@@ -431,7 +431,6 @@ export function ReadingsManagement() {
                   <TableHead className="text-right">رقم المضخة</TableHead>
                   <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
                   <TableHead className="text-right">التدفق (م³/س)</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
                   <TableHead className="text-right">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -441,11 +440,6 @@ export function ReadingsManagement() {
                     <TableCell>مضخة {index + 1}</TableCell>
                     <TableCell>{pump.time.toFixed(1)}</TableCell>
                     <TableCell>{pump.flow.toFixed(1)}</TableCell>
-                    <TableCell>
-                      <Badge variant={pump.time > 0 ? "default" : "secondary"}>
-                        {pump.time > 0 ? 'نشطة' : 'متوقفة'}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <Button 
                         variant="ghost" 
@@ -520,18 +514,7 @@ export function ReadingsManagement() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>حالة المضخة</Label>
-              <Select defaultValue={selectedPumpIndex !== null && selectedReading?.pumps[selectedPumpIndex]?.time > 0 ? "active" : "stopped"}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">نشطة</SelectItem>
-                  <SelectItem value="stopped">متوقفة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex gap-2">
                 <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
