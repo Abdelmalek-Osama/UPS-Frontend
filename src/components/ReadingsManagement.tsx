@@ -326,12 +326,9 @@ export function ReadingsManagement() {
                         <TableCell className={`text-right ${reading.battery < 12.5 ? 'text-yellow-600 font-medium' : ''}`}>
                           {reading.battery.toFixed(1)}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <TableCell  className={`text-right ${reading.calculatedFlow < 30 ? 'text-red-600 font-medium' : ''}`}>
+                          <div className="flex items-center justify-start gap-2">
                             <span>{reading.calculatedFlow.toFixed(1)} م³/س</span>
-                            {reading.hasAlarm && (
-                              <Badge variant="destructive" className="text-xs">تنبيه</Badge>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">

@@ -191,7 +191,7 @@ export function UserManagement() {
                   المسؤولون لديهم وصول لجميع المواقع تلقائياً
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-end" dir="ltr">
                 <Switch id="active" defaultChecked />
                 <Label htmlFor="active">الحساب نشط</Label>
               </div>
@@ -265,8 +265,8 @@ export function UserManagement() {
                       <span className="text-sm text-gray-400">لا يوجد</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-right">
+                    <div className="flex items-center gap-2 justify-end" dir="ltr">
                       <Switch 
                         checked={user.active}
                         onCheckedChange={() => handleToggleActive(user.id)}

@@ -116,12 +116,12 @@ export function FlowCalculations() {
         <TabsContent value="formula" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>تكوين المعادلة</CardTitle>
+              <CardTitle className="text-right">تكوين المعادلة</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <CardContent className="space-y-6" >
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" dir="rtl">
                 <p className="text-sm text-blue-800 text-center">
-                  <strong>المعادلة:</strong> Q = C × W × H<sup>n</sup>
+                  <strong>المعادلة: </strong> Q = C × W × H<sup>n</sup>
                 </p>
                 <p className="text-xs text-blue-600 text-center mt-1">
                   حيث H = USWL - DSWL

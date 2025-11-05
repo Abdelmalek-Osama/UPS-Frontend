@@ -100,7 +100,7 @@ export function AlarmConfiguration() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="threshold">
-            <AlertTriangle className="ml-2 h-4 w-4" />
+            <AlertTriangle className="ml-2 h-4 w-4"/>
             تنبيهات القيم الحدية
           </TabsTrigger>
           <TabsTrigger value="communication">
@@ -192,6 +192,21 @@ export function AlarmConfiguration() {
                     </div>
                   </div>
                 </div>
+                 <div className="space-y-2">
+                    <Label>المستلمون</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="email" 
+                        placeholder="email@example.com"
+                        value={newRecipient}
+                        onChange={(e) => setNewRecipient(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addRecipient()}
+                      />
+                      <Button type="button" onClick={addRecipient}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddThresholdOpen(false)}>
                     إلغاء
@@ -206,7 +221,7 @@ export function AlarmConfiguration() {
 
           <Card>
             <CardHeader>
-              <CardTitle>تنبيهات القيم الحدية ({thresholdAlarms.length})</CardTitle>
+              <CardTitle className="text-right">تنبيهات القيم الحدية ({thresholdAlarms.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -232,7 +247,7 @@ export function AlarmConfiguration() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={alarm.severity === 'Critical' ? 'destructive' : 'outline'}>
+                        <Badge variant="outline">
                           {alarm.severity === 'Critical' ? 'حرج' : 'تحذير'}
                         </Badge>
                       </TableCell>
@@ -345,7 +360,7 @@ export function AlarmConfiguration() {
 
           <Card>
             <CardHeader>
-              <CardTitle>تنبيهات فقدان الاتصال ({communicationAlarms.length})</CardTitle>
+              <CardTitle className="text-right">تنبيهات فقدان الاتصال ({communicationAlarms.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -368,7 +383,7 @@ export function AlarmConfiguration() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1 justify-end">
                           {alarm.recipients.map((email, idx) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
                               <Mail className="ml-1 h-3 w-3" />
