@@ -68,6 +68,10 @@ export function ReadingsManagement() {
   const [selectedSite, setSelectedSite] = useState('مستوى المياه - القاهرة 01'); // Default: all sites
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
+  const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
+  const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
+  const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null);
 
   const waterLevelReadings: WaterLevelReading[] = [
     { id: 1, site: 'مستوى المياه - القاهرة 01', timestamp: '2025-11-03 11:00', uswl: 125.4, dswl: 122.1, battery: 12.8, calculatedFlow: 34.5, hasAlarm: false },
@@ -113,6 +117,17 @@ export function ReadingsManagement() {
 
   const handleExport = () => {
     alert('سيتم تصدير البيانات إلى ملف Excel');
+  };
+
+  const handleViewPumpDetails = (reading: PumpStationReading) => {
+    setSelectedReading(reading);
+    setIsPumpDetailsOpen(true);
+  };
+
+  const handleEditPump = (pumpIndex: number) => {
+    setSelectedPumpIndex(pumpIndex);
+    setIsPumpEditOpen(true);
+    setIsPumpDetailsOpen(false);
   };
 
   return (
@@ -381,7 +396,11 @@ export function ReadingsManagement() {
                             <Button variant="ghost" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewPumpDetails(reading)}
+                            >
                               <FileText className="h-4 w-4" />
                             </Button>
                           </div>
@@ -395,6 +414,143 @@ export function ReadingsManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Pump Details Dialog */}
+      <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
+        <DialogContent className="sm:max-w-[700px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تفاصيل قراءات المضخات</DialogTitle>
+            <DialogDescription>
+              {selectedReading?.site} - {selectedReading?.timestamp}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رقم المضخة</TableHead>
+                  <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
+                  <TableHead className="text-right">التدفق (م³/س)</TableHead>
+                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-right">إجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedReading?.pumps.map((pump, index) => (
+                  <TableRow key={index}>
+                    <TableCell>مضخة {index + 1}</TableCell>
+                    <TableCell>{pump.time.toFixed(1)}</TableCell>
+                    <TableCell>{pump.flow.toFixed(1)}</TableCell>
+                    <TableCell>
+                      <Badge variant={pump.time > 0 ? "default" : "secondary"}>
+                        {pump.time > 0 ? 'نشطة' : 'متوقفة'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditPump(index)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">إجمالي وقت التشغيل</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} ساعة</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">إجمالي التدفق</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} م³/س</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPumpDetailsOpen(false)}>
+              إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Pump Dialog */}
+      <Dialog open={isPumpEditOpen} onOpenChange={setIsPumpEditOpen}>
+        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات المضخة {selectedPumpIndex !== null ? selectedPumpIndex + 1 : ''}</DialogTitle>
+            <DialogDescription>
+              تحديث قراءات المضخة
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>الموقع</Label>
+              <div className="flex items-center h-10 px-3 border rounded-md bg-gray-50">
+                <span className="text-sm">{selectedReading?.site}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>التاريخ والوقت</Label>
+              <div className="flex items-center h-10 px-3 border rounded-md bg-gray-50">
+                <span className="text-sm">{selectedReading?.timestamp}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>وقت التشغيل (ساعة)</Label>
+                <Input 
+                  type="number" 
+                  step="0.1" 
+                  defaultValue={selectedPumpIndex !== null ? selectedReading?.pumps[selectedPumpIndex]?.time : 0}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>التدفق (م³/س)</Label>
+                <Input 
+                  type="number" 
+                  step="0.1" 
+                  defaultValue={selectedPumpIndex !== null ? selectedReading?.pumps[selectedPumpIndex]?.flow : 0}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>حالة المضخة</Label>
+              <Select defaultValue={selectedPumpIndex !== null && selectedReading?.pumps[selectedPumpIndex]?.time > 0 ? "active" : "stopped"}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">نشطة</SelectItem>
+                  <SelectItem value="stopped">متوقفة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex gap-2">
+                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                <div className="text-sm text-yellow-800">
+                  <p>سيتم إعادة حساب إجمالي التدفق ووقت التشغيل تلقائياً بعد التعديل</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPumpEditOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={() => setIsPumpEditOpen(false)}>
+              حفظ التعديلات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
