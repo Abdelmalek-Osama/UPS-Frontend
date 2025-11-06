@@ -20,7 +20,6 @@ import {
 import { Label } from '../../../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { Calendar } from '../../../components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
 import { 
   Plus, 
   Download, 
@@ -42,6 +41,7 @@ import { useReadingsData } from '../hooks/useReadingsData';
 import { WaterLevelTable } from './WaterLevelTable';
 import { PumpStationTable } from './PumpStationTable';
 import type { PumpStationReading } from '../types';
+import { DatePicker } from '../../../components/ui/datepicker';
 
 export function ReadingsManagement() {
   const { handleExport, waterLevelReadings, pumpStationReadings, sites, handleEditPump } = useReadingsData();
@@ -51,7 +51,8 @@ export function ReadingsManagement() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
-
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
   
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
@@ -87,28 +88,16 @@ export function ReadingsManagement() {
                 ))}
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start">
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  من تاريخ
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" />
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start">
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  إلى تاريخ
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+            placeholder="من تاريخ"
+            value={fromDate}
+            onChange={setFromDate}
+            />
+            <DatePicker
+            placeholder="الى تاريخ"
+            value={toDate}
+            onChange={setToDate}
+            />
           </div>
         </CardContent>
       </Card>

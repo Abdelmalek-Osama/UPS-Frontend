@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { 
@@ -15,9 +15,10 @@ import {useReadingsData} from '../hooks/useReadingsData';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '../../../components/ui/select';
-import {Popover, PopoverTrigger, PopoverContent} from '../../../components/ui/popover';
 import {Input} from '../../../components/ui/input';
 import { Calendar } from '../../../components/ui/calendar';
+import {DatePicker} from '../../../components/ui/datepicker';
+
 interface PumpStationTableProps {
   readings: PumpStationReading[];
   onViewDetails: (reading: PumpStationReading) => void;
@@ -35,6 +36,8 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
         handleEditPump,
         handleExport,
         }=useReadingsData();
+    const [readingDate, setReadingDate] = useState<Date | undefined>();
+    
   return (
     <Card>
       <CardHeader>
@@ -79,17 +82,11 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                   </div>
                   <div className="space-y-2">
                     <Label>التاريخ والوقت</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <CalendarIcon className="ml-2 h-4 w-4" />
-                          اختر التاريخ
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker 
+                    placeholder="اختر التاريخ"
+                    value={readingDate}
+                    onChange={setReadingDate}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

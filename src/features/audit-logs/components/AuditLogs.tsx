@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { Calendar } from '../../../components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
 import { 
   FileText, 
   Download, 
@@ -31,12 +30,15 @@ import {
 } from 'lucide-react';
 import { getActionIcon, getActionLabel, getActionColor } from '../utils/formatters';
 import type { AuditLog } from '../types';
+import {DatePicker} from '../../../components/ui/datepicker';
 
 export function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUser, setFilterUser] = useState('all');
   const [filterSite, setFilterSite] = useState('all');
   const [filterAction, setFilterAction] = useState('all');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  
 
   const auditLogs: AuditLog[] = [
     {
@@ -146,17 +148,11 @@ export function AuditLogs() {
                 <SelectItem value="delete">حذف</SelectItem>
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start">
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  التاريخ
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+                placeholder="التاريخ"
+                value={selectedDate}
+                onChange={setSelectedDate}
+            />
           </div>
         </CardContent>
       </Card>

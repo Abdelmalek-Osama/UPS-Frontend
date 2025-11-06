@@ -20,10 +20,10 @@ import {
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
-import { Popover, PopoverTrigger, PopoverContent } from '../../../components/ui/popover';
 import { Input } from '../../../components/ui/input';
 import type { WaterLevelReading } from '../types';
 import {useReadingsData} from '../hooks/useReadingsData';
+import { DatePicker } from '../../../components/ui/datepicker';
 
 
 interface WaterLevelTableProps {
@@ -34,6 +34,7 @@ interface WaterLevelTableProps {
 
 export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }: WaterLevelTableProps) {
     const {handleExport, sites} = useReadingsData();
+    const [readingDate, setReadingDate] = useState<Date | undefined>();
     return (
     <Card>
       <CardHeader>
@@ -78,17 +79,11 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         </div>
                         <div className="space-y-2">
                             <Label>التاريخ والوقت</Label>
-                            <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start">
-                                <CalendarIcon className="ml-2 h-4 w-4" />
-                                اختر التاريخ
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="single" />
-                            </PopoverContent>
-                            </Popover>
+                            <DatePicker 
+                            placeholder="اختر التاريخ"
+                            value={readingDate}
+                            onChange={setReadingDate}
+                            />
                         </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
