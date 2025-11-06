@@ -11,13 +11,14 @@ import {
 } from '../../../components/ui/table';
 import { Edit, FileText } from 'lucide-react';
 import type { PumpStationReading } from '../types';
-
+import {useReadingsData} from '../hooks/useReadingsData';
 interface PumpStationTableProps {
   readings: PumpStationReading[];
   onViewDetails: (reading: PumpStationReading) => void;
 }
 
 export function PumpStationTable({ readings, onViewDetails }: PumpStationTableProps) {
+    const {handleViewPumpDetails}=useReadingsData();
   return (
     <Card>
       <CardHeader>
@@ -54,7 +55,7 @@ export function PumpStationTable({ readings, onViewDetails }: PumpStationTablePr
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => onViewDetails(reading)}
+                        onClick={() => handleViewPumpDetails(reading)}
                       >
                         <FileText className="h-4 w-4" />
                       </Button>

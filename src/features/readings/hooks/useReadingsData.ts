@@ -2,11 +2,16 @@ import { useState } from 'react';
 import type { WaterLevelReading, PumpStationReading } from '../types';
 
 export function useReadingsData() {
-  const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([
+  const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
+  const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
+  const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
+  const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
+
+  const waterLevelReadings: WaterLevelReading[] = [
     { id: 1, site: 'مستوى المياه - القاهرة 01', timestamp: '2025-11-03 11:00', uswl: 125.4, dswl: 122.1, battery: 12.8, calculatedFlow: 34.5, hasAlarm: false },
     { id: 2, site: 'مستوى المياه - القاهرة 01', timestamp: '2025-11-03 10:00', uswl: 125.2, dswl: 121.9, battery: 12.4, calculatedFlow: 33.8, hasAlarm: true },
     { id: 3, site: 'مستوى المياه - الإسكندرية 01', timestamp: '2025-11-03 11:00', uswl: 98.7, dswl: 95.2, battery: 13.1, calculatedFlow: 28.9, hasAlarm: false },
-  ]);
+  ];
 
   const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([
     { 
@@ -43,12 +48,16 @@ export function useReadingsData() {
     'محطة الضخ - الجيزة 01',
     'محطة الضخ - الدقهلية 02',
   ];
+  const handleViewPumpDetails = (reading: PumpStationReading) => {
+    setSelectedReading(reading);
+    setIsPumpDetailsOpen(true);
+  };
 
   return {
     waterLevelReadings,
-    setWaterLevelReadings,
     pumpStationReadings,
     setPumpStationReadings,
     sites,
+    handleViewPumpDetails,
   };
 }
