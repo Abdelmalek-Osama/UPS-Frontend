@@ -52,6 +52,14 @@ export function useReadingsData() {
     setSelectedReading(reading);
     setIsPumpDetailsOpen(true);
   };
+  const handleEditPump = (pumpIndex: number) => {
+    setSelectedPumpIndex(pumpIndex);
+    setIsPumpEditOpen(true);
+    setIsPumpDetailsOpen(false);
+  };
+  const handleExport = () => {
+    alert('سيتم تصدير البيانات إلى ملف Excel');
+  };
 
   return {
     waterLevelReadings,
@@ -59,5 +67,7 @@ export function useReadingsData() {
     setPumpStationReadings,
     sites,
     handleViewPumpDetails,
+    handleEditPump,
+    handleExport,
   };
 }

@@ -42,9 +42,9 @@ export function FlowCalculations() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2" >
               <Label>اختر الموقع</Label>
-              <Select value={selectedSite} onValueChange={setSelectedSite}>
+              <Select  value={selectedSite} onValueChange={setSelectedSite}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -123,8 +123,8 @@ export function FlowCalculations() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button>حفظ المعاملات</Button>
+          <div className="flex justify-start ">
+            <Button >حفظ المعاملات</Button>
           </div>
         </CardContent>
       </Card>

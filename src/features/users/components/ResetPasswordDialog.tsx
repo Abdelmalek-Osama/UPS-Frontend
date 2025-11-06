@@ -23,8 +23,8 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl">
         <DialogHeader>
-          <DialogTitle>إعادة تعيين كلمة المرور</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-right">إعادة تعيين كلمة المرور</DialogTitle>
+          <DialogDescription className="text-right">
             إعادة تعيين كلمة المرور للمستخدم: {user?.username}
           </DialogDescription>
         </DialogHeader>

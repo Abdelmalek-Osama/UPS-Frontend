@@ -42,8 +42,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة مستخدم جديد</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
+          <DialogDescription className="text-right">
             أدخل بيانات المستخدم الجديد
           </DialogDescription>
         </DialogHeader>

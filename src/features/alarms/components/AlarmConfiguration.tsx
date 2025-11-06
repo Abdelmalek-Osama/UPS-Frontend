@@ -77,8 +77,8 @@ export function AlarmConfiguration() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]" dir="rtl">
                 <DialogHeader>
-                  <DialogTitle>إضافة تنبيه قيمة حدية</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-right">إضافة تنبيه قيمة حدية</DialogTitle>
+                  <DialogDescription className="text-right">
                     تكوين تنبيه جديد عند تجاوز قيمة معينة
                   </DialogDescription>
                 </DialogHeader>
@@ -164,12 +164,14 @@ export function AlarmConfiguration() {
                     </div>
                   </div>
                 <DialogFooter>
+                    <div className="w-full justify-start">
                   <Button variant="outline" onClick={() => setIsAddThresholdOpen(false)}>
                     إلغاء
                   </Button>
                   <Button onClick={() => setIsAddThresholdOpen(false)}>
                     إضافة التنبيه
                   </Button>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -243,8 +245,8 @@ export function AlarmConfiguration() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]" dir="rtl">
                 <DialogHeader>
-                  <DialogTitle>إضافة تنبيه فقدان اتصال</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
+                  <DialogDescription className="text-right">
                     تكوين تنبيه عند انقطاع البيانات لفترة محددة
                   </DialogDescription>
                 </DialogHeader>
