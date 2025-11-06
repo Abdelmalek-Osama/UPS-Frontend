@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { 
   MapPin, 
   AlertTriangle, 
@@ -13,36 +13,10 @@ import {
   WifiOff
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 export function DashboardHome() {
-  // Mock data for demonstration
-  const flowData = [
-    { time: '00:00', flow: 120 },
-    { time: '04:00', flow: 135 },
-    { time: '08:00', flow: 158 },
-    { time: '12:00', flow: 142 },
-    { time: '16:00', flow: 165 },
-    { time: '20:00', flow: 148 },
-  ];
-
-  const directorateData = [
-    { name: 'القاهرة', sites: 12, active: 11 },
-    { name: 'الجيزة', sites: 8, active: 8 },
-    { name: 'الإسكندرية', sites: 15, active: 13 },
-    { name: 'الدقهلية', sites: 10, active: 9 },
-  ];
-
-  const activeAlarms = [
-    { id: 1, site: 'محطة الضخ - الجيزة 01', type: 'battery', message: 'البطارية منخفضة', severity: 'Warning', time: '10:30' },
-    { id: 2, site: 'مستوى المياه - القاهرة 03', type: 'communication', message: 'فقدان الاتصال', severity: 'Critical', time: '09:15' },
-    { id: 3, site: 'محطة الضخ - الإسكندرية 02', type: 'flow', message: 'تدفق عالي غير طبيعي', severity: 'Warning', time: '08:45' },
-  ];
-
-  const recentReadings = [
-    { site: 'مستوى المياه - القاهرة 01', type: 'WaterLevel', time: '11:30', uswl: 125.4, dswl: 122.1, flow: 34.5 },
-    { site: 'محطة الضخ - الجيزة 02', type: 'PumpStation', time: '11:25', totalFlow: 145.2, uptime: 8.5 },
-    { site: 'مستوى المياه - الدقهلية 05', type: 'WaterLevel', time: '11:20', uswl: 98.7, dswl: 95.2, flow: 28.9 },
-  ];
+  const { flowData, directorateData, activeAlarms, recentReadings, stats } = useDashboardData();
 
   return (
     <div className="space-y-6">
@@ -60,7 +34,7 @@ export function DashboardHome() {
             <MapPin className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">45</div>
+            <div className="text-2xl">{stats.totalSites}</div>
             <p className="text-xs text-gray-500 mt-1">
               <span className="text-green-600">جميع المواقع متصلة</span>
             </p>
@@ -73,9 +47,9 @@ export function DashboardHome() {
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">12</div>
+            <div className="text-2xl">{stats.activeAlarms}</div>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="text-red-600">3 حرجة</span> • <span className="text-yellow-600">9 تحذيرات</span>
+              <span className="text-red-600">{stats.criticalAlarms} حرجة</span> • <span className="text-yellow-600">{stats.warningAlarms} تحذيرات</span>
             </p>
           </CardContent>
         </Card>
@@ -86,9 +60,9 @@ export function DashboardHome() {
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">1,245 م³/س</div>
+            <div className="text-2xl">{stats.totalFlow.toLocaleString()} م³/س</div>
             <p className="text-xs text-green-600 mt-1">
-              ↑ 8.5% عن الساعة السابقة
+              ↑ {stats.flowChange}% عن الساعة السابقة
             </p>
           </CardContent>
         </Card>
@@ -99,9 +73,9 @@ export function DashboardHome() {
             <Activity className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">38/41</div>
+            <div className="text-2xl">{stats.activeStations}/{stats.totalStations}</div>
             <p className="text-xs text-gray-500 mt-1">
-              معدل التشغيل: 92.7%
+              معدل التشغيل: {stats.uptimePercentage}%
             </p>
           </CardContent>
         </Card>

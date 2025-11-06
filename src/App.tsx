@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from './features/auth';
 import { DashboardLayout } from './components/DashboardLayout';
+import type { User } from './features/auth';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{
-    id: number;
-    username: string;
-    email: string;
-    role: 'Admin' | 'Operator';
-  } | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const handleLogin = (email: string, password: string) => {
     // Mock authentication - in production, this would call an API

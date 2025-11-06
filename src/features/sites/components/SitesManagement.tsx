@@ -1,8 +1,7 @@
-import React from 'react';
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Badge } from '../../../components/ui/badge';
 import { 
   Table, 
   TableBody, 
@@ -10,47 +9,24 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from './ui/table';
+} from '../../../components/ui/table';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from '../../../components/ui/select';
 import { Search, MapPin, Droplets, Power } from 'lucide-react';
-
-interface Site {
-  id: number;
-  name: string;
-  type: 'WaterLevel' | 'PumpStation';
-  directorate: string;
-  location: string;
-  status: 'online' | 'offline';
-  flowCalcMethod?: 'Formula' | 'HQCurve';
-}
+import { useSitesData, useFilteredSites } from '../hooks/useSitesData';
 
 export function SitesManagement() {
-  const [sites, setSites] = useState<Site[]>([
-    { id: 1, name: 'مستوى المياه - القاهرة 01', type: 'WaterLevel', directorate: 'القاهرة', location: '30.0444, 31.2357', status: 'online', flowCalcMethod: 'Formula' },
-    { id: 2, name: 'محطة الضخ - الجيزة 01', type: 'PumpStation', directorate: 'الجيزة', location: '30.0131, 31.2089', status: 'online' },
-    { id: 3, name: 'مستوى المياه - الإسكندرية 01', type: 'WaterLevel', directorate: 'الإسكندرية', location: '31.2001, 29.9187', status: 'offline', flowCalcMethod: 'HQCurve' },
-    { id: 4, name: 'محطة الضخ - الدقهلية 02', type: 'PumpStation', directorate: 'الدقهلية', location: '31.0409, 31.3785', status: 'online' },
-  ]);
-
+  const { sites, directorates } = useSitesData();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
 
-  const directorates = ['القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 'الفيوم', 'المنيا'];
-
-  const filteredSites = sites.filter(site => {
-    const matchesSearch = site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         site.location.includes(searchTerm);
-    const matchesType = filterType === 'all' || site.type === filterType;
-    const matchesDirectorate = filterDirectorate === 'all' || site.directorate === filterDirectorate;
-    return matchesSearch && matchesType && matchesDirectorate;
-  });
+  const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate });
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, {useState} from 'react';
 import { 
   LayoutDashboard, 
   MapPin, 
@@ -12,20 +11,16 @@ import {
   Droplets
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { DashboardHome } from './DashboardHome';
-import { SitesManagement } from './SitesManagement';
-import { ReadingsManagement } from './ReadingsManagement';
-import { AlarmConfiguration } from './AlarmConfiguration';
-import { FlowCalculations } from './FlowCalculations';
-import { UserManagement } from './UserManagement';
+import { DashboardHome } from '../features/dashboard';
+import { SitesManagement } from '../features/sites';
+import { ReadingsManagement } from '../features/readings';
+import { AlarmConfiguration } from '../features/alarms';
+import { FlowCalculations } from '../features/flow-calculations';
+import { UserManagement } from '../features/users';
+import type { User } from '../features/auth';
 
 interface DashboardLayoutProps {
-  currentUser: {
-    id: number;
-    username: string;
-    email: string;
-    role: 'Admin' | 'Operator';
-  };
+  currentUser: User;
   onLogout: () => void;
 }
 

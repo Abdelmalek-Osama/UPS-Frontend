@@ -1,9 +1,7 @@
-import React from 'react';
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
 import { 
   Table, 
   TableBody, 
@@ -11,82 +9,40 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from './ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from './ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
-import { Label } from './ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Plus, Edit, Trash2, AlertTriangle, WifiOff, Mail } from 'lucide-react';
-
-interface ValueThresholdAlarm {
-  id: number;
-  site: string;
-  field: string;
-  operator: string;
-  threshold: number;
-  color: string;
-  severity: 'Warning' | 'Critical';
-}
-
-interface CommunicationAlarm {
-  id: number;
-  site: string;
-  hours: number;
-  recipients: string[];
-}
+} from '../../../components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { Plus, Edit, AlertTriangle, WifiOff, Mail } from 'lucide-react';
+import { useAlarmsData } from '../hooks/useAlarmsData';
+import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
+import { Label } from '../../../components/ui/label';
+import { Input } from '../../../components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
 
 export function AlarmConfiguration() {
+    const {
+    thresholdAlarms,
+    setThresholdAlarms,
+    communicationAlarms,
+    setCommunicationAlarms,
+    isAddCommOpen,
+    setIsAddCommOpen,
+    addRecipient,
+    removeRecipient,
+    newRecipient,
+    setNewRecipient,
+    recipients, 
+    setRecipients,
+  } = useAlarmsData();
   const [activeTab, setActiveTab] = useState('threshold');
   const [isAddThresholdOpen, setIsAddThresholdOpen] = useState(false);
-  const [isAddCommOpen, setIsAddCommOpen] = useState(false);
-  const [newRecipient, setNewRecipient] = useState('');
-  const [recipients, setRecipients] = useState<string[]>([]);
 
-  const thresholdAlarms: ValueThresholdAlarm[] = [
-    { id: 1, site: 'مستوى المياه - القاهرة 01', field: 'Battery', operator: '<', threshold: 12.5, color: '#fbbf24', severity: 'Warning' },
-    { id: 2, site: 'مستوى المياه - القاهرة 01', field: 'USWL', operator: '>', threshold: 130, color: '#ef4444', severity: 'Critical' },
-    { id: 3, site: 'محطة الضخ - الجيزة 01', field: 'TotalFlow', operator: '<', threshold: 50, color: '#fbbf24', severity: 'Warning' },
-  ];
-
-  const communicationAlarms: CommunicationAlarm[] = [
-    { id: 1, site: 'مستوى المياه - القاهرة 01', hours: 2, recipients: ['admin@irrigation.gov.eg', 'operator1@irrigation.gov.eg'] },
-    { id: 2, site: 'محطة الضخ - الإسكندرية 02', hours: 1, recipients: ['admin@irrigation.gov.eg'] },
-  ];
-
-  const sites = [
-    'مستوى المياه - القاهرة 01',
-    'مستوى المياه - الإسكندرية 01',
-    'محطة الضخ - الجيزة 01',
-    'محطة الضخ - الدقهلية 02',
-  ];
-
-  const fields = ['Battery', 'USWL', 'DSWL', 'TotalFlow', 'TotalUptime'];
+  // Mock data for dropdowns
+  const sites = ['محطة ضخ 1', 'محطة ضخ 2', 'محطة ضخ 3'];
+  const fields = ['مستوى الماء', 'التدفق', 'الضغط'];
   const operators = ['>', '<', '>=', '<=', '=='];
 
-  const addRecipient = () => {
-    if (newRecipient && !recipients.includes(newRecipient)) {
-      setRecipients([...recipients, newRecipient]);
-      setNewRecipient('');
-    }
-  };
-
-  const removeRecipient = (email: string) => {
-    setRecipients(recipients.filter(r => r !== email));
-  };
+  
+  
 
   return (
     <div className="space-y-6">
@@ -243,7 +199,6 @@ export function AlarmConfiguration() {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                         
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
