@@ -67,7 +67,12 @@ export function AlarmConfiguration() {
 
         {/* Value Threshold Alarms */}
         <TabsContent value="threshold" className="mt-6 space-y-6">
-          <div className="flex justify-end">
+          
+
+          <Card>
+            <CardHeader className="flex justify-between items-center" dir="rtl">
+              <CardTitle className="text-right">تنبيهات القيم الحدية ({thresholdAlarms.length})</CardTitle>
+            
             <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -82,7 +87,7 @@ export function AlarmConfiguration() {
                     تكوين تنبيه جديد عند تجاوز قيمة معينة
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-1 py-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
                     <Select>
@@ -175,12 +180,7 @@ export function AlarmConfiguration() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">تنبيهات القيم الحدية ({thresholdAlarms.length})</CardTitle>
-            </CardHeader>
+          </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -235,7 +235,11 @@ export function AlarmConfiguration() {
 
         {/* Communication Loss Alarms */}
         <TabsContent value="communication" className="mt-6 space-y-6">
-          <div className="flex justify-end">
+          
+
+          <Card>
+            <CardHeader className="flex justify-between items-center" dir="rtl">
+              <CardTitle className="text-right">تنبيهات فقدان الاتصال ({communicationAlarms.length})</CardTitle>
             <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -243,7 +247,7 @@ export function AlarmConfiguration() {
                   إضافة تنبيه جديد
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]" dir="rtl">
+              <DialogContent className="sm:max-w-[500px] max-h-[75vh] overflow-y-auto p-4 sm:p-6" dir="rtl">
                 <DialogHeader>
                   <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
                   <DialogDescription className="text-right">
@@ -313,11 +317,6 @@ export function AlarmConfiguration() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">تنبيهات فقدان الاتصال ({communicationAlarms.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
