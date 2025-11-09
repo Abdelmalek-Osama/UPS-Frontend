@@ -6,6 +6,12 @@ export function useReadingsData() {
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
+  
+  // Edit dialog states
+  const [isEditPumpStationOpen, setIsEditPumpStationOpen] = useState(false);
+  const [editingPumpStation, setEditingPumpStation] = useState<PumpStationReading | null>(null);
+  const [isEditWaterLevelOpen, setIsEditWaterLevelOpen] = useState(false);
+  const [editingWaterLevel, setEditingWaterLevel] = useState<WaterLevelReading | null>(null);
 
   const waterLevelReadings: WaterLevelReading[] = [
     { id: 1, site: 'مستوى المياه - القاهرة 01', timestamp: '2025-11-03 11:00', uswl: 125.4, dswl: 122.1, battery: 12.8, calculatedFlow: 34.5, hasAlarm: false },
@@ -57,6 +63,17 @@ export function useReadingsData() {
     setIsPumpEditOpen(true);
     setIsPumpDetailsOpen(false);
   };
+  
+  const handleEditPumpStation = (reading: PumpStationReading) => {
+    setEditingPumpStation(reading);
+    setIsEditPumpStationOpen(true);
+  };
+  
+  const handleEditWaterLevel = (reading: WaterLevelReading) => {
+    setEditingWaterLevel(reading);
+    setIsEditWaterLevelOpen(true);
+  };
+  
   const handleExport = () => {
     alert('سيتم تصدير البيانات إلى ملف Excel');
   };
@@ -69,5 +86,16 @@ export function useReadingsData() {
     handleViewPumpDetails,
     handleEditPump,
     handleExport,
+    // Edit dialog state and handlers
+    isEditPumpStationOpen,
+    setIsEditPumpStationOpen,
+    editingPumpStation,
+    setEditingPumpStation,
+    handleEditPumpStation,
+    isEditWaterLevelOpen,
+    setIsEditWaterLevelOpen,
+    editingWaterLevel,
+    setEditingWaterLevel,
+    handleEditWaterLevel,
   };
 }

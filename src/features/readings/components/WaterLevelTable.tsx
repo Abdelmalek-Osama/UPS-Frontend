@@ -33,8 +33,18 @@ interface WaterLevelTableProps {
 }
 
 export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }: WaterLevelTableProps) {
-    const {handleExport, sites} = useReadingsData();
+    const {
+        handleExport, 
+        sites,
+        isEditWaterLevelOpen,
+        setIsEditWaterLevelOpen,
+        editingWaterLevel,
+        handleEditWaterLevel,
+    } = useReadingsData();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
+    const [readingTime, setReadingTime] = useState<string>('');
+    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
+    const [editReadingTime, setEditReadingTime] = useState<string>('');
     return (
     <Card>
       <CardHeader>
@@ -78,13 +88,31 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>التاريخ والوقت</Label>
+                            <Label>التاريخ</Label>
                             <DatePicker 
                             placeholder="اختر التاريخ"
                             value={readingDate}
                             onChange={setReadingDate}
                             />
                         </div>
+                        </div>
+                        <div className="space-y-2">
+                        <Label>الوقت</Label>
+                        <Select dir="rtl" value={readingTime} onValueChange={setReadingTime}>
+                            <SelectTrigger className="w-1/2">
+                            <SelectValue placeholder="اختر الساعة" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => {
+                                const hour = i.toString().padStart(2, '0');
+                                return (
+                                <SelectItem key={hour} value={`${hour}:00`}>
+                                    {`${hour}:00`}
+                                </SelectItem>
+                                );
+                            })}
+                            </SelectContent>
+                        </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -112,6 +140,103 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         </Button>
                         <Button onClick={() => setIsAddDialogOpen(false)}>
                         حفظ القراءة
+                        </Button>
+                    </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit Dialog */}
+                <Dialog open={isEditWaterLevelOpen} onOpenChange={setIsEditWaterLevelOpen}>
+                    <DialogContent className="sm:max-w-[600px]" dir="rtl">
+                    <DialogHeader>
+                        <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
+                        <DialogDescription className="text-right">
+                        قم بتعديل بيانات القراءة
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>الموقع</Label>
+                            <Select dir="rtl" defaultValue={editingWaterLevel?.site || ""}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="اختر الموقع" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {sites.map(site => (
+                                <SelectItem key={site} value={site}>{site}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>التاريخ</Label>
+                            <DatePicker 
+                            placeholder="اختر التاريخ"
+                            value={editReadingDate}
+                            onChange={setEditReadingDate}
+                            />
+                        </div>
+                        </div>
+                        <div className="space-y-2">
+                        <Label>الوقت</Label>
+                        <Select dir="rtl" value={editReadingTime} onValueChange={setEditReadingTime}>
+                            <SelectTrigger className="w-1/2">
+                            <SelectValue placeholder="اختر الساعة" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => {
+                                const hour = i.toString().padStart(2, '0');
+                                return (
+                                <SelectItem key={hour} value={`${hour}:00`}>
+                                    {`${hour}:00`}
+                                </SelectItem>
+                                );
+                            })}
+                            </SelectContent>
+                        </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>USWL (متر)</Label>
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              defaultValue={editingWaterLevel?.uswl || 0}
+                              placeholder="125.4" 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>DSWL (متر)</Label>
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              defaultValue={editingWaterLevel?.dswl || 0}
+                              placeholder="122.1" 
+                            />
+                        </div>
+                        </div>
+                        <div className="space-y-2">
+                        <Label>البطارية (فولت)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.1" 
+                          defaultValue={editingWaterLevel?.battery || 0}
+                          placeholder="12.8" 
+                        />
+                        </div>
+                        <div className="bg-gray-50 border rounded-lg p-4">
+                        <Label className="text-sm text-gray-600" >التدفق المحسوب</Label>
+                        <p className="text-2xl mt-1">{editingWaterLevel?.calculatedFlow.toFixed(1) || '0.0'} م³/س</p>
+                        <p className="text-xs text-gray-500 mt-1">يتم الحساب تلقائياً بناءً على المعادلة المعرفة للموقع</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)}>
+                        إلغاء
+                        </Button>
+                        <Button onClick={() => setIsEditWaterLevelOpen(false)}>
+                        حفظ التعديلات
                         </Button>
                     </DialogFooter>
                     </DialogContent>
@@ -150,7 +275,11 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditWaterLevel(reading)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>

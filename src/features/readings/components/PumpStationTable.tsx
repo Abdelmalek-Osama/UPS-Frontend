@@ -35,8 +35,15 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
         handleViewPumpDetails,
         handleEditPump,
         handleExport,
+        isEditPumpStationOpen,
+        setIsEditPumpStationOpen,
+        editingPumpStation,
+        handleEditPumpStation,
         }=useReadingsData();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
+    const [readingTime, setReadingTime] = useState<string>('');
+    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
+    const [editReadingTime, setEditReadingTime] = useState<string>('');
     
   return (
     <Card>
@@ -81,13 +88,31 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>التاريخ والوقت</Label>
+                    <Label>التاريخ</Label>
                     <DatePicker 
                     placeholder="اختر التاريخ"
                     value={readingDate}
                     onChange={setReadingDate}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>الوقت</Label>
+                  <Select dir="rtl" value={readingTime} onValueChange={setReadingTime}>
+                    <SelectTrigger className="w-1/2">
+                      <SelectValue placeholder="اختر الساعة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0');
+                        return (
+                          <SelectItem key={hour} value={`${hour}:00`}>
+                            {`${hour}:00`}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -115,6 +140,80 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 </Button>
                 <Button onClick={() => setIsAddDialogOpen(false)}>
                   حفظ القراءة
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Dialog */}
+          <Dialog open={isEditPumpStationOpen} onOpenChange={setIsEditPumpStationOpen}>
+            <DialogContent className="sm:max-w-[600px]" dir="rtl">
+              <DialogHeader>
+                <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
+                <DialogDescription className="text-right">
+                  قم بتعديل بيانات القراءة
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>الموقع</Label>
+                    <Select dir="rtl" defaultValue={editingPumpStation?.site || ""}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الموقع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sites.map(site => (
+                          <SelectItem key={site} value={site}>{site}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>التاريخ</Label>
+                    <DatePicker 
+                    placeholder="اختر التاريخ"
+                    value={editReadingDate}
+                    onChange={setEditReadingDate}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>الوقت</Label>
+                  <Select dir="rtl" value={editReadingTime} onValueChange={setEditReadingTime}>
+                    <SelectTrigger className="w-1/2">
+                      <SelectValue placeholder="اختر الساعة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0');
+                        return (
+                          <SelectItem key={hour} value={`${hour}:00`}>
+                            {`${hour}:00`}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label> المضخات النشطة</Label>
+                    <Input 
+                      type="number" 
+                      step="0.1" 
+                      defaultValue={editingPumpStation?.pumps.filter(p => p.time > 0).length || 0}
+                      placeholder="0" 
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
+                  إلغاء
+                </Button>
+                <Button onClick={() => setIsEditPumpStationOpen(false)}>
+                  حفظ التعديلات
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -147,7 +246,11 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                   <TableCell className="text-right">{reading.totalFlow.toFixed(1)} م³/س</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditPumpStation(reading)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
