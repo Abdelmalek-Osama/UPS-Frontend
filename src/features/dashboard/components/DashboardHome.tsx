@@ -82,17 +82,20 @@ export function DashboardHome() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
         <Card>
           <CardHeader>
             <CardTitle>التدفق خلال 24 ساعة</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={flowData}>
+              <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
-                <YAxis label={{ value: 'م³/س', angle: 0, position: 'top' }} />
+                <YAxis 
+                  label={{ value: 'م³/س', angle: -90, position: 'insideLeft', dy:-20 }} 
+                  tick={{dx: -25}}
+                />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="flow" stroke="#2563eb" name="التدفق" strokeWidth={2} />
@@ -107,10 +110,13 @@ export function DashboardHome() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={directorateData}>
+              <BarChart data={directorateData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis />
+                <YAxis 
+                  label={{value: 'عدد المواقع', angle: -90, position: 'insideLeft', dy:-20 }} 
+                  tick={{dx: -15}}
+                />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="sites" fill="#3b82f6" name="إجمالي المواقع" />

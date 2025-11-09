@@ -11,6 +11,7 @@ import {
   Droplets
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { DashboardHome } from '../features/dashboard';
 import { SitesManagement } from '../features/sites';
 import { ReadingsManagement } from '../features/readings';
@@ -24,39 +25,20 @@ interface DashboardLayoutProps {
   onLogout: () => void;
 }
 
-type Page = 'dashboard' | 'sites' | 'readings' | 'alarms' | 'calculations' | 'users';
-
 export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps) {
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const location = useLocation();
 
   const menuItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-    { id: 'sites', label: 'إدارة المواقع', icon: MapPin },
-    { id: 'readings', label: 'القراءات', icon: Database },
-    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell },
-    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator },
-    { id: 'users', label: 'إدارة المستخدمين', icon: Users },
+    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/' },
+    { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites' },
+    { id: 'readings', label: 'القراءات', icon: Database, path: '/readings' },
+    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms' },
+    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations' },
+    { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users' },
   ];
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <DashboardHome />;
-      case 'sites':
-        return <SitesManagement />;
-      case 'readings':
-        return <ReadingsManagement />;
-      case 'alarms':
-        return <AlarmConfiguration />;
-      case 'calculations':
-        return <FlowCalculations />;
-      case 'users':
-        return <UserManagement />;
-      default:
-        return <DashboardHome />;
-    }
-  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -101,21 +83,21 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
             <nav className="p-4 space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = currentPage === item.id;
+                // const isActive = currentPage === item.id;
                 
                 return (
-                  <button
+                  <Link
                     key={item.id}
-                    onClick={() => setCurrentPage(item.id as Page)}
+                    to={item.path}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
+                      location.pathname.startsWith(item.path)
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
                     <span>{item.label}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </nav>
@@ -124,7 +106,7 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          {renderPage()}
+          <Outlet />
         </main>
       </div>
     </div>
