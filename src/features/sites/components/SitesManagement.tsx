@@ -34,7 +34,7 @@ export function SitesManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl">إدارة المواقع</h2>
-          <p className="text-gray-500 mt-1">إدارة مواقع مستويات المياه ومحطات الضخ</p>
+          <p className="text-gray-500 mt-1">إدارة مواقع مستويات المياه ومحطات رفع</p>
         </div>
       </div>
 
@@ -57,8 +57,8 @@ export function SitesManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">جميع الأنواع</SelectItem>
-                <SelectItem value="WaterLevel">مستوى المياه</SelectItem>
-                <SelectItem value="PumpStation">محطة الضخ</SelectItem>
+                <SelectItem value="WaterLevel">القناطر</SelectItem>
+                <SelectItem value="PumpStation">محطة رفع</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterDirectorate} onValueChange={setFilterDirectorate}>
@@ -106,7 +106,7 @@ export function SitesManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {site.type === 'WaterLevel' ? 'مستوى المياه' : 'محطة ضخ'}
+                      {site.type === 'WaterLevel' ? 'القناطر' : 'محطة ضخ'}
                     </Badge>
                   </TableCell>
                   <TableCell>{site.directorate}</TableCell>

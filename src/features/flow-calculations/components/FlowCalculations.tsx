@@ -23,9 +23,9 @@ export function FlowCalculations() {
   });
 
   const sites: FlowSite[] = [
-    { id: 'site1', name: 'مستوى المياه - القاهرة 01', method: 'Formula' },
-    { id: 'site2', name: 'مستوى المياه - الإسكندرية 01', method: 'HQCurve' },
-    { id: 'site3', name: 'مستوى المياه - الجيزة 03', method: 'Formula' },
+    { id: 'site1', name: 'القناطر - القاهرة 01', method: 'Formula' },
+    { id: 'site2', name: 'القناطر - الإسكندرية 01', method: 'HQCurve' },
+    { id: 'site3', name: 'القناطر - الجيزة 03', method: 'Formula' },
   ];
 
   const currentSite = sites.find(s => s.id === selectedSite);

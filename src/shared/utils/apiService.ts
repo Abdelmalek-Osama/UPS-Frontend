@@ -3,7 +3,8 @@
  * Centralized API service for all HTTP requests in the application using Axios
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
 const API_BASE_URL = 'https://localhost:7123/api';
 
@@ -23,7 +24,7 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config: any) => {
-    const token = localStorage.getItem('authToken');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,15 +35,97 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+export interface AuthResponse {
+  fullName: string;
+  email: string;
+  role: 'Admin' | 'Operator';
+  lastLoginDate: Date;
+  accessToken: string;
+  accessTokenExpiryDate: Date;
+  refreshToken: string;
+}
+
+export interface UserDto {
+  id: string;
+  userName: string;
+  email: string;
+  fullName: string;
+  role: 'Admin' | 'Operator';
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+  lastLoginAt?: Date;
+}
+
+let isRefreshing = false;
+let failedRequestsQueue: any[] = [];
+
+const processQueue = (error: AxiosError | Error | null, token: string | null = null) => {
+  failedRequestsQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedRequestsQueue = [];
+};
+
 /**
- * Response interceptor to handle errors globally
+ * Response interceptor to handle errors globally and refresh token
  */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: any) => {
-    if (error.response) {
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && originalRequest && !(originalRequest as any)._retry) {
+      (originalRequest as any)._retry = true;
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+        const refreshToken = getRefreshToken();
+
+        if (refreshToken) {
+          try {
+            const response = await axios.post<AuthResponse>(`${API_BASE_URL}/refresh`, { refreshToken });
+            const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data;
+            setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
+            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            processQueue(null, accessToken);
+            return axiosInstance(originalRequest);
+          } catch (refreshError: any) {
+            removeAuthCookies();
+            processQueue(refreshError, null);
+            // Redirect to login or show an error
+            console.error('Unable to refresh token', refreshError);
+            throw refreshError;
+          } finally {
+            isRefreshing = false;
+          }
+        } else {
+          removeAuthCookies();
+          processQueue(new Error('No refresh token available'), null);
+          // Redirect to login
+          throw new Error('No refresh token available');
+        }
+      } else {
+        return new Promise((resolve, reject) => {
+          failedRequestsQueue.push({ resolve, reject });
+        })
+        .then(token => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return axiosInstance(originalRequest);
+        })
+        .catch(err => {
+          return Promise.reject(err);
+        });
+      }
+    } else if (error.response) {
       // Server responded with error
-      const errorMessage = error.response.data?.message || error.message;
+      const errorMessage = (error.response.data as any)?.message || error.message;
       throw new Error(errorMessage);
     } else if (error.request) {
       // Request made but no response
@@ -129,6 +212,21 @@ export async function patch<T, D = unknown>(
   return response.data;
 }
 
+export const refreshAccessToken = async (refreshToken: string): Promise<AuthResponse> => {
+  const response = await axiosInstance.post<AuthResponse>('/v1/Auth/refresh', { refreshToken });
+  return response.data;
+};
+
+export const loginUser = async (credentials: any): Promise<AuthResponse> => {
+  const response = await axiosInstance.post<AuthResponse>('/v1/Auth/login', credentials);
+  return response.data;
+};
+
+export const registerUser = async (userData: any): Promise<UserDto> => {
+  const response = await axiosInstance.post<UserDto>('/v1/Users', userData);
+  return response.data;
+};
+
 // Export axios instance for direct use if needed
 export { axiosInstance };
 
@@ -139,6 +237,9 @@ const apiService = {
   put,
   delete: del,
   patch,
+  refreshAccessToken,
+  loginUser,
+  registerUser,
   instance: axiosInstance,
 };
 

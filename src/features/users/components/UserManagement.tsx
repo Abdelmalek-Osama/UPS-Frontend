@@ -15,18 +15,42 @@ import { Plus, Edit, Key, UserCircle, Shield, MapPin } from 'lucide-react';
 import { useUsersData } from '../hooks/useUsersData';
 import { AddUserDialog } from './AddUserDialog';
 import { ResetPasswordDialog } from './ResetPasswordDialog';
-import type { User } from '../types';
+import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
+import { Spinner } from '../../../components/ui/spinner';
 
 export function UserManagement() {
-  const { users, availableSites, toggleUserActive } = useUsersData();
+  const { users, availableSites, toggleUserActive, loading, error, fetchUsers } = useUsersData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
-  const handleResetPassword = (user: User) => {
+  const handleResetPassword = (user: UserDto) => {
     setSelectedUser(user);
     setIsResetPasswordOpen(true);
   };
+
+  // Refetch users after adding a new user
+  const handleAddUserSuccess = () => {
+    setIsAddDialogOpen(false);
+    fetchUsers();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spinner size="lg" />
+        <p className="text-gray-500 mr-2">جارٍ تحميل المستخدمين...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64 text-red-600">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -54,7 +78,7 @@ export function UserManagement() {
                 <TableHead className="text-right">المستخدم</TableHead>
                 <TableHead className="text-right">البريد الإلكتروني</TableHead>
                 <TableHead className="text-right">الدور</TableHead>
-                <TableHead className="text-right">المواقع المخصصة</TableHead>
+                {/* <TableHead className="text-right">المواقع المخصصة</TableHead> */}
                 <TableHead className="text-right">الحالة</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
@@ -66,7 +90,7 @@ export function UserManagement() {
                     <div className="flex items-center gap-2">
                       <UserCircle className="h-8 w-8 text-gray-400" />
                       <div>
-                        <p className="font-medium">{user.username}</p>
+                        <p className="font-medium">{user.userName}</p>
                         <p className="text-xs text-gray-500">ID: {user.id}</p>
                       </div>
                     </div>
@@ -78,35 +102,15 @@ export function UserManagement() {
                       {user.role === 'Admin' ? 'مسؤول' : 'مشغل'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {user.role === 'Admin' ? (
-                      <span className="text-sm text-gray-500">جميع المواقع</span>
-                    ) : user.assignedSites.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {user.assignedSites.slice(0, 2).map(site => (
-                          <Badge key={site} variant="outline" className="text-xs">
-                            <MapPin className="ml-1 h-3 w-3" />
-                            {site.split(' - ')[1]}
-                          </Badge>
-                        ))}
-                        {user.assignedSites.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{user.assignedSites.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400">لا يوجد</span>
-                    )}
-                  </TableCell>
+                  {/* Removed assignedSites display as it's not in UserDto */}
                   <TableCell className="text-right">
                     <div className="flex items-center gap-2 justify-end" dir="ltr">
                       <Switch 
-                        checked={user.active}
+                        checked={user.isActive}
                         onCheckedChange={() => toggleUserActive(user.id)}
                       />
                       <span className="text-sm">
-                        {user.active ? 'نشط' : 'معطل'}
+                        {user.isActive ? 'نشط' : 'معطل'}
                       </span>
                     </div>
                   </TableCell>
@@ -133,7 +137,7 @@ export function UserManagement() {
 
       <AddUserDialog 
         open={isAddDialogOpen} 
-        onOpenChange={setIsAddDialogOpen}
+        onOpenChange={handleAddUserSuccess} // Updated to call handleAddUserSuccess
         availableSites={availableSites}
       />
 

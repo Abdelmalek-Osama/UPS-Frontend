@@ -46,7 +46,7 @@ import { DatePicker } from '../../../components/ui/datepicker';
 export function ReadingsManagement() {
   const { handleExport, waterLevelReadings, pumpStationReadings, sites, handleEditPump } = useReadingsData();
   const [activeTab, setActiveTab] = useState('waterLevel');
-  const [selectedSite, setSelectedSite] = useState('مستوى المياه - القاهرة 01');
+  const [selectedSite, setSelectedSite] = useState('القناطر - القاهرة 01');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
@@ -106,8 +106,8 @@ export function ReadingsManagement() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="waterLevel">قراءات مستوى المياه</TabsTrigger>
-          <TabsTrigger value="pumpStation">قراءات محطات الضخ</TabsTrigger>
+          <TabsTrigger value="waterLevel">قراءات القناطر</TabsTrigger>
+          <TabsTrigger value="pumpStation">قراءات محطات رفع</TabsTrigger>
         </TabsList>
 
         <TabsContent value="waterLevel" className="mt-6">

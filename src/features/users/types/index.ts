@@ -1,8 +1,11 @@
 export interface User {
-  id: number;
-  username: string;
+  id: string;
+  userName: string;
   email: string;
+  fullName: string;
   role: 'Admin' | 'Operator';
-  active: boolean;
-  assignedSites: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+  lastLoginAt?: Date;
 }

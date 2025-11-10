@@ -4,18 +4,30 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Lock, Mail, Droplets } from 'lucide-react';
+import apiService, { AuthResponse } from '../../../shared/utils/apiService';
+import { setAuthCookies } from '../../../shared/utils/cookieService';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => void;
+  // onLogin: (authResponse: AuthResponse) => void; // No longer needed
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogin from destructuring
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate(); // Re-introducing navigate here
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    try {
+      const response: AuthResponse = await apiService.loginUser({ userName: email, password });
+      const { accessToken, refreshToken, accessTokenExpiryDate } = response;
+      setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
+      sessionStorage.setItem('isLogged', 'true'); // Set isLogged in sessionStorage
+      navigate('/'); // Navigate directly after successful login
+    } catch (error: any) {
+      alert(`Login failed: ${error.message}`);
+    }
   };
 
   return (

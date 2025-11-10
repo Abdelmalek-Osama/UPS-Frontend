@@ -46,7 +46,7 @@ export function AuditLogs() {
       timestamp: '2025-11-03 11:45:32',
       user: 'أحمد محمود',
       action: 'update',
-      site: 'مستوى المياه - القاهرة 01',
+      site: 'القناطر - القاهرة 01',
       field: 'USWL',
       oldValue: '125.2',
       newValue: '125.4',
@@ -57,7 +57,7 @@ export function AuditLogs() {
       timestamp: '2025-11-03 11:30:15',
       user: 'محمد علي',
       action: 'create',
-      site: 'محطة الضخ - الجيزة 01',
+      site: 'محطة رفع - الجيزة 01',
       field: 'P1_time',
       oldValue: '-',
       newValue: '3.5',
@@ -67,10 +67,10 @@ export function AuditLogs() {
 
   const users = ['أحمد محمود', 'محمد علي', 'فاطمة حسن'];
   const sites = [
-    'مستوى المياه - القاهرة 01',
-    'محطة الضخ - الجيزة 01',
-    'مستوى المياه - الإسكندرية 01',
-    'محطة الضخ - الدقهلية 02',
+    'القناطر - القاهرة 01',
+    'محطة رفع - الجيزة 01',
+    'القناطر - الإسكندرية 01',
+    'محطة رفع - الدقهلية 02',
   ];
 
   const filteredLogs = auditLogs.filter(log => {

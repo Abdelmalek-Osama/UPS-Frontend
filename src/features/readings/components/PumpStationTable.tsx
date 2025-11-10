@@ -49,7 +49,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-            <CardTitle>قراءات محطات الضخ ({readings.length})</CardTitle>
+            <CardTitle>قراءات محطات رفع ({readings.length})</CardTitle>
             <div className="flex gap-2 justify-end">
 
           <Button variant="outline" onClick={handleExport}>
