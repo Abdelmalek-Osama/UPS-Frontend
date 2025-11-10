@@ -1,168 +1,136 @@
 /**
  * API Service
- * Centralized API service for all HTTP requests in the application
+ * Centralized API service for all HTTP requests in the application using Axios
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean>;
-}
+const API_BASE_URL = 'https://localhost:7123/api';
 
 /**
- * Helper function to build URL with query parameters
+ * Create axios instance with default configuration
  */
-function buildUrl(endpoint: string, params?: Record<string, string | number | boolean>): string {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-  
-  return url.toString();
-}
-
-/**
- * Helper function to get authentication headers
- */
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('authToken');
-  
-  return {
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000, // 10 seconds
+  headers: {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-}
+  },
+});
 
 /**
- * Helper function to handle API responses
+ * Request interceptor to add authentication token
  */
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `HTTP error! status: ${response.status}`
-    );
+axiosInstance.interceptors.request.use(
+  (config: any) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: any) => {
+    return Promise.reject(error);
   }
-  
-  // Handle no-content responses
-  if (response.status === 204) {
-    return {} as T;
+);
+
+/**
+ * Response interceptor to handle errors globally
+ */
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: any) => {
+    if (error.response) {
+      // Server responded with error
+      const errorMessage = error.response.data?.message || error.message;
+      throw new Error(errorMessage);
+    } else if (error.request) {
+      // Request made but no response
+      throw new Error('No response from server. Please check your connection.');
+    } else {
+      // Something else happened
+      throw new Error(error.message);
+    }
   }
-  
-  return response.json();
+);
+
+interface RequestOptions extends AxiosRequestConfig {
+  params?: Record<string, string | number | boolean>;
 }
 
 /**
  * GET request
  * @param endpoint - API endpoint (e.g., '/users', '/sites/123')
- * @param options - Optional request options including query params
+ * @param options - Optional Axios request options including query params
  */
 export async function get<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
-  const url = buildUrl(endpoint, options?.params);
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    ...options,
-  });
-  
-  return handleResponse<T>(response);
+  const response = await axiosInstance.get<T>(endpoint, options);
+  return response.data;
 }
 
 /**
  * POST request
  * @param endpoint - API endpoint (e.g., '/users', '/sites')
  * @param data - Request body data
- * @param options - Optional request options
+ * @param options - Optional Axios request options
  */
 export async function post<T, D = unknown>(
   endpoint: string,
   data?: D,
   options?: RequestOptions
 ): Promise<T> {
-  const url = buildUrl(endpoint, options?.params);
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: data ? JSON.stringify(data) : undefined,
-    ...options,
-  });
-  
-  return handleResponse<T>(response);
+  const response = await axiosInstance.post<T>(endpoint, data, options);
+  return response.data;
 }
 
 /**
  * PUT request
  * @param endpoint - API endpoint (e.g., '/users/123', '/sites/456')
  * @param data - Request body data
- * @param options - Optional request options
+ * @param options - Optional Axios request options
  */
 export async function put<T, D = unknown>(
   endpoint: string,
   data?: D,
   options?: RequestOptions
 ): Promise<T> {
-  const url = buildUrl(endpoint, options?.params);
-  
-  const response = await fetch(url, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: data ? JSON.stringify(data) : undefined,
-    ...options,
-  });
-  
-  return handleResponse<T>(response);
+  const response = await axiosInstance.put<T>(endpoint, data, options);
+  return response.data;
 }
 
 /**
  * DELETE request
  * @param endpoint - API endpoint (e.g., '/users/123', '/sites/456')
- * @param options - Optional request options
+ * @param options - Optional Axios request options
  */
 export async function del<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
-  const url = buildUrl(endpoint, options?.params);
-  
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-    ...options,
-  });
-  
-  return handleResponse<T>(response);
+  const response = await axiosInstance.delete<T>(endpoint, options);
+  return response.data;
 }
 
 /**
  * PATCH request
  * @param endpoint - API endpoint (e.g., '/users/123', '/sites/456')
  * @param data - Request body data
- * @param options - Optional request options
+ * @param options - Optional Axios request options
  */
 export async function patch<T, D = unknown>(
   endpoint: string,
   data?: D,
   options?: RequestOptions
 ): Promise<T> {
-  const url = buildUrl(endpoint, options?.params);
-  
-  const response = await fetch(url, {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    body: data ? JSON.stringify(data) : undefined,
-    ...options,
-  });
-  
-  return handleResponse<T>(response);
+  const response = await axiosInstance.patch<T>(endpoint, data, options);
+  return response.data;
 }
+
+// Export axios instance for direct use if needed
+export { axiosInstance };
 
 // Default export with all methods
 const apiService = {
@@ -171,6 +139,7 @@ const apiService = {
   put,
   delete: del,
   patch,
+  instance: axiosInstance,
 };
 
 export default apiService;
