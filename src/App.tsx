@@ -33,7 +33,8 @@ export default function App() {
           id: decodedToken.sub, // Assuming 'sub' is the user ID
           username: decodedToken.userName || decodedToken.email,
           email: decodedToken.email,
-          role: decodedToken.role, // Assuming 'role' is in the token
+          fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
+          role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
         });
       }
     } else {

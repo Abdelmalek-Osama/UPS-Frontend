@@ -66,7 +66,7 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
           
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm">{currentUser.username}</p>
+              <p className="text-sm">{currentUser.fullName}</p>
               <p className="text-xs text-gray-500">{currentUser.role === 'Admin' ? 'مسؤول' : 'مشغل'}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onLogout}>
