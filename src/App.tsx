@@ -20,28 +20,58 @@ export default function App() {
   const navigate = useNavigate();
 
   const isAuthenticated = !!getAccessToken() && sessionStorage.getItem('isLogged') === 'true';
+  const [loadingAuth, setLoadingAuth] = useState(true); // New loading state for auth
+  const [userLoaded, setUserLoaded] = useState(false); // New state to track if currentUser is loaded
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // Decode JWT token to get user info or fetch from API
-      const token = getAccessToken();
-      if (token) {
-        // This is a simplified example. In a real app, you'd use a library like jwt-decode
-        // or make an API call to get user details based on the token.
-        const decodedToken = parseJwt(token);
-        setCurrentUser({
-          id: decodedToken.sub, // Assuming 'sub' is the user ID
-          username: decodedToken.userName || decodedToken.email,
-          email: decodedToken.email,
-          fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
-          role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
-        });
+    console.log('App.tsx: useEffect triggered');
+    console.log('App.tsx: isAuthenticated initially:', isAuthenticated);
+    const checkAuthStatus = async () => {
+      console.log('App.tsx: checkAuthStatus started');
+      if (isAuthenticated) {
+        console.log('App.tsx: User is authenticated, checking token...');
+        const token = getAccessToken();
+        if (token) {
+          console.log('App.tsx: Token found, decoding...');
+          const decodedToken = parseJwt(token);
+          if (decodedToken) {
+            console.log('App.tsx: Decoded token:', decodedToken);
+            setCurrentUser({
+              id: decodedToken.sub, // Assuming 'sub' is the user ID
+              username: decodedToken.userName || decodedToken.email,
+              email: decodedToken.email,
+              fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
+              role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
+            });
+            setUserLoaded(true); // User data has been successfully loaded
+            console.log('App.tsx: currentUser set, userLoaded true');
+          } else {
+            console.log('App.tsx: Failed to decode token.');
+            setCurrentUser(null);
+            setUserLoaded(false);
+          }
+        } else {
+          console.log('App.tsx: No token found.');
+          setCurrentUser(null);
+          setUserLoaded(false);
+        }
+      } else {
+        console.log('App.tsx: User is NOT authenticated.');
+        setCurrentUser(null);
+        setUserLoaded(false);
+        setLoadingAuth(false);
       }
-    } else {
-      setCurrentUser(null);
-    }
-  }, [isAuthenticated]);
+    };
+    
+    checkAuthStatus();
 
+    // Navigate to dashboard after successful login if on login page
+    if (isAuthenticated && userLoaded && window.location.pathname === '/login') {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, userLoaded, navigate]); // Add userLoaded to dependency array
+
+  console.log('App.tsx: Render - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser, 'loadingAuth:', loadingAuth, 'userLoaded:', userLoaded, 'path:', window.location.pathname);
   // Helper function to decode JWT (simplified, consider a library for robust decoding)
   const parseJwt = (token: string) => {
     try {
@@ -84,10 +114,12 @@ export default function App() {
       <Route 
         path="/" 
         element={
-          isAuthenticated && currentUser ? (
-            <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} />
-          ) : (
-            <Navigate to="/login" replace />
+          loadingAuth ? null : ( // Render null while authentication is loading
+            isAuthenticated && userLoaded ? (
+              <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           )
         }
       >
