@@ -15,6 +15,7 @@ import { Plus, Edit, Key, UserCircle, Shield, MapPin } from 'lucide-react';
 import { useUsersData } from '../hooks/useUsersData';
 import { AddUserDialog } from './AddUserDialog';
 import { ResetPasswordDialog } from './ResetPasswordDialog';
+import { EditUserDialog } from './EditUserDialog';
 import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
 import { Spinner } from '../../../components/ui/spinner';
 
@@ -22,6 +23,7 @@ export function UserManagement() {
   const { users, availableSites, toggleUserActive, loading, error, fetchUsers } = useUsersData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
   const handleResetPassword = (user: UserDto) => {
@@ -29,9 +31,20 @@ export function UserManagement() {
     setIsResetPasswordOpen(true);
   };
 
+  const handleEditUser = (user: UserDto) => {
+    setSelectedUser(user);
+    setIsEditDialogOpen(true);
+  };
+
   // Refetch users after adding a new user
   const handleAddUserSuccess = () => {
     setIsAddDialogOpen(false);
+    fetchUsers();
+  };
+
+  // Refetch users after editing a user
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
     fetchUsers();
   };
 
@@ -90,8 +103,7 @@ export function UserManagement() {
                     <div className="flex items-center gap-2">
                       <UserCircle className="h-8 w-8 text-gray-400" />
                       <div>
-                        <p className="font-medium">{user.userName}</p>
-                        <p className="text-xs text-gray-500">ID: {user.id}</p>
+                        <p className="font-medium">{user.fullName}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -116,7 +128,11 @@ export function UserManagement() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditUser(user)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -139,6 +155,13 @@ export function UserManagement() {
         open={isAddDialogOpen} 
         onOpenChange={handleAddUserSuccess} // Updated to call handleAddUserSuccess
         availableSites={availableSites}
+      />
+
+      <EditUserDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen}
+        user={selectedUser}
+        onEditSuccess={handleEditSuccess}
       />
 
       <ResetPasswordDialog 
