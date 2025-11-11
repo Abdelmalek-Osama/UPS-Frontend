@@ -16,17 +16,40 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate(); // Re-introducing navigate here
+  const [loading, setLoading] = useState(false); // Add loading state
+  const [loginError, setLoginError] = useState<string | null>(null); // New state for login error message
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when submission starts
+    setLoginError(null); // Clear any previous errors
     try {
-      const response: AuthResponse = await apiService.loginUser({ userName: email, password });
-      const { accessToken, refreshToken, accessTokenExpiryDate } = response;
-      setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
-      sessionStorage.setItem('isLogged', 'true'); // Set isLogged in sessionStorage
-      navigate('/'); // Navigate directly after successful login
+      const response = await apiService.loginUser({ userName: email, password });
+      if (response.isSuccess) {
+        const { accessToken, refreshToken, accessTokenExpiryDate } = response.data;
+        setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
+        sessionStorage.setItem('isLogged', 'true');
+        navigate('/');
+      } else {
+        if (response.message === 'invalid credentials') {
+          setLoginError('البريد الإلكتروني أو كلمة المرور غير صحيحة.'); // Arabic for 'Invalid email or password.'
+        } else if (response.message === 'user is not active') {
+          setLoginError('هذا المستخدم غير نشط. يرجى الاتصال بالمسؤول.'); // Arabic for 'This user is not active. Please contact the administrator.'
+        } else {
+          setLoginError(response.message || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'); // Generic error message
+        }
+      }
     } catch (error: any) {
-      alert(`Login failed: ${error.message}`);
+      let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error
+      if (error.isAxiosError && error.response && error.response.data) {
+        // Attempt to extract a more specific message from the error response data
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setLoginError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,9 +109,13 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
               </a>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}> {/* Disable button when loading */}
               تسجيل الدخول
             </Button>
+
+            {loginError && (
+              <p className="text-red-500 text-sm text-center">{loginError}</p>
+            )}
 
             <div className="pt-4 border-t text-center text-sm text-gray-500">
               <div className="flex items-center justify-center gap-1">

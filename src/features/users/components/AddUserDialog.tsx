@@ -38,6 +38,20 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [assignedSites, setAssignedSites] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Reset form fields when the dialog is opened
+  React.useEffect(() => {
+    if (open) {
+      setUsername('');
+      setEmail('');
+      setPassword('');
+      setFullName('');
+      setRole('');
+      setActive(true);
+      setAssignedSites([]);
+      setErrors({});
+    }
+  }, [open]);
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!username) newErrors.username = 'اسم المستخدم مطلوب';
@@ -121,6 +135,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 placeholder="أحمد محمود"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                autoComplete="off"
               />
               {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
             </div>
@@ -132,6 +147,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 placeholder="user@irrigation.gov.eg"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
@@ -143,6 +159,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               placeholder="أحمد محمود السيد"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              autoComplete="off"
             />
             {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
           </div>
@@ -155,6 +172,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
@@ -199,10 +217,10 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             </p>
           </div>
         )}
-        <div className="flex items-center gap-2 justify-end" dir="ltr">
+        {/* <div className="flex items-center gap-2 justify-end" dir="ltr">
           <Switch id="active" checked={active} onCheckedChange={setActive} />
           <Label htmlFor="active">الحساب نشط</Label>
-        </div>
+        </div> */}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
