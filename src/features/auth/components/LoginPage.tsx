@@ -4,7 +4,7 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Lock, Mail, Droplets } from 'lucide-react';
-import apiService, { AuthResponse } from '../../../shared/utils/apiService';
+import apiService, { AuthResponse, ApiResponse } from '../../../shared/utils/apiService';
 import { setAuthCookies } from '../../../shared/utils/cookieService';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,7 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
     setLoading(true); // Set loading to true when submission starts
     setLoginError(null); // Clear any previous errors
     try {
-      const response = await apiService.loginUser({ userName: email, password });
+      const response: ApiResponse<AuthResponse> = await apiService.loginUser({ userName: email, password });
       if (response.isSuccess) {
         const { accessToken, refreshToken, accessTokenExpiryDate } = response.data;
         setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
@@ -39,8 +39,10 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
           errorMessage = 'هذا المستخدم غير نشط. يرجى الاتصال بالمسؤول.';
         }
         setLoginError(errorMessage);
+        setLoading(false); // Re-enable button on unsuccessful login response
       }
     } catch (error: any) {
+      setLoading(false); // Re-enable button on any error
       // Handle network errors or errors thrown before the response interceptor
       let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error for catch block
 
@@ -126,11 +128,7 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <a href="#" className="text-blue-600 hover:underline">
-                نسيت كلمة المرور؟
-              </a>
-            </div>
+            
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}> {/* Disable button when loading */}
               تسجيل الدخول

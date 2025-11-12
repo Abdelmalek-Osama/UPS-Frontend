@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -18,6 +18,7 @@ import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
 import { ValueThresholdAlarm } from '../types';
+import { useSitesData } from '../../sites/hooks/useSitesData';
 
 export function AlarmConfiguration() {
     const {
@@ -48,6 +49,14 @@ export function AlarmConfiguration() {
     recipients: [],
   });
 
+  const { sites, loading: sitesLoading, error: sitesError } = useSitesData();
+
+  useEffect(() => {
+    if (sites.length > 0 && !newThresholdAlarm.site) {
+      setNewThresholdAlarm(prev => ({ ...prev, site: "all" }));
+    }
+  }, [sites, newThresholdAlarm.site]);
+
   const handleAddThresholdAlarm = () => {
     addThresholdAlarm({
       ...newThresholdAlarm,
@@ -68,7 +77,6 @@ export function AlarmConfiguration() {
   };
 
   // Mock data for dropdowns
-  const sites = ['محطة ضخ 1', 'محطة ضخ 2', 'محطة ضخ 3'];
   const fields = ['مستوى الماء', 'التدفق', 'الضغط'];
   const operators = ['>', '<', '>=', '<=', '=='];
 
@@ -126,8 +134,9 @@ export function AlarmConfiguration() {
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">جميع المواقع</SelectItem>
                         {sites.map(site => (
-                          <SelectItem key={site} value={site}>{site}</SelectItem>
+                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -315,13 +324,14 @@ export function AlarmConfiguration() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select>
+                    <Select onValueChange={(value) => setNewThresholdAlarm(prev => ({ ...prev, site: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">جميع المواقع</SelectItem>
                         {sites.map(site => (
-                          <SelectItem key={site} value={site}>{site}</SelectItem>
+                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

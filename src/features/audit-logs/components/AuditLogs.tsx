@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -31,6 +31,7 @@ import {
 import { getActionIcon, getActionLabel, getActionColor } from '../utils/formatters';
 import type { AuditLog } from '../types';
 import {DatePicker} from '../../../components/ui/datepicker';
+import { useSitesData } from '../../sites/hooks/useSitesData';
 
 export function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +39,13 @@ export function AuditLogs() {
   const [filterSite, setFilterSite] = useState('all');
   const [filterAction, setFilterAction] = useState('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const { sites, loading: sitesLoading, error: sitesError } = useSitesData();
+
+  useEffect(() => {
+    if (sites.length > 0 && filterSite === 'all') {
+      setFilterSite(sites[0].name);
+    }
+  }, [sites, filterSite]);
   
 
   const auditLogs: AuditLog[] = [
@@ -66,7 +74,7 @@ export function AuditLogs() {
   ];
 
   const users = ['أحمد محمود', 'محمد علي', 'فاطمة حسن'];
-  const sites = [
+  const sitesList = [
     'القناطر - القاهرة 01',
     'محطة رفع - الجيزة 01',
     'القناطر - الإسكندرية 01',
@@ -133,7 +141,7 @@ export function AuditLogs() {
               <SelectContent>
                 <SelectItem value="all">جميع المواقع</SelectItem>
                 {sites.map(site => (
-                  <SelectItem key={site} value={site}>{site}</SelectItem>
+                  <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

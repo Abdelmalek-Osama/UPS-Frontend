@@ -131,7 +131,7 @@ export function SitesManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {site.siteType === 'WaterLevel' ? 'القناطر' : site.siteType === 'PumpStation' ? 'محطة ضخ' : site.siteType}
+                        {site.siteType === 'WaterLevel' ? 'القناطر' : site.siteType === 'PumpStation' ? 'محطة رفع' : site.siteType}
                       </Badge>
                     </TableCell>
                     <TableCell>{site.code}</TableCell>

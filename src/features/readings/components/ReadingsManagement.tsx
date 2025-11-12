@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -46,8 +46,15 @@ import { DatePicker } from '../../../components/ui/datepicker';
 export function ReadingsManagement() {
   const { handleExport, waterLevelReadings, pumpStationReadings, sites, handleEditPump } = useReadingsData();
   const [activeTab, setActiveTab] = useState('waterLevel');
-  const [selectedSite, setSelectedSite] = useState('القناطر - القاهرة 01');
+  const [selectedSite, setSelectedSite] = useState<string>('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (sites.length > 0) {
+      setSelectedSite(sites[0].name);
+    }
+  }, [sites]);
+  
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
@@ -84,7 +91,7 @@ export function ReadingsManagement() {
               <SelectContent>
                 <SelectItem value="all">جميع المواقع</SelectItem>
                 {sites.map(site => (
-                  <SelectItem key={site} value={site}>{site}</SelectItem>
+                  <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -137,7 +144,7 @@ export function ReadingsManagement() {
       <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
         <DialogContent className="sm:max-w-[700px]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right">تفاصيل قراءات المضخات</DialogTitle>
+            <DialogTitle className="text-right">تفاصيل قراءات المرفعات</DialogTitle>
             <DialogDescription className="text-right">
               {selectedReading?.site} - {selectedReading?.timestamp}
             </DialogDescription>
@@ -146,7 +153,7 @@ export function ReadingsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">رقم المضخة</TableHead>
+                  <TableHead className="text-right">رقم المرفعة</TableHead>
                   <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
                   <TableHead className="text-right">التدفق (م³/س)</TableHead>
                   <TableHead className="text-right">إجراءات</TableHead>
@@ -155,7 +162,7 @@ export function ReadingsManagement() {
               <TableBody>
                 {selectedReading?.pumps.map((pump, index) => (
                   <TableRow key={index}>
-                    <TableCell>مضخة {index + 1}</TableCell>
+                    <TableCell>مرفعة {index + 1}</TableCell>
                     <TableCell>{pump.time.toFixed(1)}</TableCell>
                     <TableCell>{pump.flow.toFixed(1)}</TableCell>
                     <TableCell>

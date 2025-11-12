@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { UserDto as User } from '../../../shared/utils/apiService'; // Use UserDto from apiService
 import apiService from '../../../shared/utils/apiService';
+import { useSitesData } from '../../sites/hooks/useSitesData';
 
 export function useUsersData() {
   const [users, setUsers] = useState<User[]>([]);
@@ -10,8 +11,8 @@ export function useUsersData() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiService.get<User[]>('/v1/Users');
-      setUsers(response);
+      const response = await apiService.get<User[] | { data: User[] }>('/v1/Users');
+      setUsers(Array.isArray(response) ? response : (response as { data: User[] }).data || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users');
     } finally {
@@ -23,14 +24,7 @@ export function useUsersData() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const availableSites = [
-    'القناطر - القاهرة 01',
-    'القناطر - القاهرة 02',
-    'محطة رفع - القاهرة 02',
-    'القناطر - الإسكندرية 01',
-    'محطة رفع - الجيزة 01',
-    'محطة رفع - الدقهلية 02',
-  ];
+  const { sites: availableSites, loading: sitesLoading, error: sitesError } = useSitesData();
 
   const toggleUserActive = async (userId: string) => {
     try {
@@ -57,5 +51,5 @@ export function useUsersData() {
     }
   };
 
-  return { users, setUsers, availableSites, toggleUserActive, deleteUser, loading, error, fetchUsers };
+  return { users, setUsers, availableSites, toggleUserActive, deleteUser, loading, error, fetchUsers, sitesLoading, sitesError };
 }

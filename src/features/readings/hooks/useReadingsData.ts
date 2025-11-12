@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { WaterLevelReading, PumpStationReading } from '../types';
+import { useSitesData } from '../../sites/hooks/useSitesData';
 
 export function useReadingsData() {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
+  
+  const { sites, directorates, loading } = useSitesData();
   
   // Edit dialog states
   const [isEditPumpStationOpen, setIsEditPumpStationOpen] = useState(false);
@@ -48,12 +51,6 @@ export function useReadingsData() {
     },
   ]);
 
-  const sites = [
-    'القناطر - القاهرة 01',
-    'القناطر - الإسكندرية 01',
-    'محطة رفع - الجيزة 01',
-    'محطة رفع - الدقهلية 02',
-  ];
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
     setIsPumpDetailsOpen(true);

@@ -35,12 +35,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-interface ApiResponse<T> {
-  isSuccess: boolean;
-  message: string;
-  data: T;
-}
-
 export interface AuthResponse {
   fullName: string;
   email: string;
@@ -49,7 +43,12 @@ export interface AuthResponse {
   accessToken: string;
   accessTokenExpiryDate: Date;
   refreshToken: string;
-  isActive: boolean;
+}
+
+export interface ApiResponse<T> {
+  isSuccess: boolean;
+  message: string;
+  data: T;
 }
 
 export interface UserDto {
@@ -82,45 +81,39 @@ const processQueue = (error: AxiosError | Error | null, token: string | null = n
  * Response interceptor to handle errors globally and refresh token
  */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<any>>) => {
-    if (response.data.isSuccess) {
-      return { ...response, data: response.data.data };
-    } else {
-      return Promise.reject(new Error(response.data.message));
-    }
-  },
+  (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && originalRequest && !(originalRequest as any)._retry) {
       (originalRequest as any)._retry = true;
 
-      const refreshToken = getRefreshToken();
+      try {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          const refreshToken = getRefreshToken();
 
-      if (!refreshToken) {
-        // If there's no refresh token, it means it's likely a login attempt with bad credentials
-        // or the session has expired and we can't refresh. Don't attempt to refresh.
-        removeAuthCookies(); // Ensure all auth cookies are removed if no refresh token exists.
-        return Promise.reject(new Error('Authentication failed. Please log in again.')); // Propagate a more general error message
-      }
-
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        try {
-            const response = await axios.post<AuthResponse>(`${API_BASE_URL}/refresh`, { refreshToken });
-            const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data;
-            setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
-            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-            processQueue(null, accessToken);
-            return axiosInstance(originalRequest);
-          } catch (refreshError: any) {
+          if (refreshToken) {
+            try {
+              const response = await axiosInstance.post<AuthResponse>(`/v1/Auth/refresh`, { refreshToken });
+              const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data;
+              setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
+              axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+              }
+              processQueue(null, accessToken);
+              return axiosInstance(originalRequest);
+            } catch (refreshError: any) {
+              removeAuthCookies();
+              processQueue(refreshError, null);
+              console.error('Unable to refresh token', refreshError);
+              throw refreshError;
+            }
+          } else {
             removeAuthCookies();
-            processQueue(refreshError, null);
-            console.error('Unable to refresh token', refreshError);
-            throw refreshError;
-          } finally {
-            isRefreshing = false;
+            processQueue(new Error('No refresh token available'), null);
+            throw new Error('No refresh token available');
           }
         } else {
           return new Promise((resolve, reject) => {
@@ -133,13 +126,13 @@ axiosInstance.interceptors.response.use(
             return axiosInstance(originalRequest);
           })
           .catch(err => {
-            isRefreshing = false; // Ensure isRefreshing is reset on error in the queue processing
             return Promise.reject(err);
           });
         }
-    }
-
-    if (error.response) {
+      } finally {
+        isRefreshing = false;
+      }
+    } else if (error.response) {
       // Server responded with error
       const errorMessage = (error.response.data as any)?.message || error.message;
       throw new Error(errorMessage);
@@ -234,7 +227,7 @@ export const refreshAccessToken = async (refreshToken: string): Promise<AuthResp
 };
 
 export const loginUser = async (credentials: any): Promise<ApiResponse<AuthResponse>> => {
-  const response = await axios.post<ApiResponse<AuthResponse>>(`${API_BASE_URL}/v1/Auth/login`, credentials);
+  const response = await axiosInstance.post<ApiResponse<AuthResponse>>('/v1/Auth/login', credentials);
   return response.data;
 };
 

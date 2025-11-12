@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { 
@@ -44,6 +44,13 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
     const [readingTime, setReadingTime] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editReadingTime, setEditReadingTime] = useState<string>('');
+    const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
+
+    useEffect(() => {
+      if (sites.length > 0 && !selectedSiteForAdd) {
+        setSelectedSiteForAdd(sites[0].name);
+      }
+    }, [sites, selectedSiteForAdd]);
     
   return (
     <Card>
@@ -75,14 +82,14 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" defaultValue="all">
+                    <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">جميع المواقع</SelectItem>
                         {sites.map(site => (
-                          <SelectItem key={site} value={site}>{site}</SelectItem>
+                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -116,7 +123,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label> المضخات النشطة</Label>
+                    <Label> المرفعات النشطة</Label>
                     <Input type="number" step="0.1" placeholder="125.4" />
                   </div>
                   {/* <div className="space-y-2">
@@ -158,13 +165,17 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" defaultValue={editingPumpStation?.site || ""}>
+                    <Select dir="rtl" value={editingPumpStation?.site || ""} onValueChange={(value) => {
+                      if (editingPumpStation) {
+                        handleEditPumpStation({ ...editingPumpStation, site: value });
+                      }
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
                         {sites.map(site => (
-                          <SelectItem key={site} value={site}>{site}</SelectItem>
+                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -198,7 +209,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label> المضخات النشطة</Label>
+                    <Label> المرفعات النشطة</Label>
                     <Input 
                       type="number" 
                       step="0.1" 
@@ -228,7 +239,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
-                <TableHead className="text-right">المضخات النشطة</TableHead>
+                <TableHead className="text-right">المرفعات النشطة</TableHead>
                 <TableHead className="text-right">إجمالي وقت التشغيل</TableHead>
                 <TableHead className="text-right">إجمالي التدفق</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>

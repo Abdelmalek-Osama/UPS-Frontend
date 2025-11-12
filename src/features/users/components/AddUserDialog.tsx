@@ -21,11 +21,12 @@ import { Switch } from '../../../components/ui/switch';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Plus, Mail } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
+import type { Site } from '../../sites/types';
 
 interface AddUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  availableSites: string[];
+  availableSites: Site[];
 }
 
 export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDialogProps) {
@@ -109,11 +110,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     }
   };
 
-  const toggleSiteAssignment = (site: string) => {
-    if (assignedSites.includes(site)) {
-      setAssignedSites(assignedSites.filter(s => s !== site));
+  const toggleSiteAssignment = (siteName: string) => {
+    if (assignedSites.includes(siteName)) {
+      setAssignedSites(assignedSites.filter(s => s !== siteName));
     } else {
-      setAssignedSites([...assignedSites, site]);
+      setAssignedSites([...assignedSites, siteName]);
     }
   };
 
@@ -196,17 +197,17 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             <Label>تخصيص المواقع (للمشغلين فقط)</Label>
             <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
               {availableSites.map(site => (
-                <div key={site} className="flex items-center gap-2">
+                <div key={site.id} className="flex items-center gap-2">
                   <Checkbox 
-                    id={`site-${site}`}
-                    checked={assignedSites.includes(site)}
-                    onCheckedChange={() => toggleSiteAssignment(site)}
+                    id={`site-${site.id}`}
+                    checked={assignedSites.includes(site.name)}
+                    onCheckedChange={() => toggleSiteAssignment(site.name)}
                   />
                   <label 
-                    htmlFor={`site-${site}`}
+                    htmlFor={`site-${site.id}`}
                     className="text-sm cursor-pointer flex-1"
                   >
-                    {site}
+                    {site.name}
                   </label>
                 </div>
               ))}
