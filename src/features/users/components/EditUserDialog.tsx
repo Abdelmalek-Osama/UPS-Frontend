@@ -145,7 +145,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
           </div>
 
           {/* Active Status */}
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <Label htmlFor="isActive">حالة الحساب</Label>
             <div className="flex items-center gap-2" dir="ltr">
               <Switch 
@@ -158,7 +158,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
                 {isActive ? 'نشط' : 'معطل'}
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <DialogFooter>

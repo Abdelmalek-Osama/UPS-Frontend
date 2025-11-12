@@ -6,6 +6,7 @@ export interface ValueThresholdAlarm {
   threshold: number;
   color: string;
   severity: 'Warning' | 'Critical';
+  recipients: string[];
 }
 
 export interface CommunicationAlarm {
