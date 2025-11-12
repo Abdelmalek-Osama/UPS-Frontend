@@ -18,6 +18,7 @@ import { ResetPasswordDialog } from './ResetPasswordDialog';
 import { EditUserDialog } from './EditUserDialog';
 import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
 import { Spinner } from '../../../components/ui/spinner';
+import { getUserIdFromToken } from '../../../shared/utils/jwtService';
 
 export function UserManagement() {
   const { users, availableSites, toggleUserActive, loading, error, fetchUsers } = useUsersData();
@@ -25,6 +26,9 @@ export function UserManagement() {
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+  const loggedInUserId = getUserIdFromToken();
+
+  console.log('Logged In User ID:', loggedInUserId);
 
   const handleResetPassword = (user: UserDto) => {
     setSelectedUser(user);
@@ -97,55 +101,59 @@ export function UserManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <UserCircle className="h-8 w-8 text-gray-400" />
-                      <div>
-                        <p className="font-medium">{user.fullName}</p>
+              {users.map((user) => {
+                console.log(`User ID: ${user.id}, LoggedIn ID: ${loggedInUserId}, Disabled: ${user.id === loggedInUserId}`);
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <UserCircle className="h-8 w-8 text-gray-400" />
+                        <div>
+                          <p className="font-medium">{user.fullName}</p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
-                      <Shield className="ml-1 h-3 w-3" />
-                      {user.role === 'Admin' ? 'مسؤول' : 'مشغل'}
-                    </Badge>
-                  </TableCell>
-                  {/* Removed assignedSites display as it's not in UserDto */}
-                  <TableCell className="text-right">
-                    <div className="flex items-center gap-2 justify-end" dir="ltr">
-                      <Switch 
-                        checked={user.isActive}
-                        onCheckedChange={() => toggleUserActive(user.id)}
-                      />
-                      <span className="text-sm">
-                        {user.isActive ? 'نشط' : 'معطل'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEditUser(user)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleResetPassword(user)}
-                      >
-                        <Key className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
+                        <Shield className="ml-1 h-3 w-3" />
+                        {user.role === 'Admin' ? 'مسؤول' : 'مشغل'}
+                      </Badge>
+                    </TableCell>
+                    {/* Removed assignedSites display as it's not in UserDto */}
+                    <TableCell className="text-right">
+                      <div className="flex items-center gap-2 justify-end" dir="ltr">
+                        <Switch 
+                          checked={user.isActive}
+                          onCheckedChange={() => toggleUserActive(user.id)}
+                          disabled={user.id === loggedInUserId}
+                        />
+                        <span className="text-sm">
+                          {user.isActive ? 'نشط' : 'معطل'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleResetPassword(user)}
+                        >
+                          <Key className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
