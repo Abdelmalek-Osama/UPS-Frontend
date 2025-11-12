@@ -64,6 +64,7 @@ export default function App() {
     };
     
     checkAuthStatus();
+    setLoadingAuth(false); // Ensure loading state is always resolved
 
     // Navigate to dashboard after successful login if on login page
     if (isAuthenticated && userLoaded && window.location.pathname === '/login') {

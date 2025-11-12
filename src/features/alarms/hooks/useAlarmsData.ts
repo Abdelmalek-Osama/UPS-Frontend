@@ -3,9 +3,9 @@ import type { ValueThresholdAlarm, CommunicationAlarm } from '../types';
 
 export function useAlarmsData() {
   const [thresholdAlarms, setThresholdAlarms] = useState<ValueThresholdAlarm[]>([
-    { id: 1, site: 'القناطر - القاهرة 01', field: 'Battery', operator: '<', threshold: 12.5, color: '#fbbf24', severity: 'Warning' },
-    { id: 2, site: 'القناطر - القاهرة 01', field: 'USWL', operator: '>', threshold: 130, color: '#ef4444', severity: 'Critical' },
-    { id: 3, site: 'محطة رفع - الجيزة 01', field: 'TotalFlow', operator: '<', threshold: 50, color: '#fbbf24', severity: 'Warning' },
+    { id: 1, site: 'القناطر - القاهرة 01', field: 'Battery', operator: '<', threshold: 12.5, color: '#fbbf24', severity: 'Warning', recipients: ['admin@irrigation.gov.eg'] },
+    { id: 2, site: 'القناطر - القاهرة 01', field: 'USWL', operator: '>', threshold: 130, color: '#ef4444', severity: 'Critical', recipients: ['admin@irrigation.gov.eg', 'manager@irrigation.gov.eg'] },
+    { id: 3, site: 'محطة رفع - الجيزة 01', field: 'TotalFlow', operator: '<', threshold: 50, color: '#fbbf24', severity: 'Warning', recipients: ['operator2@irrigation.gov.eg'] },
   ]);
 
   const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarm[]>([
@@ -36,6 +36,11 @@ export function useAlarmsData() {
     setRecipients(recipients.filter(r => r !== email));
   };
 
+  const addThresholdAlarm = (newAlarm: ValueThresholdAlarm) => {
+    setThresholdAlarms((prevAlarms) => [...prevAlarms, { ...newAlarm, id: prevAlarms.length > 0 ? Math.max(...prevAlarms.map(a => a.id)) + 1 : 1 }]);
+    setRecipients([]); // Clear recipients after adding alarm
+  };
+
   return {
     thresholdAlarms,
     setThresholdAlarms,
@@ -52,5 +57,6 @@ export function useAlarmsData() {
     setNewRecipient,
     recipients,
     setRecipients,
+    addThresholdAlarm,
   };
 }
