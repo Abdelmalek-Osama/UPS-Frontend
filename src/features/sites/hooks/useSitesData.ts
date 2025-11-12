@@ -1,17 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Site, SiteFilters } from '../types';
+import apiService from '../../../../src/shared/utils/apiService';
 
 export function useSitesData() {
-  const [sites, setSites] = useState<Site[]>([
-    { id: 1, name: 'القناطر - القاهرة 01', type: 'WaterLevel', directorate: 'القاهرة', location: '30.0444, 31.2357', status: 'online', flowCalcMethod: 'Formula' },
-    { id: 2, name: 'محطة رفع - الجيزة 01', type: 'PumpStation', directorate: 'الجيزة', location: '30.0131, 31.2089', status: 'online' },
-    { id: 3, name: 'القناطر - الإسكندرية 01', type: 'WaterLevel', directorate: 'الإسكندرية', location: '31.2001, 29.9187', status: 'offline', flowCalcMethod: 'HQCurve' },
-    { id: 4, name: 'محطة رفع - الدقهلية 02', type: 'PumpStation', directorate: 'الدقهلية', location: '31.0409, 31.3785', status: 'online' },
-  ]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const directorates = ['القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 'الفيوم', 'المنيا'];
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.get<Site[]>('/Site/all');
+        setSites(response);
+      } catch (err) {
+        setError('Failed to fetch sites');
+        console.error('Error fetching sites:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return { sites, setSites, directorates };
+    fetchSites();
+  }, []);
+
+  const directorates = Array.from(new Set(sites.map(site => site.directorateName)));
+
+  return { sites, setSites, directorates, loading, error };
 }
 
 export function useFilteredSites(sites: Site[], filters: SiteFilters) {
@@ -19,7 +34,7 @@ export function useFilteredSites(sites: Site[], filters: SiteFilters) {
     const matchesSearch = site.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
                          site.location.includes(filters.searchTerm);
     const matchesType = filters.type === 'all' || site.type === filters.type;
-    const matchesDirectorate = filters.directorate === 'all' || site.directorate === filters.directorate;
+    const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
     return matchesSearch && matchesType && matchesDirectorate;
   });
 }

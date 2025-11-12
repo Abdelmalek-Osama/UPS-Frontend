@@ -19,9 +19,10 @@ import {
 } from '../../../components/ui/select';
 import { Search, MapPin, Droplets, Power } from 'lucide-react';
 import { useSitesData, useFilteredSites } from '../hooks/useSitesData';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 export function SitesManagement() {
-  const { sites, directorates } = useSitesData();
+  const { sites, directorates, loading, error } = useSitesData();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
@@ -59,6 +60,7 @@ export function SitesManagement() {
                 <SelectItem value="all">جميع الأنواع</SelectItem>
                 <SelectItem value="WaterLevel">القناطر</SelectItem>
                 <SelectItem value="PumpStation">محطة رفع</SelectItem>
+                <SelectItem value="Hybrid">مختلط</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterDirectorate} onValueChange={setFilterDirectorate}>
@@ -76,52 +78,65 @@ export function SitesManagement() {
         </CardContent>
       </Card>
 
-      {/* Sites Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>المواقع ({filteredSites.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">اسم الموقع</TableHead>
-                <TableHead className="text-right">النوع</TableHead>
-                <TableHead className="text-right">المديرية</TableHead>
-                <TableHead className="text-right">الموقع</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSites.map((site) => (
-                <TableRow key={site.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {site.type === 'WaterLevel' ? (
-                        <Droplets className="h-4 w-4 text-blue-600" />
-                      ) : (
-                        <Power className="h-4 w-4 text-green-600" />
-                      )}
-                      {site.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {site.type === 'WaterLevel' ? 'القناطر' : 'محطة ضخ'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{site.directorate}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <MapPin className="h-3 w-3" />
-                      {site.location}
-                    </div>
-                  </TableCell>
+      {/* Loading, Error, or Sites Table */}
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      ) : error ? (
+        <div className="text-red-500 text-center py-8">Error: {error}</div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>المواقع ({filteredSites.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">اسم الموقع</TableHead>
+                  <TableHead className="text-right">النوع</TableHead>
+                  <TableHead className="text-right">الكود</TableHead>
+                  <TableHead className="text-right">الترعة</TableHead>
+                  <TableHead className="text-right">المديرية</TableHead>
+                  <TableHead className="text-right">الموقع</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredSites.map((site) => (
+                  <TableRow key={site.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {site.type === 'WaterLevel' ? (
+                          <Droplets className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <Power className="h-4 w-4 text-green-600" />
+                        )}
+                        {site.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {site.type === 'WaterLevel' ? 'القناطر' : site.type === 'PumpStation' ? 'محطة ضخ' : site.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{site.code}</TableCell>
+                    <TableCell>{site.canal}</TableCell>
+                    <TableCell>{site.directorateName}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <MapPin className="h-3 w-3" />
+                        {site.location}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,11 +1,17 @@
 export interface Site {
   id: number;
   name: string;
-  type: 'WaterLevel' | 'PumpStation';
-  directorate: string;
+  type: 'WaterLevel' | 'PumpStation' | 'Hybrid';
+  directorateName: string;
   location: string;
   status: 'online' | 'offline';
   flowCalcMethod?: 'Formula' | 'HQCurve';
+  code?: string;
+  canal?: string;
+  hasUS?: boolean;
+  hasDS1?: boolean;
+  hasDS2?: boolean;
+  numPumps?: number;
 }
 
 export interface SiteFilters {
