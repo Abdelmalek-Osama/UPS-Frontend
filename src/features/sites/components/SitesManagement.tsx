@@ -26,8 +26,9 @@ export function SitesManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
+  const [filterCanal, setFilterCanal] = useState<string>('all');
 
-  const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate });
+  const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate, canal: filterCanal });
 
   return (
     <div className="space-y-6">
@@ -71,6 +72,18 @@ export function SitesManagement() {
                 <SelectItem value="all">جميع المديريات</SelectItem>
                 {directorates.map(dir => (
                   <SelectItem key={dir} value={dir}>{dir}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {/* New Select for Canal Filter */}
+            <Select value={filterCanal} onValueChange={setFilterCanal}>
+              <SelectTrigger>
+                <SelectValue placeholder="الترعة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الترع</SelectItem>
+                {Array.from(new Set(sites.map(site => site.canal).filter(Boolean) as string[])).map(canal => (
+                  <SelectItem key={canal} value={canal}>{canal}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

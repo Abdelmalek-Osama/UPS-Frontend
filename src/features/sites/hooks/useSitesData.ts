@@ -35,6 +35,7 @@ export function useFilteredSites(sites: Site[], filters: SiteFilters) {
                          site.location.includes(filters.searchTerm);
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
     const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
-    return matchesSearch && matchesType && matchesDirectorate;
+    const matchesCanal = filters.canal === 'all' || (site.canal && site.canal === filters.canal);
+    return matchesSearch && matchesType && matchesDirectorate && matchesCanal;
   });
 }

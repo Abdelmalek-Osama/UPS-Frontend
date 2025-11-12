@@ -18,4 +18,5 @@ export interface SiteFilters {
   searchTerm: string;
   type: string;
   directorate: string;
+  canal: string;
 }
