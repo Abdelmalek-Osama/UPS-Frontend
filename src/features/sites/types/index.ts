@@ -1,7 +1,7 @@
 export interface Site {
   id: number;
   name: string;
-  type: 'WaterLevel' | 'PumpStation' | 'Hybrid';
+  siteType: 'WaterLevel' | 'PumpStation' | 'Hybrid';
   directorateName: string;
   location: string;
   status: 'online' | 'offline';

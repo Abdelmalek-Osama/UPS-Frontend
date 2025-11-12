@@ -33,7 +33,7 @@ export function useFilteredSites(sites: Site[], filters: SiteFilters) {
   return sites.filter(site => {
     const matchesSearch = site.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
                          site.location.includes(filters.searchTerm);
-    const matchesType = filters.type === 'all' || site.type === filters.type;
+    const matchesType = filters.type === 'all' || site.siteType === filters.type;
     const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
     return matchesSearch && matchesType && matchesDirectorate;
   });

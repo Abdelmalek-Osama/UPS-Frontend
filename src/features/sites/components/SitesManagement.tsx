@@ -108,7 +108,7 @@ export function SitesManagement() {
                   <TableRow key={site.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {site.type === 'WaterLevel' ? (
+                        {site.siteType === 'WaterLevel' ? (
                           <Droplets className="h-4 w-4 text-blue-600" />
                         ) : (
                           <Power className="h-4 w-4 text-green-600" />
@@ -118,7 +118,7 @@ export function SitesManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {site.type === 'WaterLevel' ? 'القناطر' : site.type === 'PumpStation' ? 'محطة ضخ' : site.type}
+                        {site.siteType === 'WaterLevel' ? 'القناطر' : site.siteType === 'PumpStation' ? 'محطة ضخ' : site.siteType}
                       </Badge>
                     </TableCell>
                     <TableCell>{site.code}</TableCell>
