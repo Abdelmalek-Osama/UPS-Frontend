@@ -139,8 +139,14 @@ export function SitesManagement() {
                     <TableCell>{site.directorateName}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <MapPin className="h-3 w-3" />
-                        {site.location}
+                        <a
+                          href={`https://www.google.com/maps?q=${site.latitude},${site.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          <MapPin className="h-4 w-4" />
+                        </a>
                       </div>
                     </TableCell>
                   </TableRow>

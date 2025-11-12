@@ -3,7 +3,8 @@ export interface Site {
   name: string;
   siteType: 'WaterLevel' | 'PumpStation' | 'Hybrid';
   directorateName: string;
-  location: string;
+  latitude: number;
+  longitude: number;
   status: 'online' | 'offline';
   flowCalcMethod?: 'Formula' | 'HQCurve';
   code?: string;
