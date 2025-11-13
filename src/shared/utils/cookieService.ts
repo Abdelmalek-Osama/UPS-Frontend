@@ -5,8 +5,14 @@ export const setAuthCookies = (accessToken: string, refreshToken: string, access
   Cookies.set('refreshToken', refreshToken, { expires: 7 }); // Refresh token typically has a longer expiry, e.g., 7 days
 };
 
-export const getAccessToken = () => Cookies.get('accessToken');
-export const getRefreshToken = () => Cookies.get('refreshToken');
+export const getAccessToken = () => {
+  const token = Cookies.get('accessToken');
+  return token;
+};
+export const getRefreshToken = () => {
+  const token = Cookies.get('refreshToken');
+  return token;
+};
 
 export const removeAuthCookies = () => {
   Cookies.remove('accessToken');

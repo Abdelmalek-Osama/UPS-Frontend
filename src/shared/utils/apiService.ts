@@ -95,8 +95,8 @@ axiosInstance.interceptors.response.use(
 
           if (refreshToken) {
             try {
-              const response = await axiosInstance.post<AuthResponse>(`/v1/Auth/refresh`, { refreshToken });
-              const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data;
+              const response = await axiosInstance.post<ApiResponse<AuthResponse>>(`/v1/Auth/refresh`, { refreshToken });
+              const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data.data;
               setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
               axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
               if (originalRequest.headers) {
