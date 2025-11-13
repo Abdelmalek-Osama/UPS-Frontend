@@ -19,7 +19,7 @@ import {
 } from '../../../components/ui/select';
 import { Switch } from '../../../components/ui/switch';
 import { Checkbox } from '../../../components/ui/checkbox';
-import { Plus, Mail } from 'lucide-react';
+import { Plus, Mail, Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
 
@@ -38,6 +38,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [active, setActive] = useState(true);
   const [assignedSites, setAssignedSites] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
 
   // Reset form fields when the dialog is opened
   React.useEffect(() => {
@@ -167,14 +168,30 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
+              <div className="relative">
               <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-              />
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  )}
+                </Button>
+              </div>
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
             <div className="space-y-2">
