@@ -27,30 +27,36 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<string[]>([]);
 
   const handleSubmit = async () => {
-    const newErrors: { newPassword?: string; confirmPassword?: string } = {};
+    const currentErrors: string[] = [];
 
     if (!newPassword) {
-      newErrors.newPassword = 'كلمة المرور الجديدة مطلوبة';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
-    } else if (!/[A-Z]/.test(newPassword)) {
-      newErrors.newPassword = 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل';
-    } else if (!/\d/.test(newPassword)) {
-      newErrors.newPassword = 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل';
+      currentErrors.push('كلمة المرور الجديدة مطلوبة');
+    } else {
+      if (newPassword.length < 8) {
+        currentErrors.push('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+      }
+      if (!/[A-Z]/.test(newPassword)) {
+        currentErrors.push('كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل');
+      }
+      if (!/\d/.test(newPassword)) {
+        currentErrors.push('كلمة المرور يجب أن تحتوي على رقم واحد على الأقل');
+      }
     }
 
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'تأكيد كلمة المرور مطلوب';
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'كلمة المرور وتأكيدها غير متطابقين';
+    if (currentErrors.length === 0) {
+      if (!confirmPassword) {
+        currentErrors.push('تأكيد كلمة المرور مطلوب');
+      } else if (newPassword !== confirmPassword) {
+        currentErrors.push('كلمة المرور وتأكيدها غير متطابقين');
+      }
     }
 
-    setErrors(newErrors);
+    setErrors(currentErrors);
 
-    if (Object.keys(newErrors).length > 0) {
+    if (currentErrors.length > 0) {
       return;
     }
 
@@ -106,9 +112,6 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
                 )}
               </Button>
             </div>
-            {errors.newPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
-            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
@@ -135,11 +138,16 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
                 )}
               </Button>
             </div>
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+            {errors.length > 0 && (
+              <div className="mt-1">
+                {errors.map((error, index) => (
+                  <p key={index} className="text-red-600 text-xs text-right">
+                    {error}
+                  </p>
+                ))}
+              </div>
             )}
           </div>
-          
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
