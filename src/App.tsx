@@ -129,7 +129,16 @@ export default function App() {
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
         <Route path="sites" element={<SitesManagement />} />
-        <Route path="users" element={<UserManagement />} />
+        <Route 
+          path="users" 
+          element={
+            currentUser?.role === 'Admin' ? (
+              <UserManagement />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
         {/* <Route path="*" element={<PageNotFound />} /> */}
       </Route>
     </Routes>

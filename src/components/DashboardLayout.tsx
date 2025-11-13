@@ -29,14 +29,17 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
-  const menuItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/' },
-    { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites' },
-    { id: 'readings', label: 'القراءات', icon: Database, path: '/readings' },
-    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms' },
-    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations' },
-    { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users' },
+  const allMenuItems = [
+    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator'] },
+    { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
+    { id: 'readings', label: 'القراءات', icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
+    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
+    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
+    { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
   ];
+
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => item.roles.includes(currentUser.role));
 
   
 
@@ -65,8 +68,10 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm">{currentUser.fullName}</p>
+            <div className="text-right" dir="rtl">
+              <p className="text-sm font-medium" style={{ unicodeBidi: 'plaintext' }}>
+                {currentUser.fullName}
+              </p>
               <p className="text-xs text-gray-500">{currentUser.role === 'Admin' ? 'مسؤول' : 'مشغل'}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onLogout}>
