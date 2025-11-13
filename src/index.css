@@ -2738,3 +2738,57 @@ body {
     transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
   }
 }
+
+/* React-Toastify Custom Styles */
+.custom-toast {
+  background-color: white !important;
+  color: #333 !important; /* Dark grey for text */
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.custom-toast-body {
+  color: #333 !important; /* Ensure body text is dark */
+}
+
+/* For success toasts */
+.Toastify__toast--success {
+  border-left: 5px solid green !important; /* Green line on the left */
+}
+
+/* For error toasts */
+.Toastify__toast--error {
+  border-left: 5px solid red !important; /* Red line on the left */
+}
+
+/* For info toasts */
+.Toastify__toast--info {
+  border-left: 5px solid blue !important; /* Blue line on the left */
+}
+
+/* To ensure icons are colored correctly (React-Toastify's default icons) */
+.Toastify__toast--success .Toastify__progress-bar--success {
+  background-color: green !important;
+}
+.Toastify__toast--error .Toastify__progress-bar--error {
+  background-color: red !important;
+}
+.Toastify__toast--info .Toastify__progress-bar--info {
+  background-color: blue !important;
+}
+
+.Toastify__toast--success .Toastify__toast-icon {
+  color: green !important;
+}
+
+.Toastify__toast--error .Toastify__toast-icon {
+  color: red !important;
+}
+
+.Toastify__toast--info .Toastify__toast-icon {
+  color: blue !important;
+}
+
+.custom-toast .Toastify__toast-body {
+  color: #333 !important; /* Ensure body text is dark */
+}

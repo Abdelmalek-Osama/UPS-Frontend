@@ -12,8 +12,8 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// import { ToastContainer, toast } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
 import type { User } from '../types';
 
 interface ResetPasswordDialogProps {
@@ -69,7 +69,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     }
 
     if (!user) {
-      toast.error("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم.");
+      // toast.error("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم.");
       return;
     }
 
@@ -78,10 +78,10 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
         email: user.email,
         newPassword,
       });
-      toast.success("تمت إعادة تعيين كلمة المرور بنجاح.");
+      // toast.success("تمت إعادة تعيين كلمة المرور بنجاح.");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.Message || "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
+      // toast.error( "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
     }
   };
 
@@ -166,7 +166,11 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           </Button>
         </DialogFooter>
       </DialogContent>
-      <ToastContainer position="bottom-center" theme="colored" />
+      {/* <ToastContainer 
+        position="bottom-right" 
+        toastClassName="custom-toast"
+        bodyClassName="custom-toast-body"
+      /> */}
     </Dialog>
   );
 }

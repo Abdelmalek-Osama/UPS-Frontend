@@ -22,6 +22,7 @@ import { Checkbox } from '../../../components/ui/checkbox';
 import { Plus, Mail, Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
+import { toast } from 'react-toastify';
 
 interface AddUserDialogProps {
   open: boolean;
@@ -97,7 +98,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       };
       // We no longer expect tokens from the registerUser response
       await apiService.registerUser(userData);
-      alert('User registered successfully!');
+      toast.success('تم اضافة مستخدم جديد بنجاح');
       // Clear form and close dialog
       setUsername('');
       setEmail('');
@@ -109,8 +110,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setErrors({});
       onOpenChange(false);
     } catch (error: any) {
-      // alert(`Failed to register user: ${error.message}`);
       setApiError('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقًا.'); // Set generic error message
+      // toast.error('Failed to register user. Please try again later.');
     }
   };
 

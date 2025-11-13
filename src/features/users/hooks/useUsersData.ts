@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { UserDto as User } from '../../../shared/utils/apiService'; // Use UserDto from apiService
 import apiService from '../../../shared/utils/apiService';
 import { useSitesData } from '../../sites/hooks/useSitesData';
+import { toast } from 'react-toastify';
 
 export function useUsersData() {
   const [users, setUsers] = useState<User[]>([]);
@@ -37,19 +38,19 @@ export function useUsersData() {
       await apiService.patch(`/v1/Users/${userId}`, { isActive: !users.find(u => u.id === userId)?.isActive });
     } catch (err: any) {
       // If API call fails, revert UI (or re-fetch for simplicity)
-      alert(`Failed to toggle user status: ${err.message}`);
+      toast.error(`فشل تغيير حالة المستخدم: ${err.message}`);
       fetchUsers(); // Re-fetch to ensure data consistency
     }
   };
 
-  const deleteUser = async (userId: string) => {
-    try {
-      await apiService.del(`/v1/Users/${userId}`);
-      setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
-    } catch (err: any) {
-      alert(`Failed to delete user: ${err.message}`);
-    }
-  };
+  // const deleteUser = async (userId: string) => {
+  //   try {
+  //     await apiService.del(`/v1/Users/${userId}`);
+  //     setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+  //   } catch (err: any) {
+  //     toast.error(`Failed to delete user: ${err.message}`);
+  //   }
+  // };
 
-  return { users, setUsers, availableSites, toggleUserActive, deleteUser, loading, error, fetchUsers, sitesLoading, sitesError };
+  return { users, setUsers, availableSites, toggleUserActive, loading, error, fetchUsers, sitesLoading, sitesError };
 }
