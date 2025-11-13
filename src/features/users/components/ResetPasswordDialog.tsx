@@ -29,6 +29,14 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  React.useEffect(() => {
+    if (!open) {
+      setNewPassword('');
+      setConfirmPassword('');
+      setErrors([]);
+    }
+  }, [open]);
+
   const handleSubmit = async () => {
     const currentErrors: string[] = [];
 
@@ -153,7 +161,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={!newPassword || !confirmPassword}>
             إعادة تعيين
           </Button>
         </DialogFooter>
