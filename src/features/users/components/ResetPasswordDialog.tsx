@@ -10,6 +10,7 @@ import {
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -24,6 +25,8 @@ interface ResetPasswordDialogProps {
 export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordDialogProps) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
 
   const handleSubmit = async () => {
@@ -80,26 +83,58 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="new-password">كلمة المرور الجديدة</Label>
-            <Input
-              id="new-password"
-              type="password"
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="new-password"
+                type={showNewPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                onClick={() => setShowNewPassword((prev) => !prev)}
+              >
+                {showNewPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-500" />
+                )}
+              </Button>
+            </div>
             {errors.newPassword && (
               <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-500" />
+                )}
+              </Button>
+            </div>
             {errors.confirmPassword && (
               <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
             )}

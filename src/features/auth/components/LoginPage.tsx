@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Lock, Mail, Droplets } from 'lucide-react';
+import { Lock, Mail, Droplets, Eye, EyeOff } from 'lucide-react';
 import apiService, { AuthResponse, ApiResponse } from '../../../shared/utils/apiService';
 import { setAuthCookies } from '../../../shared/utils/cookieService';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ interface LoginPageProps {
 export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogin from destructuring
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate(); // Re-introducing navigate here
   const [loading, setLoading] = useState(false); // Add loading state
   const [loginError, setLoginError] = useState<string | null>(null); // New state for login error message
@@ -114,11 +115,17 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
             
             <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
-              <div className="relative">
-                <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+              <div className="relative">                {/* <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" /> */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 top-3 h-4 w-2 flex items-center pr-3 text-gray-400 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="h-1 w-2" /> : <Eye className="h-1 w-2" />}
+                </button>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="أدخل كلمة المرور"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
