@@ -85,6 +85,11 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
+    // If the error is 401 and it's the login endpoint, do not attempt to refresh the token.
+    if (error.response?.status === 401 && originalRequest?.url?.includes('/v1/Auth/login')) {
+      return Promise.reject(error); // Directly reject so LoginPage can handle it
+    }
+
     if (error.response?.status === 401 && originalRequest && !(originalRequest as any)._retry) {
       (originalRequest as any)._retry = true;
 
