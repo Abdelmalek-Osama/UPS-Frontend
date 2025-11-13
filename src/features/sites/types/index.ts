@@ -20,4 +20,6 @@ export interface SiteFilters {
   type: string;
   directorate: string;
   canal: string;
+  directorateId?: string;
+  siteId?: string;
 }

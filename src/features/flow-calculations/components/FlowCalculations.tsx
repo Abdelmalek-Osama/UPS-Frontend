@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -13,22 +13,25 @@ import {
 import { Label } from '../../../components/ui/label';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { FormulaParams, FlowSite } from '../types';
+import { useSitesData } from '../../sites/hooks/useSitesData';
 
 export function FlowCalculations() {
-  const [selectedSite, setSelectedSite] = useState('site1');
+  const [selectedSite, setSelectedSite] = useState('');
   const [formulaParams, setFormulaParams] = useState<FormulaParams>({
     c: 1.84,
     w: 2.5,
     n: 1.5
   });
 
-  const sites: FlowSite[] = [
-    { id: 'site1', name: 'القناطر - القاهرة 01', method: 'Formula' },
-    { id: 'site2', name: 'القناطر - الإسكندرية 01', method: 'HQCurve' },
-    { id: 'site3', name: 'القناطر - الجيزة 03', method: 'Formula' },
-  ];
+  const { sites, loading: sitesLoading, error: sitesError } = useSitesData();
 
-  const currentSite = sites.find(s => s.id === selectedSite);
+  useEffect(() => {
+    if (sites.length > 0 && !selectedSite) {
+      setSelectedSite(sites[0].id.toString()); 
+    }
+  }, [sites, selectedSite]);
+
+  const currentSite = sites.find(s => s.id.toString() === selectedSite);
 
   return (
     <div className="space-y-6">
@@ -50,7 +53,7 @@ export function FlowCalculations() {
                 </SelectTrigger>
                 <SelectContent>
                   {sites.map(site => (
-                    <SelectItem key={site.id} value={site.id}>
+                    <SelectItem key={site.id} value={site.id.toString()}>
                       {site.name}
                     </SelectItem>
                   ))}

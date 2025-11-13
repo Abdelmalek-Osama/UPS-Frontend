@@ -61,7 +61,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
         email: user.email,
         newPassword,
       });
-      toast.success("تمت إعادة تعيين كلمة المرور بنجاح وإرسالها إلى البريد الإلكتروني للمستخدم.");
+      toast.success("تمت إعادة تعيين كلمة المرور بنجاح.");
       onOpenChange(false);
     } catch (error: any) {
       toast.error(error.response?.data?.Message || "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
@@ -104,11 +104,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
               <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
             )}
           </div>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              سيتم إرسال كلمة المرور الجديدة إلى البريد الإلكتروني للمستخدم
-            </p>
-          </div>
+          
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
@@ -45,6 +45,14 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
     const [readingTime, setReadingTime] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editReadingTime, setEditReadingTime] = useState<string>('');
+    const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
+
+    useEffect(() => {
+      if (sites.length > 0 && !selectedSiteForAdd) {
+        setSelectedSiteForAdd(sites[0].name);
+      }
+    }, [sites, selectedSiteForAdd]);
+
     return (
     <Card>
       <CardHeader>
@@ -75,14 +83,14 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>الموقع</Label>
-                            <Select dir="rtl" defaultValue="all">
+                            <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd}>
                             <SelectTrigger>
                                 <SelectValue placeholder="اختر الموقع" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">جميع المواقع</SelectItem>
                                 {sites.map(site => (
-                                <SelectItem key={site} value={site}>{site}</SelectItem>
+                                <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                                 ))}
                             </SelectContent>
                             </Select>
@@ -158,13 +166,17 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>الموقع</Label>
-                            <Select dir="rtl" defaultValue={editingWaterLevel?.site || ""}>
+                            <Select dir="rtl" value={editingWaterLevel?.site || ""} onValueChange={(value) => {
+                              if (editingWaterLevel) {
+                                handleEditWaterLevel({ ...editingWaterLevel, site: value });
+                              }
+                            }}>
                             <SelectTrigger>
                                 <SelectValue placeholder="اختر الموقع" />
                             </SelectTrigger>
                             <SelectContent>
                                 {sites.map(site => (
-                                <SelectItem key={site} value={site}>{site}</SelectItem>
+                                <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                                 ))}
                             </SelectContent>
                             </Select>
