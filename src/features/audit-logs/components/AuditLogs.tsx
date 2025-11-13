@@ -32,6 +32,7 @@ import { getActionIcon, getActionLabel, getActionColor } from '../utils/formatte
 import type { AuditLog } from '../types';
 import {DatePicker} from '../../../components/ui/datepicker';
 import { useSitesData } from '../../sites/hooks/useSitesData';
+import { toast } from 'react-toastify';
 
 export function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,7 +94,7 @@ export function AuditLogs() {
   });
 
   const handleExport = () => {
-    alert('سيتم تصدير سجل التدقيق إلى ملف Excel');
+    toast.info('سيتم تصدير سجل التدقيق إلى ملف Excel');
   };
 
   return (

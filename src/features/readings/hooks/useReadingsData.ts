@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { WaterLevelReading, PumpStationReading } from '../types';
 import { useSitesData } from '../../sites/hooks/useSitesData';
+import { toast } from 'react-toastify';
 
 export function useReadingsData() {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
@@ -72,7 +73,7 @@ export function useReadingsData() {
   };
   
   const handleExport = () => {
-    alert('سيتم تصدير البيانات إلى ملف Excel');
+    toast.info('سيتم تصدير البيانات إلى ملف Excel');
   };
 
   return {

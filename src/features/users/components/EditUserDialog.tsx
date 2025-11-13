@@ -19,6 +19,7 @@ import {
 } from '../../../components/ui/select';
 import { Switch } from '../../../components/ui/switch';
 import apiService, { UserDto } from '../../../shared/utils/apiService';
+import { toast } from 'react-toastify';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -78,11 +79,11 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
         updateData
       );
 
-      alert(response.message || 'تم تحديث المستخدم بنجاح');
+      toast.success('تم تحديث بيانات المستخدم بنجاح');
       onEditSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      alert(`فشل تحديث المستخدم: ${error.message}`);
+      toast.error(`فشل تحديث بيانات المستخدم: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
