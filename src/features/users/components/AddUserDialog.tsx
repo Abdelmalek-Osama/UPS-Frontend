@@ -39,6 +39,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [assignedSites, setAssignedSites] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const [apiError, setApiError] = useState<string | null>(null); // New state for API errors
 
   // Reset form fields when the dialog is opened
   React.useEffect(() => {
@@ -51,6 +52,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setActive(true);
       setAssignedSites([]);
       setErrors({});
+      setApiError(null); // Clear API error on dialog open
     }
   }, [open]);
 
@@ -107,7 +109,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setErrors({});
       onOpenChange(false);
     } catch (error: any) {
-      alert(`Failed to register user: ${error.message}`);
+      // alert(`Failed to register user: ${error.message}`);
+      setApiError('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقًا.'); // Set generic error message
     }
   };
 
@@ -139,7 +142,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="off"
               />
-              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+              {errors.username && <p className="text-red-600 text-xs mt-1">{errors.username}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">البريد الإلكتروني</Label>
@@ -151,7 +154,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="off"
               />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
             </div>
           </div>
           <div className="space-y-2">
@@ -163,7 +166,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="off"
             />
-            {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
+            {errors.fullName && <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -192,7 +195,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                   )}
                 </Button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">الدور</Label>
@@ -205,7 +208,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                   <SelectItem value="Operator">مشغل (Operator)</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
+              {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
             </div>
           </div>
         </div>
@@ -229,7 +232,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 </div>
               ))}
             </div>
-            {errors.assignedSites && <p className="text-red-500 text-xs mt-1">{errors.assignedSites}</p>}
+            {errors.assignedSites && <p className="text-red-600 text-xs mt-1">{errors.assignedSites}</p>}
             <p className="text-xs text-gray-500">
               المسؤولون لديهم وصول لجميع المواقع تلقائياً
             </p>
@@ -240,6 +243,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
           <Label htmlFor="active">الحساب نشط</Label>
         </div> */}
         <DialogFooter>
+          {apiError && <p className="text-red-600 text-xs mt-1 text-right w-full">{apiError}</p>}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
