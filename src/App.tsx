@@ -73,10 +73,22 @@ export default function App() {
   }, [isAuthenticated, userLoaded, navigate]); // Add userLoaded to dependency array
 
   console.log('App.tsx: Render - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser, 'loadingAuth:', loadingAuth, 'userLoaded:', userLoaded, 'path:', window.location.pathname);
-  // Helper function to decode JWT (simplified, consider a library for robust decoding)
+  
+  // Helper function to decode JWT with proper UTF-8 support for Arabic characters
   const parseJwt = (token: string) => {
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Properly decode UTF-8 characters (including Arabic)
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
+      const decoded = JSON.parse(jsonPayload);
       console.log('Decoded JWT:', decoded); // Log the decoded token
       return decoded;
     } catch (e) {

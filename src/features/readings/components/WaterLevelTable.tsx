@@ -57,7 +57,7 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-            <CardTitle>قراءاتالقناطر ({readings.length})</CardTitle>
+            <CardTitle>قراءات القناطر ({readings.length})</CardTitle>
             <div className="flex gap-2 justify-end">
                 
                 <Button variant="outline" onClick={handleExport}>
