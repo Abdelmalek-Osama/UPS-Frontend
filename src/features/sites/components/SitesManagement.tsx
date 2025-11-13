@@ -60,8 +60,7 @@ export function SitesManagement() {
               <SelectContent>
                 <SelectItem value="all">جميع الأنواع</SelectItem>
                 <SelectItem value="WaterLevel">القناطر</SelectItem>
-                <SelectItem value="PumpStation">محطة رفع</SelectItem>
-                <SelectItem value="Hybrid">مختلط</SelectItem>
+                <SelectItem value="Pumps">محطة رفع</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterDirectorate} onValueChange={setFilterDirectorate}>
@@ -131,7 +130,7 @@ export function SitesManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {site.siteType === 'WaterLevel' ? 'القناطر' : site.siteType === 'PumpStation' ? 'محطة رفع' : site.siteType}
+                        {site.siteType === 'WaterLevel' ? 'القناطر' : site.siteType === 'Pumps' ? 'محطة رفع' : site.siteType}
                       </Badge>
                     </TableCell>
                     <TableCell>{site.code}</TableCell>

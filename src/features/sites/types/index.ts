@@ -1,7 +1,7 @@
 export interface Site {
   id: number;
   name: string;
-  siteType: 'WaterLevel' | 'PumpStation' | 'Hybrid';
+  siteType: 'WaterLevel' | 'Pumps';
   directorateName: string;
   latitude: number;
   longitude: number;
