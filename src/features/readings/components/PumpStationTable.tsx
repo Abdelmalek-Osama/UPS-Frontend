@@ -239,6 +239,9 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
+                <TableHead className="text-right">USWL (م)</TableHead>
+                <TableHead className="text-right">DSWL (م)</TableHead>
+                <TableHead className="text-right">البطارية (V)</TableHead>
                 <TableHead className="text-right">المرفعات النشطة</TableHead>
                 <TableHead className="text-right">إجمالي وقت التشغيل</TableHead>
                 <TableHead className="text-right">إجمالي التدفق</TableHead>
@@ -250,6 +253,11 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{reading.timestamp}</TableCell>
+                  <TableCell className="text-right">{reading.uswl.toFixed(1)}</TableCell>
+                  <TableCell className="text-right">{reading.dswl.toFixed(1)}</TableCell>
+                  <TableCell className={`text-right ${reading.battery < 12.5 ? 'text-yellow-600 font-medium' : ''}`}>
+                    {reading.battery.toFixed(1)}
+                  </TableCell>
                   <TableCell className="text-right">
                     {reading.pumps.filter(p => p.time > 0).length} / {reading.pumps.length}
                   </TableCell>

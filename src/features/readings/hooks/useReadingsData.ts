@@ -28,6 +28,9 @@ export function useReadingsData() {
       id: 1, 
       site: 'محطة رفع - الجيزة 01', 
       timestamp: '2025-11-03 11:00',
+      uswl: 98.7,
+      dswl: 95.2,
+      battery: 13.1,
       pumps: [
         { time: 3.5, flow: 45.2 },
         { time: 4.2, flow: 48.1 },
@@ -41,6 +44,9 @@ export function useReadingsData() {
       id: 2, 
       site: 'محطة رفع - الدقهلية 02', 
       timestamp: '2025-11-03 11:00',
+      uswl: 100.3,
+      dswl: 87.2,
+      battery: 11.2,
       pumps: [
         { time: 5.0, flow: 52.3 },
         { time: 4.8, flow: 50.1 },

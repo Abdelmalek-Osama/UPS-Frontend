@@ -18,6 +18,9 @@ export interface PumpStationReading {
   id: number;
   site: string;
   timestamp: string;
+  uswl: number,
+  dswl: number,
+  battery: number,
   pumps: PumpData[];
   totalUptime: number;
   totalFlow: number;
