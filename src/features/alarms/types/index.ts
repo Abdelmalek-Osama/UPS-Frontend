@@ -15,3 +15,35 @@ export interface CommunicationAlarm {
   hours: number;
   recipients: string[];
 }
+
+export interface ThresholdAlarmResponse {
+  alarmId: number;
+  siteName: string;
+  alarmName: string;
+  alarmType: number;
+  emails: string;
+  phones: string;
+  method: number;
+  thresholdId: number;
+  fieldName: number;
+  operator: number;
+  thresholdValue: number;
+  colorCode: string;
+  severity: number;
+}
+
+export interface CommunicationAlarmResponse {
+  alarmId: number;
+  siteName: string;
+  alarmName: string;
+  alarmType: number;
+  emails: string;
+  phones: string;
+  method: number;
+  communicationLossId: number;
+  severity: number;
+  numHours: number;
+}
+
+export interface ThresholdAlarm extends ValueThresholdAlarm {}
+export interface CommunicationLossAlarm extends CommunicationAlarm {}
