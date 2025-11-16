@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { ValueThresholdAlarm, CommunicationAlarm, ThresholdAlarmResponse, CommunicationAlarmResponse } from '../types';
+import type { ValueThresholdAlarm, CommunicationAlarm, ThresholdAlarmResponse, CommunicationAlarmResponse, CreateThresholdAlarmRequest, CreateCommunicationAlarmRequest } from '../types';
 import apiService from '../../../shared/utils/apiService';
 
 export function useAlarmsData() {
@@ -39,23 +39,23 @@ export function useAlarmsData() {
     };
   };
 
-  useEffect(() => {
-    const fetchAlarms = async () => {
-      try {
-        const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/alarm/threshold');
-        if (thresholdResponse.isSuccess) {
-          setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
-        }
-
-        const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/alarm/communication');
-        if (communicationResponse.isSuccess) {
-          setCommunicationAlarms(communicationResponse.data.map(mapToCommunicationAlarm));
-        }
-      } catch (error) {
-        console.error('Failed to fetch alarms:', error);
+  const fetchAlarms = async () => {
+    try {
+      const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/alarm/threshold');
+      if (thresholdResponse.isSuccess) {
+        setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
       }
-    };
 
+      const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/alarm/communication');
+      if (communicationResponse.isSuccess) {
+        setCommunicationAlarms(communicationResponse.data.map(mapToCommunicationAlarm));
+      }
+    } catch (error) {
+      console.error('Failed to fetch alarms:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchAlarms();
   }, []);
 
@@ -83,6 +83,36 @@ export function useAlarmsData() {
     setRecipients([]); // Clear recipients after adding alarm
   };
 
+  const createThresholdAlarm = async (alarmData: CreateThresholdAlarmRequest) => {
+    try {
+      const response = await apiService.post<any, CreateThresholdAlarmRequest>('/alarm/threshold', alarmData);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error('Failed to create threshold alarm:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const createCommunicationAlarm = async (alarmData: CreateCommunicationAlarmRequest) => {
+    try {
+      const response = await apiService.post<any, CreateCommunicationAlarmRequest>('/alarm/communication', alarmData);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error('Failed to create communication alarm:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
   return {
     thresholdAlarms,
     setThresholdAlarms,
@@ -100,5 +130,7 @@ export function useAlarmsData() {
     recipients,
     setRecipients,
     addThresholdAlarm,
+    createThresholdAlarm,
+    createCommunicationAlarm,
   };
 }
