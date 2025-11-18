@@ -26,7 +26,8 @@ import {
   Upload, 
   CalendarIcon,
   AlertCircle,
-  Edit
+  Edit,
+  X
 } from 'lucide-react';
 import {
   Dialog,
@@ -44,27 +45,71 @@ import type { PumpStationReading } from '../types';
 import { DatePicker } from '../../../components/ui/datepicker';
 
 export function ReadingsManagement() {
-  const { handleExport, waterLevelReadings, pumpStationReadings, sites, handleEditPump } = useReadingsData();
+  const {
+    handleExport,
+    waterLevelReadings,
+    pumpStationReadings,
+    sites,
+    handleEditPump,
+    isEditWaterLevelOpen,
+    setIsEditWaterLevelOpen,
+    editingWaterLevel,
+    handleEditWaterLevel,
+    isEditPumpStationOpen,
+    setIsEditPumpStationOpen,
+    editingPumpStation,
+    handleEditPumpStation,
+    fetchWaterLevelReadings,
+    createWaterLevelReading,
+    updateWaterLevelReading,
+    waterLevelLoading,
+    waterLevelError,
+  } = useReadingsData();
   const [activeTab, setActiveTab] = useState('waterLevel');
-  const [selectedSite, setSelectedSite] = useState<string>('');
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (sites.length > 0) {
-      setSelectedSite(sites[0].name);
+    if (sites.length > 0 && !selectedSiteId) {
+      setSelectedSiteId(String(sites[0].id));
     }
-  }, [sites]);
-  
+  }, [sites, selectedSiteId]);
+
+  const formatDate = (date?: Date) => {
+    if (!date) return undefined;
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
+
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
-  const [fromDate, setFromDate] = useState<Date | undefined>();
-  const [toDate, setToDate] = useState<Date | undefined>();
+
+  useEffect(() => {
+    if (!selectedSiteId) {
+      return;
+    }
+    const siteNumericId = Number(selectedSiteId);
+    if (Number.isNaN(siteNumericId)) {
+      return;
+    }
+    fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+  }, [selectedSiteId, fromDate, toDate, fetchWaterLevelReadings]);
   
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
     setIsPumpDetailsOpen(true);
+  };
+
+  const handleResetDates = () => {
+    setFromDate(undefined);
+    setToDate(undefined);
   };
 
   return (
@@ -84,27 +129,38 @@ export function ReadingsManagement() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select value={selectedSite} onValueChange={setSelectedSite} defaultValue="all">
+            <Select value={selectedSiteId} onValueChange={setSelectedSiteId}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر الموقع" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع المواقع</SelectItem>
                 {sites.map(site => (
-                  <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
+                  <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <DatePicker
-            placeholder="من تاريخ"
-            value={fromDate}
-            onChange={setFromDate}
-            />
-            <DatePicker
-            placeholder="الى تاريخ"
-            value={toDate}
-            onChange={setToDate}
-            />
+            <div className="flex gap-2">
+              <DatePicker
+                placeholder="من تاريخ"
+                value={fromDate}
+                onChange={setFromDate}
+              />
+              <DatePicker
+                placeholder="الى تاريخ"
+                value={toDate}
+                onChange={setToDate}
+              />
+              {(fromDate || toDate) && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleResetDates}
+                  title="إعادة تعيين التواريخ"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -122,7 +178,21 @@ export function ReadingsManagement() {
           <WaterLevelTable 
             readings={waterLevelReadings} 
             isAddDialogOpen={isAddDialogOpen} 
-            setIsAddDialogOpen={setIsAddDialogOpen} 
+            setIsAddDialogOpen={setIsAddDialogOpen}
+            sites={sites}
+            handleExport={handleExport}
+            isEditWaterLevelOpen={isEditWaterLevelOpen}
+            setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
+            editingWaterLevel={editingWaterLevel}
+            handleEditWaterLevel={handleEditWaterLevel}
+            isLoading={waterLevelLoading}
+            error={waterLevelError}
+            createWaterLevelReading={createWaterLevelReading}
+            updateWaterLevelReading={updateWaterLevelReading}
+            selectedSiteId={selectedSiteId}
+            fetchWaterLevelReadings={fetchWaterLevelReadings}
+            fromDate={fromDate}
+            toDate={toDate}
           />
 
         </TabsContent>
@@ -135,6 +205,12 @@ export function ReadingsManagement() {
             onViewDetails={handleViewPumpDetails}
             isAddDialogOpen={isAddDialogOpen}
             setIsAddDialogOpen={setIsAddDialogOpen}
+            sites={sites}
+            handleExport={handleExport}
+            isEditPumpStationOpen={isEditPumpStationOpen}
+            setIsEditPumpStationOpen={setIsEditPumpStationOpen}
+            editingPumpStation={editingPumpStation}
+            handleEditPumpStation={handleEditPumpStation}
           />
         </TabsContent>
       </Tabs>

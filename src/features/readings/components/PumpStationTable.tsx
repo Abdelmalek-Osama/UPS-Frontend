@@ -10,13 +10,11 @@ import {
   TableRow 
 } from '../../../components/ui/table';
 import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
-import type { PumpStationReading } from '../types';
-import {useReadingsData} from '../hooks/useReadingsData';
+import type { PumpStationReading, SiteLookupOption } from '../types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '../../../components/ui/select';
 import {Input} from '../../../components/ui/input';
-import { Calendar } from '../../../components/ui/calendar';
 import {DatePicker} from '../../../components/ui/datepicker';
 
 interface PumpStationTableProps {
@@ -24,22 +22,26 @@ interface PumpStationTableProps {
   onViewDetails: (reading: PumpStationReading) => void;
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: (open: boolean) => void;
+  sites: SiteLookupOption[];
+  handleExport: () => void;
+  isEditPumpStationOpen: boolean;
+  setIsEditPumpStationOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  editingPumpStation: PumpStationReading | null;
+  handleEditPumpStation: (reading: PumpStationReading) => void;
 }
 
-export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, setIsAddDialogOpen }: PumpStationTableProps) {
-    const {
-        waterLevelReadings,
-        pumpStationReadings,
-        setPumpStationReadings,
-        sites,
-        handleViewPumpDetails,
-        handleEditPump,
-        handleExport,
-        isEditPumpStationOpen,
-        setIsEditPumpStationOpen,
-        editingPumpStation,
-        handleEditPumpStation,
-        }=useReadingsData();
+export function PumpStationTable({
+  readings,
+  onViewDetails,
+  isAddDialogOpen,
+  setIsAddDialogOpen,
+  sites,
+  handleExport,
+  isEditPumpStationOpen,
+  setIsEditPumpStationOpen,
+  editingPumpStation,
+  handleEditPumpStation,
+}: PumpStationTableProps) {
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [readingTime, setReadingTime] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
