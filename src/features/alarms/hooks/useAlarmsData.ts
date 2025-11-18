@@ -41,12 +41,12 @@ export function useAlarmsData() {
 
   const fetchAlarms = async () => {
     try {
-      const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/alarm/threshold');
+      const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/v1/alarm/threshold');
       if (thresholdResponse.isSuccess) {
         setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
       }
 
-      const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/alarm/communication');
+      const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
       if (communicationResponse.isSuccess) {
         setCommunicationAlarms(communicationResponse.data.map(mapToCommunicationAlarm));
       }
@@ -85,7 +85,7 @@ export function useAlarmsData() {
 
   const createThresholdAlarm = async (alarmData: CreateThresholdAlarmRequest) => {
     try {
-      const response = await apiService.post<any, CreateThresholdAlarmRequest>('/alarm/threshold', alarmData);
+      const response = await apiService.post<any, CreateThresholdAlarmRequest>('/v1/alarm/threshold', alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
@@ -100,7 +100,7 @@ export function useAlarmsData() {
 
   const createCommunicationAlarm = async (alarmData: CreateCommunicationAlarmRequest) => {
     try {
-      const response = await apiService.post<any, CreateCommunicationAlarmRequest>('/alarm/communication', alarmData);
+      const response = await apiService.post<any, CreateCommunicationAlarmRequest>('/v1/alarm/communication', alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
