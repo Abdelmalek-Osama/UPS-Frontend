@@ -53,3 +53,34 @@ export interface PumpStationReading {
   totalFlow: number;
   hasAlarm: boolean;
 }
+
+export interface PumpStationApiResponse {
+  id: number;
+  siteId: number;
+  siteName: string;
+  timestamp: string;
+  recordNumber: number;
+  p1_Time: number;
+  p1_Flow: number;
+  p2_Time: number;
+  p2_Flow: number;
+  p3_Time: number;
+  p3_Flow: number;
+  p4_Time: number;
+  p4_Flow: number;
+  p5_Time: number;
+  p5_Flow: number;
+  p6_Time: number;
+  p6_Flow: number;
+  p7_Time: number;
+  p7_Flow: number;
+  p8_Time: number;
+  p8_Flow: number;
+  p9_Time: number;
+  p9_Flow: number;
+  p10_Time: number;
+  p10_Flow: number;
+  totalUptime: number;
+  totalFlow: number;
+  isManual: boolean;
+}

@@ -58,15 +58,21 @@ export function ReadingsManagement() {
     isEditPumpStationOpen,
     setIsEditPumpStationOpen,
     editingPumpStation,
+    setEditingPumpStation, // This was added for PumpStationTable to allow siteName changes
     handleEditPumpStation,
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
     waterLevelLoading,
     waterLevelError,
+    pumpStationLoading, // Added
+    pumpStationError,   // Added
+    fetchPumpStationReadings, // Added
+    createPumpStationReading, // Added
+    updatePumpStationReading, // Added
   } = useReadingsData();
   const [activeTab, setActiveTab] = useState('waterLevel');
-  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
+  const [selectedSiteId, setSelectedSiteId] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -100,7 +106,19 @@ export function ReadingsManagement() {
     }
     fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
   }, [selectedSiteId, fromDate, toDate, fetchWaterLevelReadings]);
-  
+
+  // Added useEffect for fetching pump station readings
+  useEffect(() => {
+    if (!selectedSiteId) {
+      return;
+    }
+    const siteNumericId = Number(selectedSiteId);
+    if (Number.isNaN(siteNumericId)) {
+      return;
+    }
+    fetchPumpStationReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+  }, [selectedSiteId, fromDate, toDate, fetchPumpStationReadings]);
+
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
@@ -120,11 +138,10 @@ export function ReadingsManagement() {
           <h2 className="text-2xl font-bold">إدارة القراءات</h2>
           <p className="text-gray-500 mt-1">عرض وتحرير قراءات المواقع</p>
         </div>
-    
+        
         
       </div>
       
-
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -210,7 +227,16 @@ export function ReadingsManagement() {
             isEditPumpStationOpen={isEditPumpStationOpen}
             setIsEditPumpStationOpen={setIsEditPumpStationOpen}
             editingPumpStation={editingPumpStation}
+            setEditingPumpStation={setEditingPumpStation}
             handleEditPumpStation={handleEditPumpStation}
+            selectedSiteId={selectedSiteId}
+            startDate={fromDate ?? null}
+            endDate={toDate ?? null}
+            isLoading={pumpStationLoading}
+            error={pumpStationError}
+            fetchPumpStationReadings={fetchPumpStationReadings}
+            createPumpStationReading={createPumpStationReading}
+            updatePumpStationReading={updatePumpStationReading}
           />
         </TabsContent>
       </Tabs>
