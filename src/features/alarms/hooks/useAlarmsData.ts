@@ -15,7 +15,10 @@ export function useAlarmsData() {
 
     return {
       id: apiAlarm.alarmId,
+      siteId: apiAlarm.siteId,
       site: apiAlarm.siteName,
+      alarmName: apiAlarm.alarmName,
+      method: 0, // Assuming method is always 0 for now as per CreateThresholdAlarmRequest
       field: String(apiAlarm.fieldName), // Assuming fieldName is a number that needs to be converted to a string
       operator: String(apiAlarm.operator), // Assuming operator is a number that needs to be converted to a string
       threshold: apiAlarm.thresholdValue,
@@ -33,8 +36,12 @@ export function useAlarmsData() {
 
     return {
       id: apiAlarm.alarmId,
+      siteId: apiAlarm.siteId,
       site: apiAlarm.siteName,
+      alarmName: apiAlarm.alarmName,
+      method: 0, // Assuming method is always 0 for now as per CreateCommunicationAlarmRequest
       hours: apiAlarm.numHours,
+      severity: apiAlarm.severity === 0 ? 'Warning' : 'Critical',
       recipients: recipients,
     };
   };

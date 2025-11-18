@@ -1,6 +1,9 @@
 export interface ValueThresholdAlarm {
   id: number;
+  siteId: number;
   site: string;
+  alarmName: string;
+  method: number;
   field: string;
   operator: string;
   threshold: number;
@@ -11,13 +14,18 @@ export interface ValueThresholdAlarm {
 
 export interface CommunicationAlarm {
   id: number;
+  siteId: number;
   site: string;
+  alarmName: string;
+  method: number;
   hours: number;
+  severity: 'Warning' | 'Critical';
   recipients: string[];
 }
 
 export interface ThresholdAlarmResponse {
   alarmId: number;
+  siteId: number;
   siteName: string;
   alarmName: string;
   alarmType: number;
@@ -34,6 +42,7 @@ export interface ThresholdAlarmResponse {
 
 export interface CommunicationAlarmResponse {
   alarmId: number;
+  siteId: number;
   siteName: string;
   alarmName: string;
   alarmType: number;

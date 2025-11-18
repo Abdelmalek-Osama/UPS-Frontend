@@ -426,12 +426,13 @@ export function AlarmConfiguration() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-right">إجراءات</TableHead>
-                    <TableHead className="text-right">الخطورة</TableHead>
-                    <TableHead className="text-right">المستلمون</TableHead>
                     <TableHead className="text-right">اللون</TableHead>
-                    <TableHead className="text-right">الشرط</TableHead>
                     <TableHead className="text-right">الحقل</TableHead>
+                    <TableHead className="text-right">الشرط</TableHead>
+                    <TableHead className="text-right">المستلمون</TableHead>
+                    <TableHead className="text-right">الخطورة</TableHead>
                     <TableHead className="text-right">الموقع</TableHead>
+                    <TableHead className="text-right">الاسم</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -445,9 +446,20 @@ export function AlarmConfiguration() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline">
-                          {alarm.severity === 'Critical' ? 'حرج' : 'تحذير'}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-6 h-6 rounded border"
+                            style={{ backgroundColor: alarm.color }}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">{alarm.field}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          {alarm.operator} {alarm.threshold}
+                        </code>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
@@ -460,22 +472,12 @@ export function AlarmConfiguration() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-6 h-6 rounded border"
-                            style={{ backgroundColor: alarm.color }}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {alarm.operator} {alarm.threshold}
-                        </code>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline">{alarm.field}</Badge>
+                        <Badge variant="outline">
+                          {alarm.severity === 'Critical' ? 'حرج' : 'تحذير'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">{alarm.site}</TableCell>
+                      <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -624,6 +626,7 @@ export function AlarmConfiguration() {
                     <TableHead className="text-right">المستلمون</TableHead>
                     <TableHead className="text-right">الحد الزمني</TableHead>
                     <TableHead className="text-right">الموقع</TableHead>
+                    <TableHead className="text-right">الاسم</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -652,6 +655,7 @@ export function AlarmConfiguration() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">{alarm.site}</TableCell>
+                      <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
