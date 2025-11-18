@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { 
   Table, 
@@ -10,48 +9,248 @@ import {
   TableHeader, 
   TableRow 
 } from '../../../components/ui/table';
-import { 
-  Edit, 
-  Download, 
-  Plus, 
-  CalendarIcon, 
-  Calendar
-} from 'lucide-react';
+import { Edit, Download, Plus } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
 import { Input } from '../../../components/ui/input';
-import type { WaterLevelReading } from '../types';
-import {useReadingsData} from '../hooks/useReadingsData';
 import { DatePicker } from '../../../components/ui/datepicker';
-
+import type { SiteLookupOption, WaterLevelReading } from '../types';
 
 interface WaterLevelTableProps {
   readings: WaterLevelReading[];
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  sites: SiteLookupOption[];
+  handleExport: () => void;
+  isEditWaterLevelOpen: boolean;
+  setIsEditWaterLevelOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  editingWaterLevel: WaterLevelReading | null;
+  handleEditWaterLevel: (reading: WaterLevelReading) => void;
+  isLoading: boolean;
+  error?: string | null;
+  createWaterLevelReading: (data: {
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    uswl: number;
+    dswL1: number;
+    dswL2: number;
+    battery: number;
+    isManual: boolean;
+  }) => Promise<any>;
+  updateWaterLevelReading: (data: {
+    id: number;
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    uswl: number;
+    dswL1: number;
+    dswL2: number;
+    battery: number;
+    isManual: boolean;
+  }) => Promise<any>;
+  selectedSiteId: string;
+  fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  fromDate?: Date;
+  toDate?: Date;
 }
 
-export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }: WaterLevelTableProps) {
-    const {
-        handleExport, 
-        sites,
-        isEditWaterLevelOpen,
-        setIsEditWaterLevelOpen,
-        editingWaterLevel,
-        handleEditWaterLevel,
-    } = useReadingsData();
+export function WaterLevelTable({
+  readings,
+  isAddDialogOpen,
+  setIsAddDialogOpen,
+  sites,
+  handleExport,
+  isEditWaterLevelOpen,
+  setIsEditWaterLevelOpen,
+  editingWaterLevel,
+  handleEditWaterLevel,
+  isLoading,
+  error,
+  createWaterLevelReading,
+  updateWaterLevelReading,
+  selectedSiteId,
+  fetchWaterLevelReadings,
+  fromDate,
+  toDate,
+}: WaterLevelTableProps) {
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [readingTime, setReadingTime] = useState<string>('');
+    const [uswl, setUswl] = useState<string>('');
+    const [dswl, setDswl] = useState<string>('');
+    const [battery, setBattery] = useState<string>('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editReadingTime, setEditReadingTime] = useState<string>('');
-    const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
+    const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
+    const [editUswl, setEditUswl] = useState<string>('');
+    const [editDswl, setEditDswl] = useState<string>('');
+    const [editBattery, setEditBattery] = useState<string>('');
+    const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
     useEffect(() => {
-      if (sites.length > 0 && !selectedSiteForAdd) {
-        setSelectedSiteForAdd(sites[0].name);
+      if (selectedSiteId) {
+        setSelectedSiteForAdd(selectedSiteId);
+      } else if (sites.length > 0 && !selectedSiteForAdd) {
+        setSelectedSiteForAdd(String(sites[0].id));
       }
-    }, [sites, selectedSiteForAdd]);
+    }, [sites, selectedSiteForAdd, selectedSiteId]);
+
+    useEffect(() => {
+      if (!isAddDialogOpen) {
+        // Reset form when dialog closes
+        setReadingDate(undefined);
+        setReadingTime('');
+        setUswl('');
+        setDswl('');
+        setBattery('');
+      }
+    }, [isAddDialogOpen]);
+
+    useEffect(() => {
+      if (isEditWaterLevelOpen && editingWaterLevel) {
+        const siteFromReading =
+          editingWaterLevel.siteId
+            ? String(editingWaterLevel.siteId)
+            : (sites.find(site => site.name === editingWaterLevel.site)?.id?.toString() ?? '');
+        setEditSelectedSiteId(siteFromReading);
+
+        const timestampDate = editingWaterLevel.timestamp ? new Date(editingWaterLevel.timestamp) : undefined;
+        setEditReadingDate(timestampDate);
+        setEditReadingTime(
+          timestampDate ? `${timestampDate.getHours().toString().padStart(2, '0')}:00` : ''
+        );
+        setEditUswl(editingWaterLevel.uswl?.toString() ?? '');
+        setEditDswl(editingWaterLevel.dswl?.toString() ?? '');
+        setEditBattery(editingWaterLevel.battery?.toString() ?? '');
+      }
+    }, [isEditWaterLevelOpen, editingWaterLevel, sites]);
+
+    useEffect(() => {
+      if (!isEditWaterLevelOpen) {
+        setIsSubmittingEdit(false);
+      }
+    }, [isEditWaterLevelOpen]);
+
+    const formatTimestamp = (value: string) => {
+      if (!value) return '--';
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return value;
+      }
+      return parsed.toLocaleString('en-GB', { hour12: false });
+    };
+
+    const formatDate = (date?: Date) => {
+      if (!date) return undefined;
+      const year = date.getFullYear();
+      const month = `${date.getMonth() + 1}`.padStart(2, '0');
+      const day = `${date.getDate()}`.padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const handleAddReading = async () => {
+      if (!readingDate || !readingTime || !selectedSiteForAdd) {
+        return;
+      }
+
+      const siteId = Number(selectedSiteForAdd);
+      if (Number.isNaN(siteId)) {
+        return;
+      }
+
+      // Combine date and time into ISO timestamp
+      const [hours] = readingTime.split(':');
+      const dateTime = new Date(readingDate);
+      dateTime.setHours(Number(hours), 0, 0, 0);
+
+      setIsSubmitting(true);
+      try {
+        await createWaterLevelReading({
+          siteId,
+          timestamp: dateTime.toISOString(),
+          timePerHour: 0,
+          recordNumber: 0,
+          uswl: Number(uswl) || 0,
+          dswL1: Number(dswl) || 0,
+          dswL2: 0,
+          battery: Number(battery) || 0,
+          isManual: true,
+        });
+
+        // Reset form
+        setReadingDate(undefined);
+        setReadingTime('');
+        setUswl('');
+        setDswl('');
+        setBattery('');
+        setIsAddDialogOpen(false);
+
+        // Refresh readings
+        const siteNumericId = Number(selectedSiteId);
+        if (!Number.isNaN(siteNumericId)) {
+          await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+        }
+      } catch (error) {
+        // Error is already handled in createWaterLevelReading
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const handleUpdateReading = async () => {
+      if (!editingWaterLevel || !editReadingDate || !editReadingTime) {
+        return;
+      }
+
+      const siteId = Number(editSelectedSiteId || editingWaterLevel.siteId);
+      if (!siteId || Number.isNaN(siteId)) {
+        return;
+      }
+
+      const [hours] = editReadingTime.split(':');
+      const dateTime = new Date(editReadingDate);
+      dateTime.setHours(Number(hours), 0, 0, 0);
+
+      setIsSubmittingEdit(true);
+      try {
+        await updateWaterLevelReading({
+          id: editingWaterLevel.id,
+          siteId,
+          timestamp: dateTime.toISOString(),
+          timePerHour: 0,
+          recordNumber: editingWaterLevel.recordNumber ?? 0,
+          uswl: Number(editUswl) || 0,
+          dswL1: Number(editDswl) || 0,
+          dswL2: 0,
+          battery: Number(editBattery) || 0,
+          isManual: editingWaterLevel.isManual ?? true,
+        });
+
+        setIsEditWaterLevelOpen(false);
+
+        const siteNumericId = Number(selectedSiteId);
+        if (!Number.isNaN(siteNumericId)) {
+          await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+        }
+      } catch (error) {
+        // handled inside update function
+      } finally {
+        setIsSubmittingEdit(false);
+      }
+    };
+
+    // Determine column visibility based on siteConfiguration
+    const firstReading = readings.length > 0 ? readings[0] : null;
+    const showUSWL = firstReading?.siteConfiguration?.hasUS ?? true;
+    const showDSWL = firstReading?.siteConfiguration?.hasDS1 ?? true;
+    
+    // Calculate total column count for colSpan
+    const totalColumns = 5 + (showUSWL ? 1 : 0) + (showDSWL ? 1 : 0);
 
     return (
     <Card>
@@ -88,9 +287,8 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                                 <SelectValue placeholder="اختر الموقع" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">جميع المواقع</SelectItem>
                                 {sites.map(site => (
-                                <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
+                                <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
                                 ))}
                             </SelectContent>
                             </Select>
@@ -125,16 +323,34 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>USWL (متر)</Label>
-                            <Input type="number" step="0.1" placeholder="125.4" />
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              placeholder="125.4"
+                              value={uswl}
+                              onChange={(e) => setUswl(e.target.value)}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label>DSWL (متر)</Label>
-                            <Input type="number" step="0.1" placeholder="122.1" />
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              placeholder="122.1"
+                              value={dswl}
+                              onChange={(e) => setDswl(e.target.value)}
+                            />
                         </div>
                         </div>
                         <div className="space-y-2">
                         <Label>البطارية (فولت)</Label>
-                        <Input type="number" step="0.1" placeholder="12.8" />
+                        <Input 
+                          type="number" 
+                          step="0.1" 
+                          placeholder="12.8"
+                          value={battery}
+                          onChange={(e) => setBattery(e.target.value)}
+                        />
                         </div>
                         <div className="bg-gray-50 border rounded-lg p-4">
                         <Label className="text-sm text-gray-600" >التدفق المحسوب</Label>
@@ -143,11 +359,11 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                         إلغاء
                         </Button>
-                        <Button onClick={() => setIsAddDialogOpen(false)}>
-                        حفظ القراءة
+                        <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || !readingTime || !selectedSiteForAdd}>
+                        {isSubmitting ? 'جاري الحفظ...' : 'حفظ القراءة'}
                         </Button>
                     </DialogFooter>
                     </DialogContent>
@@ -166,17 +382,13 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>الموقع</Label>
-                            <Select dir="rtl" value={editingWaterLevel?.site || ""} onValueChange={(value) => {
-                              if (editingWaterLevel) {
-                                handleEditWaterLevel({ ...editingWaterLevel, site: value });
-                              }
-                            }}>
+                            <Select dir="rtl" value={editSelectedSiteId} onValueChange={setEditSelectedSiteId}>
                             <SelectTrigger>
                                 <SelectValue placeholder="اختر الموقع" />
                             </SelectTrigger>
                             <SelectContent>
                                 {sites.map(site => (
-                                <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
+                                <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
                                 ))}
                             </SelectContent>
                             </Select>
@@ -214,7 +426,8 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                             <Input 
                               type="number" 
                               step="0.1" 
-                              defaultValue={editingWaterLevel?.uswl || 0}
+                              value={editUswl}
+                              onChange={(e) => setEditUswl(e.target.value)}
                               placeholder="125.4" 
                             />
                         </div>
@@ -223,7 +436,8 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                             <Input 
                               type="number" 
                               step="0.1" 
-                              defaultValue={editingWaterLevel?.dswl || 0}
+                              value={editDswl}
+                              onChange={(e) => setEditDswl(e.target.value)}
                               placeholder="122.1" 
                             />
                         </div>
@@ -233,7 +447,8 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         <Input 
                           type="number" 
                           step="0.1" 
-                          defaultValue={editingWaterLevel?.battery || 0}
+                          value={editBattery}
+                          onChange={(e) => setEditBattery(e.target.value)}
                           placeholder="12.8" 
                         />
                         </div>
@@ -244,11 +459,20 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)}>
+                        <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)} disabled={isSubmittingEdit}>
                         إلغاء
                         </Button>
-                        <Button onClick={() => setIsEditWaterLevelOpen(false)}>
-                        حفظ التعديلات
+                        <Button 
+                          onClick={handleUpdateReading}
+                          disabled={
+                            isSubmittingEdit ||
+                            !editingWaterLevel ||
+                            !editReadingDate ||
+                            !editReadingTime ||
+                            !editSelectedSiteId
+                          }
+                        >
+                        {isSubmittingEdit ? 'جاري الحفظ...' : 'حفظ التعديلات'}
                         </Button>
                     </DialogFooter>
                     </DialogContent>
@@ -263,26 +487,54 @@ export function WaterLevelTable({ readings,isAddDialogOpen, setIsAddDialogOpen }
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
-                <TableHead className="text-right">USWL (م)</TableHead>
-                <TableHead className="text-right">DSWL (م)</TableHead>
+                {showUSWL && <TableHead className="text-right">USWL (م)</TableHead>}
+                {showDSWL && <TableHead className="text-right">DSWL (م)</TableHead>}
                 <TableHead className="text-right">البطارية (V)</TableHead>
                 <TableHead className="text-right">التدفق المحسوب</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {readings.map((reading) => (
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
+                    جاري تحميل البيانات...
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && error && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-red-600">
+                    {error}
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !error && readings.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
+                    لا توجد قراءات لعرضها
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !error && readings.map((reading) => (
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
-                  <TableCell className="text-right">{reading.timestamp}</TableCell>
-                  <TableCell className="text-right">{reading.uswl.toFixed(1)}</TableCell>
-                  <TableCell className="text-right">{reading.dswl.toFixed(1)}</TableCell>
+                  <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
+                  {showUSWL && (
+                    <TableCell className="text-right">{reading.uswl.toFixed(2)}</TableCell>
+                  )}
+                  {showDSWL && (
+                    <TableCell className="text-right">{reading.dswl.toFixed(2)}</TableCell>
+                  )}
                   <TableCell className={`text-right ${reading.battery < 12.5 ? 'text-yellow-600 font-medium' : ''}`}>
-                    {reading.battery.toFixed(1)}
+                    {reading.battery.toFixed(2)}
                   </TableCell>
                   <TableCell className={`text-right ${reading.calculatedFlow < 30 ? 'text-red-600 font-medium' : ''}`}>
                     <div className="flex items-center justify-start gap-2">
-                      <span>{reading.calculatedFlow.toFixed(1)} م³/س</span>
+                      <span>{reading.calculatedFlow.toFixed(2)} م³/س</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
