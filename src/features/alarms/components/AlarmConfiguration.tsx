@@ -11,7 +11,7 @@ import {
   TableRow 
 } from '../../../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
-import { Plus, Edit, AlertTriangle, WifiOff, Mail } from 'lucide-react';
+import { Plus, Edit, AlertTriangle, WifiOff, Mail, Phone } from 'lucide-react';
 import { useAlarmsData } from '../hooks/useAlarmsData';
 import { 
   Dialog, 
@@ -353,18 +353,23 @@ export function AlarmConfiguration() {
         </div>
         {recipients.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {recipients.map(recipient => (
-              <Badge key={recipient} variant="secondary" className="flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                {recipient}
-                <button
-                  onClick={() => handleRemove(recipient, forAlarmType)}
-                  className="mr-1 hover:text-red-600"
-                >
-                  ×
-                </button>
-              </Badge>
-            ))}
+            {recipients.map(recipient => {
+              const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+              const isPhone = /^\d{11}$/.test(recipient);
+              return (
+                <Badge key={recipient} variant="secondary" className="flex items-center gap-1">
+                  {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                  {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                  {recipient}
+                  <button
+                    onClick={() => handleRemove(recipient, forAlarmType)}
+                    className="mr-1 hover:text-red-600"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              );
+            })}
           </div>
         )}
       </div>
@@ -865,12 +870,17 @@ export function AlarmConfiguration() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.recipients.map((email, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              <Mail className="ml-1 h-3 w-3" />
-                              {email}
-                            </Badge>
-                          ))}
+                          {alarm.recipients.map((recipient, idx) => {
+                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                            const isPhone = /^\d{11}$/.test(recipient);
+                            return (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                {recipient}
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -1148,10 +1158,12 @@ export function AlarmConfiguration() {
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
                           {alarm.recipients.map((recipient, idx) => {
-                            const isEmail = recipient.includes('@'); // Simple check for email
+                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                            const isPhone = /^\d{11}$/.test(recipient);
                             return (
                               <Badge key={idx} variant="secondary" className="text-xs">
-                                {isEmail ? <Mail className="ml-1 h-3 w-3" /> : <span className="ml-1 h-3 w-3">📱</span>}
+                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
                                 {recipient}
                               </Badge>
                             );
