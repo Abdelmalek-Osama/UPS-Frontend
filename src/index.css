@@ -2792,3 +2792,10 @@ body {
 .custom-toast .Toastify__toast-body {
   color: #333 !important; /* Ensure body text is dark */
 }
+
+/* Fix for unexpected '>' character in SelectValue component */
+[data-slot="select-value"]::before,
+[data-slot="select-value"]::after {
+  content: none !important;
+  display: none !important;
+}
