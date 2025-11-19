@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse } from '../types';
+import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse, PumpStationApiResponse } from '../types';
 import { toast } from 'react-toastify';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
+import type { Site } from '../../sites/types';
 
-export function useReadingsData() {
+export function useReadingsData(selectedSiteId: string) {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
@@ -24,35 +25,9 @@ export function useReadingsData() {
   const [editingPumpStation, setEditingPumpStation] = useState<PumpStationReading | null>(null);
   const [isEditWaterLevelOpen, setIsEditWaterLevelOpen] = useState(false);
   const [editingWaterLevel, setEditingWaterLevel] = useState<WaterLevelReading | null>(null);
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
 
-  const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([
-    { 
-      id: 1, 
-      site: 'محطة رفع - الجيزة 01', 
-      timestamp: '2025-11-03 11:00',
-      pumps: [
-        { time: 3.5, flow: 45.2 },
-        { time: 4.2, flow: 48.1 },
-        { time: 0, flow: 0 },
-      ],
-      totalUptime: 7.7,
-      totalFlow: 93.3,
-      hasAlarm: false
-    },
-    { 
-      id: 2, 
-      site: 'محطة رفع - الدقهلية 02', 
-      timestamp: '2025-11-03 11:00',
-      pumps: [
-        { time: 5.0, flow: 52.3 },
-        { time: 4.8, flow: 50.1 },
-        { time: 3.2, flow: 38.5 },
-      ],
-      totalUptime: 13.0,
-      totalFlow: 140.9,
-      hasAlarm: false
-    },
-  ]);
+  const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([]);
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
@@ -292,7 +267,7 @@ export function useReadingsData() {
       setPumpStationError(null);
 
       try {
-        const response = await apiService.get<ApiResponse<PumpStationReading[]> | PumpStationReading[]>(endpoint);
+        const response = await apiService.get<ApiResponse<PumpStationApiResponse[]> | PumpStationApiResponse[]>(endpoint);
 
         const payload = Array.isArray(response)
           ? response
@@ -300,7 +275,29 @@ export function useReadingsData() {
             ? response.data
             : [];
 
-        setPumpStationReadings(payload);
+        setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
+          id: reading.id,
+          site: reading.siteName,
+          timestamp: reading.timestamp,
+          usLevel: reading.usLevel,
+          ds1Level: reading.ds1Level,
+          ds2Level: reading.ds2Level,
+          pumps: [
+            { time: reading.p1_Time, flow: reading.p1_Flow },
+            { time: reading.p2_Time, flow: reading.p2_Flow },
+            { time: reading.p3_Time, flow: reading.p3_Flow },
+            { time: reading.p4_Time, flow: reading.p4_Flow },
+            { time: reading.p5_Time, flow: reading.p5_Flow },
+            { time: reading.p6_Time, flow: reading.p6_Flow },
+            { time: reading.p7_Time, flow: reading.p7_Flow },
+            { time: reading.p8_Time, flow: reading.p8_Flow },
+            { time: reading.p9_Time, flow: reading.p9_Flow },
+            { time: reading.p10_Time, flow: reading.p10_Flow },
+          ].filter(pump => pump.time > 0 || pump.flow > 0),
+          totalUptime: reading.totalUptime,
+          totalFlow: reading.totalFlow,
+          hasAlarm: false, // Assuming no alarm status in API for now
+        })));
       } catch (error: any) {
         console.error('Error fetching pump station readings', error);
         setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
@@ -315,6 +312,22 @@ export function useReadingsData() {
   useEffect(() => {
     fetchSitesLookup();
   }, [fetchSitesLookup]);
+
+  useEffect(() => {
+    const fetchSelectedSiteDetails = async () => {
+      if (selectedSiteId) {
+        try {
+          const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
+          setSelectedSite(response);
+        } catch (err) {
+          console.error("Failed to fetch selected site details:", err);
+          setSelectedSite(null);
+        }
+      }
+    };
+
+    fetchSelectedSiteDetails();
+  }, [selectedSiteId]);
 
   return {
     waterLevelReadings,
@@ -347,5 +360,6 @@ export function useReadingsData() {
     editingWaterLevel,
     setEditingWaterLevel,
     handleEditWaterLevel,
+    selectedSite,
   };
 }

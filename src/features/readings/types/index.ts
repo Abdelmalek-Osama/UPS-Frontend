@@ -48,6 +48,9 @@ export interface PumpStationReading {
   id: number;
   site: string;
   timestamp: string;
+  usLevel?: number;
+  ds1Level?: number;
+  ds2Level?: number;
   pumps: PumpData[];
   totalUptime: number;
   totalFlow: number;
@@ -60,6 +63,9 @@ export interface PumpStationApiResponse {
   siteName: string;
   timestamp: string;
   recordNumber: number;
+  usLevel?: number;
+  ds1Level?: number;
+  ds2Level?: number;
   p1_Time: number;
   p1_Flow: number;
   p2_Time: number;

@@ -45,6 +45,10 @@ import type { PumpStationReading } from '../types';
 import { DatePicker } from '../../../components/ui/datepicker';
 
 export function ReadingsManagement() {
+  const [activeTab, setActiveTab] = useState('waterLevel');
+  const [selectedSiteId, setSelectedSiteId] = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
   const {
     handleExport,
     waterLevelReadings,
@@ -70,10 +74,8 @@ export function ReadingsManagement() {
     fetchPumpStationReadings, // Added
     createPumpStationReading, // Added
     updatePumpStationReading, // Added
-  } = useReadingsData();
-  const [activeTab, setActiveTab] = useState('waterLevel');
-  const [selectedSiteId, setSelectedSiteId] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    selectedSite,
+  } = useReadingsData(selectedSiteId);
 
   useEffect(() => {
     if (sites.length > 0 && !selectedSiteId) {
@@ -237,6 +239,7 @@ export function ReadingsManagement() {
             fetchPumpStationReadings={fetchPumpStationReadings}
             createPumpStationReading={createPumpStationReading}
             updatePumpStationReading={updatePumpStationReading}
+            selectedSite={selectedSite}
           />
         </TabsContent>
       </Tabs>

@@ -111,6 +111,7 @@ interface PumpStationTableProps {
     totalFlow: number;
     isManual: boolean;
   }) => Promise<any>;
+  selectedSite: Site | null;
 }
 
 export function PumpStationTable({
@@ -134,28 +135,29 @@ export function PumpStationTable({
   fetchPumpStationReadings,
   createPumpStationReading,
   updatePumpStationReading,
+  selectedSite,
 }: PumpStationTableProps) {
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [readingTime, setReadingTime] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>(undefined);
     const [editReadingTime, setEditReadingTime] = useState<string>('');
-    const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+    // const [selectedSite, setSelectedSite] = useState<Site | null>(null);
 
     // Fetch selected site details to get numPumps
-    useEffect(() => {
-      const fetchSelectedSite = async () => {
-        if (selectedSiteId) {
-          try {
-            const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
-            setSelectedSite(response);
-          } catch (err) {
-            console.error("Failed to fetch site details:", err);
-            setSelectedSite(null);
-          }
-        }
-      };
-      fetchSelectedSite();
-    }, [selectedSiteId]);
+    // useEffect(() => {
+    //   const fetchSelectedSite = async () => {
+    //     if (selectedSiteId) {
+    //       try {
+    //         const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
+    //         setSelectedSite(response);
+    //       } catch (err) {
+    //         console.error("Failed to fetch site details:", err);
+    //         setSelectedSite(null);
+    //       }
+    //     }
+    //   };
+    //   fetchSelectedSite();
+    // }, [selectedSiteId]);
 
     // Existing states for dialogs and form inputs
 
@@ -163,10 +165,14 @@ export function PumpStationTable({
     
     // Determine number of pumps based on first reading's pumps array or site configuration
     const firstReading = readings.length > 0 ? readings[0] : null;
-    const numPumps = firstReading?.pumps?.length || selectedSite?.numPumps || 0;
+    const totalPumps = firstReading?.pumps?.length || selectedSite?.numPumps || 0;
     
-    // Calculate total column count for colSpan (site, timestamp, pumps*2, totalUptime, totalFlow, actions)
-    const totalColumns = 2 + (numPumps * 2) + 3;
+    // Calculate total column count for colSpan (site, timestamp, US, DS1, DS2, pumps*2, totalUptime, totalFlow, actions)
+    let totalColumns = 2; // Site and Timestamp
+    if (selectedSite?.hasUS) totalColumns += 1;
+    if (selectedSite?.hasDS1) totalColumns += 1;
+    if (selectedSite?.hasDS2) totalColumns += 1;
+    totalColumns += (totalPumps * 2) + 3; // Pumps (time + flow), totalUptime, totalFlow, actions
     
   return (
     <Card >
@@ -338,12 +344,15 @@ export function PumpStationTable({
       </CardHeader>
       <CardContent className="overflow-x-hidden">
         <div className="overflow-x-auto">
-          <Table  className="min-w-max" dir="rtl">
+          <Table  className="" dir="rtl">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
-                {numPumps > 0 && Array.from({ length: numPumps }).map((_, i) => (
+                {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>}
+                {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>}
+                {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>}
+                {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
                   <React.Fragment key={i}>
                     <TableHead className="text-right">مضخة {i + 1} وقت التشغيل</TableHead>
                     <TableHead className="text-right">مضخة {i + 1} التدفق</TableHead>
@@ -383,7 +392,10 @@ export function PumpStationTable({
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{reading.timestamp}</TableCell>
-                  {numPumps > 0 && Array.from({ length: numPumps }).map((_, i) => {
+                  {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>}
+                  {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>}
+                  {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>}
+                  {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
                     const pump = reading.pumps?.[i];
                     return (
                       <React.Fragment key={i}>
