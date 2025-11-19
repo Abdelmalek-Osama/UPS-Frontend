@@ -72,22 +72,8 @@ export function useAlarmsData() {
   const operators: string[] = []; // Placeholder, as operators might come from an API or be static in AlarmConfiguration
 
   const [isAddCommOpen, setIsAddCommOpen] = useState(false);
-  const [newRecipient, setNewRecipient] = useState('');
-  const [recipients, setRecipients] = useState<string[]>([]);
-  const addRecipient = () => {
-    if (newRecipient && !recipients.includes(newRecipient)) {
-      setRecipients([...recipients, newRecipient]);
-      setNewRecipient('');
-    }
-  };
-
-  const removeRecipient = (email: string) => {
-    setRecipients(recipients.filter(r => r !== email));
-  };
-
   const addThresholdAlarm = (newAlarm: ValueThresholdAlarm) => {
     setThresholdAlarms((prevAlarms) => [...prevAlarms, { ...newAlarm, id: prevAlarms.length > 0 ? Math.max(...prevAlarms.map(a => a.id)) + 1 : 1 }]);
-    setRecipients([]); // Clear recipients after adding alarm
   };
 
   const createThresholdAlarm = async (alarmData: CreateThresholdAlarmRequest) => {
@@ -120,6 +106,36 @@ export function useAlarmsData() {
     }
   };
 
+  const updateThresholdAlarm = async (alarmId: number, alarmData: CreateThresholdAlarmRequest) => {
+    try {
+      const response = await apiService.put<any, CreateThresholdAlarmRequest>(`/v1/alarm/threshold/${alarmId}`, alarmData);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to update threshold alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const updateCommunicationAlarm = async (alarmId: number, alarmData: CreateCommunicationAlarmRequest) => {
+    try {
+      const response = await apiService.put<any, CreateCommunicationAlarmRequest>(`/v1/alarm/communication/${alarmId}`, alarmData);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to update communication alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
   return {
     thresholdAlarms,
     setThresholdAlarms,
@@ -130,14 +146,10 @@ export function useAlarmsData() {
     sites,
     fields,
     operators,
-    addRecipient,
-    removeRecipient,
-    newRecipient,
-    setNewRecipient,
-    recipients,
-    setRecipients,
     addThresholdAlarm,
     createThresholdAlarm,
     createCommunicationAlarm,
+    updateThresholdAlarm,
+    updateCommunicationAlarm,
   };
 }
