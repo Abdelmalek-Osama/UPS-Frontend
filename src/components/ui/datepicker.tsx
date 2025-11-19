@@ -1,5 +1,5 @@
 // components/DatePicker.tsx
-import { useState } from "react"
+import React, { useState } from "react"
 import { Popover, PopoverTrigger, PopoverContent } from "./popover"
 import { Button } from "./button"
 import { Calendar } from "./calendar"
@@ -11,9 +11,11 @@ interface DatePickerProps {
   placeholder: string
   value?: Date
   onChange?: (date: Date | undefined) => void
+  minDate?: Date
+  maxDate?: Date
 }
 
-export function DatePicker({ placeholder, value, onChange }: DatePickerProps) {
+export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: DatePickerProps) {
   const [internalDate, setInternalDate] = useState<Date | undefined>(value)
   const date = value ?? internalDate
 
@@ -43,7 +45,9 @@ export function DatePicker({ placeholder, value, onChange }: DatePickerProps) {
           mode="single"
           selected={date}
           onSelect={handleSelect}
-          disabled={(date) => date > new Date()}
+          disabled={(date) =>
+            (minDate && date < minDate) || (maxDate && date > maxDate)
+          }
           locale={arSA}
         />
       </PopoverContent>
