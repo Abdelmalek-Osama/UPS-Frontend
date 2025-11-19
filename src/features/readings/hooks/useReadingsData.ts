@@ -1,62 +1,33 @@
-import { useState, useEffect } from 'react';
-import type { WaterLevelReading, PumpStationReading } from '../types';
-import { useSitesData } from '../../sites/hooks/useSitesData';
+import { useState, useEffect, useCallback } from 'react';
+import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse, PumpStationApiResponse } from '../types';
 import { toast } from 'react-toastify';
+import apiService, { ApiResponse } from '../../../shared/utils/apiService';
+import type { Site } from '../../sites/types';
 
-export function useReadingsData() {
+export function useReadingsData(selectedSiteId: string) {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
   
-  const { sites, directorates, loading } = useSitesData();
+  const [sites, setSites] = useState<SiteLookupOption[]>([]);
+  const [sitesError, setSitesError] = useState<string | null>(null);
+
+  const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([]);
+  const [waterLevelLoading, setWaterLevelLoading] = useState<boolean>(false);
+  const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
   
+  const [pumpStationLoading, setPumpStationLoading] = useState<boolean>(false);
+  const [pumpStationError, setPumpStationError] = useState<string | null>(null);
+
   // Edit dialog states
   const [isEditPumpStationOpen, setIsEditPumpStationOpen] = useState(false);
   const [editingPumpStation, setEditingPumpStation] = useState<PumpStationReading | null>(null);
   const [isEditWaterLevelOpen, setIsEditWaterLevelOpen] = useState(false);
   const [editingWaterLevel, setEditingWaterLevel] = useState<WaterLevelReading | null>(null);
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
 
-  const waterLevelReadings: WaterLevelReading[] = [
-    { id: 1, site: 'القناطر - القاهرة 01', timestamp: '2025-11-03 11:00', uswl: 125.4, dswl: 122.1, battery: 12.8, calculatedFlow: 34.5, hasAlarm: false },
-    { id: 2, site: 'القناطر - القاهرة 01', timestamp: '2025-11-03 10:00', uswl: 125.2, dswl: 121.9, battery: 12.4, calculatedFlow: 33.8, hasAlarm: true },
-    { id: 3, site: 'القناطر - الإسكندرية 01', timestamp: '2025-11-03 11:00', uswl: 98.7, dswl: 95.2, battery: 13.1, calculatedFlow: 28.9, hasAlarm: false },
-  ];
-
-  const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([
-    { 
-      id: 1, 
-      site: 'محطة رفع - الجيزة 01', 
-      timestamp: '2025-11-03 11:00',
-      uswl: 98.7,
-      dswl: 95.2,
-      battery: 13.1,
-      pumps: [
-        { time: 3.5, flow: 45.2 },
-        { time: 4.2, flow: 48.1 },
-        { time: 0, flow: 0 },
-      ],
-      totalUptime: 7.7,
-      totalFlow: 93.3,
-      hasAlarm: false
-    },
-    { 
-      id: 2, 
-      site: 'محطة رفع - الدقهلية 02', 
-      timestamp: '2025-11-03 11:00',
-      uswl: 100.3,
-      dswl: 87.2,
-      battery: 11.2,
-      pumps: [
-        { time: 5.0, flow: 52.3 },
-        { time: 4.8, flow: 50.1 },
-        { time: 3.2, flow: 38.5 },
-      ],
-      totalUptime: 13.0,
-      totalFlow: 140.9,
-      hasAlarm: false
-    },
-  ]);
+  const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([]);
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
@@ -82,11 +53,299 @@ export function useReadingsData() {
     toast.info('سيتم تصدير البيانات إلى ملف Excel');
   };
 
+  interface CreateWaterLevelReadingRequest {
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    uswl: number;
+    dswL1: number;
+    dswL2: number;
+    battery: number;
+    isManual: boolean;
+  }
+
+  interface CreatePumpStationReadingRequest {
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    p1_Time: number;
+    p1_Flow: number;
+    p2_Time: number;
+    p2_Flow: number;
+    p3_Time: number;
+    p3_Flow: number;
+    p4_Time: number;
+    p4_Flow: number;
+    p5_Time: number;
+    p5_Flow: number;
+    p6_Time: number;
+    p6_Flow: number;
+    p7_Time: number;
+    p7_Flow: number;
+    p8_Time: number;
+    p8_Flow: number;
+    p9_Time: number;
+    p9_Flow: number;
+    p10_Time: number;
+    p10_Flow: number;
+    totalUptime: number;
+    totalFlow: number;
+    isManual: boolean;
+  }
+
+  const createWaterLevelReading = useCallback(
+    async (data: CreateWaterLevelReadingRequest) => {
+      try {
+        const response = await apiService.post<ApiResponse<any>>(
+          '/v1/readings/water-level',
+          data
+        );
+        toast.success('تم إضافة القراءة بنجاح');
+        return response;
+      } catch (error: any) {
+        console.error('Error creating water level reading', error);
+        const errorMessage = error?.message || 'حدث خطأ أثناء إضافة القراءة';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
+  interface UpdateWaterLevelReadingRequest extends CreateWaterLevelReadingRequest {
+    id: number;
+  }
+
+  interface UpdatePumpStationReadingRequest extends CreatePumpStationReadingRequest {
+    id: number;
+  }
+
+  const updateWaterLevelReading = useCallback(
+    async (data: UpdateWaterLevelReadingRequest) => {
+      try {
+        const response = await apiService.put<ApiResponse<any>>(
+          `/v1/readings/water-level/${data.id}`,
+          data
+        );
+        toast.success('تم تحديث القراءة بنجاح');
+        return response;
+      } catch (error: any) {
+        console.error('Error updating water level reading', error);
+        const errorMessage = error?.message || 'حدث خطأ أثناء تحديث القراءة';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const createPumpStationReading = useCallback(
+    async (data: CreatePumpStationReadingRequest) => {
+      try {
+        const response = await apiService.post<ApiResponse<any>>(
+          '/v1/readings/pump-station',
+          data
+        );
+        toast.success('تم إضافة قراءة محطة الرفع بنجاح');
+        return response;
+      } catch (error: any) {
+        console.error('Error creating pump station reading', error);
+        const errorMessage = error?.message || 'حدث خطأ أثناء إضافة قراءة محطة الرفع';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const updatePumpStationReading = useCallback(
+    async (data: UpdatePumpStationReadingRequest) => {
+      try {
+        const response = await apiService.put<ApiResponse<any>>(
+          `/v1/readings/pump-station/${data.id}`,
+          data
+        );
+        toast.success('تم تحديث قراءة محطة الرفع بنجاح');
+        return response;
+      } catch (error: any) {
+        console.error('Error updating pump station reading', error);
+        const errorMessage = error?.message || 'حدث خطأ أثناء تحديث قراءة محطة الرفع';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const fetchSitesLookup = useCallback(async () => {
+    try {
+      setSitesError(null);
+      const response = await apiService.get<SiteLookupOption[] | { data: SiteLookupOption[] }>('/v1/Lookups/Lookup/Sites');
+      setSites(Array.isArray(response) ? response : (response as { data: SiteLookupOption[] }).data ?? []);
+    } catch (error) {
+      console.error('Error fetching lookup sites', error);
+      setSitesError('تعذر تحميل قائمة المواقع');
+    }
+  }, []);
+
+  const mapReading = (reading: WaterLevelReadingApiResponse): WaterLevelReading => ({
+    id: reading.id,
+    siteId: reading.siteId,
+    site: reading.siteName,
+    timestamp: reading.timestamp,
+    uswl: reading.uswl,
+    dswl: reading.dswL1,
+    battery: reading.battery,
+    calculatedFlow: reading.calculatedFlow,
+    hasAlarm: false,
+    recordNumber: reading.recordNumber,
+    isManual: reading.isManual,
+    siteConfiguration: reading.siteConfiguration,
+  });
+
+  const fetchWaterLevelReadings = useCallback(
+    async (siteId?: number, startDate?: string, endDate?: string) => {
+      if (!siteId) {
+        setWaterLevelReadings([]);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      if (startDate) {
+        params.append('startDate', startDate);
+      }
+      if (endDate) {
+        params.append('endDate', endDate);
+      }
+      const query = params.toString();
+      const endpoint = `/v1/readings/water-level/site/${siteId}/date-range${query ? `?${query}` : ''}`;
+
+      setWaterLevelLoading(true);
+      setWaterLevelError(null);
+
+      try {
+        const response = await apiService.get<ApiResponse<WaterLevelReadingApiResponse[]> | WaterLevelReadingApiResponse[]>(endpoint);
+
+        const payload = Array.isArray(response)
+          ? response
+          : Array.isArray(response.data)
+            ? response.data
+            : [];
+
+        setWaterLevelReadings(payload.map(mapReading));
+      } catch (error: any) {
+        console.error('Error fetching water level readings', error);
+        setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
+        setWaterLevelReadings([]);
+      } finally {
+        setWaterLevelLoading(false);
+      }
+    },
+    []
+  );
+
+  const fetchPumpStationReadings = useCallback(
+    async (siteId?: number, startDate?: string, endDate?: string) => {
+      if (!siteId) {
+        setPumpStationReadings([]);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      if (startDate) {
+        params.append('startDate', startDate);
+      }
+      if (endDate) {
+        params.append('endDate', endDate);
+      }
+      const query = params.toString();
+      const endpoint = `/v1/readings/pump-station/site/${siteId}/date-range${query ? `?${query}` : ''}`;
+
+      setPumpStationLoading(true);
+      setPumpStationError(null);
+
+      try {
+        const response = await apiService.get<ApiResponse<PumpStationApiResponse[]> | PumpStationApiResponse[]>(endpoint);
+
+        const payload = Array.isArray(response)
+          ? response
+          : Array.isArray(response.data)
+            ? response.data
+            : [];
+
+        setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
+          id: reading.id,
+          site: reading.siteName,
+          timestamp: reading.timestamp,
+          usLevel: reading.usLevel,
+          ds1Level: reading.ds1Level,
+          ds2Level: reading.ds2Level,
+          pumps: [
+            { time: reading.p1_Time, flow: reading.p1_Flow },
+            { time: reading.p2_Time, flow: reading.p2_Flow },
+            { time: reading.p3_Time, flow: reading.p3_Flow },
+            { time: reading.p4_Time, flow: reading.p4_Flow },
+            { time: reading.p5_Time, flow: reading.p5_Flow },
+            { time: reading.p6_Time, flow: reading.p6_Flow },
+            { time: reading.p7_Time, flow: reading.p7_Flow },
+            { time: reading.p8_Time, flow: reading.p8_Flow },
+            { time: reading.p9_Time, flow: reading.p9_Flow },
+            { time: reading.p10_Time, flow: reading.p10_Flow },
+          ].filter(pump => pump.time > 0 || pump.flow > 0),
+          totalUptime: reading.totalUptime,
+          totalFlow: reading.totalFlow,
+          hasAlarm: false, // Assuming no alarm status in API for now
+        })));
+      } catch (error: any) {
+        console.error('Error fetching pump station readings', error);
+        setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
+        setPumpStationReadings([]);
+      } finally {
+        setPumpStationLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    fetchSitesLookup();
+  }, [fetchSitesLookup]);
+
+  useEffect(() => {
+    const fetchSelectedSiteDetails = async () => {
+      if (selectedSiteId) {
+        try {
+          const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
+          setSelectedSite(response);
+        } catch (err) {
+          console.error("Failed to fetch selected site details:", err);
+          setSelectedSite(null);
+        }
+      }
+    };
+
+    fetchSelectedSiteDetails();
+  }, [selectedSiteId]);
+
   return {
     waterLevelReadings,
+    waterLevelLoading,
+    waterLevelError,
+    fetchWaterLevelReadings,
+    createWaterLevelReading,
+    updateWaterLevelReading,
     pumpStationReadings,
     setPumpStationReadings,
+    pumpStationLoading,
+    pumpStationError,
+    fetchPumpStationReadings,
+    createPumpStationReading,
+    updatePumpStationReading,
     sites,
+    setSites,
+    sitesError,
     handleViewPumpDetails,
     handleEditPump,
     handleExport,
@@ -101,5 +360,6 @@ export function useReadingsData() {
     editingWaterLevel,
     setEditingWaterLevel,
     handleEditWaterLevel,
+    selectedSite,
   };
 }

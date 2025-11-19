@@ -6,7 +6,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
-const API_BASE_URL = 'https://localhost:7123/api';
+const API_BASE_URL = 'https://localhost:44360/api/';
 
 /**
  * Create axios instance with default configuration

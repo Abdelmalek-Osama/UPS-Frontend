@@ -10,55 +10,177 @@ import {
   TableRow 
 } from '../../../components/ui/table';
 import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
-import type { PumpStationReading } from '../types';
-import {useReadingsData} from '../hooks/useReadingsData';
+import apiService from '../../../../src/shared/utils/apiService';
+import type { Site } from '../../sites/types';
+import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption} from "../types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '../../../components/ui/select';
 import {Input} from '../../../components/ui/input';
-import { Calendar } from '../../../components/ui/calendar';
 import {DatePicker} from '../../../components/ui/datepicker';
 
+interface ApiResponse<T> {
+  isSuccess: boolean;
+  message: string;
+  data: T;
+}
+
+// Redefine PumpStationApiResponse locally to match API response
+
+
+const formatDateTimeForAPI = (date: Date | null): string => {
+  if (!date) return '';
+  // Using toISOString for precise UTC formatting, then truncate to seconds
+  return date.toISOString().slice(0, 19);
+};
+
 interface PumpStationTableProps {
-  readings: PumpStationReading[];
   onViewDetails: (reading: PumpStationReading) => void;
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: (open: boolean) => void;
+  handleExport: () => void;
+  isEditPumpStationOpen: boolean;
+  setIsEditPumpStationOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  editingPumpStation: PumpStationReading | null;
+  setEditingPumpStation: React.Dispatch<React.SetStateAction<PumpStationReading | null>>;
+  handleEditPumpStation: (reading: PumpStationReading) => void;
+  readings: PumpStationReading[];
+  sites: SiteLookupOption[];
+  selectedSiteId: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  isLoading: boolean;
+  error: string | null;
+  fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  createPumpStationReading: (data: {
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    p1_Time: number;
+    p1_Flow: number;
+    p2_Time: number;
+    p2_Flow: number;
+    p3_Time: number;
+    p3_Flow: number;
+    p4_Time: number;
+    p4_Flow: number;
+    p5_Time: number;
+    p5_Flow: number;
+    p6_Time: number;
+    p6_Flow: number;
+    p7_Time: number;
+    p7_Flow: number;
+    p8_Time: number;
+    p8_Flow: number;
+    p9_Time: number;
+    p9_Flow: number;
+    p10_Time: number;
+    p10_Flow: number;
+    totalUptime: number;
+    totalFlow: number;
+    isManual: boolean;
+  }) => Promise<any>;
+  updatePumpStationReading: (data: {
+    id: number;
+    siteId: number;
+    timestamp: string;
+    timePerHour: number;
+    recordNumber: number;
+    p1_Time: number;
+    p1_Flow: number;
+    p2_Time: number;
+    p2_Flow: number;
+    p3_Time: number;
+    p3_Flow: number;
+    p4_Time: number;
+    p4_Flow: number;
+    p5_Time: number;
+    p5_Flow: number;
+    p6_Time: number;
+    p6_Flow: number;
+    p7_Time: number;
+    p7_Flow: number;
+    p8_Time: number;
+    p8_Flow: number;
+    p9_Time: number;
+    p9_Flow: number;
+    p10_Time: number;
+    p10_Flow: number;
+    totalUptime: number;
+    totalFlow: number;
+    isManual: boolean;
+  }) => Promise<any>;
+  selectedSite: Site | null;
 }
 
-export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, setIsAddDialogOpen }: PumpStationTableProps) {
-    const {
-        waterLevelReadings,
-        pumpStationReadings,
-        setPumpStationReadings,
-        sites,
-        handleViewPumpDetails,
-        handleEditPump,
-        handleExport,
-        isEditPumpStationOpen,
-        setIsEditPumpStationOpen,
-        editingPumpStation,
-        handleEditPumpStation,
-        }=useReadingsData();
+export function PumpStationTable({
+  // readings,
+  onViewDetails,
+  isAddDialogOpen,
+  setIsAddDialogOpen,
+  handleExport,
+  isEditPumpStationOpen,
+  setIsEditPumpStationOpen,
+  setEditingPumpStation,
+  editingPumpStation,
+  handleEditPumpStation,
+  readings,
+  sites,
+  selectedSiteId,
+  startDate,
+  endDate,
+  isLoading,
+  error,
+  fetchPumpStationReadings,
+  createPumpStationReading,
+  updatePumpStationReading,
+  selectedSite,
+}: PumpStationTableProps) {
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [readingTime, setReadingTime] = useState<string>('');
-    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
+    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>(undefined);
     const [editReadingTime, setEditReadingTime] = useState<string>('');
-    const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
+    // const [selectedSite, setSelectedSite] = useState<Site | null>(null);
 
-    useEffect(() => {
-      if (sites.length > 0 && !selectedSiteForAdd) {
-        setSelectedSiteForAdd(sites[0].name);
-      }
-    }, [sites, selectedSiteForAdd]);
+    // Fetch selected site details to get numPumps
+    // useEffect(() => {
+    //   const fetchSelectedSite = async () => {
+    //     if (selectedSiteId) {
+    //       try {
+    //         const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
+    //         setSelectedSite(response);
+    //       } catch (err) {
+    //         console.error("Failed to fetch site details:", err);
+    //         setSelectedSite(null);
+    //       }
+    //     }
+    //   };
+    //   fetchSelectedSite();
+    // }, [selectedSiteId]);
+
+    // Existing states for dialogs and form inputs
+
+    // Handlers
+    
+    // Determine number of pumps based on first reading's pumps array or site configuration
+    const firstReading = readings.length > 0 ? readings[0] : null;
+    const totalPumps = firstReading?.pumps?.length || selectedSite?.numPumps || 0;
+    
+    // Calculate total column count for colSpan (site, timestamp, US, DS1, DS2, pumps*2, totalUptime, totalFlow, actions)
+    let totalColumns = 2; // Site and Timestamp
+    if (selectedSite?.hasUS) totalColumns += 1;
+    if (selectedSite?.hasDS1) totalColumns += 1;
+    if (selectedSite?.hasDS2) totalColumns += 1;
+    totalColumns += (totalPumps * 2) + 3; // Pumps (time + flow), totalUptime, totalFlow, actions
     
   return (
-    <Card>
+    <Card >
       <CardHeader>
         <div className="flex items-center justify-between">
             <CardTitle>قراءات محطات رفع ({readings.length})</CardTitle>
             <div className="flex gap-2 justify-end">
-
+            
           <Button variant="outline" onClick={handleExport}>
             <Download className="ml-2 h-4 w-4" />
             تصدير
@@ -82,15 +204,16 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd}>
+                    <Select dir="rtl" value={selectedSiteId || ''} onValueChange={(value) => {
+                      // Site selection handled by parent
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">جميع المواقع</SelectItem>
-                        {sites.map(site => (
+                        {/* {sites.map(site => (
                           <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -99,7 +222,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     <DatePicker 
                     placeholder="اختر التاريخ"
                     value={readingDate}
-                    onChange={setReadingDate}
+                    onChange={(date) => setReadingDate(date ?? undefined)}
                     />
                   </div>
                 </div>
@@ -126,20 +249,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     <Label> المرفعات النشطة</Label>
                     <Input type="number" step="0.1" placeholder="125.4" />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label>	إجمالي وقت التشغيل</Label>
-                    <Input type="number" step="0.1" placeholder="122.1" />
-                  </div>*/}
                 </div>
-                {/* <div className="space-y-2">
-                  <Label>إجمالي التدفق</Label>
-                  <Input type="number" step="0.1" placeholder="12.8" />
-                </div> */}
-                {/* <div className="bg-gray-50 border rounded-lg p-4">
-                  <Label className="text-sm text-gray-600" >التدفق المحسوب</Label>
-                  <p className="text-2xl mt-1">34.5 م³/س</p>
-                  <p className="text-xs text-gray-500 mt-1">يتم الحساب تلقائياً بناءً على المعادلة المعرفة للموقع</p>
-                </div> */}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -167,16 +277,16 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     <Label>الموقع</Label>
                     <Select dir="rtl" value={editingPumpStation?.site || ""} onValueChange={(value) => {
                       if (editingPumpStation) {
-                        handleEditPumpStation({ ...editingPumpStation, site: value });
+                        setEditingPumpStation(prev => prev ? { ...prev, site: value } : null);
                       }
                     }}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
-                        {sites.map(site => (
+                        {/* {sites.map(site => (
                           <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
-                        ))}
+                        ))} */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -185,7 +295,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     <DatePicker 
                     placeholder="اختر التاريخ"
                     value={editReadingDate}
-                    onChange={setEditReadingDate}
+                    onChange={(date) => setEditReadingDate(date ?? undefined)}
                     />
                   </div>
                 </div>
@@ -213,7 +323,7 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     <Input 
                       type="number" 
                       step="0.1" 
-                      defaultValue={editingPumpStation?.pumps.filter(p => p.time > 0).length || 0}
+                      defaultValue={editingPumpStation?.pumps ? editingPumpStation.pumps.filter(p => p.time > 0).length : 0}
                       placeholder="0" 
                     />
                   </div>
@@ -232,35 +342,68 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-hidden">
         <div className="overflow-x-auto">
-          <Table dir="rtl">
+          <Table  className="" dir="rtl">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
-                <TableHead className="text-right">USWL (م)</TableHead>
-                <TableHead className="text-right">DSWL (م)</TableHead>
-                <TableHead className="text-right">البطارية (V)</TableHead>
-                <TableHead className="text-right">المرفعات النشطة</TableHead>
+                {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>}
+                {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>}
+                {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>}
+                {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
+                  <React.Fragment key={i}>
+                    <TableHead className="text-right">مضخة {i + 1} وقت التشغيل</TableHead>
+                    <TableHead className="text-right">مضخة {i + 1} التدفق</TableHead>
+                  </React.Fragment>
+                ))}
                 <TableHead className="text-right">إجمالي وقت التشغيل</TableHead>
                 <TableHead className="text-right">إجمالي التدفق</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {readings.map((reading) => (
+              {readings.length === 0 && !isLoading && !error && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="h-24 text-center">
+                    {selectedSiteId
+                      ? "لا توجد قراءات لمحطة الرفع هذه ضمن النطاق الزمني المحدد."
+                      : "الرجاء اختيار موقع لعرض قراءات محطة الرفع."}
+                  </TableCell>
+                </TableRow>
+              )}
+              {error && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="h-24 text-center text-red-500">
+                    حدث خطأ أثناء تحميل البيانات: {error}
+                  </TableCell>
+                </TableRow>
+              )}
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="h-24 text-center">
+                    تحميل البيانات...
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && !error && readings.map((reading) => {
+                return (
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{reading.timestamp}</TableCell>
-                  <TableCell className="text-right">{reading.uswl.toFixed(1)}</TableCell>
-                  <TableCell className="text-right">{reading.dswl.toFixed(1)}</TableCell>
-                  <TableCell className={`text-right ${reading.battery < 12.5 ? 'text-yellow-600 font-medium' : ''}`}>
-                    {reading.battery.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {reading.pumps.filter(p => p.time > 0).length} / {reading.pumps.length}
-                  </TableCell>
+                  {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>}
+                  {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>}
+                  {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>}
+                  {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
+                    const pump = reading.pumps?.[i];
+                    return (
+                      <React.Fragment key={i}>
+                        <TableCell className="text-right">{pump?.time?.toFixed(1) || 'N/A'} ساعة</TableCell>
+                        <TableCell className="text-right">{pump?.flow?.toFixed(1) || 'N/A'} م³/س</TableCell>
+                      </React.Fragment>
+                    );
+                  })}
                   <TableCell className="text-right">{reading.totalUptime.toFixed(1)} ساعة</TableCell>
                   <TableCell className="text-right">{reading.totalFlow.toFixed(1)} م³/س</TableCell>
                   <TableCell className="text-right">
@@ -282,7 +425,8 @@ export function PumpStationTable({ readings, onViewDetails, isAddDialogOpen, set
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+               );
+               })}
             </TableBody>
           </Table>
         </div>

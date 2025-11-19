@@ -11,7 +11,7 @@ export function useSitesData() {
     const fetchSites = async () => {
       try {
         setLoading(true);
-        const response = await apiService.get<Site[] | { data: Site[] }>('/v1/Sites/all');
+        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites/all');
         setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
       } catch (err) {
         setError('Failed to fetch sites');
