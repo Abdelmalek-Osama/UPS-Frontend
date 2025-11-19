@@ -38,8 +38,32 @@ import {
 import { useSitesData } from '../../sites/hooks/useSitesData';
 
 const FIELD_MAP: { [key: string]: number } = {
-  'مستوى الماء': 0,
-  'الضغط': 1,
+  USWL: 0,
+  DSWL: 1,
+  Battery: 2,
+  P1_Time: 3,
+  P1_Flow: 4,
+  P2_Time: 5,
+  P2_Flow: 6,
+  P3_Time: 7,
+  P3_Flow: 8,
+  P4_Time: 9,
+  P4_Flow: 10,
+  P5_Time: 11,
+  P5_Flow: 12,
+  P6_Time: 13,
+  P6_Flow: 14,
+  P7_Time: 15,
+  P7_Flow: 16,
+  P8_Time: 17,
+  P8_Flow: 18,
+  P9_Time: 19,
+  P9_Flow: 20,
+  P10_Time: 21,
+  P10_Flow: 22,
+  Calculated_flow: 23,
+  Total_uptime: 24,
+  Total_flow: 25,
 };
 
 const OPERATOR_MAP: { [key: string]: number } = {
@@ -80,17 +104,69 @@ const mapSeverityToNumber = (severity: 'Warning' | 'Critical'): number =>
     severity === 'Warning' ? 0 : 1;
 
 const mapNumberToField: { [key: number]: string } = {
-  0: 'مستوى الماء',
-  1: 'الضغط',
+  0: 'USWL',
+  1: 'DSWL',
+  2: 'Battery',
+  3: 'P1_Time',
+  4: 'P1_Flow',
+  5: 'P2_Time',
+  6: 'P2_Flow',
+  7: 'P3_Time',
+  8: 'P3_Flow',
+  9: 'P4_Time',
+  10: 'P4_Flow',
+  11: 'P5_Time',
+  12: 'P5_Flow',
+  13: 'P6_Time',
+  14: 'P6_Flow',
+  15: 'P7_Time',
+  16: 'P7_Flow',
+  17: 'P8_Time',
+  18: 'P8_Flow',
+  19: 'P9_Time',
+  20: 'P9_Flow',
+  21: 'P10_Time',
+  22: 'P10_Flow',
+  23: 'Calculated_flow',
+  24: 'Total_uptime',
+  25: 'Total_flow',
 };
 
-const FIELDS = ['مستوى الماء', 'الضغط'];
+const FIELDS = [
+  'USWL',
+  'DSWL',
+  'Battery',
+  'P1_Time',
+  'P1_Flow',
+  'P2_Time',
+  'P2_Flow',
+  'P3_Time',
+  'P3_Flow',
+  'P4_Time',
+  'P4_Flow',
+  'P5_Time',
+  'P5_Flow',
+  'P6_Time',
+  'P6_Flow',
+  'P7_Time',
+  'P7_Flow',
+  'P8_Time',
+  'P8_Flow',
+  'P9_Time',
+  'P9_Flow',
+  'P10_Time',
+  'P10_Flow',
+  'Calculated_flow',
+  'Total_uptime',
+  'Total_flow',
+];
 const OPERATORS = ['>', '<', '>=', '<=', '==', '!='];
 
 interface ThresholdAlarmForm {
   id: number; // Added for editing existing alarms
   siteId: number | null;
   alarmName: string;
+  site: string; // Added site property
   field: string;
   operator: string;
   threshold: number;
@@ -103,6 +179,7 @@ interface CommunicationAlarmForm {
   id: number; // Added for editing existing alarms
   siteId: number | null;
   alarmName: string;
+  site: string; // Added site property
   severity: 'Warning' | 'Critical';
   hours: number;
   recipients: string[];
@@ -112,6 +189,7 @@ const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
   id: 0, // Placeholder for new alarms
   siteId: null,
   alarmName: '',
+  site: '', // Added site property
   field: '',
   operator: '',
   threshold: 0,
@@ -124,6 +202,7 @@ const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
   id: 0, // Placeholder for new alarms
   siteId: null,
   alarmName: '',
+  site: '', // Added site property
   severity: 'Warning',
   hours: 0,
   recipients: [],
@@ -243,6 +322,7 @@ export function AlarmConfiguration() {
       id: alarm.id, // Populate ID for editing
       siteId: sites.find(site => site.name === alarm.site)?.id || null,
       alarmName: alarm.alarmName,
+      site: alarm.site, // Populate site
       field: mapNumberToField[alarm.field],
       operator: mapNumberToOperator[alarm.operator],
       threshold: alarm.threshold,
@@ -257,6 +337,7 @@ export function AlarmConfiguration() {
       id: alarm.id, // Populate ID for editing
       siteId: sites.find(site => site.name === alarm.site)?.id || null,
       alarmName: alarm.alarmName,
+      site: alarm.site, // Populate site
       severity: alarm.severity,
       hours: alarm.hours,
       recipients: alarm.recipients,
@@ -694,24 +775,28 @@ export function AlarmConfiguration() {
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
                                 <Label>الموقع</Label>
-                                <Select 
-                                  onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
-                                    ...prev, 
-                                    siteId: parseInt(value)
-                                  }))} 
-                                  value={newThresholdAlarmForm.siteId?.toString() || ""}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر الموقع" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {sites.map(site => (
-                                      <SelectItem key={site.id} value={site.id.toString()}>
-                                        {site.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                {currentThresholdAlarm ? (
+                                  <Input type="text" value={currentThresholdAlarm.site} disabled />
+                                ) : (
+                                  <Select 
+                                    onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
+                                      ...prev, 
+                                      siteId: parseInt(value)
+                                    }))} 
+                                    value={newThresholdAlarmForm.siteId?.toString() || ""}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="اختر الموقع" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sites.map(site => (
+                                        <SelectItem key={site.id} value={site.id.toString()}>
+                                          {site.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
                               </div>
 
                               <div className="space-y-2">
@@ -1059,24 +1144,28 @@ export function AlarmConfiguration() {
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
                                 <Label>الموقع</Label>
-                                <Select 
-                                  onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({
-                                    ...prev, 
-                                    siteId: parseInt(value)
-                                  }))} 
-                                  value={newCommunicationAlarmForm.siteId?.toString() || ""}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر الموقع" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {sites.map(site => (
-                                      <SelectItem key={site.id} value={site.id.toString()}>
-                                        {site.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                {currentCommunicationAlarm ? (
+                                  <Input type="text" value={currentCommunicationAlarm.site} disabled />
+                                ) : (
+                                  <Select 
+                                    onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({
+                                      ...prev, 
+                                      siteId: parseInt(value)
+                                    }))} 
+                                    value={newCommunicationAlarmForm.siteId?.toString() || ""}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="اختر الموقع" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sites.map(site => (
+                                        <SelectItem key={site.id} value={site.id.toString()}>
+                                          {site.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
                               </div>
 
                               <div className="space-y-2">
