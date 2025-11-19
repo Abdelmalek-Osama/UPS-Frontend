@@ -1015,7 +1015,7 @@ export function AlarmConfiguration() {
                   <TableRow>
                     <TableHead className="text-right">إجراءات</TableHead>
                     <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">الحد الزمني</TableHead>
+                    <TableHead className="text-right">عدد الساعات</TableHead>
                     <TableHead className="text-right">الموقع</TableHead>
                     <TableHead className="text-right">الاسم</TableHead>
                   </TableRow>
@@ -1147,16 +1147,21 @@ export function AlarmConfiguration() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.recipients.map((email, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              <Mail className="ml-1 h-3 w-3" />
-                              {email}
-                            </Badge>
-                          ))}
+                          {alarm.recipients.map((recipient, idx) => {
+                            const isEmail = recipient.includes('@'); // Simple check for email
+                            return (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {isEmail ? <Mail className="ml-1 h-3 w-3" /> : <span className="ml-1 h-3 w-3">📱</span>}
+                                {recipient}
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline">{alarm.severity}</Badge>
+                        <Badge variant="outline">
+                          {alarm.hours} {alarm.hours === 1 ? 'ساعة' : 'ساعات'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">{alarm.site}</TableCell>
                       <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
