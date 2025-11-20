@@ -85,3 +85,19 @@ export interface CreateCommunicationAlarmRequest {
     numHours: number;
   };
 }
+
+export interface AlarmForm {
+  id: number;
+  siteId: number | null;
+  alarmName: string;
+  site: string;
+  severity: 'Warning' | 'Critical';
+  recipients: string[];
+  // Threshold specific
+  field?: string;
+  operator?: string;
+  threshold?: number;
+  color?: string;
+  // Communication specific
+  hours?: number;
+}
