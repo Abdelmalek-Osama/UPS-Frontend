@@ -8,7 +8,8 @@ import {
   Users,
   LogOut,
   Menu,
-  Droplets
+  Droplets,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -34,6 +35,7 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
     { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
     { id: 'readings', label: 'القراءات', icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
     { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
+    { id: 'alarm-events', label: 'أحداث التنبيهات', icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
     { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
     { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
   ];

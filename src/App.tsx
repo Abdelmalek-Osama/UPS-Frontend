@@ -5,6 +5,7 @@ import type { User } from './features/auth/types';
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { DashboardHome } from './features/dashboard';
 import {AlarmConfiguration} from './features/alarms/components/AlarmConfiguration';
+import { AlarmEvents } from './features/alarms/components/AlarmEvents';
 // import {LoginPage} from './features/auth/components/LoginPage';
 import {FlowCalculations} from './features/flow-calculations/components/FlowCalculations';
 import {ReadingsManagement} from './features/readings/components/ReadingsManagement';
@@ -138,6 +139,7 @@ export default function App() {
       >
         <Route index element={<DashboardHome />} />
         <Route path="alarms" element={<AlarmConfiguration />} />
+        <Route path="alarms/events" element={<AlarmEvents />} />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
         <Route path="sites" element={<SitesManagement />} />
