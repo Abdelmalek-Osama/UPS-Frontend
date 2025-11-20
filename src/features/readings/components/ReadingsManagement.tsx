@@ -246,7 +246,7 @@ export function ReadingsManagement() {
             fetchPumpStationReadings={fetchPumpStationReadings}
             createPumpStationReading={createPumpStationReading}
             updatePumpStationReading={updatePumpStationReading}
-            selectedSite={selectedSite}
+            selectedSite={selectedSite?.data ?? null}
           />
         </TabsContent>
       </Tabs>

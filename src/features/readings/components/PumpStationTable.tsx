@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '../../../components/ui/table';
 import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
 import apiService from '../../../../src/shared/utils/apiService';
@@ -27,11 +27,48 @@ interface ApiResponse<T> {
 
 // Redefine PumpStationApiResponse locally to match API response
 
+interface CreatePumpStationReadingRequest {
+  siteId: number;
+  timestamp: string;
+  recordNumber: number;
+  timePerHour: number;
+  usLevel?: number;
+  ds1Level?: number;
+  ds2Level?: number;
+  p1_Time: number;
+  p1_Flow: number;
+  p2_Time: number;
+  p2_Flow: number;
+  p3_Time: number;
+  p3_Flow: number;
+  p4_Time: number;
+  p4_Flow: number;
+  p5_Time: number;
+  p5_Flow: number;
+  p6_Time: number;
+  p6_Flow: number;
+  p7_Time: number;
+  p7_Flow: number;
+  p8_Time: number;
+  p8_Flow: number;
+  p9_Time: number;
+  p9_Flow: number;
+  p10_Time: number;
+  p10_Flow: number;
+  totalUptime: number;
+  totalFlow: number;
+  isManual: boolean;
+}
 
 const formatDateTimeForAPI = (date: Date | null): string => {
   if (!date) return '';
-  // Using toISOString for precise UTC formatting, then truncate to seconds
-  return date.toISOString().slice(0, 19);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 };
 
 interface PumpStationTableProps {
@@ -43,7 +80,6 @@ interface PumpStationTableProps {
   setIsEditPumpStationOpen: React.Dispatch<React.SetStateAction<boolean>>;
   editingPumpStation: PumpStationReading | null;
   setEditingPumpStation: React.Dispatch<React.SetStateAction<PumpStationReading | null>>;
-  handleEditPumpStation: (reading: PumpStationReading) => void;
   readings: PumpStationReading[];
   sites: SiteLookupOption[];
   selectedSiteId: string;
@@ -52,35 +88,7 @@ interface PumpStationTableProps {
   isLoading: boolean;
   error: string | null;
   fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
-  createPumpStationReading: (data: {
-    siteId: number;
-    timestamp: string;
-    timePerHour: number;
-    recordNumber: number;
-    p1_Time: number;
-    p1_Flow: number;
-    p2_Time: number;
-    p2_Flow: number;
-    p3_Time: number;
-    p3_Flow: number;
-    p4_Time: number;
-    p4_Flow: number;
-    p5_Time: number;
-    p5_Flow: number;
-    p6_Time: number;
-    p6_Flow: number;
-    p7_Time: number;
-    p7_Flow: number;
-    p8_Time: number;
-    p8_Flow: number;
-    p9_Time: number;
-    p9_Flow: number;
-    p10_Time: number;
-    p10_Flow: number;
-    totalUptime: number;
-    totalFlow: number;
-    isManual: boolean;
-  }) => Promise<any>;
+  createPumpStationReading: (data: CreatePumpStationReadingRequest) => Promise<any>;
   updatePumpStationReading: (data: {
     id: number;
     siteId: number;
@@ -112,6 +120,7 @@ interface PumpStationTableProps {
     isManual: boolean;
   }) => Promise<any>;
   selectedSite: Site | null;
+  handleEditPumpStation: (reading: PumpStationReading) => void;
 }
 
 export function PumpStationTable({
@@ -124,7 +133,7 @@ export function PumpStationTable({
   setIsEditPumpStationOpen,
   setEditingPumpStation,
   editingPumpStation,
-  handleEditPumpStation,
+  handleEditPumpStation, // Re-added to props destructuring
   readings,
   sites,
   selectedSiteId,
@@ -137,29 +146,178 @@ export function PumpStationTable({
   updatePumpStationReading,
   selectedSite,
 }: PumpStationTableProps) {
+    const [pumpReadings, setPumpReadings] = useState<{ time: number; flow: number }[]>([]);
+    const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
-    const [readingTime, setReadingTime] = useState<string>('');
-    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>(undefined);
-    const [editReadingTime, setEditReadingTime] = useState<string>('');
-    // const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+    const [recordNumber, setRecordNumber] = useState<number>(0);
+    const [timePerHour, setTimePerHour] = useState<number>(0);
 
-    // Fetch selected site details to get numPumps
-    // useEffect(() => {
-    //   const fetchSelectedSite = async () => {
-    //     if (selectedSiteId) {
-    //       try {
-    //         const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
-    //         setSelectedSite(response);
-    //       } catch (err) {
-    //         console.error("Failed to fetch site details:", err);
-    //         setSelectedSite(null);
-    //       }
-    //     }
-    //   };
-    //   fetchSelectedSite();
-    // }, [selectedSiteId]);
+    const [editActivePumpsCount, setEditActivePumpsCount] = useState<number>(0);
+    const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
+    const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
+    const [editTimePerHour, setEditTimePerHour] = useState<number>(0);
+    const [editPumpReadings, setEditPumpReadings] = useState<{ time: number; flow: number }[]>([]);
 
-    // Existing states for dialogs and form inputs
+    // Extracted values for clearer conditional rendering
+    const shouldShowUSLevel = selectedSite?.hasUS ?? false;
+    const shouldShowDS1Level = selectedSite?.hasDS1 ?? false;
+    const shouldShowDS2Level = selectedSite?.hasDS2 ?? false;
+    const numberOfPumps = selectedSite?.numPumps ?? 0;
+
+    useEffect(() => {
+      console.log('useEffect (selectedSite?.numPumps) triggered. selectedSite.numPumps:', selectedSite?.numPumps);
+      if (selectedSite?.numPumps) {
+        setPumpReadings(Array.from({ length: selectedSite.numPumps }, () => ({ time: 0, flow: 0 })));
+      } else {
+        setPumpReadings([]);
+      }
+    }, [selectedSite?.numPumps]);
+
+    useEffect(() => {
+      if (isAddDialogOpen) {
+        setReadingDate(undefined);
+        setRecordNumber(0);
+        setTimePerHour(0);
+      
+        setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: 0, flow: 0 })));
+      }
+    }, [isAddDialogOpen, selectedSiteId, selectedSite?.numPumps]);
+
+    useEffect(() => {
+      if (isEditPumpStationOpen && editingPumpStation) {
+        setEditReadingDate(editingPumpStation.timestamp ? new Date(editingPumpStation.timestamp) : undefined);
+        setEditRecordNumber(editingPumpStation.recordNumber || 0); // Safeguard against undefined
+        setEditTimePerHour(editingPumpStation.timePerHour || 0); // Safeguard against undefined
+        setEditPumpReadings(editingPumpStation.pumps || []); // Safeguard against undefined
+      }
+    }, [isEditPumpStationOpen, editingPumpStation]);
+
+    const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
+      const newPumpReadings = [...pumpReadings];
+      newPumpReadings[index] = { ...newPumpReadings[index], [field]: parseFloat(value) || 0 };
+      setPumpReadings(newPumpReadings);
+    };
+
+    const handleEditPumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
+      const newEditPumpReadings = [...editPumpReadings];
+      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: parseFloat(value) || 0 };
+      setEditPumpReadings(newEditPumpReadings);
+    };
+
+    const handleAddReading = async () => {
+      if (!selectedSiteId || !readingDate || !timePerHour) {
+        // You might want to show a toast error here
+        return;
+      }
+
+      const dateTime = new Date(readingDate);
+      dateTime.setHours(Number(timePerHour), 0, 0, 0); // Use timePerHour for hours
+
+      const formattedTimestamp = formatDateTimeForAPI(dateTime);
+
+      const totalUptime = pumpReadings.reduce((sum, pump) => sum + pump.time, 0);
+      const totalFlow = pumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
+
+      // Initialize all pump data fields up to p10_Flow with 0
+      const pumpData: { [key: string]: number } = {};
+      for (let i = 1; i <= 10; i++) {
+        pumpData[`p${i}_Time`] = 0;
+        pumpData[`p${i}_Flow`] = 0;
+      }
+
+      // Overwrite with actual pumpReadings data
+      pumpReadings.forEach((pump, index) => {
+        if (index < 10) { // Ensure we don't go beyond p10
+          pumpData[`p${index + 1}_Time`] = pump.time;
+          pumpData[`p${index + 1}_Flow`] = pump.flow;
+        }
+      });
+
+      const requestBody: CreatePumpStationReadingRequest = {
+        siteId: Number(selectedSiteId),
+        timestamp: formattedTimestamp,
+        timePerHour: Number(timePerHour), // Map timePerHour directly
+        recordNumber: Number(recordNumber || 0),
+        ...pumpData as {
+          p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
+          p3_Time: number; p3_Flow: number; p4_Time: number; p4_Flow: number; 
+          p5_Time: number; p5_Flow: number; p6_Time: number; p6_Flow: number; 
+          p7_Time: number; p7_Flow: number; p8_Time: number; p8_Flow: number; 
+          p9_Time: number; p9_Flow: number; p10_Time: number; p10_Flow: number;
+        },
+        totalUptime,
+        totalFlow,
+        isManual: true,
+      };
+
+      try {
+        await createPumpStationReading(requestBody);
+        setIsAddDialogOpen(false);
+        // Optionally refetch readings
+        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
+      } catch (error) {
+        console.error("Failed to create pump station reading:", error);
+      }
+    };
+
+    const handleSaveEditPumpStation = async () => {
+      if (!editingPumpStation || !editReadingDate) {
+        return;
+      }
+
+      const siteId = Number(editingPumpStation.siteId); // Site cannot be changed for existing readings
+      if (!siteId || Number.isNaN(siteId)) {
+        return;
+      }
+
+      const dateTime = new Date(editReadingDate);
+      dateTime.setHours(Number(editTimePerHour), 0, 0, 0);
+
+      const totalUptime = editPumpReadings.reduce((sum, pump) => sum + pump.time, 0);
+      const totalFlow = editPumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
+
+      // Initialize all pump data fields up to p10_Flow with 0
+      const pumpData: { [key: string]: number } = {};
+      for (let i = 1; i <= 10; i++) {
+        pumpData[`p${i}_Time`] = 0;
+        pumpData[`p${i}_Flow`] = 0;
+      }
+
+      // Overwrite with actual editPumpReadings data
+      editPumpReadings.forEach((pump, index) => {
+        if (index < 10) { // Ensure we don't go beyond p10
+          pumpData[`p${index + 1}_Time`] = pump.time;
+          pumpData[`p${index + 1}_Flow`] = pump.flow;
+        }
+      });
+
+      try {
+        await updatePumpStationReading({
+          id: editingPumpStation.id,
+          siteId: siteId,
+          timestamp: formatDateTimeForAPI(dateTime),
+          timePerHour: Number(editTimePerHour) || 0,
+          recordNumber: Number(editRecordNumber) || 0,
+          ...pumpData as {
+            p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
+            p3_Time: number; p3_Flow: number; p4_Time: number; p4_Flow: number; 
+            p5_Time: number; p5_Flow: number; p6_Time: number; p6_Flow: number; 
+            p7_Time: number; p7_Flow: number; p8_Time: number; p8_Flow: number; 
+            p9_Time: number; p9_Flow: number; p10_Time: number; p10_Flow: number;
+          },
+          totalUptime,
+          totalFlow,
+          isManual: editingPumpStation.isManual ?? true,
+        });
+
+        setEditingPumpStation(null);
+        setIsEditPumpStationOpen(false);
+        // Optionally refetch readings
+        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
+      } catch (error) {
+        console.error("Failed to update pump station reading:", error);
+      }
+    };
 
     // Handlers
     
@@ -174,6 +332,15 @@ export function PumpStationTable({
     if (selectedSite?.hasDS2) totalColumns += 1;
     totalColumns += (totalPumps * 2) + 3; // Pumps (time + flow), totalUptime, totalFlow, actions
     
+    console.log('PumpStationTable - Rendering with:', {
+      selectedSite,
+      shouldShowUSLevel,
+      shouldShowDS1Level,
+      shouldShowDS2Level,
+      numberOfPumps,
+      isAddDialogOpen,
+    });
+
   return (
     <Card >
       <CardHeader>
@@ -200,7 +367,7 @@ export function PumpStationTable({
                   أدخل بيانات القراءة الجديدة
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div key={selectedSiteId} className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
@@ -211,9 +378,9 @@ export function PumpStationTable({
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* {sites.map(site => (
-                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
-                        ))} */}
+                        {sites.map(site => (
+                          <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -226,36 +393,95 @@ export function PumpStationTable({
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>الوقت</Label>
-                  <Select dir="rtl" value={readingTime} onValueChange={setReadingTime}>
-                    <SelectTrigger className="w-1/2">
-                      <SelectValue placeholder="اختر الساعة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hour = i.toString().padStart(2, '0');
-                        return (
-                          <SelectItem key={hour} value={`${hour}:00`}>
-                            {`${hour}:00`}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Removed USWL, DSWL, Battery, Record Number, Time Per Hour fields as per user request */}
+                {/* {shouldShowUSLevel && (
+                  <div className="space-y-2">
+                    <Label>المستوى العلوي (US)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={usLevel === '' ? '' : usLevel}
+                      onChange={(e) => setUsLevel(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </div>
+                )} */}
+                {/* {shouldShowDS1Level && (
+                  <div className="space-y-2">
+                    <Label>المستوى السفلي 1 (DS1)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={ds1Level === '' ? '' : ds1Level}
+                      onChange={(e) => setDs1Level(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </div>
+                )} */}
+                {/* {shouldShowDS2Level && (
+                  <div className="space-y-2">
+                    <Label>المستوى السفلي 2 (DS2)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={ds2Level === '' ? '' : ds2Level}
+                      onChange={(e) => setDs2Level(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </div>
+                )} */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label> المرفعات النشطة</Label>
-                    <Input type="number" step="0.1" placeholder="125.4" />
+                    <Label>رقم السجل</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={recordNumber}
+                      onChange={(e) => setRecordNumber(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الوقت لكل ساعة</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={timePerHour}
+                      onChange={(e) => setTimePerHour(parseFloat(e.target.value) || 0)}
+                    />
                   </div>
                 </div>
+
+                {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
+                  <div key={index} className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                        value={pumpReadings[index]?.time === undefined ? '' : pumpReadings[index].time}
+                        onChange={(e) => handlePumpInputChange(index, 'time', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>مضخة {index + 1} التدفق (م³/س)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                        value={pumpReadings[index]?.flow === undefined ? '' : pumpReadings[index].flow}
+                        onChange={(e) => handlePumpInputChange(index, 'flow', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={() => setIsAddDialogOpen(false)}>
+                <Button onClick={handleAddReading}>
                   حفظ القراءة
                 </Button>
               </DialogFooter>
@@ -299,41 +525,73 @@ export function PumpStationTable({
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>الوقت</Label>
-                  <Select dir="rtl" value={editReadingTime} onValueChange={setEditReadingTime}>
-                    <SelectTrigger className="w-1/2">
-                      <SelectValue placeholder="اختر الساعة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hour = i.toString().padStart(2, '0');
-                        return (
-                          <SelectItem key={hour} value={`${hour}:00`}>
-                            {`${hour}:00`}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label> المرفعات النشطة</Label>
                     <Input 
                       type="number" 
                       step="0.1" 
-                      defaultValue={editingPumpStation?.pumps ? editingPumpStation.pumps.filter(p => p.time > 0).length : 0}
+                      value={Number(editActivePumpsCount)}
+                      onChange={(e) => setEditActivePumpsCount(Number(e.target.value))}
                       placeholder="0" 
                     />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>رقم السجل</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={editRecordNumber.toString()}
+                      onChange={(e) => setEditRecordNumber(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الوقت لكل ساعة</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={editTimePerHour.toString()}
+                      onChange={(e) => setEditTimePerHour(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                
+                
+               
+
+                {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
+                  <div key={index} className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                        value={editPumpReadings[index]?.time?.toString() || ''}
+                        onChange={(e) => handleEditPumpInputChange(index, 'time', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>مضخة {index + 1} التدفق (م³/س)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                        value={editPumpReadings[index]?.flow?.toString() || ''}
+                        onChange={(e) => handleEditPumpInputChange(index, 'flow', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={() => setIsEditPumpStationOpen(false)}>
+                <Button onClick={handleSaveEditPumpStation}>
                   حفظ التعديلات
                 </Button>
               </DialogFooter>
@@ -349,9 +607,10 @@ export function PumpStationTable({
               <TableRow>
                 <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-right">التاريخ والوقت</TableHead>
-                {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>}
-                {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>}
-                {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>}
+                {/* Removed US, DS1, DS2 table headers */}
+                {/* {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>} */}
+                {/* {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>} */}
+                {/* {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>} */}
                 {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
                   <React.Fragment key={i}>
                     <TableHead className="text-right">مضخة {i + 1} وقت التشغيل</TableHead>
@@ -392,9 +651,10 @@ export function PumpStationTable({
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{reading.timestamp}</TableCell>
-                  {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>}
-                  {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>}
-                  {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>}
+                  {/* Removed US, DS1, DS2 table cells */}
+                  {/* {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
                     const pump = reading.pumps?.[i];
                     return (
