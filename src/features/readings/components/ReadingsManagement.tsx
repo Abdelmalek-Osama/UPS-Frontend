@@ -43,6 +43,7 @@ import { WaterLevelTable } from './WaterLevelTable';
 import { PumpStationTable } from './PumpStationTable';
 import type { PumpStationReading } from '../types';
 import { DatePicker } from '../../../components/ui/datepicker';
+import Loader from '../../../components/ui/Loader';
 
 export function ReadingsManagement() {
   const [activeTab, setActiveTab] = useState('waterLevel');
@@ -67,13 +68,12 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
-    waterLevelLoading,
+    isLoading, // Use the consolidated isLoading state
     waterLevelError,
-    pumpStationLoading, // Added
-    pumpStationError,   // Added
-    fetchPumpStationReadings, // Added
-    createPumpStationReading, // Added
-    updatePumpStationReading, // Added
+    pumpStationError,
+    fetchPumpStationReadings,
+    createPumpStationReading,
+    updatePumpStationReading,
     selectedSite,
   } = useReadingsData(selectedSiteId);
 
@@ -134,6 +134,11 @@ export function ReadingsManagement() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      {/* {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <Loader />
+        </div>
+      )} */}
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -163,11 +168,13 @@ export function ReadingsManagement() {
                 placeholder="من تاريخ"
                 value={fromDate}
                 onChange={setFromDate}
+                maxDate={toDate}
               />
               <DatePicker
                 placeholder="الى تاريخ"
                 value={toDate}
                 onChange={setToDate}
+                minDate={fromDate}
               />
               {(fromDate || toDate) && (
                 <Button
@@ -204,7 +211,7 @@ export function ReadingsManagement() {
             setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
             editingWaterLevel={editingWaterLevel}
             handleEditWaterLevel={handleEditWaterLevel}
-            isLoading={waterLevelLoading}
+            isLoading={isLoading}
             error={waterLevelError}
             createWaterLevelReading={createWaterLevelReading}
             updateWaterLevelReading={updateWaterLevelReading}
@@ -234,7 +241,7 @@ export function ReadingsManagement() {
             selectedSiteId={selectedSiteId}
             startDate={fromDate ?? null}
             endDate={toDate ?? null}
-            isLoading={pumpStationLoading}
+            isLoading={isLoading}
             error={pumpStationError}
             fetchPumpStationReadings={fetchPumpStationReadings}
             createPumpStationReading={createPumpStationReading}

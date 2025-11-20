@@ -352,12 +352,12 @@ export function PumpStationTable({
                 {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>}
                 {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>}
                 {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>}
-                {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
+                {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
                   <React.Fragment key={i}>
                     <TableHead className="text-right">مضخة {i + 1} وقت التشغيل</TableHead>
                     <TableHead className="text-right">مضخة {i + 1} التدفق</TableHead>
                   </React.Fragment>
-                ))}
+                ))} */}
                 <TableHead className="text-right">إجمالي وقت التشغيل</TableHead>
                 <TableHead className="text-right">إجمالي التدفق</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>
@@ -395,7 +395,7 @@ export function PumpStationTable({
                   {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>}
                   {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>}
                   {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>}
-                  {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
+                  {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
                     const pump = reading.pumps?.[i];
                     return (
                       <React.Fragment key={i}>
@@ -403,7 +403,7 @@ export function PumpStationTable({
                         <TableCell className="text-right">{pump?.flow?.toFixed(1) || 'N/A'} م³/س</TableCell>
                       </React.Fragment>
                     );
-                  })}
+                  })} */}
                   <TableCell className="text-right">{reading.totalUptime.toFixed(1)} ساعة</TableCell>
                   <TableCell className="text-right">{reading.totalFlow.toFixed(1)} م³/س</TableCell>
                   <TableCell className="text-right">
