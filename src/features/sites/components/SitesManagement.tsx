@@ -20,6 +20,7 @@ import {
 import { Search, MapPin, Droplets, Power } from 'lucide-react';
 import { useSitesData, useFilteredSites } from '../hooks/useSitesData';
 import { Skeleton } from '../../../components/ui/skeleton';
+import Loader from '../../../components/ui/Loader';
 
 export function SitesManagement() {
   const { sites, directorates, loading, error } = useSitesData();
@@ -32,6 +33,11 @@ export function SitesManagement() {
 
   return (
     <div className="space-y-6">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <Loader />
+        </div>
+      )}
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

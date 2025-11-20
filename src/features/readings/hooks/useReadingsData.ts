@@ -9,15 +9,14 @@ export function useReadingsData(selectedSiteId: string) {
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
-  
+  const [isLoading, setIsLoading] = useState(false); // General loading state
+
   const [sites, setSites] = useState<SiteLookupOption[]>([]);
   const [sitesError, setSitesError] = useState<string | null>(null);
 
   const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([]);
-  const [waterLevelLoading, setWaterLevelLoading] = useState<boolean>(false);
   const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
   
-  const [pumpStationLoading, setPumpStationLoading] = useState<boolean>(false);
   const [pumpStationError, setPumpStationError] = useState<string | null>(null);
 
   // Edit dialog states
@@ -97,6 +96,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const createWaterLevelReading = useCallback(
     async (data: CreateWaterLevelReadingRequest) => {
+      setIsLoading(true); // Start loading
       try {
         const response = await apiService.post<ApiResponse<any>>(
           '/v1/readings/water-level',
@@ -109,6 +109,8 @@ export function useReadingsData(selectedSiteId: string) {
         const errorMessage = error?.message || 'حدث خطأ أثناء إضافة القراءة';
         toast.error(errorMessage);
         throw error;
+      } finally {
+        setIsLoading(false); // End loading
       }
     },
     []
@@ -124,6 +126,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const updateWaterLevelReading = useCallback(
     async (data: UpdateWaterLevelReadingRequest) => {
+      setIsLoading(true); // Start loading
       try {
         const response = await apiService.put<ApiResponse<any>>(
           `/v1/readings/water-level/${data.id}`,
@@ -136,6 +139,8 @@ export function useReadingsData(selectedSiteId: string) {
         const errorMessage = error?.message || 'حدث خطأ أثناء تحديث القراءة';
         toast.error(errorMessage);
         throw error;
+      } finally {
+        setIsLoading(false); // End loading
       }
     },
     []
@@ -143,6 +148,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const createPumpStationReading = useCallback(
     async (data: CreatePumpStationReadingRequest) => {
+      setIsLoading(true); // Start loading
       try {
         const response = await apiService.post<ApiResponse<any>>(
           '/v1/readings/pump-station',
@@ -155,6 +161,8 @@ export function useReadingsData(selectedSiteId: string) {
         const errorMessage = error?.message || 'حدث خطأ أثناء إضافة قراءة محطة الرفع';
         toast.error(errorMessage);
         throw error;
+      } finally {
+        setIsLoading(false); // End loading
       }
     },
     []
@@ -162,6 +170,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const updatePumpStationReading = useCallback(
     async (data: UpdatePumpStationReadingRequest) => {
+      setIsLoading(true); // Start loading
       try {
         const response = await apiService.put<ApiResponse<any>>(
           `/v1/readings/pump-station/${data.id}`,
@@ -174,12 +183,15 @@ export function useReadingsData(selectedSiteId: string) {
         const errorMessage = error?.message || 'حدث خطأ أثناء تحديث قراءة محطة الرفع';
         toast.error(errorMessage);
         throw error;
+      } finally {
+        setIsLoading(false); // End loading
       }
     },
     []
   );
 
   const fetchSitesLookup = useCallback(async () => {
+    setIsLoading(true); // Start loading
     try {
       setSitesError(null);
       const response = await apiService.get<SiteLookupOption[] | { data: SiteLookupOption[] }>('/v1/Lookups/Lookup/Sites');
@@ -187,6 +199,8 @@ export function useReadingsData(selectedSiteId: string) {
     } catch (error) {
       console.error('Error fetching lookup sites', error);
       setSitesError('تعذر تحميل قائمة المواقع');
+    } finally {
+      setIsLoading(false); // End loading
     }
   }, []);
 
@@ -222,7 +236,7 @@ export function useReadingsData(selectedSiteId: string) {
       const query = params.toString();
       const endpoint = `/v1/readings/water-level/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
-      setWaterLevelLoading(true);
+      setIsLoading(true); // Start loading
       setWaterLevelError(null);
 
       try {
@@ -240,7 +254,7 @@ export function useReadingsData(selectedSiteId: string) {
         setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
         setWaterLevelReadings([]);
       } finally {
-        setWaterLevelLoading(false);
+        setIsLoading(false); // End loading
       }
     },
     []
@@ -263,7 +277,7 @@ export function useReadingsData(selectedSiteId: string) {
       const query = params.toString();
       const endpoint = `/v1/readings/pump-station/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
-      setPumpStationLoading(true);
+      setIsLoading(true); // Start loading
       setPumpStationError(null);
 
       try {
@@ -303,7 +317,7 @@ export function useReadingsData(selectedSiteId: string) {
         setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
         setPumpStationReadings([]);
       } finally {
-        setPumpStationLoading(false);
+        setIsLoading(false); // End loading
       }
     },
     []
@@ -331,14 +345,12 @@ export function useReadingsData(selectedSiteId: string) {
 
   return {
     waterLevelReadings,
-    waterLevelLoading,
     waterLevelError,
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
     pumpStationReadings,
     setPumpStationReadings,
-    pumpStationLoading,
     pumpStationError,
     fetchPumpStationReadings,
     createPumpStationReading,
@@ -361,5 +373,6 @@ export function useReadingsData(selectedSiteId: string) {
     setEditingWaterLevel,
     handleEditWaterLevel,
     selectedSite,
+    isLoading,
   };
 }
