@@ -47,6 +47,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
       setRole(user.role);
       setIsActive(user.isActive);
       setErrors({});
+      setIsSubmitting(false); // Reset submitting state on dialog open
     }
   }, [user]);
 
@@ -173,8 +174,10 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
           <Button 
             onClick={handleEditUser}
             disabled={isSubmitting}
+            loadingText="جاري الحفظ..." 
+            isLoading={isSubmitting}
           >
-            {isSubmitting ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
+            حفظ التغييرات
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -204,8 +204,10 @@ export function FlowCalculations() {
             <Button
               disabled={constantsLoading || savingConstants}
               onClick={handleSaveConstants}
+              loadingText="جاري الحفظ..."
+              isLoading={savingConstants}
             >
-              {savingConstants ? 'جاري الحفظ...' : 'حفظ المعاملات'}
+              حفظ المعاملات
             </Button>
           </div>
 

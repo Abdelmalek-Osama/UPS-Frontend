@@ -28,16 +28,19 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false); // New state for reset password submission
 
   React.useEffect(() => {
     if (!open) {
       setNewPassword('');
       setConfirmPassword('');
       setErrors([]);
+      setIsSubmittingResetPassword(false); // Reset submitting state on dialog close
     }
   }, [open]);
 
   const handleSubmit = async () => {
+    setIsSubmittingResetPassword(true); // Set submitting state to true
     const currentErrors: string[] = [];
 
     if (!newPassword) {
@@ -65,11 +68,13 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     setErrors(currentErrors);
 
     if (currentErrors.length > 0) {
+      setIsSubmittingResetPassword(false); // Reset on validation failure
       return;
     }
 
     if (!user) {
       // toast.error("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم.");
+      setIsSubmittingResetPassword(false); // Reset if user is not defined
       return;
     }
 
@@ -82,6 +87,8 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       onOpenChange(false);
     } catch (error: any) {
       // toast.error( "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
+    } finally {
+      setIsSubmittingResetPassword(false); // Reset submitting state to false
     }
   };
 
@@ -161,7 +168,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleSubmit} disabled={!newPassword || !confirmPassword}>
+          <Button onClick={handleSubmit} disabled={isSubmittingResetPassword || !newPassword || !confirmPassword} loadingText="جاري إعادة التعيين..." isLoading={isSubmittingResetPassword}>
             إعادة تعيين
           </Button>
         </DialogFooter>

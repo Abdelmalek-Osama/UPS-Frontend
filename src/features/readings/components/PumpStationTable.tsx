@@ -91,6 +91,8 @@ export function PumpStationTable({
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
     const [editTimePerHour, setEditTimePerHour] = useState<number>(0);
     const [editPumpReadings, setEditPumpReadings] = useState<{ time: number; flow: number }[]>([]);
+    const [isSubmittingAdd, setIsSubmittingAdd] = useState(false); // New state for add dialog submission
+    const [isSubmittingEdit, setIsSubmittingEdit] = useState(false); // New state for edit dialog submission
 
     const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false); // Added local state for pump details dialog
     const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null); // Added local state for selected reading
@@ -111,14 +113,19 @@ export function PumpStationTable({
     }, [selectedSite?.numPumps]);
 
     useEffect(() => {
-      if (isAddDialogOpen) {
+      if (!isAddDialogOpen) { // Reset form when dialog closes
         setReadingDate(undefined);
         setRecordNumber(0);
         setTimePerHour(0);
-      
         setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: 0, flow: 0 })));
       }
-    }, [isAddDialogOpen, selectedSiteId, selectedSite?.numPumps]);
+    }, [isAddDialogOpen, selectedSite?.numPumps]);
+
+    useEffect(() => {
+      if (!isAddDialogOpen) {
+        setIsSubmittingAdd(false); // Reset submitting state when dialog closes
+      }
+    }, [isAddDialogOpen]);
 
     useEffect(() => {
       if (isEditPumpStationOpen && editingPumpStation) {
@@ -128,6 +135,12 @@ export function PumpStationTable({
         setEditPumpReadings(editingPumpStation.pumps || []); // Safeguard against undefined
       }
     }, [isEditPumpStationOpen, editingPumpStation]);
+
+    useEffect(() => {
+      if (!isEditPumpStationOpen) {
+        setIsSubmittingEdit(false); // Reset submitting state when dialog closes
+      }
+    }, [isEditPumpStationOpen]);
 
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
@@ -147,6 +160,7 @@ export function PumpStationTable({
         return;
       }
 
+      setIsSubmittingAdd(true); // Set submitting state to true
       const dateTime = new Date(readingDate);
       dateTime.setHours(Number(timePerHour), 0, 0, 0); // Use timePerHour for hours
 
@@ -194,6 +208,8 @@ export function PumpStationTable({
         fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
       } catch (error) {
         console.error("Failed to create pump station reading:", error);
+      } finally {
+        setIsSubmittingAdd(false); // Ensure this is correctly set
       }
     };
 
@@ -228,6 +244,7 @@ export function PumpStationTable({
         }
       });
 
+      setIsSubmittingEdit(true); // Set submitting state to true
       try {
         await updatePumpStationReading({
           id: editingPumpStation.id,
@@ -253,6 +270,8 @@ export function PumpStationTable({
         fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
       } catch (error) {
         console.error("Failed to update pump station reading:", error);
+      } finally {
+        setIsSubmittingEdit(false); // Reset submitting state to false
       }
     };
 
@@ -437,7 +456,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleAddReading}>
+                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || !timePerHour} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
                   حفظ القراءة
                 </Button>
               </DialogFooter>
@@ -536,7 +555,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleSaveEditPumpStation}>
+                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
                   حفظ التعديلات
                 </Button>
               </DialogFooter>

@@ -230,13 +230,19 @@ export function AlarmConfiguration() {
   const [newCommunicationAlarmForm, setNewCommunicationAlarmForm] = useState<CommunicationAlarmForm>(INITIAL_COMMUNICATION_FORM);
   const [isEditCommOpen, setIsEditCommOpen] = useState(false);
   const [currentCommunicationAlarm, setCurrentCommunicationAlarm] = useState<CommunicationAlarmForm | null>(null);
+  const [isSubmittingThresholdAdd, setIsSubmittingThresholdAdd] = useState(false); // New state for add threshold dialog
+  const [isSubmittingThresholdEdit, setIsSubmittingThresholdEdit] = useState(false); // New state for edit threshold dialog
+  const [isSubmittingCommAdd, setIsSubmittingCommAdd] = useState(false); // New state for add communication dialog
+  const [isSubmittingCommEdit, setIsSubmittingCommEdit] = useState(false); // New state for edit communication dialog
 
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
+    setIsSubmittingThresholdAdd(true); // Set submitting state to true
     const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
     
     if (!siteId || !alarmName || !field || !operator) {
       console.error('Missing required threshold alarm fields');
+      setIsSubmittingThresholdAdd(false); // Reset on validation failure
       return;
     }
 
@@ -256,20 +262,26 @@ export function AlarmConfiguration() {
       },
     };
 
-    const result = await createThresholdAlarm(requestBody);
-    if (result.success) {
-      setIsAddThresholdOpen(false);
-      setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
-    } else {
-      console.error('Error creating threshold alarm:', result.message);
+    try {
+      const result = await createThresholdAlarm(requestBody);
+      if (result.success) {
+        setIsAddThresholdOpen(false);
+        setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
+      } else {
+        console.error('Error creating threshold alarm:', result.message);
+      }
+    } finally {
+      setIsSubmittingThresholdAdd(false); // Reset submitting state to false
     }
   };
 
   const handleSubmitCommunicationAlarm = async () => {
+    setIsSubmittingCommAdd(true); // Set submitting state to true
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
     
     if (!siteId || !alarmName) {
       console.error('Missing required communication alarm fields');
+      setIsSubmittingCommAdd(false); // Reset on validation failure
       return;
     }
 
@@ -286,12 +298,16 @@ export function AlarmConfiguration() {
       },
     };
 
-    const result = await createCommunicationAlarm(requestBody);
-    if (result.success) {
-      setIsAddCommOpen(false);
-      setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
-    } else {
-      console.error('Error creating communication alarm:', result.message);
+    try {
+      const result = await createCommunicationAlarm(requestBody);
+      if (result.success) {
+        setIsAddCommOpen(false);
+        setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
+      } else {
+        console.error('Error creating communication alarm:', result.message);
+      }
+    } finally {
+      setIsSubmittingCommAdd(false); // Reset submitting state to false
     }
   };
 
@@ -315,6 +331,30 @@ export function AlarmConfiguration() {
       setNewCommunicationAlarmForm(prev => ({ ...prev, siteId: sites[0].id }));
     }
   }, [sites, newCommunicationAlarmForm.siteId]);
+
+  useEffect(() => {
+    if (!isAddThresholdOpen) {
+      setIsSubmittingThresholdAdd(false); // Reset submitting state when dialog closes
+    }
+  }, [isAddThresholdOpen]);
+
+  useEffect(() => {
+    if (!isEditThresholdOpen) {
+      setIsSubmittingThresholdEdit(false); // Reset submitting state when dialog closes
+    }
+  }, [isEditThresholdOpen]);
+
+  useEffect(() => {
+    if (!isAddCommOpen) {
+      setIsSubmittingCommAdd(false); // Reset submitting state when dialog closes
+    }
+  }, [isAddCommOpen]);
+
+  useEffect(() => {
+    if (!isEditCommOpen) {
+      setIsSubmittingCommEdit(false); // Reset submitting state when dialog closes
+    }
+  }, [isEditCommOpen]);
 
   // Helper functions
   const populateThresholdAlarmFormForEdit = (alarm: any) => {
@@ -458,12 +498,14 @@ export function AlarmConfiguration() {
   };
 
   const handleEditThresholdAlarm = async () => {
+    setIsSubmittingThresholdEdit(true); // Set submitting state to true
     if (!currentThresholdAlarm) return;
 
     const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
     
     if (!siteId || !alarmName || !field || !operator) {
       console.error('Missing required threshold alarm fields');
+      setIsSubmittingThresholdEdit(false); // Reset on validation failure
       return;
     }
 
@@ -483,23 +525,29 @@ export function AlarmConfiguration() {
       },
     };
 
-    const result = await updateThresholdAlarm(currentThresholdAlarm.id, requestBody);
-    if (result.success) {
-      setIsEditThresholdOpen(false);
-      setCurrentThresholdAlarm(null);
-      setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
-    } else {
-      console.error('Error updating threshold alarm:', result.message);
+    try {
+      const result = await updateThresholdAlarm(currentThresholdAlarm.id, requestBody);
+      if (result.success) {
+        setIsEditThresholdOpen(false);
+        setCurrentThresholdAlarm(null);
+        setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
+      } else {
+        console.error('Error updating threshold alarm:', result.message);
+      }
+    } finally {
+      setIsSubmittingThresholdEdit(false); // Reset submitting state to false
     }
   };
 
   const handleEditCommunicationAlarm = async () => {
+    setIsSubmittingCommEdit(true); // Set submitting state to true
     if (!currentCommunicationAlarm) return;
 
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
     
     if (!siteId || !alarmName) {
       console.error('Missing required communication alarm fields');
+      setIsSubmittingCommEdit(false); // Reset on validation failure
       return;
     }
 
@@ -516,13 +564,17 @@ export function AlarmConfiguration() {
       },
     };
 
-    const result = await updateCommunicationAlarm(currentCommunicationAlarm.id, requestBody);
-    if (result.success) {
-      setIsEditCommOpen(false);
-      setCurrentCommunicationAlarm(null);
-      setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
-    } else {
-      console.error('Error updating communication alarm:', result.message);
+    try {
+      const result = await updateCommunicationAlarm(currentCommunicationAlarm.id, requestBody);
+      if (result.success) {
+        setIsEditCommOpen(false);
+        setCurrentCommunicationAlarm(null);
+        setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
+      } else {
+        console.error('Error updating communication alarm:', result.message);
+      }
+    } finally {
+      setIsSubmittingCommEdit(false); // Reset submitting state to false
     }
   };
 
@@ -723,7 +775,7 @@ export function AlarmConfiguration() {
                       <Button variant="outline" onClick={() => setIsAddThresholdOpen(false)}>
                         إلغاء
                       </Button>
-                      <Button onClick={handleSubmitThresholdAlarm}>
+                      <Button onClick={handleSubmitThresholdAlarm} disabled={isSubmittingThresholdAdd || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} loadingText="جاري الإضافة..." isLoading={isSubmittingThresholdAdd}>
                         إضافة التنبيه
                       </Button>
                     </div>
@@ -931,7 +983,7 @@ export function AlarmConfiguration() {
                                 <Button variant="outline" onClick={() => setIsEditThresholdOpen(false)}>
                                   إلغاء
                                 </Button>
-                                <Button onClick={handleEditThresholdAlarm}>
+                                <Button onClick={handleEditThresholdAlarm} disabled={isSubmittingThresholdEdit || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} loadingText="جاري الحفظ..." isLoading={isSubmittingThresholdEdit}>
                                   حفظ التغييرات
                                 </Button>
                               </div>
@@ -1095,7 +1147,7 @@ export function AlarmConfiguration() {
                       <Button variant="outline" onClick={() => setIsAddCommOpen(false)}>
                         إلغاء
                       </Button>
-                      <Button onClick={handleSubmitCommunicationAlarm}>
+                      <Button onClick={handleSubmitCommunicationAlarm} disabled={isSubmittingCommAdd || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName} loadingText="جاري الإضافة..." isLoading={isSubmittingCommAdd}>
                         إضافة التنبيه
                       </Button>
                     </div>
@@ -1236,7 +1288,7 @@ export function AlarmConfiguration() {
                                 <Button variant="outline" onClick={() => setIsEditCommOpen(false)}>
                                   إلغاء
                                 </Button>
-                                <Button onClick={handleEditCommunicationAlarm}>
+                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
                                   حفظ التغييرات
                                 </Button>
                               </div>
