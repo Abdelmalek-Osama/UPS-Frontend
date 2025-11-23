@@ -41,6 +41,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false); // New state for password visibility
   const [apiError, setApiError] = useState<string | null>(null); // New state for API errors
+  const [isSubmittingAddUser, setIsSubmittingAddUser] = useState(false); // New state for add user submission
 
   // Reset form fields when the dialog is opened
   React.useEffect(() => {
@@ -54,6 +55,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setAssignedSites([]);
       setErrors({});
       setApiError(null); // Clear API error on dialog open
+      setIsSubmittingAddUser(false); // Reset submitting state on dialog open
     }
   }, [open]);
 
@@ -84,7 +86,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   };
 
   const handleAddUser = async () => {
-    if (!validateForm()) return;
+    setIsSubmittingAddUser(true); // Set submitting state to true
+    if (!validateForm()) {
+      setIsSubmittingAddUser(false); // Reset on validation failure
+      return;
+    }
 
     try {
       const userData = {
@@ -112,6 +118,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     } catch (error: any) {
       setApiError('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقًا.'); // Set generic error message
       // toast.error('Failed to register user. Please try again later.');
+    } finally {
+      setIsSubmittingAddUser(false); // Reset submitting state to false
     }
   };
 
@@ -248,7 +256,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleAddUser}>
+          <Button onClick={handleAddUser} disabled={isSubmittingAddUser || !username || !email || !password || !fullName || !role || (role === 'Operator' && assignedSites.length === 0)} loadingText="جاري الإضافة..." isLoading={isSubmittingAddUser}>
             إضافة المستخدم
           </Button>
         </DialogFooter>

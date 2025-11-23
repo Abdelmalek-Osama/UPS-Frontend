@@ -278,7 +278,10 @@ export function WaterLevelTable({
                 تصدير
                 </Button>
             
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+                  setIsAddDialogOpen(open);
+                  setIsSubmitting(false); // Unconditionally reset submitting state when dialog opens or closes
+                }}>
                     <DialogTrigger asChild>
                     <Button>
                         <Plus className="ml-2 h-4 w-4" />
@@ -376,8 +379,8 @@ export function WaterLevelTable({
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                         إلغاء
                         </Button>
-                        <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || !readingTime || !selectedSiteForAdd}>
-                        {isSubmitting ? 'جاري الحفظ...' : 'حفظ القراءة'}
+                        <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || !readingTime || !selectedSiteForAdd} loadingText="جاري الحفظ..." isLoading={isSubmitting}>
+                        حفظ القراءة
                         </Button>
                     </DialogFooter>
                     </DialogContent>
@@ -485,8 +488,10 @@ export function WaterLevelTable({
                             !editReadingTime ||
                             !editSelectedSiteId
                           }
+                          loadingText="جاري الحفظ..."
+                          isLoading={isSubmittingEdit}
                         >
-                        {isSubmittingEdit ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                        حفظ التعديلات
                         </Button>
                     </DialogFooter>
                     </DialogContent>

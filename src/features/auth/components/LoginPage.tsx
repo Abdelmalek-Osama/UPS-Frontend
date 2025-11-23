@@ -137,7 +137,7 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
 
             
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}> {/* Disable button when loading */}
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading} loadingText="جاري تسجيل الدخول..." isLoading={loading}> {/* Disable button when loading */}
               تسجيل الدخول
             </Button>
 
