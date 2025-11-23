@@ -24,6 +24,7 @@ export interface WaterLevelReading {
   recordNumber?: number;
   isManual?: boolean;
   siteConfiguration?: SiteConfiguration;
+  alarms?: Alarm[];
 }
 
 export interface WaterLevelReadingApiResponse {
@@ -38,6 +39,7 @@ export interface WaterLevelReadingApiResponse {
   battery: number;
   isManual: boolean;
   siteConfiguration?: SiteConfiguration;
+  alarms?: Alarm[];
 }
 
 export interface PumpData {

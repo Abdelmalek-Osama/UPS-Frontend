@@ -217,6 +217,7 @@ export function useReadingsData(selectedSiteId: string) {
     recordNumber: reading.recordNumber,
     isManual: reading.isManual,
     siteConfiguration: reading.siteConfiguration,
+    alarms: reading.alarms, // Include alarms in mapping
   });
 
   const fetchWaterLevelReadings = useCallback(

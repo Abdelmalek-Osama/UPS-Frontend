@@ -16,6 +16,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Input } from '../../../components/ui/input';
 import { DatePicker } from '../../../components/ui/datepicker';
 import type { SiteLookupOption, WaterLevelReading } from '../types';
+import { getColorCategory } from '../utils/utils';
 
 interface WaterLevelTableProps {
   readings: WaterLevelReading[];
@@ -251,6 +252,19 @@ export function WaterLevelTable({
     
     // Calculate total column count for colSpan
     const totalColumns = 5 + (showUSWL ? 1 : 0) + (showDSWL ? 1 : 0);
+
+    const getAlarmColor = (reading: WaterLevelReading, fieldName: string) => {
+      const relevantAlarms = reading.alarms?.filter(alarm => alarm.fieldName === fieldName);
+      if (!relevantAlarms || relevantAlarms.length === 0) return undefined;
+
+      const hasRedAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'red');
+      if (hasRedAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'red')?.colorCode;
+
+      const hasYellowAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'yellow');
+      if (hasYellowAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'yellow')?.colorCode;
+
+      return undefined;
+    };
 
     return (
     <Card>
@@ -524,15 +538,15 @@ export function WaterLevelTable({
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className="text-right">{reading.uswl.toFixed(2)}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'USWL') }}>{reading.uswl.toFixed(2)}</TableCell>
                   )}
                   {showDSWL && (
-                    <TableCell className="text-right">{reading.dswl.toFixed(2)}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'DSWL') }}>{reading.dswl.toFixed(2)}</TableCell>
                   )}
-                  <TableCell className={`text-right ${reading.battery < 12.5 ? 'text-yellow-600 font-medium' : ''}`}>
+                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Battery') }}>
                     {reading.battery.toFixed(2)}
                   </TableCell>
-                  <TableCell className={`text-right ${reading.calculatedFlow < 30 ? 'text-red-600 font-medium' : ''}`}>
+                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'CalculatedFlow') }}>
                     <div className="flex items-center justify-start gap-2">
                       <span>{reading.calculatedFlow.toFixed(2)} م³/س</span>
                     </div>
