@@ -441,7 +441,7 @@ export function PumpStationTable({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>الوقت لكل ساعة</Label>
+                    <Label>الساعة</Label>
                     <Input
                       type="number"
                       step="0.1"
@@ -501,18 +501,18 @@ export function PumpStationTable({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" value={editingPumpStation?.site || ""} onValueChange={(value) => {
+                    <Select dir="rtl" value={editingPumpStation?.siteId?.toString() || ""} onValueChange={(value) => {
                       if (editingPumpStation) {
-                        setEditingPumpStation(prev => prev ? { ...prev, site: value } : null);
+                        setEditingPumpStation(prev => prev ? { ...prev, siteId: Number(value) } : null);
                       }
                     }}>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* {sites.map(site => (
-                          <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
-                        ))} */}
+                        {sites.map(site => (
+                          <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -525,18 +525,7 @@ export function PumpStationTable({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label> المرفعات النشطة</Label>
-                    <Input 
-                      type="number" 
-                      step="0.1" 
-                      value={Number(editActivePumpsCount)}
-                      onChange={(e) => setEditActivePumpsCount(Number(e.target.value))}
-                      placeholder="0" 
-                    />
-                  </div>
-                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>رقم السجل</Label>
@@ -548,7 +537,7 @@ export function PumpStationTable({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>الوقت لكل ساعة</Label>
+                    <Label>الساعة  </Label>
                     <Input
                       type="number"
                       step="0.1"
