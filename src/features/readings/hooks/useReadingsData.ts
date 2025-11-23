@@ -217,6 +217,7 @@ export function useReadingsData(selectedSiteId: string) {
     recordNumber: reading.recordNumber,
     isManual: reading.isManual,
     siteConfiguration: reading.siteConfiguration,
+    alarms: reading.alarms, // Include alarms in mapping
   });
 
   const fetchWaterLevelReadings = useCallback(
@@ -315,6 +316,7 @@ export function useReadingsData(selectedSiteId: string) {
           totalFlow: reading.totalFlow,
           hasAlarm: false, // Assuming no alarm status in API for now
           isManual: reading.isManual, // Include isManual in mapping
+          alarms: reading.alarms, // Include alarms in mapping
         })));
       } catch (error: any) {
         console.error('Error fetching pump station readings', error);
