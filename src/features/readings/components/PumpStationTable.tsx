@@ -12,53 +12,14 @@ import {
 import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
 import apiService from '../../../../src/shared/utils/apiService';
 import type { Site } from '../../sites/types';
-import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption} from "../types";
+import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption, ApiResponse, CreatePumpStationReadingRequest} from "../types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '../../../components/ui/select';
 import {Input} from '../../../components/ui/input';
 import {DatePicker} from '../../../components/ui/datepicker';
+import { hexToHsl, getColorCategory } from '../utils/utils';
 
-interface ApiResponse<T> {
-  isSuccess: boolean;
-  message: string;
-  data: T;
-}
-
-// Redefine PumpStationApiResponse locally to match API response
-
-interface CreatePumpStationReadingRequest {
-  siteId: number;
-  timestamp: string;
-  recordNumber: number;
-  timePerHour: number;
-  usLevel?: number;
-  ds1Level?: number;
-  ds2Level?: number;
-  p1_Time: number;
-  p1_Flow: number;
-  p2_Time: number;
-  p2_Flow: number;
-  p3_Time: number;
-  p3_Flow: number;
-  p4_Time: number;
-  p4_Flow: number;
-  p5_Time: number;
-  p5_Flow: number;
-  p6_Time: number;
-  p6_Flow: number;
-  p7_Time: number;
-  p7_Flow: number;
-  p8_Time: number;
-  p8_Flow: number;
-  p9_Time: number;
-  p9_Flow: number;
-  p10_Time: number;
-  p10_Flow: number;
-  totalUptime: number;
-  totalFlow: number;
-  isManual: boolean;
-}
 
 const formatDateTimeForAPI = (date: Date | null): string => {
   if (!date) return '';
@@ -72,7 +33,7 @@ const formatDateTimeForAPI = (date: Date | null): string => {
 };
 
 interface PumpStationTableProps {
-  onViewDetails: (reading: PumpStationReading) => void;
+  // onViewDetails: (reading: PumpStationReading) => void; // Removed, dialog handled internally
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: (open: boolean) => void;
   handleExport: () => void;
@@ -89,43 +50,15 @@ interface PumpStationTableProps {
   error: string | null;
   fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
   createPumpStationReading: (data: CreatePumpStationReadingRequest) => Promise<any>;
-  updatePumpStationReading: (data: {
-    id: number;
-    siteId: number;
-    timestamp: string;
-    timePerHour: number;
-    recordNumber: number;
-    p1_Time: number;
-    p1_Flow: number;
-    p2_Time: number;
-    p2_Flow: number;
-    p3_Time: number;
-    p3_Flow: number;
-    p4_Time: number;
-    p4_Flow: number;
-    p5_Time: number;
-    p5_Flow: number;
-    p6_Time: number;
-    p6_Flow: number;
-    p7_Time: number;
-    p7_Flow: number;
-    p8_Time: number;
-    p8_Flow: number;
-    p9_Time: number;
-    p9_Flow: number;
-    p10_Time: number;
-    p10_Flow: number;
-    totalUptime: number;
-    totalFlow: number;
-    isManual: boolean;
-  }) => Promise<any>;
+  updatePumpStationReading: (data: CreatePumpStationReadingRequest & { id: number }) => Promise<any>;
   selectedSite: Site | null;
   handleEditPumpStation: (reading: PumpStationReading) => void;
+  handleEditPump: (pumpIndex: number, reading: PumpStationReading) => void; // Added handleEditPump prop
 }
 
 export function PumpStationTable({
   // readings,
-  onViewDetails,
+  // onViewDetails, // Removed, dialog handled internally
   isAddDialogOpen,
   setIsAddDialogOpen,
   handleExport,
@@ -145,6 +78,7 @@ export function PumpStationTable({
   createPumpStationReading,
   updatePumpStationReading,
   selectedSite,
+  handleEditPump, // Added handleEditPump to destructuring
 }: PumpStationTableProps) {
     const [pumpReadings, setPumpReadings] = useState<{ time: number; flow: number }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
@@ -157,6 +91,9 @@ export function PumpStationTable({
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
     const [editTimePerHour, setEditTimePerHour] = useState<number>(0);
     const [editPumpReadings, setEditPumpReadings] = useState<{ time: number; flow: number }[]>([]);
+
+    const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false); // Added local state for pump details dialog
+    const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null); // Added local state for selected reading
 
     // Extracted values for clearer conditional rendering
     const shouldShowUSLevel = selectedSite?.hasUS ?? false;
@@ -320,6 +257,25 @@ export function PumpStationTable({
     };
 
     // Handlers
+    const handleViewDetailsClick = (reading: PumpStationReading) => {
+      setSelectedReading(reading);
+      setIsPumpDetailsOpen(true);
+    };
+
+    const getAlarmColor = (reading: PumpStationReading, fieldName: string) => {
+      const relevantAlarms = reading.alarms?.filter(alarm => alarm.fieldName === fieldName);
+      if (!relevantAlarms || relevantAlarms.length === 0) return undefined;
+
+      // Prioritize red alarms
+      const hasRedAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'red');
+      if (hasRedAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'red')?.colorCode;
+
+      // Then consider yellow alarms
+      const hasYellowAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'yellow');
+      if (hasYellowAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'yellow')?.colorCode;
+
+      return undefined;
+    };
     
     // Determine number of pumps based on first reading's pumps array or site configuration
     const firstReading = readings.length > 0 ? readings[0] : null;
@@ -667,7 +623,7 @@ export function PumpStationTable({
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => onViewDetails(reading)}
+                        onClick={() => handleViewDetailsClick(reading)}
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
@@ -680,6 +636,69 @@ export function PumpStationTable({
           </Table>
         </div>
       </CardContent>
+      {/* Pump Details Dialog */}
+      <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
+        <DialogContent className="sm:max-w-[700px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">تفاصيل قراءات المرفعات</DialogTitle>
+            <DialogDescription className="text-right">
+              {selectedReading?.site} - {selectedReading?.timestamp}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رقم المرفعة</TableHead>
+                  <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
+                  <TableHead className="text-right">التدفق (م³/س)</TableHead>
+                  <TableHead className="text-right">إجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedReading?.pumps.map((pump, index) => {
+                  const pumpTimeColor = getAlarmColor(selectedReading, `P${index + 1}_Time`);
+                  const pumpFlowColor = getAlarmColor(selectedReading, `P${index + 1}_Flow`);
+                  
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>مرفعة {index + 1}</TableCell>
+                      <TableCell style={{ color: pumpTimeColor }}>{pump.time.toFixed(1)}</TableCell>
+                      <TableCell style={{ color: pumpFlowColor }}>{pump.flow.toFixed(1)}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditPump(index, selectedReading as PumpStationReading)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">إجمالي وقت التشغيل</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} ساعة</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">إجمالي التدفق</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} م³/س</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPumpDetailsOpen(false)}>
+              إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

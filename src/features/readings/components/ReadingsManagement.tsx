@@ -95,8 +95,8 @@ export function ReadingsManagement() {
   const [toDate, setToDate] = useState<Date | undefined>();
 
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
-  const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
+  // const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
+  // const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
 
   useEffect(() => {
     if (!selectedSiteId) {
@@ -122,10 +122,10 @@ export function ReadingsManagement() {
   }, [selectedSiteId, fromDate, toDate, fetchPumpStationReadings]);
 
 
-  const handleViewPumpDetails = (reading: PumpStationReading) => {
-    setSelectedReading(reading);
-    setIsPumpDetailsOpen(true);
-  };
+  // const handleViewPumpDetails = (reading: PumpStationReading) => {
+  //   setSelectedReading(reading);
+  //   setIsPumpDetailsOpen(true);
+  // };
 
   const handleResetDates = () => {
     setFromDate(undefined);
@@ -228,7 +228,7 @@ export function ReadingsManagement() {
             
           <PumpStationTable 
             readings={pumpStationReadings} 
-            onViewDetails={handleViewPumpDetails}
+            // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
             isAddDialogOpen={isAddDialogOpen}
             setIsAddDialogOpen={setIsAddDialogOpen}
             sites={sites}
@@ -247,13 +247,14 @@ export function ReadingsManagement() {
             createPumpStationReading={createPumpStationReading}
             updatePumpStationReading={updatePumpStationReading}
             selectedSite={selectedSite?.data ?? null}
+            handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
           />
         </TabsContent>
       </Tabs>
       
     
       {/* Pump Details Dialog */}
-      <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
+      {/* <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
         <DialogContent className="sm:max-w-[700px]" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right">تفاصيل قراءات المرفعات</DialogTitle>
@@ -309,7 +310,7 @@ export function ReadingsManagement() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }
