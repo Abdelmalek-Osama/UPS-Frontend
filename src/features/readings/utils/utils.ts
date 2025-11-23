@@ -56,3 +56,21 @@ export const getColorCategory = (hexColor: string) => {
   }
   return 'other';
 };
+
+export const formatDateTimeForAPI = (date: Date | undefined, endOfDay: boolean = false): string => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  let hours = date.getHours().toString().padStart(2, '0');
+  let minutes = date.getMinutes().toString().padStart(2, '0');
+  let seconds = date.getSeconds().toString().padStart(2, '0');
+
+  if (endOfDay) {
+    hours = '23';
+    minutes = '59';
+    seconds = '59';
+  }
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
