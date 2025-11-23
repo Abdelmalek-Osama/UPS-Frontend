@@ -44,6 +44,7 @@ import { PumpStationTable } from './PumpStationTable';
 import type { PumpStationReading } from '../types';
 import { DatePicker } from '../../../components/ui/datepicker';
 import Loader from '../../../components/ui/Loader';
+import { formatDateTimeForAPI } from '../utils/utils';
 
 export function ReadingsManagement() {
   const [activeTab, setActiveTab] = useState('waterLevel');
@@ -91,12 +92,26 @@ export function ReadingsManagement() {
     return `${year}-${month}-${day}`;
   };
 
-  const [fromDate, setFromDate] = useState<Date | undefined>();
-  const [toDate, setToDate] = useState<Date | undefined>();
+  
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
 
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   // const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   // const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
+
+  useEffect(() => {
+    if (!selectedSiteId || fromDate !== undefined || toDate !== undefined) {
+      return;
+    }
+
+    const defaultToDate = new Date();
+    const defaultFromDate = new Date();
+    defaultFromDate.setHours(defaultFromDate.getHours() - 10);
+
+    setFromDate(defaultFromDate);
+    setToDate(defaultToDate);
+  }, [selectedSiteId, fromDate, toDate]);
 
   useEffect(() => {
     if (!selectedSiteId) {
@@ -118,7 +133,22 @@ export function ReadingsManagement() {
     if (Number.isNaN(siteNumericId)) {
       return;
     }
-    fetchPumpStationReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+
+    let apiFromDate = fromDate;
+    let apiToDate = toDate;
+
+    if (apiFromDate === undefined && apiToDate === undefined) {
+      // If both are undefined, use the default 10-hour range for the API call
+      apiToDate = new Date();
+      apiFromDate = new Date();
+      apiFromDate.setHours(apiFromDate.getHours() - 10);
+    }
+
+    fetchPumpStationReadings(
+      siteNumericId,
+      apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+    );
   }, [selectedSiteId, fromDate, toDate, fetchPumpStationReadings]);
 
 
@@ -239,8 +269,8 @@ export function ReadingsManagement() {
             setEditingPumpStation={setEditingPumpStation}
             handleEditPumpStation={handleEditPumpStation}
             selectedSiteId={selectedSiteId}
-            startDate={fromDate ?? null}
-            endDate={toDate ?? null}
+            startDate={fromDate ?? undefined}
+            endDate={toDate ?? undefined}
             isLoading={isLoading}
             error={pumpStationError}
             fetchPumpStationReadings={fetchPumpStationReadings}

@@ -18,19 +18,8 @@ import { Label } from '../../../components/ui/label';
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from '../../../components/ui/select';
 import {Input} from '../../../components/ui/input';
 import {DatePicker} from '../../../components/ui/datepicker';
-import { hexToHsl, getColorCategory } from '../utils/utils';
+import { hexToHsl, getColorCategory, formatDateTimeForAPI } from '../utils/utils';
 
-
-const formatDateTimeForAPI = (date: Date | null): string => {
-  if (!date) return '';
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-};
 
 interface PumpStationTableProps {
   // onViewDetails: (reading: PumpStationReading) => void; // Removed, dialog handled internally
@@ -44,8 +33,8 @@ interface PumpStationTableProps {
   readings: PumpStationReading[];
   sites: SiteLookupOption[];
   selectedSiteId: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
   isLoading: boolean;
   error: string | null;
   fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
@@ -164,7 +153,7 @@ export function PumpStationTable({
       const dateTime = new Date(readingDate);
       dateTime.setHours(Number(timePerHour), 0, 0, 0); // Use timePerHour for hours
 
-      const formattedTimestamp = formatDateTimeForAPI(dateTime);
+      const formattedTimestamp = dateTime.toISOString(); // Use toISOString() directly
 
       const totalUptime = pumpReadings.reduce((sum, pump) => sum + pump.time, 0);
       const totalFlow = pumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
@@ -205,7 +194,7 @@ export function PumpStationTable({
         await createPumpStationReading(requestBody);
         setIsAddDialogOpen(false);
         // Optionally refetch readings
-        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
+        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
       } catch (error) {
         console.error("Failed to create pump station reading:", error);
       } finally {
@@ -267,7 +256,7 @@ export function PumpStationTable({
         setEditingPumpStation(null);
         setIsEditPumpStationOpen(false);
         // Optionally refetch readings
-        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate) : undefined);
+        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
       } catch (error) {
         console.error("Failed to update pump station reading:", error);
       } finally {
@@ -587,26 +576,26 @@ export function PumpStationTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {readings.length === 0 && !isLoading && !error && (
-                <TableRow>
-                  <TableCell colSpan={totalColumns} className="h-24 text-center">
-                    {selectedSiteId
-                      ? "لا توجد قراءات لمحطة الرفع هذه ضمن النطاق الزمني المحدد."
-                      : "الرجاء اختيار موقع لعرض قراءات محطة الرفع."}
-                  </TableCell>
-                </TableRow>
-              )}
-              {error && (
-                <TableRow>
-                  <TableCell colSpan={totalColumns} className="h-24 text-center text-red-500">
-                    حدث خطأ أثناء تحميل البيانات: {error}
-                  </TableCell>
-                </TableRow>
-              )}
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={totalColumns} className="h-24 text-center">
-                    تحميل البيانات...
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
+                    جاري تحميل البيانات...
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && error && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-red-600">
+                    {error}
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !error && readings.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
+                    لا توجد قراءات لعرضها
                   </TableCell>
                 </TableRow>
               )}
