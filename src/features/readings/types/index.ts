@@ -15,6 +15,7 @@ export interface WaterLevelReading {
   site: string;
   siteId?: number;
   timestamp: string;
+  timePerHour?: number;
   uswl: number;
   dswl: number;
   battery: number;
@@ -47,7 +48,10 @@ export interface PumpData {
 export interface PumpStationReading {
   id: number;
   site: string;
+  siteId?: number;
   timestamp: string;
+  timePerHour?: number;
+  recordNumber: number;
   usLevel?: number;
   ds1Level?: number;
   ds2Level?: number;
@@ -55,6 +59,7 @@ export interface PumpStationReading {
   totalUptime: number;
   totalFlow: number;
   hasAlarm: boolean;
+  isManual: boolean;
 }
 
 export interface PumpStationApiResponse {
@@ -62,6 +67,7 @@ export interface PumpStationApiResponse {
   siteId: number;
   siteName: string;
   timestamp: string;
+  timePerHour: number;
   recordNumber: number;
   usLevel?: number;
   ds1Level?: number;

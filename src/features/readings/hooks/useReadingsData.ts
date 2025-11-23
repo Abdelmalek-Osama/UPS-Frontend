@@ -24,7 +24,7 @@ export function useReadingsData(selectedSiteId: string) {
   const [editingPumpStation, setEditingPumpStation] = useState<PumpStationReading | null>(null);
   const [isEditWaterLevelOpen, setIsEditWaterLevelOpen] = useState(false);
   const [editingWaterLevel, setEditingWaterLevel] = useState<WaterLevelReading | null>(null);
-  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+  const [selectedSite, setSelectedSite] = useState<ApiResponse<Site> | null>(null);
 
   const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([]);
 
@@ -292,7 +292,10 @@ export function useReadingsData(selectedSiteId: string) {
         setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
           id: reading.id,
           site: reading.siteName,
+          siteId: reading.siteId, // Include siteId in mapping
           timestamp: reading.timestamp,
+          timePerHour: reading.timePerHour, // Include timePerHour in mapping
+          recordNumber: reading.recordNumber, // Include recordNumber in mapping
           usLevel: reading.usLevel,
           ds1Level: reading.ds1Level,
           ds2Level: reading.ds2Level,
@@ -311,6 +314,7 @@ export function useReadingsData(selectedSiteId: string) {
           totalUptime: reading.totalUptime,
           totalFlow: reading.totalFlow,
           hasAlarm: false, // Assuming no alarm status in API for now
+          isManual: reading.isManual, // Include isManual in mapping
         })));
       } catch (error: any) {
         console.error('Error fetching pump station readings', error);
@@ -331,7 +335,7 @@ export function useReadingsData(selectedSiteId: string) {
     const fetchSelectedSiteDetails = async () => {
       if (selectedSiteId) {
         try {
-          const response = await apiService.get<Site>(`/v1/Sites/${selectedSiteId}`);
+          const response = await apiService.get<ApiResponse<Site>>(`/v1/Sites/${selectedSiteId}`);
           setSelectedSite(response);
         } catch (err) {
           console.error("Failed to fetch selected site details:", err);
