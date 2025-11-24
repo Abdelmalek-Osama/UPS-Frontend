@@ -79,14 +79,14 @@ export function WaterLevelTable({
   toDate,
 }: WaterLevelTableProps) {
     const [readingDate, setReadingDate] = useState<Date | undefined>();
-    const [readingTime, setReadingTime] = useState<string>('');
+    const [readingTime, setReadingTime] = useState<string | undefined>(undefined);
     const [uswl, setUswl] = useState<string>('');
     const [dswl, setDswl] = useState<string>('');
     const [battery, setBattery] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
-    const [editReadingTime, setEditReadingTime] = useState<string>('');
+    const [editReadingTime, setEditReadingTime] = useState<string | undefined>(undefined);
     const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
     const [editUswl, setEditUswl] = useState<string>('');
     const [editDswl, setEditDswl] = useState<string>('');
@@ -105,7 +105,7 @@ export function WaterLevelTable({
       if (!isAddDialogOpen) {
         // Reset form when dialog closes
         setReadingDate(undefined);
-        setReadingTime('');
+        setReadingTime(undefined);
         setUswl('');
         setDswl('');
         setBattery('');
@@ -123,7 +123,7 @@ export function WaterLevelTable({
         const timestampDate = editingWaterLevel.timestamp ? new Date(editingWaterLevel.timestamp) : undefined;
         setEditReadingDate(timestampDate);
         setEditReadingTime(
-          timestampDate ? `${timestampDate.getHours().toString().padStart(2, '0')}:00` : ''
+          timestampDate?.getHours() !== undefined ? `${timestampDate.getHours().toString().padStart(2, '0')}:00` : undefined
         );
         setEditUswl(editingWaterLevel.uswl?.toString() ?? '');
         setEditDswl(editingWaterLevel.dswl?.toString() ?? '');
@@ -136,6 +136,28 @@ export function WaterLevelTable({
         setIsSubmittingEdit(false);
       }
     }, [isEditWaterLevelOpen]);
+
+    useEffect(() => {
+      if (readingDate !== undefined && readingTime !== undefined) {
+        const now = new Date();
+        const isToday = readingDate.toDateString() === now.toDateString();
+        const selectedHour = parseInt(readingTime.split(':')[0]);
+        if (isToday && selectedHour > now.getHours()) {
+          setReadingTime(undefined); // Reset if selected hour is in the future on the current day
+        }
+      }
+    }, [readingDate, readingTime]);
+
+    useEffect(() => {
+      if (editReadingDate !== undefined && editReadingTime !== undefined) {
+        const now = new Date();
+        const isToday = editReadingDate.toDateString() === now.toDateString();
+        const selectedHour = parseInt(editReadingTime.split(':')[0]);
+        if (isToday && selectedHour > now.getHours()) {
+          setEditReadingTime(undefined); // Reset if selected hour is in the future on the current day
+        }
+      }
+    }, [editReadingDate, editReadingTime]);
 
     const formatTimestamp = (value: string) => {
       if (!value) return '--';
@@ -154,8 +176,28 @@ export function WaterLevelTable({
       return `${year}-${month}-${day}`;
     };
 
+    const getAvailableHours = (selectedDate?: Date) => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+
+      if (!selectedDate) {
+        return hours; // If no date is selected, all hours are theoretically available for selection
+      }
+
+      const isToday = selectedDate.toDateString() === now.toDateString();
+
+      if (isToday) {
+        return hours.filter(hour => hour <= currentHour);
+      } else if (selectedDate.getTime() > now.getTime()) {
+        return []; // Future date, no hours should be selectable
+      }
+
+      return hours; // Past date, all hours are available
+    };
+
     const handleAddReading = async () => {
-      if (!readingDate || !readingTime || !selectedSiteForAdd) {
+      if (!readingDate || readingTime === undefined || !selectedSiteForAdd) {
         return;
       }
 
@@ -185,7 +227,7 @@ export function WaterLevelTable({
 
         // Reset form
         setReadingDate(undefined);
-        setReadingTime('');
+        setReadingTime(undefined);
         setUswl('');
         setDswl('');
         setBattery('');
@@ -204,7 +246,7 @@ export function WaterLevelTable({
     };
 
     const handleUpdateReading = async () => {
-      if (!editingWaterLevel || !editReadingDate || !editReadingTime) {
+      if (!editingWaterLevel || !editReadingDate || editReadingTime === undefined) {
         return;
       }
 
@@ -321,13 +363,13 @@ export function WaterLevelTable({
                         </div>
                         <div className="space-y-2">
                         <Label>الوقت</Label>
-                        <Select dir="rtl" value={readingTime} onValueChange={setReadingTime}>
+                        <Select dir="rtl" value={readingTime || ''} onValueChange={(value) => setReadingTime(value === '' ? undefined : value)}>
                             <SelectTrigger className="w-1/2">
                             <SelectValue placeholder="اختر الساعة" />
                             </SelectTrigger>
                             <SelectContent>
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const hour = i.toString().padStart(2, '0');
+                            {getAvailableHours(readingDate).map((hourNum) => {
+                                const hour = hourNum.toString().padStart(2, '0');
                                 return (
                                 <SelectItem key={hour} value={`${hour}:00`}>
                                     {`${hour}:00`}
@@ -375,7 +417,7 @@ export function WaterLevelTable({
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                         إلغاء
                         </Button>
-                        <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || !readingTime || !selectedSiteForAdd} loadingText="جاري الحفظ..." isLoading={isSubmitting}>
+                        <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || readingTime === undefined || !selectedSiteForAdd} loadingText="جاري الحفظ..." isLoading={isSubmitting}>
                         حفظ القراءة
                         </Button>
                     </DialogFooter>
@@ -417,13 +459,13 @@ export function WaterLevelTable({
                         </div>
                         <div className="space-y-2">
                         <Label>الوقت</Label>
-                        <Select dir="rtl" value={editReadingTime} onValueChange={setEditReadingTime}>
+                        <Select dir="rtl" value={editReadingTime || ''} onValueChange={(value) => setEditReadingTime(value === '' ? undefined : value)}>
                             <SelectTrigger className="w-1/2">
                             <SelectValue placeholder="اختر الساعة" />
                             </SelectTrigger>
                             <SelectContent>
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const hour = i.toString().padStart(2, '0');
+                            {getAvailableHours(editReadingDate).map((hourNum) => {
+                                const hour = hourNum.toString().padStart(2, '0');
                                 return (
                                 <SelectItem key={hour} value={`${hour}:00`}>
                                     {`${hour}:00`}
@@ -477,7 +519,7 @@ export function WaterLevelTable({
                             isSubmittingEdit ||
                             !editingWaterLevel ||
                             !editReadingDate ||
-                            !editReadingTime ||
+                            editReadingTime === undefined ||
                             !editSelectedSiteId
                           }
                           loadingText="جاري الحفظ..."

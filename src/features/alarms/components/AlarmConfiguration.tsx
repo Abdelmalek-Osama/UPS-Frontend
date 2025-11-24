@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -37,6 +37,8 @@ import {
 } from '../types';
 import apiService from '../../../shared/utils/apiService'; // Import apiService
 import Loader from '../../../components/ui/Loader'; // Import Loader component
+import CommunicationAlarmConfig from './CommunicationAlarmConfig'; // Import the new component
+import { AlarmMethod } from '../types'; // Import AlarmMethod
 
 const FIELD_MAP: { [key: string]: number } = {
   USWL: 0,
@@ -276,7 +278,7 @@ export function AlarmConfiguration() {
       alarmName,
       emails: newThresholdAlarmForm.recipients.join(','),
       phones: '', // Assuming phones are combined into recipients
-      method: 0,
+      method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
         operator: mapOperatorToNumber(operator),
@@ -315,7 +317,7 @@ export function AlarmConfiguration() {
       alarmName,
       emails: newCommunicationAlarmForm.recipients.join(','),
       phones: '', // Assuming phones are combined into recipients
-      method: 0,
+      method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       communicationLoss: {
         severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
@@ -392,11 +394,15 @@ export function AlarmConfiguration() {
       threshold: alarm.threshold,
       color: alarm.color,
       severity: alarm.severity,
-      recipients: alarm.recipients,
+      recipients: alarm.recipients || [], // Ensure recipients is always an array
     });
   };
   
   const populateCommunicationAlarmFormForEdit = (alarm: any) => {
+    const combinedRecipients = [
+      ...(alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+      ...(alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+    ];
     setNewCommunicationAlarmForm({
       id: alarm.id, // Populate ID for editing
       siteId: alarm.siteId,
@@ -404,7 +410,7 @@ export function AlarmConfiguration() {
       site: alarm.site, // Populate site
       severity: alarm.severity,
       hours: alarm.hours,
-      recipients: alarm.recipients,
+      recipients: combinedRecipients, // Use combined emails and phones
     });
   };
   
@@ -539,7 +545,7 @@ export function AlarmConfiguration() {
       alarmName,
       emails: newThresholdAlarmForm.recipients.join(','),
       phones: '', // Assuming phones are combined into recipients
-      method: 0,
+      method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
         operator: mapOperatorToNumber(operator),
@@ -581,7 +587,7 @@ export function AlarmConfiguration() {
       alarmName,
       emails: newCommunicationAlarmForm.recipients.join(','),
       phones: '', // Assuming phones are combined into recipients
-      method: 0,
+      method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       communicationLoss: {
         severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
@@ -1044,14 +1050,14 @@ export function AlarmConfiguration() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.recipients.map((recipient, idx) => {
+                          {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
                             const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
                             const isPhone = /^\d{11}$/.test(recipient);
                             return (
                               <Badge key={idx} variant="secondary" className="text-xs">
                                 {isEmail && <Mail className="ml-1 h-3 w-3" />}
                                 {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
+                                {!isEmail && !isPhone && recipient}
                               </Badge>
                             );
                           })}
@@ -1086,7 +1092,7 @@ export function AlarmConfiguration() {
               
               <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}> {/* Reset form on add click */}
                     <Plus className="ml-2 h-4 w-4" />
                     إضافة تنبيه جديد
                   </Button>
@@ -1194,7 +1200,7 @@ export function AlarmConfiguration() {
                       <Button variant="outline" onClick={() => setIsAddCommOpen(false)}>
                         إلغاء
                       </Button>
-                      <Button onClick={handleSubmitCommunicationAlarm} disabled={isSubmittingCommAdd || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName} loadingText="جاري الإضافة..." isLoading={isSubmittingCommAdd}>
+                      <Button onClick={handleSubmitCommunicationAlarm} disabled={isSubmittingCommAdd || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الإضافة..." isLoading={isSubmittingCommAdd}>
                         إضافة التنبيه
                       </Button>
                     </div>
@@ -1224,7 +1230,20 @@ export function AlarmConfiguration() {
                               variant="ghost" 
                               size="sm"
                               onClick={() => {
-                                setCurrentCommunicationAlarm(alarm);
+                                // Transform CommunicationAlarm to CommunicationAlarmForm for setCurrentCommunicationAlarm
+                                const combinedRecipients = [
+                                  ...(alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+                                  ...(alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+                                ];
+                                setCurrentCommunicationAlarm({
+                                  id: alarm.id,
+                                  siteId: alarm.siteId,
+                                  alarmName: alarm.alarmName,
+                                  site: alarm.site || '',
+                                  severity: alarm.severity === 'Warning' ? 'Warning' : 'Critical',
+                                  hours: alarm.hours || 0,
+                                  recipients: combinedRecipients,
+                                });
                                 populateCommunicationAlarmFormForEdit(alarm);
                                 setIsEditCommOpen(true);
                               }}
@@ -1339,7 +1358,7 @@ export function AlarmConfiguration() {
                                 <Button variant="outline" onClick={() => setIsEditCommOpen(false)}>
                                   إلغاء
                                 </Button>
-                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
+                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
                                   حفظ التغييرات
                                 </Button>
                               </div>
@@ -1349,17 +1368,16 @@ export function AlarmConfiguration() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.recipients.map((recipient, idx) => {
-                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                            const isPhone = /^\d{11}$/.test(recipient);
-                            return (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                              </Badge>
-                            );
-                          })}
+                          {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
+                            <Badge key={`email-${idx}`} variant="secondary" className="text-xs">
+                              <Mail className="ml-1 h-3 w-3" /> {email.trim()}
+                            </Badge>
+                          ))}
+                          {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
+                            <Badge key={`phone-${idx}`} variant="secondary" className="text-xs">
+                              <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
+                            </Badge>
+                          ))}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
