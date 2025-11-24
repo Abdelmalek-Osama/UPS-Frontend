@@ -97,10 +97,8 @@ export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps)
                     key={item.id}
                     to={item.path}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      (item.path === '/'
-                        ? location.pathname === '/'
-                        : location.pathname.startsWith(item.path)
-                      )
+                      (item.path === location.pathname ||
+                        (item.path === '/' && location.pathname === '/'))
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}

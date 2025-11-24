@@ -36,6 +36,7 @@ import {
   CreateCommunicationAlarmRequest 
 } from '../types';
 import { useSitesData } from '../../sites/hooks/useSitesData';
+import Loader from '../../../components/ui/Loader'; // Import Loader component
 
 const FIELD_MAP: { [key: string]: number } = {
   USWL: 0,
@@ -218,6 +219,7 @@ export function AlarmConfiguration() {
     createCommunicationAlarm,
     updateThresholdAlarm,
     updateCommunicationAlarm,
+    isLoading, // Destructure isLoading from useAlarmsData
   } = useAlarmsData();
 
   const { sites } = useSitesData();
@@ -599,6 +601,11 @@ export function AlarmConfiguration() {
 
         {/* Threshold Alarms Tab */}
         <TabsContent value="threshold" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
           <Card>
             <CardHeader className="flex justify-between items-center" dir="rtl">
               <CardTitle className="text-right">
@@ -1031,10 +1038,16 @@ export function AlarmConfiguration() {
               </Table>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         {/* Communication Loss Alarms Tab */}
         <TabsContent value="communication" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
           <Card>
             <CardHeader className="flex justify-between items-center" dir="rtl">
               <CardTitle className="text-right">
@@ -1324,6 +1337,7 @@ export function AlarmConfiguration() {
               </Table>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
       </Tabs>    </div>
   );

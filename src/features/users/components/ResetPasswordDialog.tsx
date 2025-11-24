@@ -55,6 +55,9 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       if (!/\d/.test(newPassword)) {
         currentErrors.push('كلمة المرور يجب أن تحتوي على رقم واحد على الأقل');
       }
+      if (!/[a-z]/.test(newPassword)) {
+        currentErrors.push('كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل');
+      }
     }
 
     if (currentErrors.length === 0) {

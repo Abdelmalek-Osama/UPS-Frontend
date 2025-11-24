@@ -33,11 +33,6 @@ export function SitesManagement() {
 
   return (
     <div className="space-y-6">
-      {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
-          <Loader />
-        </div>
-      )}
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -98,10 +93,13 @@ export function SitesManagement() {
 
       {/* Loading, Error, or Sites Table */}
       {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          </CardContent>
+        </Card>
       ) : error ? (
         <div className="text-red-500 text-center py-8">Error: {error}</div>
       ) : (

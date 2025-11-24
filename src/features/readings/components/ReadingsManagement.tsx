@@ -93,25 +93,31 @@ export function ReadingsManagement() {
   };
 
   
-  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
-  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+  const [fromDate, setFromDate] = useState<Date | undefined>(() => {
+    const storedFromDate = localStorage.getItem('fromDate');
+    return storedFromDate ? new Date(storedFromDate) : undefined;
+  });
+  const [toDate, setToDate] = useState<Date | undefined>(() => {
+    const storedToDate = localStorage.getItem('toDate');
+    return storedToDate ? new Date(storedToDate) : undefined;
+  });
+
+  useEffect(() => {
+    if (fromDate) {
+      localStorage.setItem('fromDate', fromDate.toISOString());
+    } else {
+      localStorage.removeItem('fromDate');
+    }
+    if (toDate) {
+      localStorage.setItem('toDate', toDate.toISOString());
+    } else {
+      localStorage.removeItem('toDate');
+    }
+  }, [fromDate, toDate]);
 
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   // const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   // const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
-
-  useEffect(() => {
-    if (!selectedSiteId || fromDate !== undefined || toDate !== undefined) {
-      return;
-    }
-
-    const defaultToDate = new Date();
-    const defaultFromDate = new Date();
-    defaultFromDate.setHours(defaultFromDate.getHours() - 10);
-
-    setFromDate(defaultFromDate);
-    setToDate(defaultToDate);
-  }, [selectedSiteId, fromDate, toDate]);
 
   useEffect(() => {
     if (!selectedSiteId) {
@@ -121,7 +127,7 @@ export function ReadingsManagement() {
     if (Number.isNaN(siteNumericId)) {
       return;
     }
-    fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+    fetchWaterLevelReadings(siteNumericId, fromDate ? formatDate(fromDate) : undefined, toDate ? formatDate(toDate) : undefined);
   }, [selectedSiteId, fromDate, toDate, fetchWaterLevelReadings]);
 
   // Added useEffect for fetching pump station readings
@@ -137,7 +143,7 @@ export function ReadingsManagement() {
     let apiFromDate = fromDate;
     let apiToDate = toDate;
 
-    if (apiFromDate === undefined && apiToDate === undefined) {
+    if (apiFromDate === undefined || apiToDate === undefined) {
       // If both are undefined, use the default 10-hour range for the API call
       apiToDate = new Date();
       apiFromDate = new Date();
@@ -160,6 +166,8 @@ export function ReadingsManagement() {
   const handleResetDates = () => {
     setFromDate(undefined);
     setToDate(undefined);
+    localStorage.removeItem('fromDate');
+    localStorage.removeItem('toDate');
   };
 
   return (
@@ -230,55 +238,65 @@ export function ReadingsManagement() {
         </TabsList>
 
         <TabsContent value="waterLevel" className="mt-6">
-
-          <WaterLevelTable 
-            readings={waterLevelReadings} 
-            isAddDialogOpen={isAddDialogOpen} 
-            setIsAddDialogOpen={setIsAddDialogOpen}
-            sites={sites}
-            handleExport={handleExport}
-            isEditWaterLevelOpen={isEditWaterLevelOpen}
-            setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
-            editingWaterLevel={editingWaterLevel}
-            handleEditWaterLevel={handleEditWaterLevel}
-            isLoading={isLoading}
-            error={waterLevelError}
-            createWaterLevelReading={createWaterLevelReading}
-            updateWaterLevelReading={updateWaterLevelReading}
-            selectedSiteId={selectedSiteId}
-            fetchWaterLevelReadings={fetchWaterLevelReadings}
-            fromDate={fromDate}
-            toDate={toDate}
-          />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
+            <WaterLevelTable 
+              readings={waterLevelReadings} 
+              isAddDialogOpen={isAddDialogOpen} 
+              setIsAddDialogOpen={setIsAddDialogOpen}
+              sites={sites}
+              handleExport={handleExport}
+              isEditWaterLevelOpen={isEditWaterLevelOpen}
+              setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
+              editingWaterLevel={editingWaterLevel}
+              handleEditWaterLevel={handleEditWaterLevel}
+              isLoading={isLoading}
+              error={waterLevelError}
+              createWaterLevelReading={createWaterLevelReading}
+              updateWaterLevelReading={updateWaterLevelReading}
+              selectedSiteId={selectedSiteId}
+              fetchWaterLevelReadings={fetchWaterLevelReadings}
+              fromDate={fromDate}
+              toDate={toDate}
+            />
+          )}
 
         </TabsContent>
 
 
         <TabsContent value="pumpStation" className="mt-6">
-            
-          <PumpStationTable 
-            readings={pumpStationReadings} 
-            // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
-            isAddDialogOpen={isAddDialogOpen}
-            setIsAddDialogOpen={setIsAddDialogOpen}
-            sites={sites}
-            handleExport={handleExport}
-            isEditPumpStationOpen={isEditPumpStationOpen}
-            setIsEditPumpStationOpen={setIsEditPumpStationOpen}
-            editingPumpStation={editingPumpStation}
-            setEditingPumpStation={setEditingPumpStation}
-            handleEditPumpStation={handleEditPumpStation}
-            selectedSiteId={selectedSiteId}
-            startDate={fromDate ?? undefined}
-            endDate={toDate ?? undefined}
-            isLoading={isLoading}
-            error={pumpStationError}
-            fetchPumpStationReadings={fetchPumpStationReadings}
-            createPumpStationReading={createPumpStationReading}
-            updatePumpStationReading={updatePumpStationReading}
-            selectedSite={selectedSite?.data ?? null}
-            handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
-          />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
+            <PumpStationTable 
+              readings={pumpStationReadings} 
+              // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
+              isAddDialogOpen={isAddDialogOpen}
+              setIsAddDialogOpen={setIsAddDialogOpen}
+              sites={sites}
+              handleExport={handleExport}
+              isEditPumpStationOpen={isEditPumpStationOpen}
+              setIsEditPumpStationOpen={setIsEditPumpStationOpen}
+              editingPumpStation={editingPumpStation}
+              setEditingPumpStation={setEditingPumpStation}
+              handleEditPumpStation={handleEditPumpStation}
+              selectedSiteId={selectedSiteId}
+              startDate={fromDate ?? undefined}
+              endDate={toDate ?? undefined}
+              isLoading={isLoading}
+              error={pumpStationError}
+              fetchPumpStationReadings={fetchPumpStationReadings}
+              createPumpStationReading={createPumpStationReading}
+              updatePumpStationReading={updatePumpStationReading}
+              selectedSite={selectedSite?.data ?? null}
+              handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
+            />
+          )}
         </TabsContent>
       </Tabs>
       
