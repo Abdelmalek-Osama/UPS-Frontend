@@ -40,6 +40,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import apiService from '../../../shared/utils/apiService';
+import Loader from '../../../components/ui/Loader';
 
 type SeverityOption = 'warning' | 'critical' | 'info';
 
@@ -252,20 +253,14 @@ export function AlarmEvents() {
 
 
 
-      {isLoading && (
-        <Card>
-          <CardContent className="py-12 flex flex-col items-center gap-4 text-center text-gray-500">
-            <div className="w-10 h-10 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-            <p>يتم تحميل بيانات أحداث التنبيهات...</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="py-6 flex flex-col gap-4" dir="rtl">
-            <div>
-              <h3 className="text-lg font-semibold text-red-700">حدث خطأ أثناء جلب البيانات</h3>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-48">
+          <Loader />
+        </div>
+      ) : error ? (
+        <Card className="border-red-500 bg-red-50 text-red-800 p-4 mt-6" dir="rtl">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
               <p className="text-sm text-red-600 mt-1">{error}</p>
             </div>
             <div className="flex gap-2">
@@ -273,12 +268,7 @@ export function AlarmEvents() {
             </div>
           </CardContent>
         </Card>
-      )}
-
-
-
-      {/* Data Table or Empty State */}
-      {!isLoading && !error && (
+      ) : (
         filteredEvents.length === 0 ? (
         <Card>
           <CardContent className="py-16">
@@ -306,11 +296,7 @@ export function AlarmEvents() {
 
           <TabsContent value="table" className="mt-6">
             <Card>
-              <CardHeader>
-                <CardTitle>أحداث التنبيهات ({filteredEvents.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
+              <CardContent className="pt-6">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -366,77 +352,68 @@ export function AlarmEvents() {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
           </TabsContent>
 
           <TabsContent value="cards" className="mt-6">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredEvents.map((event) => (
-                <Card 
-                  key={event.id} 
-                  className="border shadow-sm hover:border-blue-200 transition cursor-pointer"
-                  onClick={() => handleRowClick(event)}
-                >
-                  <CardHeader className="space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-blue-600" />
-                        <CardTitle className="text-base">#{event.id}</CardTitle>
-                      </div>
-                      {getSeverityBadge(event.severity)}
-                    </div>
-                    <p className="text-sm text-gray-500">{event.triggeredAt}</p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="font-semibold text-right">{event.alarmName}</p>
-                      <p className="text-sm text-gray-500 text-right">
-                        {event.siteName}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="text-right">
-                        <p className="text-gray-500">الحقل</p>
-                        <Badge variant="outline" className="mt-1">{event.fieldName}</Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-500">القيم</p>
-                        <p className="mt-1">{event.value ?? '—'} / {event.thresholdValue ?? '—'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500">رمز اللون</div>
-                      <div 
-                        className="w-8 h-8 rounded border shadow-sm"
-                        style={{ backgroundColor: event.colorCode }}
-                      />
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-right">
-                      <p className="font-medium mb-1">الرسالة</p>
-                      <p className="text-gray-600 leading-relaxed">{event.message}</p>
-                    </div>
-
-                    <Button 
-                      variant="ghost" 
-                      className="w-full" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRowClick(event);
-                      }}
+                  {filteredEvents.map((event) => (
+                    <Card 
+                      key={event.id} 
+                      className="border shadow-sm hover:border-blue-200 transition cursor-pointer"
+                      onClick={() => handleRowClick(event)}
                     >
-                      عرض التفاصيل
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+                      <CardHeader className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-blue-600" />
+                            <CardTitle className="text-base">#{event.id}</CardTitle>
+                          </div>
+                          {getSeverityBadge(event.severity)}
+                        </div>
+                        <p className="text-sm text-gray-500">{event.triggeredAt}</p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <p className="font-semibold text-right">{event.alarmName}</p>
+                          <p className="text-sm text-gray-500 text-right">
+                            {event.siteName}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="text-right">
+                            <p className="text-gray-500">الحقل</p>
+                            <Badge variant="outline" className="mt-1">{event.fieldName}</Badge>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-500">القيم</p>
+                            <p className="mt-1">{event.value ?? '—'} / {event.thresholdValue ?? '—'}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-gray-500">رمز اللون</div>
+                          <div 
+                            className="w-8 h-8 rounded border shadow-sm"
+                            style={{ backgroundColor: event.colorCode }}
+                          />
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-right">
+                          <p className="font-medium mb-1">الرسالة</p>
+                          <p className="text-gray-600 leading-relaxed">{event.message}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                ) : (
+                  <div className="text-center py-8">لا توجد تنبيهات لعرضها.</div>
+                )
+            </TabsContent>
+          </Tabs>
         )
       )}
 

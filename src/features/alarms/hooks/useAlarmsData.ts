@@ -6,6 +6,7 @@ export function useAlarmsData() {
   const [thresholdAlarms, setThresholdAlarms] = useState<ValueThresholdAlarm[]>([]);
 
   const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarm[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   const mapToValueThresholdAlarm = (apiAlarm: ThresholdAlarmResponse): ValueThresholdAlarm => {
     const recipients = `${apiAlarm.emails},${apiAlarm.phones}`
@@ -47,6 +48,7 @@ export function useAlarmsData() {
   };
 
   const fetchAlarms = async () => {
+    setIsLoading(true); // Set loading to true before fetching
     try {
       const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/v1/alarm/threshold');
       if (thresholdResponse.isSuccess) {
@@ -59,6 +61,8 @@ export function useAlarmsData() {
       }
     } catch (error) {
       console.error('Failed to fetch alarms:', error);
+    } finally {
+      setIsLoading(false); // Set loading to false after fetching (success or failure)
     }
   };
 
@@ -151,5 +155,6 @@ export function useAlarmsData() {
     createCommunicationAlarm,
     updateThresholdAlarm,
     updateCommunicationAlarm,
+    isLoading, // Return isLoading state
   };
 }

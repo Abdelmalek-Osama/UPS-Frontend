@@ -35,7 +35,8 @@ import {
   CreateThresholdAlarmRequest, 
   CreateCommunicationAlarmRequest 
 } from '../types';
-import { useSitesData } from '../../sites/hooks/useSitesData';
+import apiService from '../../../shared/utils/apiService'; // Import apiService
+import Loader from '../../../components/ui/Loader'; // Import Loader component
 
 const FIELD_MAP: { [key: string]: number } = {
   USWL: 0,
@@ -162,6 +163,11 @@ const FIELDS = [
 ];
 const OPERATORS = ['>', '<', '>=', '<=', '==', '!='];
 
+interface Site {
+  id: number;
+  name: string;
+}
+
 interface ThresholdAlarmForm {
   id: number; // Added for editing existing alarms
   siteId: number | null;
@@ -218,9 +224,27 @@ export function AlarmConfiguration() {
     createCommunicationAlarm,
     updateThresholdAlarm,
     updateCommunicationAlarm,
+    isLoading, // Destructure isLoading from useAlarmsData
   } = useAlarmsData();
 
-  const { sites } = useSitesData();
+  const [sites, setSites] = useState<Site[]>([]);
+  const [sitesLoading, setSitesLoading] = useState(true);
+  const [sitesError, setSitesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        setSitesLoading(true);
+        const response = await apiService.get<Site[]>('/v1/Lookups/Lookup/Sites');
+        setSites(response);
+      } catch (error) {
+        setSitesError(error instanceof Error ? error.message : 'Failed to fetch sites');
+      } finally {
+        setSitesLoading(false);
+      }
+    };
+    fetchSites();
+  }, []);
   
   const [activeTab, setActiveTab] = useState('threshold');
   const [isAddThresholdOpen, setIsAddThresholdOpen] = useState(false);
@@ -322,13 +346,13 @@ export function AlarmConfiguration() {
   // Set default site when sites load
   useEffect(() => {
     if (sites.length > 0 && newThresholdAlarmForm.siteId === null) {
-      setNewThresholdAlarmForm(prev => ({ ...prev, siteId: sites[0].id }));
+      setNewThresholdAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
   }, [sites, newThresholdAlarmForm.siteId]);
 
   useEffect(() => {
     if (sites.length > 0 && newCommunicationAlarmForm.siteId === null) {
-      setNewCommunicationAlarmForm(prev => ({ ...prev, siteId: sites[0].id }));
+      setNewCommunicationAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
   }, [sites, newCommunicationAlarmForm.siteId]);
 
@@ -360,7 +384,7 @@ export function AlarmConfiguration() {
   const populateThresholdAlarmFormForEdit = (alarm: any) => {
     setNewThresholdAlarmForm({
       id: alarm.id, // Populate ID for editing
-      siteId: sites.find(site => site.name === alarm.site)?.id || null,
+      siteId: alarm.siteId,
       alarmName: alarm.alarmName,
       site: alarm.site, // Populate site
       field: mapNumberToField[alarm.field],
@@ -375,7 +399,7 @@ export function AlarmConfiguration() {
   const populateCommunicationAlarmFormForEdit = (alarm: any) => {
     setNewCommunicationAlarmForm({
       id: alarm.id, // Populate ID for editing
-      siteId: sites.find(site => site.name === alarm.site)?.id || null,
+      siteId: alarm.siteId,
       alarmName: alarm.alarmName,
       site: alarm.site, // Populate site
       severity: alarm.severity,
@@ -599,6 +623,11 @@ export function AlarmConfiguration() {
 
         {/* Threshold Alarms Tab */}
         <TabsContent value="threshold" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
           <Card>
             <CardHeader className="flex justify-between items-center" dir="rtl">
               <CardTitle className="text-right">
@@ -634,11 +663,15 @@ export function AlarmConfiguration() {
                           <SelectValue placeholder="اختر الموقع" />
                         </SelectTrigger>
                         <SelectContent>
-                          {sites.map(site => (
-                            <SelectItem key={site.id} value={site.id.toString()}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
+                          {sitesLoading ? (
+                            <SelectItem value="0">جاري التحميل...</SelectItem>
+                          ) : sitesError ? (
+                            <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                          ) : (
+                            sites.map(site => (
+                              <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -841,11 +874,15 @@ export function AlarmConfiguration() {
                                       <SelectValue placeholder="اختر الموقع" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {sites.map(site => (
-                                        <SelectItem key={site.id} value={site.id.toString()}>
-                                          {site.name}
-                                        </SelectItem>
-                                      ))}
+                                      {sitesLoading ? (
+                                        <SelectItem value="0">جاري التحميل...</SelectItem>
+                                      ) : sitesError ? (
+                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                                      ) : (
+                                        sites.map(site => (
+                                          <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                        ))
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 )}
@@ -1031,10 +1068,16 @@ export function AlarmConfiguration() {
               </Table>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         {/* Communication Loss Alarms Tab */}
         <TabsContent value="communication" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
           <Card>
             <CardHeader className="flex justify-between items-center" dir="rtl">
               <CardTitle className="text-right">
@@ -1070,11 +1113,15 @@ export function AlarmConfiguration() {
                           <SelectValue placeholder="اختر الموقع" />
                         </SelectTrigger>
                         <SelectContent>
-                          {sites.map(site => (
-                            <SelectItem key={site.id} value={site.id.toString()}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
+                          {sitesLoading ? (
+                            <SelectItem value="0">جاري التحميل...</SelectItem>
+                          ) : sitesError ? (
+                            <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                          ) : (
+                            sites.map(site => (
+                              <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1210,11 +1257,15 @@ export function AlarmConfiguration() {
                                       <SelectValue placeholder="اختر الموقع" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {sites.map(site => (
-                                        <SelectItem key={site.id} value={site.id.toString()}>
-                                          {site.name}
-                                        </SelectItem>
-                                      ))}
+                                      {sitesLoading ? (
+                                        <SelectItem value="0">جاري التحميل...</SelectItem>
+                                      ) : sitesError ? (
+                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                                      ) : (
+                                        sites.map(site => (
+                                          <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                        ))
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 )}
@@ -1324,6 +1375,7 @@ export function AlarmConfiguration() {
               </Table>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
       </Tabs>    </div>
   );

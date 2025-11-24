@@ -76,6 +76,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       newErrors.password = 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل';
     } else if (!/\d/.test(password)) {
       newErrors.password = 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل';
+    } else if (!/[a-z]/.test(password)) {
+      newErrors.password = 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل';
     }
     if (!role) newErrors.role = 'الدور مطلوب';
     if (role === 'Operator' && assignedSites.length === 0) {

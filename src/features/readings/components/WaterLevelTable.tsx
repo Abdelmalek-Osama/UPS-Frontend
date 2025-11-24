@@ -369,11 +369,7 @@ export function WaterLevelTable({
                           onChange={(e) => setBattery(e.target.value)}
                         />
                         </div>
-                        <div className="bg-gray-50 border rounded-lg p-4">
-                        <Label className="text-sm text-gray-600" >التدفق المحسوب</Label>
-                        <p className="text-2xl mt-1">34.5 م³/س</p>
-                        <p className="text-xs text-gray-500 mt-1">يتم الحساب تلقائياً بناءً على المعادلة المعرفة للموقع</p>
-                        </div>
+                        
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
@@ -469,11 +465,7 @@ export function WaterLevelTable({
                           placeholder="12.8" 
                         />
                         </div>
-                        <div className="bg-gray-50 border rounded-lg p-4">
-                        <Label className="text-sm text-gray-600" >التدفق المحسوب</Label>
-                        <p className="text-2xl mt-1">{editingWaterLevel?.calculatedFlow.toFixed(1) || '0.0'} م³/س</p>
-                        <p className="text-xs text-gray-500 mt-1">يتم الحساب تلقائياً بناءً على المعادلة المعرفة للموقع</p>
-                        </div>
+                        
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)} disabled={isSubmittingEdit}>
