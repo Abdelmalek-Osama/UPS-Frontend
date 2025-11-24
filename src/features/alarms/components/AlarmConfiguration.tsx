@@ -68,19 +68,19 @@ const FIELD_MAP: { [key: string]: number } = {
 };
 
 const OPERATOR_MAP: { [key: string]: number } = {
-  '>': 0,
-  '<': 1,
-  '>=': 2,
-  '<=': 3,
-  '==': 4,
-  '!=': 5,
+  '<' : 0,
+  '<=' : 1,
+  '>' : 2,
+  '>=' : 3,
+  '==' : 4,
+  '!=' : 5,
 };
 
 const mapNumberToOperator: { [key: number]: string } = {
-  0: '>',
-  1: '<',
-  2: '>=',
-  3: '<=',
+  0: '<',
+  1: '<=',
+  2: '>',
+  3: '>=',
   4: '==',
   5: '!=',
 };
