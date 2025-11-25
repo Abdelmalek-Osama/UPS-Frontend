@@ -234,7 +234,10 @@ export function ReadingsManagement() {
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="waterLevel">قراءات القناطر</TabsTrigger>
-          <TabsTrigger value="pumpStation">قراءات محطات رفع</TabsTrigger>
+          <TabsTrigger 
+            value="pumpStation" 
+            disabled={selectedSite?.data?.numPumps === 0}
+          >قراءات محطات رفع</TabsTrigger>
         </TabsList>
 
         <TabsContent value="waterLevel" className="mt-6">
