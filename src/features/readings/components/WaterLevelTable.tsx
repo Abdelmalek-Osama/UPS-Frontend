@@ -385,9 +385,21 @@ export function WaterLevelTable({
                             />
                         </div>
                         )}
-                        {(selectedSiteData?.hasDS1 || selectedSiteData?.hasDS2) && (
+                        {(selectedSiteData?.hasDS1) && (
                         <div className="space-y-2">
-                            <Label>DSWL (متر)</Label>
+                            <Label>DSWL1 (متر)</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="122.1"
+                              value={dswl}
+                              onChange={(e) => setDswl(e.target.value)}
+                            />
+                        </div>
+                        )}
+                        {(selectedSiteData?.hasDS2) && (
+                        <div className="space-y-2">
+                            <Label>DSWL2 (متر)</Label>
                             <Input
                               type="number"
                               step="0.1"
