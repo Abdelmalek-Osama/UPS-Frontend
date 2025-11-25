@@ -18,6 +18,21 @@ import { DatePicker } from '../../../components/ui/datepicker';
 import type { SiteLookupOption, WaterLevelReading } from '../types';
 import { getColorCategory } from '../utils/utils';
 
+interface SiteConfiguration {
+  id: number;
+  code: string;
+  name: string;
+  siteType: string;
+  canal: string;
+  longitude: number;
+  latitude: number;
+  directorateName: string;
+  hasUS: boolean;
+  hasDS1: boolean;
+  hasDS2: boolean;
+  numPumps: number;
+}
+
 interface WaterLevelTableProps {
   readings: WaterLevelReading[];
   isAddDialogOpen: boolean;
@@ -85,6 +100,7 @@ export function WaterLevelTable({
     const [battery, setBattery] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
+    const [selectedSiteData, setSelectedSiteData] = useState<SiteConfiguration | null>(null);
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editReadingTime, setEditReadingTime] = useState<string>('');
     const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
@@ -100,6 +116,25 @@ export function WaterLevelTable({
         setSelectedSiteForAdd(String(sites[0].id));
       }
     }, [sites, selectedSiteForAdd, selectedSiteId]);
+
+    useEffect(() => {
+      const fetchSiteData = async () => {
+        if (selectedSiteForAdd) {
+          try {
+            const response = await fetch(`https://localhost:7123/api/v1/Sites/${selectedSiteForAdd}`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            setSelectedSiteData(data.data);
+          } catch (error) {
+            console.error("Failed to fetch site data:", error);
+            setSelectedSiteData(null);
+          }
+        }
+      };
+      fetchSiteData();
+    }, [selectedSiteForAdd, sites]);
 
     useEffect(() => {
       if (!isAddDialogOpen) {
@@ -338,38 +373,42 @@ export function WaterLevelTable({
                         </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
+                        {selectedSiteData?.hasUS && (
                         <div className="space-y-2">
                             <Label>USWL (متر)</Label>
-                            <Input 
-                              type="number" 
-                              step="0.1" 
+                            <Input
+                              type="number"
+                              step="0.1"
                               placeholder="125.4"
                               value={uswl}
                               onChange={(e) => setUswl(e.target.value)}
                             />
                         </div>
+                        )}
+                        {(selectedSiteData?.hasDS1 || selectedSiteData?.hasDS2) && (
                         <div className="space-y-2">
                             <Label>DSWL (متر)</Label>
-                            <Input 
-                              type="number" 
-                              step="0.1" 
+                            <Input
+                              type="number"
+                              step="0.1"
                               placeholder="122.1"
                               value={dswl}
                               onChange={(e) => setDswl(e.target.value)}
                             />
                         </div>
+                        )}
                         </div>
                         <div className="space-y-2">
                         <Label>البطارية (فولت)</Label>
-                        <Input 
-                          type="number" 
-                          step="0.1" 
+                        <Input
+                          type="number"
+                          step="0.1"
                           placeholder="12.8"
                           value={battery}
                           onChange={(e) => setBattery(e.target.value)}
                         />
                         </div>
-                        
+
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
@@ -408,7 +447,7 @@ export function WaterLevelTable({
                         </div>
                         <div className="space-y-2">
                             <Label>التاريخ</Label>
-                            <DatePicker 
+                            <DatePicker
                             placeholder="اختر التاريخ"
                             value={editReadingDate}
                             onChange={setEditReadingDate}
@@ -434,44 +473,48 @@ export function WaterLevelTable({
                         </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
+                        {selectedSiteData?.hasUS && (
                         <div className="space-y-2">
                             <Label>USWL (متر)</Label>
-                            <Input 
-                              type="number" 
-                              step="0.1" 
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="125.4"
                               value={editUswl}
                               onChange={(e) => setEditUswl(e.target.value)}
-                              placeholder="125.4" 
                             />
                         </div>
+                        )}
+                        {(selectedSiteData?.hasDS1 || selectedSiteData?.hasDS2) && (
                         <div className="space-y-2">
                             <Label>DSWL (متر)</Label>
-                            <Input 
-                              type="number" 
-                              step="0.1" 
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="122.1"
                               value={editDswl}
                               onChange={(e) => setEditDswl(e.target.value)}
-                              placeholder="122.1" 
                             />
                         </div>
+                        )}
                         </div>
                         <div className="space-y-2">
                         <Label>البطارية (فولت)</Label>
-                        <Input 
-                          type="number" 
-                          step="0.1" 
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="12.8"
                           value={editBattery}
                           onChange={(e) => setEditBattery(e.target.value)}
-                          placeholder="12.8" 
                         />
                         </div>
-                        
+
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)} disabled={isSubmittingEdit}>
                         إلغاء
                         </Button>
-                        <Button 
+                        <Button
                           onClick={handleUpdateReading}
                           disabled={
                             isSubmittingEdit ||
@@ -550,8 +593,8 @@ export function WaterLevelTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleEditWaterLevel(reading)}
                       >
