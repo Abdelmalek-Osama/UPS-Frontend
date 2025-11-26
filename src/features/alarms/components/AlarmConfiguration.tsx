@@ -33,12 +33,12 @@ import {
 } from '../../../components/ui/select';
 import { 
   CreateThresholdAlarmRequest, 
-  CreateCommunicationAlarmRequest 
-} from '../types';
+  CreateCommunicationAlarmRequest, 
+  AlarmMethod,
+  Severity
+} from '../types/index';
 import apiService from '../../../shared/utils/apiService'; // Import apiService
 import Loader from '../../../components/ui/Loader'; // Import Loader component
-import CommunicationAlarmConfig from './CommunicationAlarmConfig'; // Import the new component
-import { AlarmMethod } from '../types'; // Import AlarmMethod
 
 const FIELD_MAP: { [key: string]: number } = {
   USWL: 0,
@@ -180,7 +180,8 @@ interface ThresholdAlarmForm {
   threshold: number;
   color: string;
   severity: 'Warning' | 'Critical';
-  recipients: string[];
+  emails: string[];
+  phones: string[];
 }
 
 interface CommunicationAlarmForm {
@@ -190,7 +191,8 @@ interface CommunicationAlarmForm {
   site: string; // Added site property
   severity: 'Warning' | 'Critical';
   hours: number;
-  recipients: string[];
+  emails: string[];
+  phones: string[];
 }
 
 const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
@@ -203,7 +205,8 @@ const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
   threshold: 0,
   color: '#fbbf24',
   severity: 'Warning',
-  recipients: [],
+  emails: [],
+  phones: [],
 };
 
 const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
@@ -213,7 +216,8 @@ const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
   site: '', // Added site property
   severity: 'Warning',
   hours: 0,
-  recipients: [],
+  emails: [],
+  phones: [],
 };
 
 export function AlarmConfiguration() {
@@ -260,6 +264,8 @@ export function AlarmConfiguration() {
   const [isSubmittingThresholdEdit, setIsSubmittingThresholdEdit] = useState(false); // New state for edit threshold dialog
   const [isSubmittingCommAdd, setIsSubmittingCommAdd] = useState(false); // New state for add communication dialog
   const [isSubmittingCommEdit, setIsSubmittingCommEdit] = useState(false); // New state for edit communication dialog
+  const [hasThresholdChanges, setHasThresholdChanges] = useState(false); // New state to track changes in threshold form
+  const [hasCommunicationChanges, setHasCommunicationChanges] = useState(false); // New state to track changes in communication form
 
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
@@ -276,8 +282,8 @@ export function AlarmConfiguration() {
       id: 0,
       siteId,
       alarmName,
-      emails: newThresholdAlarmForm.recipients.join(','),
-      phones: '', // Assuming phones are combined into recipients
+      emails: newThresholdAlarmForm.emails.join(','),
+      phones: newThresholdAlarmForm.phones.join(','),
       method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
@@ -315,8 +321,8 @@ export function AlarmConfiguration() {
       id: 0,
       siteId,
       alarmName,
-      emails: newCommunicationAlarmForm.recipients.join(','),
-      phones: '', // Assuming phones are combined into recipients
+      emails: newCommunicationAlarmForm.emails.join(','),
+      phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       communicationLoss: {
         severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
@@ -337,12 +343,20 @@ export function AlarmConfiguration() {
     }
   };
 
-  const setThresholdRecipients = (newRecipients: string[]) => {
-    setNewThresholdAlarmForm(prev => ({ ...prev, recipients: newRecipients }));
+  const setThresholdEmails = (newEmails: string[]) => {
+    setNewThresholdAlarmForm(prev => ({ ...prev, emails: newEmails }));
   };
 
-  const setCommunicationRecipients = (newRecipients: string[]) => {
-    setNewCommunicationAlarmForm(prev => ({ ...prev, recipients: newRecipients }));
+  const setThresholdPhones = (newPhones: string[]) => {
+    setNewThresholdAlarmForm(prev => ({ ...prev, phones: newPhones }));
+  };
+
+  const setCommunicationEmails = (newEmails: string[]) => {
+    setNewCommunicationAlarmForm(prev => ({ ...prev, emails: newEmails }));
+  };
+
+  const setCommunicationPhones = (newPhones: string[]) => {
+    setNewCommunicationAlarmForm(prev => ({ ...prev, phones: newPhones }));
   };
 
   // Set default site when sites load
@@ -367,6 +381,7 @@ export function AlarmConfiguration() {
   useEffect(() => {
     if (!isEditThresholdOpen) {
       setIsSubmittingThresholdEdit(false); // Reset submitting state when dialog closes
+      setHasThresholdChanges(false); // Reset changes tracker
     }
   }, [isEditThresholdOpen]);
 
@@ -379,14 +394,44 @@ export function AlarmConfiguration() {
   useEffect(() => {
     if (!isEditCommOpen) {
       setIsSubmittingCommEdit(false); // Reset submitting state when dialog closes
+      setHasCommunicationChanges(false); // Reset changes tracker
     }
   }, [isEditCommOpen]);
 
   // Helper functions
   const populateThresholdAlarmFormForEdit = (alarm: any) => {
-    setNewThresholdAlarmForm({
+    // Find siteId from sites array if not present in alarm
+    let siteId = alarm.siteId;
+    if (!siteId && alarm.site) {
+      const matchingSite = sites.find(s => s.name === alarm.site);
+      siteId = matchingSite?.id;
+    }
+    
+    // If still no siteId, try to find by trimming and case-insensitive match
+    if (!siteId && alarm.site) {
+      const matchingSite = sites.find(s => s.name.trim().toLowerCase() === alarm.site.trim().toLowerCase());
+      siteId = matchingSite?.id;
+    }
+    
+    // Separate emails and phones from recipients
+    const emails: string[] = [];
+    const phones: string[] = [];
+    
+    if (alarm.recipients && Array.isArray(alarm.recipients)) {
+      alarm.recipients.forEach((recipient: string) => {
+        const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+        const phoneRegex = /^\d{11}$/;
+        if (emailRegex.test(recipient)) {
+          emails.push(recipient);
+        } else if (phoneRegex.test(recipient)) {
+          phones.push(recipient);
+        }
+      });
+    }
+    
+    const formData = {
       id: alarm.id, // Populate ID for editing
-      siteId: alarm.siteId,
+      siteId: siteId || null, // Use null if still undefined
       alarmName: alarm.alarmName,
       site: alarm.site, // Populate site
       field: mapNumberToField[alarm.field],
@@ -394,24 +439,35 @@ export function AlarmConfiguration() {
       threshold: alarm.threshold,
       color: alarm.color,
       severity: alarm.severity,
-      recipients: alarm.recipients || [], // Ensure recipients is always an array
-    });
+      emails: emails,
+      phones: phones,
+    };
+    setNewThresholdAlarmForm(formData);
+    setHasThresholdChanges(false); // Reset changes tracker when form is populated
   };
   
   const populateCommunicationAlarmFormForEdit = (alarm: any) => {
-    const combinedRecipients = [
-      ...(alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-      ...(alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-    ];
+    const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    
+    // Find siteId from sites array if not present in alarm
+    let siteId = alarm.siteId;
+    if (!siteId && alarm.siteName) {
+      const matchingSite = sites.find(s => s.name === alarm.siteName);
+      siteId = matchingSite?.id;
+    }
+    
     setNewCommunicationAlarmForm({
-      id: alarm.id, // Populate ID for editing
-      siteId: alarm.siteId,
+      id: alarm.alarmId, // Populate ID for editing
+      siteId: siteId,
       alarmName: alarm.alarmName,
-      site: alarm.site, // Populate site
-      severity: alarm.severity,
-      hours: alarm.hours,
-      recipients: combinedRecipients, // Use combined emails and phones
+      site: alarm.siteName || '', // Populate site
+      severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+      hours: alarm.numHours || 0,
+      emails: emails,
+      phones: phones,
     });
+    setHasCommunicationChanges(false); // Reset changes tracker when form is populated
   };
   
   const mapFieldToNumber = (field: string): number => {
@@ -438,17 +494,19 @@ export function AlarmConfiguration() {
     type,
     forAlarmType,
     recipients,
-    setRecipients
+    setRecipients,
+    setHasChanges // New prop for setting hasChanges flag
   }: {
     type: 'email' | 'phone';
     forAlarmType: 'threshold' | 'communication';
     recipients: string[];
     setRecipients: (newRecipients: string[]) => void; // Modified to accept a function
+    setHasChanges: (hasChanges: boolean) => void; // New prop for setting hasChanges flag
   }) => {
     const isEmail = type === 'email';
     const [inputValue, setInputValue] = useState('');
 
-    const handleAdd = (alarmType: 'threshold' | 'communication', newRecipient: string) => {
+    const handleAdd = (newRecipient: string) => {
       if (newRecipient.trim() === '') return;
 
       const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -462,21 +520,14 @@ export function AlarmConfiguration() {
         return;
       }
 
-      if (alarmType === 'threshold') {
-        setThresholdRecipients([...newThresholdAlarmForm.recipients, newRecipient]);
-        setInputValue('');
-      } else {
-        setCommunicationRecipients([...newCommunicationAlarmForm.recipients, newRecipient]);
-        setInputValue('');
-      }
+      setRecipients([...recipients, newRecipient]);
+      setInputValue('');
+      setHasChanges(true); // Set hasChanges when a recipient is added
     };
 
-    const handleRemove = (recipientToRemove: string, alarmType: 'threshold' | 'communication') => {
-      if (alarmType === 'threshold') {
-        setThresholdRecipients(newThresholdAlarmForm.recipients.filter(r => r !== recipientToRemove));
-      } else {
-        setCommunicationRecipients(newCommunicationAlarmForm.recipients.filter(r => r !== recipientToRemove));
-      }
+    const handleRemove = (recipientToRemove: string) => {
+      setRecipients(recipients.filter(r => r !== recipientToRemove));
+      setHasChanges(true); // Set hasChanges when a recipient is removed
     };
 
     return (
@@ -487,17 +538,18 @@ export function AlarmConfiguration() {
             type={isEmail ? 'email' : 'tel'}
             placeholder={isEmail ? 'email@example.com' : '0123456789'}
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              // Don't set hasChanges here - only when actually adding/removing recipients
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
-                handleAdd(forAlarmType, inputValue);
-                setInputValue(''); 
+                handleAdd(inputValue);
               }
             }}
           />
           <Button type="button" onClick={() => {
-            handleAdd(forAlarmType, inputValue);
-            setInputValue(''); 
+            handleAdd(inputValue);
           }}>
             <Plus className="h-4 w-4" />
           </Button>
@@ -513,7 +565,7 @@ export function AlarmConfiguration() {
                   {isPhone && <Phone className="ml-1 h-3 w-3" />}
                   {recipient}
                   <button
-                    onClick={() => handleRemove(recipient, forAlarmType)}
+                    onClick={() => handleRemove(recipient)}
                     className="mr-1 hover:text-red-600"
                   >
                     ×
@@ -543,8 +595,8 @@ export function AlarmConfiguration() {
       id: currentThresholdAlarm.id, // Use the existing alarm ID
       siteId,
       alarmName,
-      emails: newThresholdAlarmForm.recipients.join(','),
-      phones: '', // Assuming phones are combined into recipients
+      emails: newThresholdAlarmForm.emails.join(','),
+      phones: newThresholdAlarmForm.phones.join(','),
       method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
@@ -585,8 +637,8 @@ export function AlarmConfiguration() {
       id: currentCommunicationAlarm.id, // Use the existing alarm ID
       siteId,
       alarmName,
-      emails: newCommunicationAlarmForm.recipients.join(','),
-      phones: '', // Assuming phones are combined into recipients
+      emails: newCommunicationAlarmForm.emails.join(','),
+      phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email, // Changed from 0 to AlarmMethod.Email
       communicationLoss: {
         severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
@@ -797,15 +849,17 @@ export function AlarmConfiguration() {
                     <RecipientInput 
                       type="email" 
                       forAlarmType="threshold" 
-                      recipients={newThresholdAlarmForm.recipients} 
-                      setRecipients={setThresholdRecipients}
+                      recipients={newThresholdAlarmForm.emails} 
+                      setRecipients={setThresholdEmails}
+                      setHasChanges={() => {}} // No need to track changes for add dialog
                     />
                     
                     <RecipientInput 
                       type="phone" 
                       forAlarmType="threshold" 
-                      recipients={newThresholdAlarmForm.recipients} 
-                      setRecipients={setThresholdRecipients}
+                      recipients={newThresholdAlarmForm.phones} 
+                      setRecipients={setThresholdPhones}
+                      setHasChanges={() => {}} // No need to track changes for add dialog
                     />
                   </div>
 
@@ -847,8 +901,21 @@ export function AlarmConfiguration() {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => {
-                                setCurrentThresholdAlarm(alarm);
                                 populateThresholdAlarmFormForEdit(alarm);
+                                // Set currentThresholdAlarm after populating the form
+                                setCurrentThresholdAlarm({
+                                  id: alarm.id,
+                                  siteId: alarm.siteId,
+                                  alarmName: alarm.alarmName,
+                                  site: alarm.site,
+                                  field: alarm.field,
+                                  operator: alarm.operator,
+                                  threshold: alarm.threshold,
+                                  color: alarm.color,
+                                  severity: alarm.severity,
+                                  emails: [],
+                                  phones: [],
+                                });
                                 setIsEditThresholdOpen(true);
                               }}
                             >
@@ -870,10 +937,13 @@ export function AlarmConfiguration() {
                                   <Input type="text" value={currentThresholdAlarm.site} disabled />
                                 ) : (
                                   <Select 
-                                    onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
-                                      ...prev, 
-                                      siteId: parseInt(value)
-                                    }))} 
+                                    onValueChange={(value) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev, 
+                                        siteId: parseInt(value)
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
                                     value={newThresholdAlarmForm.siteId?.toString() || ""}
                                   >
                                     <SelectTrigger>
@@ -900,20 +970,26 @@ export function AlarmConfiguration() {
                                   type="text" 
                                   placeholder="اسم التنبيه" 
                                   value={newThresholdAlarmForm.alarmName} 
-                                  onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                                    ...prev, 
-                                    alarmName: e.target.value 
-                                  }))} 
+                                  onChange={(e) => {
+                                    setNewThresholdAlarmForm(prev => ({
+                                      ...prev, 
+                                      alarmName: e.target.value 
+                                    }));
+                                    setHasThresholdChanges(true);
+                                  }}
                                 />
                               </div>
 
                               <div className="space-y-2">
                                 <Label>الحقل</Label>
                                 <Select 
-                                  onValueChange={(value) => setNewThresholdAlarmForm(prev => ({ 
-                                    ...prev, 
-                                    field: value 
-                                  }))} 
+                                  onValueChange={(value) => {
+                                    setNewThresholdAlarmForm(prev => ({
+                                      ...prev, 
+                                      field: value 
+                                    }));
+                                    setHasThresholdChanges(true);
+                                  }}
                                   value={newThresholdAlarmForm.field}
                                 >
                                   <SelectTrigger>
@@ -931,10 +1007,13 @@ export function AlarmConfiguration() {
                                 <div className="space-y-2">
                                   <Label>المعامل</Label>
                                   <Select 
-                                    onValueChange={(value) => setNewThresholdAlarmForm(prev => ({ 
-                                      ...prev, 
-                                      operator: value 
-                                    }))} 
+                                    onValueChange={(value) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev, 
+                                        operator: value 
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
                                     value={newThresholdAlarmForm.operator}
                                   >
                                     <SelectTrigger>
@@ -955,10 +1034,13 @@ export function AlarmConfiguration() {
                                     step="0.1" 
                                     placeholder="12.5" 
                                     value={newThresholdAlarmForm.threshold} 
-                                    onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                                      ...prev, 
-                                      threshold: parseFloat(e.target.value) || 0
-                                    }))} 
+                                    onChange={(e) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev, 
+                                        threshold: parseFloat(e.target.value) || 0
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -966,10 +1048,13 @@ export function AlarmConfiguration() {
                               <div className="space-y-2">
                                 <Label>مستوى الخطورة</Label>
                                 <Select 
-                                  onValueChange={(value: 'Warning' | 'Critical') => setNewThresholdAlarmForm(prev => ({ 
-                                    ...prev, 
-                                    severity: value 
-                                  }))} 
+                                  onValueChange={(value: 'Warning' | 'Critical') => {
+                                    setNewThresholdAlarmForm(prev => ({
+                                      ...prev, 
+                                      severity: value 
+                                    }));
+                                    setHasThresholdChanges(true);
+                                  }}
                                   value={newThresholdAlarmForm.severity}
                                 >
                                   <SelectTrigger>
@@ -989,19 +1074,25 @@ export function AlarmConfiguration() {
                                     type="color" 
                                     className="w-20" 
                                     value={newThresholdAlarmForm.color} 
-                                    onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                                      ...prev, 
-                                      color: e.target.value 
-                                    }))} 
+                                    onChange={(e) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev, 
+                                        color: e.target.value 
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
                                   />
                                   <Input 
                                     type="text" 
                                     className="flex-1" 
                                     value={newThresholdAlarmForm.color} 
-                                    onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                                      ...prev, 
-                                      color: e.target.value 
-                                    }))} 
+                                    onChange={(e) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev, 
+                                        color: e.target.value 
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -1009,15 +1100,17 @@ export function AlarmConfiguration() {
                               <RecipientInput 
                                 type="email" 
                                 forAlarmType="threshold" 
-                                recipients={newThresholdAlarmForm.recipients} 
-                                setRecipients={setThresholdRecipients}
+                                recipients={newThresholdAlarmForm.emails} 
+                                setRecipients={setThresholdEmails}
+                                setHasChanges={setHasThresholdChanges}
                               />
                               
                               <RecipientInput 
                                 type="phone" 
                                 forAlarmType="threshold" 
-                                recipients={newThresholdAlarmForm.recipients} 
-                                setRecipients={setThresholdRecipients}
+                                recipients={newThresholdAlarmForm.phones} 
+                                setRecipients={setThresholdPhones}
+                                setHasChanges={setHasThresholdChanges}
                               />
                             </div>
 
@@ -1026,7 +1119,12 @@ export function AlarmConfiguration() {
                                 <Button variant="outline" onClick={() => setIsEditThresholdOpen(false)}>
                                   إلغاء
                                 </Button>
-                                <Button onClick={handleEditThresholdAlarm} disabled={isSubmittingThresholdEdit || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} loadingText="جاري الحفظ..." isLoading={isSubmittingThresholdEdit}>
+                                <Button 
+                                  onClick={handleEditThresholdAlarm} 
+                                  disabled={isSubmittingThresholdEdit || !hasThresholdChanges || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} 
+                                  loadingText="جاري الحفظ..." 
+                                  isLoading={isSubmittingThresholdEdit}
+                                >
                                   حفظ التغييرات
                                 </Button>
                               </div>
@@ -1183,15 +1281,17 @@ export function AlarmConfiguration() {
                     <RecipientInput 
                       type="email" 
                       forAlarmType="communication" 
-                      recipients={newCommunicationAlarmForm.recipients} 
-                      setRecipients={setCommunicationRecipients}
+                      recipients={newCommunicationAlarmForm.emails} 
+                      setRecipients={setCommunicationEmails}
+                      setHasChanges={() => {}} // No need to track changes for add dialog
                     />
                     
                     <RecipientInput 
                       type="phone" 
                       forAlarmType="communication" 
-                      recipients={newCommunicationAlarmForm.recipients} 
-                      setRecipients={setCommunicationRecipients}
+                      recipients={newCommunicationAlarmForm.phones} 
+                      setRecipients={setCommunicationPhones}
+                      setHasChanges={() => {}} // No need to track changes for add dialog
                     />
                   </div>
 
@@ -1222,27 +1322,26 @@ export function AlarmConfiguration() {
                 </TableHeader>
                 <TableBody>
                   {communicationAlarms.map((alarm) => (
-                    <TableRow key={alarm.id}>
+                    <TableRow key={alarm.alarmId}>
                       <TableCell className="text-right">
-                        <Dialog open={isEditCommOpen && currentCommunicationAlarm?.id === alarm.id} onOpenChange={setIsEditCommOpen}>
+                        <Dialog open={isEditCommOpen && currentCommunicationAlarm?.id === alarm.alarmId} onOpenChange={setIsEditCommOpen}>
                           <DialogTrigger asChild>
                             <Button 
                               variant="ghost" 
                               size="sm"
                               onClick={() => {
                                 // Transform CommunicationAlarm to CommunicationAlarmForm for setCurrentCommunicationAlarm
-                                const combinedRecipients = [
-                                  ...(alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-                                  ...(alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-                                ];
+                                const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+                                const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
                                 setCurrentCommunicationAlarm({
-                                  id: alarm.id,
+                                  id: alarm.alarmId,
                                   siteId: alarm.siteId,
                                   alarmName: alarm.alarmName,
-                                  site: alarm.site || '',
-                                  severity: alarm.severity === 'Warning' ? 'Warning' : 'Critical',
-                                  hours: alarm.hours || 0,
-                                  recipients: combinedRecipients,
+                                  site: alarm.siteName || '',
+                                  severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+                                  hours: alarm.numHours || 0,
+                                  emails: emails,
+                                  phones: phones,
                                 });
                                 populateCommunicationAlarmFormForEdit(alarm);
                                 setIsEditCommOpen(true);
@@ -1296,10 +1395,13 @@ export function AlarmConfiguration() {
                                   type="text" 
                                   placeholder="اسم التنبيه" 
                                   value={newCommunicationAlarmForm.alarmName} 
-                                  onChange={(e) => setNewCommunicationAlarmForm(prev => ({
-                                    ...prev, 
-                                    alarmName: e.target.value 
-                                  }))} 
+                                  onChange={(e) => {
+                                    setNewCommunicationAlarmForm(prev => ({
+                                      ...prev, 
+                                      alarmName: e.target.value 
+                                    }));
+                                    setHasCommunicationChanges(true);
+                                  }}
                                 />
                               </div>
 
@@ -1309,10 +1411,13 @@ export function AlarmConfiguration() {
                                   type="number" 
                                   placeholder="2" 
                                   value={newCommunicationAlarmForm.hours} 
-                                  onChange={(e) => setNewCommunicationAlarmForm(prev => ({
-                                    ...prev, 
-                                    hours: parseInt(e.target.value) || 0 
-                                  }))} 
+                                  onChange={(e) => {
+                                    setNewCommunicationAlarmForm(prev => ({
+                                      ...prev, 
+                                      hours: parseInt(e.target.value) || 0 
+                                    }));
+                                    setHasCommunicationChanges(true);
+                                  }}
                                 />
                                 <p className="text-xs text-gray-500">
                                   سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
@@ -1322,10 +1427,13 @@ export function AlarmConfiguration() {
                               <div className="space-y-2">
                                 <Label>مستوى الخطورة</Label>
                                 <Select 
-                                  onValueChange={(value: 'Warning' | 'Critical') => setNewCommunicationAlarmForm(prev => ({
-                                    ...prev, 
-                                    severity: value 
-                                  }))} 
+                                  onValueChange={(value: 'Warning' | 'Critical') => {
+                                    setNewCommunicationAlarmForm(prev => ({
+                                      ...prev, 
+                                      severity: value 
+                                    }));
+                                    setHasCommunicationChanges(true);
+                                  }}
                                   value={newCommunicationAlarmForm.severity}
                                 >
                                   <SelectTrigger>
@@ -1341,15 +1449,17 @@ export function AlarmConfiguration() {
                               <RecipientInput 
                                 type="email" 
                                 forAlarmType="communication" 
-                                recipients={newCommunicationAlarmForm.recipients} 
-                                setRecipients={setCommunicationRecipients}
+                                recipients={newCommunicationAlarmForm.emails} 
+                                setRecipients={setCommunicationEmails}
+                                setHasChanges={setHasCommunicationChanges}
                               />
                               
                               <RecipientInput 
                                 type="phone" 
                                 forAlarmType="communication" 
-                                recipients={newCommunicationAlarmForm.recipients} 
-                                setRecipients={setCommunicationRecipients}
+                                recipients={newCommunicationAlarmForm.phones} 
+                                setRecipients={setCommunicationPhones}
+                                setHasChanges={setHasCommunicationChanges}
                               />
                             </div>
 
@@ -1358,7 +1468,7 @@ export function AlarmConfiguration() {
                                 <Button variant="outline" onClick={() => setIsEditCommOpen(false)}>
                                   إلغاء
                                 </Button>
-                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
+                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !hasCommunicationChanges || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
                                   حفظ التغييرات
                                 </Button>
                               </div>
@@ -1382,10 +1492,10 @@ export function AlarmConfiguration() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="outline">
-                          {alarm.hours} {alarm.hours === 1 ? 'ساعة' : 'ساعات'}
+                          {alarm.numHours} {alarm.numHours === 1 ? 'ساعة' : 'ساعات'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-medium">{alarm.site}</TableCell>
+                      <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
                       <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
                     </TableRow>
                   ))}

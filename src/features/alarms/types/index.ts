@@ -22,6 +22,8 @@ export interface CommunicationAlarm {
   severity: 'Warning' | 'Critical';
   emails?: string;
   phones?: string;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
 }
 
 export enum AlarmMethod {

@@ -6,7 +6,7 @@ import apiService from '../../../shared/utils/apiService';
 export function useAlarmsData() {
   const [thresholdAlarms, setThresholdAlarms] = useState<ValueThresholdAlarm[]>([]);
 
-  const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarm[]>([]);
+  const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarmResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   const mapToValueThresholdAlarm = (apiAlarm: ThresholdAlarmResponse): ValueThresholdAlarm => {
@@ -30,25 +30,6 @@ export function useAlarmsData() {
     };
   };
 
-  const mapToCommunicationAlarm = (apiAlarm: CommunicationAlarmResponse): CommunicationAlarm => {
-    // const recipients = `${apiAlarm.emails},${apiAlarm.phones}`
-    //   .split(',')
-    //   .map(s => s.trim())
-    //   .filter(Boolean);
-
-    return {
-      id: apiAlarm.alarmId,
-      siteId: apiAlarm.siteId,
-      site: apiAlarm.siteName || '',
-      alarmName: apiAlarm.alarmName,
-      method: apiAlarm.method, // Use actual method from API
-      hours: apiAlarm.numHours || 0,
-      severity: apiAlarm.severity === Severity.Warning ? 'Warning' : 'Critical', // Map Severity enum
-      emails: apiAlarm.emails,
-      phones: apiAlarm.phones,
-    };
-  };
-
   const fetchAlarms = async () => {
     setIsLoading(true); // Set loading to true before fetching
     try {
@@ -59,9 +40,7 @@ export function useAlarmsData() {
 
       const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
       if (communicationResponse.isSuccess) {
-        // console.log("Backend communication alarms response:", communicationResponse.data); // Removed log
-        setCommunicationAlarms(communicationResponse.data.map(mapToCommunicationAlarm));
-        // console.log("Mapped communication alarms state:", communicationResponse.data.map(mapToCommunicationAlarm)); // Removed log
+        setCommunicationAlarms(communicationResponse.data);
       } else {
         console.error("Failed to fetch communication alarms, isSuccess was false:", communicationResponse);
       }
