@@ -1155,7 +1155,7 @@ export function AlarmConfiguration() {
                               <Badge key={idx} variant="secondary" className="text-xs">
                                 {isEmail && <Mail className="ml-1 h-3 w-3" />}
                                 {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {!isEmail && !isPhone && recipient}
+                                {recipient}
                               </Badge>
                             );
                           })}
@@ -1491,8 +1491,8 @@ export function AlarmConfiguration() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline">
-                          {alarm.numHours} {alarm.numHours === 1 ? 'ساعة' : 'ساعات'}
+                        <Badge variant="outline" dir="rtl">
+                          {alarm.numHours === 1 ? `${alarm.numHours} ساعة ` : `${alarm.numHours} ساعات`}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
