@@ -20,7 +20,28 @@ export interface CommunicationAlarm {
   method: number;
   hours: number;
   severity: 'Warning' | 'Critical';
-  recipients: string[];
+  emails?: string;
+  phones?: string;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+}
+
+export enum AlarmMethod {
+  Email = 1,
+  SMS = 2,
+  Both = 3,
+}
+
+export enum Severity {
+  Critical = 1,
+  Major = 2,
+  Minor = 3,
+  Warning = 4,
+}
+
+export interface CommunicationLossDto {
+  severity: Severity;
+  numHours: number;
 }
 
 export interface ThresholdAlarmResponse {
@@ -43,15 +64,15 @@ export interface ThresholdAlarmResponse {
 export interface CommunicationAlarmResponse {
   alarmId: number;
   siteId: number;
-  siteName: string;
+  siteName?: string;
   alarmName: string;
-  alarmType: number;
-  emails: string;
-  phones: string;
-  method: number;
-  communicationLossId: number;
-  severity: number;
-  numHours: number;
+  alarmType: "CommunicationLoss";
+  emails?: string;
+  phones?: string;
+  method: AlarmMethod;
+  communicationLossId?: number;
+  severity?: Severity;
+  numHours?: number;
 }
 
 export interface ThresholdAlarm extends ValueThresholdAlarm {}
@@ -77,11 +98,8 @@ export interface CreateCommunicationAlarmRequest {
   id: number;
   siteId: number;
   alarmName: string;
-  emails: string;
-  phones: string;
-  method: number;
-  communicationLoss: {
-    severity: number;
-    numHours: number;
-  };
+  emails?: string;
+  phones?: string;
+  method: AlarmMethod;
+  communicationLoss?: CommunicationLossDto;
 }

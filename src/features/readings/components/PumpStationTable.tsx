@@ -73,12 +73,12 @@ export function PumpStationTable({
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [recordNumber, setRecordNumber] = useState<number>(0);
-    const [timePerHour, setTimePerHour] = useState<number>(0);
+    const [timePerHour, setTimePerHour] = useState<number | undefined>(undefined);
 
     const [editActivePumpsCount, setEditActivePumpsCount] = useState<number>(0);
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
-    const [editTimePerHour, setEditTimePerHour] = useState<number>(0);
+    const [editTimePerHour, setEditTimePerHour] = useState<number | undefined>(undefined);
     const [editPumpReadings, setEditPumpReadings] = useState<{ time: number; flow: number }[]>([]);
     const [isSubmittingAdd, setIsSubmittingAdd] = useState(false); // New state for add dialog submission
     const [isSubmittingEdit, setIsSubmittingEdit] = useState(false); // New state for edit dialog submission
@@ -105,7 +105,7 @@ export function PumpStationTable({
       if (!isAddDialogOpen) { // Reset form when dialog closes
         setReadingDate(undefined);
         setRecordNumber(0);
-        setTimePerHour(0);
+        setTimePerHour(undefined);
         setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: 0, flow: 0 })));
       }
     }, [isAddDialogOpen, selectedSite?.numPumps]);
@@ -120,7 +120,7 @@ export function PumpStationTable({
       if (isEditPumpStationOpen && editingPumpStation) {
         setEditReadingDate(editingPumpStation.timestamp ? new Date(editingPumpStation.timestamp) : undefined);
         setEditRecordNumber(editingPumpStation.recordNumber || 0); // Safeguard against undefined
-        setEditTimePerHour(editingPumpStation.timePerHour || 0); // Safeguard against undefined
+        setEditTimePerHour(editingPumpStation.timePerHour === undefined ? undefined : editingPumpStation.timePerHour); // Set to undefined if no time, otherwise use the number
         setEditPumpReadings(editingPumpStation.pumps || []); // Safeguard against undefined
       }
     }, [isEditPumpStationOpen, editingPumpStation]);
@@ -130,6 +130,35 @@ export function PumpStationTable({
         setIsSubmittingEdit(false); // Reset submitting state when dialog closes
       }
     }, [isEditPumpStationOpen]);
+
+    useEffect(() => {
+      if (readingDate !== undefined && timePerHour !== undefined) {
+        const now = new Date();
+        const isToday = readingDate.toDateString() === now.toDateString();
+        if (isToday && timePerHour > now.getHours()) {
+          setTimePerHour(undefined); // Reset if selected hour is in the future on the current day
+        }
+      }
+    }, [readingDate, timePerHour]);
+
+    useEffect(() => {
+      if (editReadingDate !== undefined && editTimePerHour !== undefined) {
+        const now = new Date();
+        const isToday = editReadingDate.toDateString() === now.toDateString();
+        if (isToday && editTimePerHour > now.getHours()) {
+          setEditTimePerHour(undefined); // Reset if selected hour is in the future on the current day
+        }
+      }
+    }, [editReadingDate, editTimePerHour]);
+
+    const formatTimestamp = (value: string) => {
+      if (!value) return '--';
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return value;
+      }
+      return parsed.toLocaleString('en-GB', { hour12: false });
+    };
 
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
@@ -144,14 +173,14 @@ export function PumpStationTable({
     };
 
     const handleAddReading = async () => {
-      if (!selectedSiteId || !readingDate || !timePerHour) {
+      if (!selectedSiteId || !readingDate || timePerHour === undefined) {
         // You might want to show a toast error here
         return;
       }
 
       setIsSubmittingAdd(true); // Set submitting state to true
       const dateTime = new Date(readingDate);
-      dateTime.setHours(Number(timePerHour), 0, 0, 0); // Use timePerHour for hours
+      dateTime.setHours(timePerHour, 0, 0, 0); // Use timePerHour for hours
 
       const formattedTimestamp = dateTime.toISOString(); // Use toISOString() directly
 
@@ -176,7 +205,7 @@ export function PumpStationTable({
       const requestBody: CreatePumpStationReadingRequest = {
         siteId: Number(selectedSiteId),
         timestamp: formattedTimestamp,
-        timePerHour: Number(timePerHour), // Map timePerHour directly
+        timePerHour: timePerHour, // Map timePerHour directly
         recordNumber: Number(recordNumber || 0),
         ...pumpData as {
           p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
@@ -203,7 +232,7 @@ export function PumpStationTable({
     };
 
     const handleSaveEditPumpStation = async () => {
-      if (!editingPumpStation || !editReadingDate) {
+      if (!editingPumpStation || !editReadingDate || editTimePerHour === undefined) {
         return;
       }
 
@@ -213,7 +242,7 @@ export function PumpStationTable({
       }
 
       const dateTime = new Date(editReadingDate);
-      dateTime.setHours(Number(editTimePerHour), 0, 0, 0);
+      dateTime.setHours(editTimePerHour, 0, 0, 0);
 
       const totalUptime = editPumpReadings.reduce((sum, pump) => sum + pump.time, 0);
       const totalFlow = editPumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
@@ -239,7 +268,7 @@ export function PumpStationTable({
           id: editingPumpStation.id,
           siteId: siteId,
           timestamp: formatDateTimeForAPI(dateTime),
-          timePerHour: Number(editTimePerHour) || 0,
+          timePerHour: editTimePerHour || 0,
           recordNumber: Number(editRecordNumber) || 0,
           ...pumpData as {
             p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
@@ -304,6 +333,26 @@ export function PumpStationTable({
       numberOfPumps,
       isAddDialogOpen,
     });
+
+    const getAvailableHours = (selectedDate?: Date) => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+
+      if (!selectedDate) {
+        return hours; // If no date is selected, all hours are theoretically available for selection
+      }
+
+      const isToday = selectedDate.toDateString() === now.toDateString();
+
+      if (isToday) {
+        return hours.filter(hour => hour <= currentHour);
+      } else if (selectedDate.getTime() > now.getTime()) {
+        return []; // Future date, no hours should be selectable
+      }
+
+      return hours; // Past date, all hours are available
+    };
 
   return (
     <Card >
@@ -405,14 +454,26 @@ export function PumpStationTable({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>الساعة</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      placeholder="0.0"
-                      value={timePerHour}
-                      onChange={(e) => setTimePerHour(parseFloat(e.target.value) || 0)}
-                    />
+                    <Label>الوقت</Label>
+                    <Select
+                      dir="rtl"
+                      value={timePerHour?.toString() || ''}
+                      onValueChange={(value) => setTimePerHour(value === '' ? undefined : parseFloat(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الساعة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableHours(readingDate).map((hourNum) => {
+                          const hour = hourNum.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hour} value={hour}>
+                              {`${hour}:00`}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -445,7 +506,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || !timePerHour} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
+                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
                   حفظ القراءة
                 </Button>
               </DialogFooter>
@@ -501,14 +562,26 @@ export function PumpStationTable({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>الساعة  </Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      placeholder="0.0"
-                      value={editTimePerHour.toString()}
-                      onChange={(e) => setEditTimePerHour(parseFloat(e.target.value) || 0)}
-                    />
+                    <Label>الوقت</Label>
+                    <Select
+                      dir="rtl"
+                      value={editTimePerHour?.toString() || ''}
+                      onValueChange={(value) => setEditTimePerHour(value === '' ? undefined : parseFloat(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الساعة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableHours(editReadingDate).map((hourNum) => {
+                          const hour = hourNum.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hour} value={hour}>
+                              {`${hour}:00`}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -544,7 +617,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
+                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
                   حفظ التعديلات
                 </Button>
               </DialogFooter>
@@ -603,7 +676,7 @@ export function PumpStationTable({
                 return (
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
-                  <TableCell className="text-right">{reading.timestamp}</TableCell>
+                  <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
                   {/* Removed US, DS1, DS2 table cells */}
                   {/* {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}

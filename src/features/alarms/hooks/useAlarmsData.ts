@@ -1,49 +1,32 @@
 import { useState, useEffect } from 'react';
 import type { ValueThresholdAlarm, CommunicationAlarm, ThresholdAlarmResponse, CommunicationAlarmResponse, CreateThresholdAlarmRequest, CreateCommunicationAlarmRequest } from '../types';
+import { Severity } from '../types'; // Import Severity enum
 import apiService from '../../../shared/utils/apiService';
 
 export function useAlarmsData() {
   const [thresholdAlarms, setThresholdAlarms] = useState<ValueThresholdAlarm[]>([]);
 
-  const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarm[]>([]);
+  const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarmResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   const mapToValueThresholdAlarm = (apiAlarm: ThresholdAlarmResponse): ValueThresholdAlarm => {
-    const recipients = `${apiAlarm.emails},${apiAlarm.phones}`
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const recipients = [
+      ...(apiAlarm.emails ? apiAlarm.emails.split(',').map(s => s.trim()).filter(Boolean) : []),
+      ...(apiAlarm.phones ? apiAlarm.phones.split(',').map(s => s.trim()).filter(Boolean) : []),
+    ];
 
     return {
       id: apiAlarm.alarmId,
       siteId: apiAlarm.siteId,
       site: apiAlarm.siteName,
       alarmName: apiAlarm.alarmName,
-      method: 0, // Assuming method is always 0 for now as per CreateThresholdAlarmRequest
+      method: apiAlarm.method, // Use actual method from API
       field: String(apiAlarm.fieldName), // Assuming fieldName is a number that needs to be converted to a string
       operator: String(apiAlarm.operator), // Assuming operator is a number that needs to be converted to a string
       threshold: apiAlarm.thresholdValue,
       color: apiAlarm.colorCode,
       severity: apiAlarm.severity === 0 ? 'Warning' : 'Critical', // Assuming 0 is Warning, 1 is Critical
-      recipients: recipients,
-    };
-  };
-
-  const mapToCommunicationAlarm = (apiAlarm: CommunicationAlarmResponse): CommunicationAlarm => {
-    const recipients = `${apiAlarm.emails},${apiAlarm.phones}`
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    return {
-      id: apiAlarm.alarmId,
-      siteId: apiAlarm.siteId,
-      site: apiAlarm.siteName,
-      alarmName: apiAlarm.alarmName,
-      method: 0, // Assuming method is always 0 for now as per CreateCommunicationAlarmRequest
-      hours: apiAlarm.numHours,
-      severity: apiAlarm.severity === 0 ? 'Warning' : 'Critical',
-      recipients: recipients,
+      recipients: recipients || [], // Ensure recipients is always an array
     };
   };
 
@@ -57,10 +40,12 @@ export function useAlarmsData() {
 
       const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
       if (communicationResponse.isSuccess) {
-        setCommunicationAlarms(communicationResponse.data.map(mapToCommunicationAlarm));
+        setCommunicationAlarms(communicationResponse.data);
+      } else {
+        console.error("Failed to fetch communication alarms, isSuccess was false:", communicationResponse);
       }
     } catch (error) {
-      console.error('Failed to fetch alarms:', error);
+      console.error('Failed to fetch alarms:', error); // Log the actual error object
     } finally {
       setIsLoading(false); // Set loading to false after fetching (success or failure)
     }
