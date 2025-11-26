@@ -6,7 +6,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
-const API_BASE_URL = 'https://localhost:7123/api/';
+const API_BASE_URL = 'http://softtrend.ddns.net:8883/api/';
 
 /**
  * Create axios instance with default configuration
@@ -124,15 +124,15 @@ axiosInstance.interceptors.response.use(
           return new Promise((resolve, reject) => {
             failedRequestsQueue.push({ resolve, reject });
           })
-          .then(token => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return axiosInstance(originalRequest);
-          })
-          .catch(err => {
-            return Promise.reject(err);
-          });
+            .then(token => {
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              }
+              return axiosInstance(originalRequest);
+            })
+            .catch(err => {
+              return Promise.reject(err);
+            });
         }
       } finally {
         isRefreshing = false;

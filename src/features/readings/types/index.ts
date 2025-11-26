@@ -17,7 +17,8 @@ export interface WaterLevelReading {
   timestamp: string;
   timePerHour?: number;
   uswl: number;
-  dswl: number;
+  dswL1: number;
+  dswL2: number;
   battery: number;
   calculatedFlow: number;
   hasAlarm: boolean;
@@ -35,6 +36,7 @@ export interface WaterLevelReadingApiResponse {
   recordNumber: number;
   uswl: number;
   dswL1: number;
+  dswL2: number;
   calculatedFlow: number;
   battery: number;
   isManual: boolean;
