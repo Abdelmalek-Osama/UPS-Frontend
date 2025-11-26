@@ -109,7 +109,10 @@ export function AlarmEvents() {
         params: { unresolvedOnly: true },
       });
 
-      const severityMap: Record<string, SeverityOption> = {
+      const severityMap: Record<string | number, SeverityOption> = {
+        0: 'warning',
+        1: 'critical',
+        2: 'info',
         warning: 'warning',
         Warning: 'warning',
         WARN: 'warning',
@@ -168,11 +171,11 @@ export function AlarmEvents() {
   const getSeverityBadge = (severity: 'warning' | 'critical' | 'info') => {
     const config = {
       critical: { label: 'حرج', className: 'bg-red-100 text-red-700 border-red-300' },
-      warning: { label: 'تحذير', className: 'bg-orange-100 text-orange-700 border-orange-300' },
+      warning: { label: 'تحذير', className: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
       info: { label: 'معلومات', className: 'bg-blue-100 text-blue-700 border-blue-300' }
     };
     return (
-      <Badge variant="outline" className={config[severity].className}>
+      <Badge className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden ${config[severity].className}`}>
         {config[severity].label}
       </Badge>
     );
@@ -197,7 +200,6 @@ export function AlarmEvents() {
     // Search filter
     if (
       normalizedQuery &&
-      !(event.message?.toLowerCase().includes(normalizedQuery)) &&
       !event.id.toString().includes(normalizedQuery)
     ) {
       return false;
@@ -309,7 +311,6 @@ export function AlarmEvents() {
                         <TableHead className="text-right hidden md:table-cell">الخطورة</TableHead>
                         <TableHead className="text-right hidden 2xl:table-cell">رمز اللون</TableHead>
                         <TableHead className="text-right hidden lg:table-cell">وقت الإطلاق</TableHead>
-                        <TableHead className="text-right hidden 2xl:table-cell">الرسالة</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -342,11 +343,6 @@ export function AlarmEvents() {
                           </TableCell>
                           <TableCell className="text-right hidden lg:table-cell text-sm">
                             {event.triggeredAt}
-                          </TableCell>
-                          <TableCell className="text-right hidden 2xl:table-cell max-w-xs">
-                            <div className="truncate" title={event.message}>
-                              {event.message}
-                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
