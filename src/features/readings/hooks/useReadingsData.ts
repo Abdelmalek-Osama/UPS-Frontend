@@ -6,7 +6,7 @@ import type { Site } from '../../sites/types';
 
 export function useReadingsData(selectedSiteId: string) {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
-  const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null); 
+  const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // General loading state
@@ -16,7 +16,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([]);
   const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
-  
+
   const [pumpStationError, setPumpStationError] = useState<string | null>(null);
 
   // Edit dialog states
@@ -37,17 +37,17 @@ export function useReadingsData(selectedSiteId: string) {
     setIsPumpEditOpen(true);
     setIsPumpDetailsOpen(false);
   };
-  
+
   const handleEditPumpStation = (reading: PumpStationReading) => {
     setEditingPumpStation(reading);
     setIsEditPumpStationOpen(true);
   };
-  
+
   const handleEditWaterLevel = (reading: WaterLevelReading) => {
     setEditingWaterLevel(reading);
     setIsEditWaterLevelOpen(true);
   };
-  
+
   const handleExport = () => {
     toast.info('سيتم تصدير البيانات إلى ملف Excel');
   };
@@ -210,7 +210,8 @@ export function useReadingsData(selectedSiteId: string) {
     site: reading.siteName,
     timestamp: reading.timestamp,
     uswl: reading.uswl,
-    dswl: reading.dswL1,
+    dswL1: reading.dswL1,
+    dswL2: reading.dswL2,
     battery: reading.battery,
     calculatedFlow: reading.calculatedFlow,
     hasAlarm: false,
