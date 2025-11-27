@@ -1,82 +1,57 @@
-export interface ValueThresholdAlarm {
+export interface Site {
   id: number;
-  siteId: number;
-  site: string;
+  name: string;
+}
+
+export interface ThresholdAlarmForm {
+  id: number;
+  siteId: number | null;
   alarmName: string;
-  method: number;
+  site: string;
   field: string;
   operator: string;
   threshold: number;
   color: string;
   severity: 'Warning' | 'Critical';
-  recipients: string[];
+  emails: string[];
+  phones: string[];
 }
 
-export interface CommunicationAlarm {
+export interface CommunicationAlarmForm {
   id: number;
-  siteId: number;
-  site: string;
+  siteId: number | null;
   alarmName: string;
-  method: number;
-  hours: number;
+  site: string;
   severity: 'Warning' | 'Critical';
-  emails?: string;
-  phones?: string;
-  emailEnabled: boolean;
-  smsEnabled: boolean;
+  hours: number;
+  emails: string[];
+  phones: string[];
+}
+
+export interface SiteDetails {
+  id: number;
+  code: string;
+  name: string;
+  siteType: string;
+  canal: string;
+  longitude: number;
+  latitude: number;
+  directorateName: string;
+  hasUS: boolean;
+  hasDS1: boolean;
+  hasDS2: boolean;
+  numPumps: number;
 }
 
 export enum AlarmMethod {
-  Email = 1,
-  SMS = 2,
-  Both = 3,
+  Email = 0,
+  SMS = 1,
 }
 
 export enum Severity {
+  Warning = 0,
   Critical = 1,
-  Major = 2,
-  Minor = 3,
-  Warning = 4,
 }
-
-export interface CommunicationLossDto {
-  severity: Severity;
-  numHours: number;
-}
-
-export interface ThresholdAlarmResponse {
-  alarmId: number;
-  siteId: number;
-  siteName: string;
-  alarmName: string;
-  alarmType: number;
-  emails: string;
-  phones: string;
-  method: number;
-  thresholdId: number;
-  fieldName: number;
-  operator: number;
-  thresholdValue: number;
-  colorCode: string;
-  severity: number;
-}
-
-export interface CommunicationAlarmResponse {
-  alarmId: number;
-  siteId: number;
-  siteName?: string;
-  alarmName: string;
-  alarmType: "CommunicationLoss";
-  emails?: string;
-  phones?: string;
-  method: AlarmMethod;
-  communicationLossId?: number;
-  severity?: Severity;
-  numHours?: number;
-}
-
-export interface ThresholdAlarm extends ValueThresholdAlarm {}
-export interface CommunicationLossAlarm extends CommunicationAlarm {}
 
 export interface CreateThresholdAlarmRequest {
   id: number;
@@ -84,7 +59,7 @@ export interface CreateThresholdAlarmRequest {
   alarmName: string;
   emails: string;
   phones: string;
-  method: number;
+  method: AlarmMethod;
   valueThreshold: {
     fieldName: number;
     operator: number;
@@ -98,8 +73,41 @@ export interface CreateCommunicationAlarmRequest {
   id: number;
   siteId: number;
   alarmName: string;
-  emails?: string;
-  phones?: string;
+  emails: string;
+  phones: string;
   method: AlarmMethod;
-  communicationLoss?: CommunicationLossDto;
+  communicationLoss: {
+    severity: number;
+    numHours: number;
+  };
+}
+
+export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarmDialogProps {
+  currentAlarm: CommunicationAlarmForm | null;
+  hasChanges: boolean;
+  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface CommunicationAlarmResponse {
+  alarmId: number;
+  siteId: number;
+  alarmName: string;
+  siteName: string;
+  severity: Severity;
+  numHours: number;
+  emails: string;
+  phones: string;
+}
+
+export interface ValueThresholdAlarm {
+  id: number;
+  siteId: number;
+  alarmName: string;
+  site: string;
+  field: number;
+  operator: number;
+  threshold: number;
+  color: string;
+  severity: string; // Assuming it's a string like 'Warning' or 'Critical'
+  recipients: string[]; // Assuming recipients can be an array of strings
 }
