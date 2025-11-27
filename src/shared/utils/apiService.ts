@@ -7,7 +7,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } f
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
 //const API_BASE_URL = 'https://localhost:7123/api/';
-const API_BASE_URL = 'http://softtrend.ddns.net:8883/api/';
+const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 
 /**
  * Create axios instance with default configuration
