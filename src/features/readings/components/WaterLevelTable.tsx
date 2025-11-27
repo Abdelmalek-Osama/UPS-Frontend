@@ -110,6 +110,8 @@ export function WaterLevelTable({
   const [editDswl2, setEditDswl2] = useState<string>('');
   const [editBattery, setEditBattery] = useState<string>('');
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedSiteId) {
@@ -140,13 +142,14 @@ export function WaterLevelTable({
 
   useEffect(() => {
     if (!isAddDialogOpen) {
-      // Reset form when dialog closes
+      // Reset form and errors when dialog closes
       setReadingDate(undefined);
       setReadingTime('');
       setUswl('');
       setDswl('');
       setDswl2('');
       setBattery('');
+      setAddError(null); // Clear error on dialog close
     }
   }, [isAddDialogOpen]);
 
@@ -167,6 +170,8 @@ export function WaterLevelTable({
       setEditDswl(editingWaterLevel.dswL1?.toString() ?? '');
       setEditDswl2(editingWaterLevel.dswL2?.toString() ?? '');
       setEditBattery(editingWaterLevel.battery?.toString() ?? '');
+    } else if (!isEditWaterLevelOpen) {
+      setEditError(null); // Clear error on dialog close
     }
   }, [isEditWaterLevelOpen, editingWaterLevel, sites]);
 
@@ -194,12 +199,15 @@ export function WaterLevelTable({
   };
 
   const handleAddReading = async () => {
+    setAddError(null); // Clear previous errors
     if (!readingDate || !readingTime || !selectedSiteForAdd) {
+      setAddError('الرجاء تعبئة جميع الحقول المطلوبة.');
       return;
     }
 
     const siteId = Number(selectedSiteForAdd);
     if (Number.isNaN(siteId)) {
+      setAddError('الموقع المحدد غير صالح.');
       return;
     }
 
@@ -215,10 +223,10 @@ export function WaterLevelTable({
         timestamp: dateTime.toISOString(),
         timePerHour: 0,
         recordNumber: 0,
-        uswl: Number(uswl) || 0,
-        dswL1: Number(dswl) || 0,
-        dswL2: Number(dswl2) || 0,
-        battery: Number(battery) || 0,
+        uswl: uswl === '' ? null : Number(uswl),
+        dswL1: dswl === '' ? null : Number(dswl),
+        dswL2: dswl2 === '' ? null : Number(dswl2),
+        battery: battery === '' ? null : Number(battery),
         isManual: true,
       });
 
@@ -236,20 +244,23 @@ export function WaterLevelTable({
       if (!Number.isNaN(siteNumericId)) {
         await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
       }
-    } catch (error) {
-      // Error is already handled in createWaterLevelReading
+    } catch (error: any) {
+      setAddError(error.message || 'فشل في إضافة القراءة.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleUpdateReading = async () => {
+    setEditError(null); // Clear previous errors
     if (!editingWaterLevel || !editReadingDate || !editReadingTime) {
+      setEditError('الرجاء تعبئة جميع الحقول المطلوبة.');
       return;
     }
 
     const siteId = Number(editSelectedSiteId || editingWaterLevel.siteId);
     if (!siteId || Number.isNaN(siteId)) {
+      setEditError('الموقع المحدد غير صالح.');
       return;
     }
 
@@ -265,10 +276,10 @@ export function WaterLevelTable({
         timestamp: dateTime.toISOString(),
         timePerHour: 0,
         recordNumber: editingWaterLevel.recordNumber ?? 0,
-        uswl: Number(editUswl) || 0,
-        dswL1: Number(editDswl) || 0,
-        dswL2: Number(editDswl2) || 0,
-        battery: Number(editBattery) || 0,
+        uswl: editUswl === '' ? null : Number(editUswl),
+        dswL1: editDswl === '' ? null : Number(editDswl),
+        dswL2: editDswl2 === '' ? null : Number(editDswl2),
+        battery: editBattery === '' ? null : Number(editBattery),
         isManual: editingWaterLevel.isManual ?? true,
       });
 
@@ -278,8 +289,8 @@ export function WaterLevelTable({
       if (!Number.isNaN(siteNumericId)) {
         await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
       }
-    } catch (error) {
-      // handled inside update function
+    } catch (error: any) {
+      setEditError(error.message || 'فشل في تحديث القراءة.');
     } finally {
       setIsSubmittingEdit(false);
     }
@@ -336,6 +347,9 @@ export function WaterLevelTable({
                     أدخل بيانات القراءة الجديدة
                   </DialogDescription>
                 </DialogHeader>
+                {addError && (
+                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError}</p>
+                )}
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -357,6 +371,7 @@ export function WaterLevelTable({
                         placeholder="اختر التاريخ"
                         value={readingDate}
                         onChange={setReadingDate}
+                        maxDate={new Date()} // Disable dates after today
                       />
                     </div>
                   </div>
@@ -432,7 +447,19 @@ export function WaterLevelTable({
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
                     إلغاء
                   </Button>
-                  <Button onClick={handleAddReading} disabled={isSubmitting || !readingDate || !readingTime || !selectedSiteForAdd} loadingText="جاري الحفظ..." isLoading={isSubmitting}>
+                  <Button onClick={handleAddReading}
+                    disabled={
+                      isSubmitting ||
+                      !readingDate ||
+                      !readingTime ||
+                      !selectedSiteForAdd ||
+                      (selectedSiteData?.hasUS && uswl === '') ||
+                      (selectedSiteData?.hasDS1 && dswl === '') ||
+                      (selectedSiteData?.hasDS2 && dswl2 === '') ||
+                      battery === ''
+                    }
+                    loadingText="جاري الحفظ..."
+                    isLoading={isSubmitting}>
                     حفظ القراءة
                   </Button>
                 </DialogFooter>
@@ -448,6 +475,9 @@ export function WaterLevelTable({
                     قم بتعديل بيانات القراءة
                   </DialogDescription>
                 </DialogHeader>
+                {editError && (
+                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError}</p>
+                )}
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -469,6 +499,7 @@ export function WaterLevelTable({
                         placeholder="اختر التاريخ"
                         value={editReadingDate}
                         onChange={setEditReadingDate}
+                        maxDate={new Date()} // Disable dates after today
                       />
                     </div>
                   </div>
@@ -551,7 +582,11 @@ export function WaterLevelTable({
                       !editingWaterLevel ||
                       !editReadingDate ||
                       !editReadingTime ||
-                      !editSelectedSiteId
+                      !editSelectedSiteId ||
+                      (selectedSiteData?.hasUS && editUswl === '') ||
+                      (selectedSiteData?.hasDS1 && editDswl === '') ||
+                      (selectedSiteData?.hasDS2 && editDswl2 === '') ||
+                      editBattery === ''
                     }
                     loadingText="جاري الحفظ..."
                     isLoading={isSubmittingEdit}

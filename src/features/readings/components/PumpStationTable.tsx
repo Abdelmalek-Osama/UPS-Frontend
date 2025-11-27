@@ -69,7 +69,7 @@ export function PumpStationTable({
   selectedSite,
   handleEditPump, // Added handleEditPump to destructuring
 }: PumpStationTableProps) {
-    const [pumpReadings, setPumpReadings] = useState<{ time: number; flow: number }[]>([]);
+    const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [recordNumber, setRecordNumber] = useState<number>(0);
@@ -79,12 +79,14 @@ export function PumpStationTable({
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
     const [editTimePerHour, setEditTimePerHour] = useState<number | undefined>(undefined);
-    const [editPumpReadings, setEditPumpReadings] = useState<{ time: number; flow: number }[]>([]);
+    const [editPumpReadings, setEditPumpReadings] = useState<{ time: number | null; flow: number | null }[]>([]);
     const [isSubmittingAdd, setIsSubmittingAdd] = useState(false); // New state for add dialog submission
     const [isSubmittingEdit, setIsSubmittingEdit] = useState(false); // New state for edit dialog submission
 
     const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false); // Added local state for pump details dialog
     const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null); // Added local state for selected reading
+    const [addError, setAddError] = useState<string | null>(null); // New state for add dialog error
+    const [editError, setEditError] = useState<string | null>(null); // New state for edit dialog error
 
     // Extracted values for clearer conditional rendering
     const shouldShowUSLevel = selectedSite?.hasUS ?? false;
@@ -95,7 +97,7 @@ export function PumpStationTable({
     useEffect(() => {
       console.log('useEffect (selectedSite?.numPumps) triggered. selectedSite.numPumps:', selectedSite?.numPumps);
       if (selectedSite?.numPumps) {
-        setPumpReadings(Array.from({ length: selectedSite.numPumps }, () => ({ time: 0, flow: 0 })));
+        setPumpReadings(Array.from({ length: selectedSite.numPumps }, () => ({ time: null, flow: null })));
       } else {
         setPumpReadings([]);
       }
@@ -106,7 +108,8 @@ export function PumpStationTable({
         setReadingDate(undefined);
         setRecordNumber(0);
         setTimePerHour(undefined);
-        setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: 0, flow: 0 })));
+        setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: null, flow: null })));
+        setAddError(null); // Clear error on dialog close
       }
     }, [isAddDialogOpen, selectedSite?.numPumps]);
 
@@ -119,9 +122,11 @@ export function PumpStationTable({
     useEffect(() => {
       if (isEditPumpStationOpen && editingPumpStation) {
         setEditReadingDate(editingPumpStation.timestamp ? new Date(editingPumpStation.timestamp) : undefined);
-        setEditRecordNumber(editingPumpStation.recordNumber || 0); // Safeguard against undefined
+        setEditRecordNumber(editingPumpStation.recordNumber ?? 0); // Use nullish coalescing for safety
         setEditTimePerHour(editingPumpStation.timePerHour === undefined ? undefined : editingPumpStation.timePerHour); // Set to undefined if no time, otherwise use the number
-        setEditPumpReadings(editingPumpStation.pumps || []); // Safeguard against undefined
+        setEditPumpReadings(editingPumpStation.pumps.map(pump => ({ time: pump.time ?? null, flow: pump.flow ?? null })) || []); // Map to new type
+      } else if (!isEditPumpStationOpen) {
+        setEditError(null); // Clear error on dialog close
       }
     }, [isEditPumpStationOpen, editingPumpStation]);
 
@@ -162,19 +167,20 @@ export function PumpStationTable({
 
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
-      newPumpReadings[index] = { ...newPumpReadings[index], [field]: parseFloat(value) || 0 };
+      newPumpReadings[index] = { ...newPumpReadings[index], [field]: value === '' ? null : parseFloat(value) };
       setPumpReadings(newPumpReadings);
     };
 
     const handleEditPumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newEditPumpReadings = [...editPumpReadings];
-      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: parseFloat(value) || 0 };
+      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: value === '' ? null : parseFloat(value) };
       setEditPumpReadings(newEditPumpReadings);
     };
 
     const handleAddReading = async () => {
+      setAddError(null); // Clear previous errors
       if (!selectedSiteId || !readingDate || timePerHour === undefined) {
-        // You might want to show a toast error here
+        setAddError('الرجاء تعبئة جميع الحقول المطلوبة.');
         return;
       }
 
@@ -184,21 +190,21 @@ export function PumpStationTable({
 
       const formattedTimestamp = dateTime.toISOString(); // Use toISOString() directly
 
-      const totalUptime = pumpReadings.reduce((sum, pump) => sum + pump.time, 0);
-      const totalFlow = pumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
+      const totalUptime = pumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
+      const totalFlow = pumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
-      // Initialize all pump data fields up to p10_Flow with 0
-      const pumpData: { [key: string]: number } = {};
+      // Initialize all pump data fields up to p10_Flow with null
+      const pumpData: { [key: string]: number | null } = {};
       for (let i = 1; i <= 10; i++) {
-        pumpData[`p${i}_Time`] = 0;
-        pumpData[`p${i}_Flow`] = 0;
+        pumpData[`p${i}_Time`] = null;
+        pumpData[`p${i}_Flow`] = null;
       }
 
-      // Overwrite with actual pumpReadings data
+      // Overwrite with actual pumpReadings data, using null for undefined values
       pumpReadings.forEach((pump, index) => {
         if (index < 10) { // Ensure we don't go beyond p10
-          pumpData[`p${index + 1}_Time`] = pump.time;
-          pumpData[`p${index + 1}_Flow`] = pump.flow;
+          pumpData[`p${index + 1}_Time`] = pump.time ?? null;
+          pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
         }
       });
 
@@ -206,13 +212,13 @@ export function PumpStationTable({
         siteId: Number(selectedSiteId),
         timestamp: formattedTimestamp,
         timePerHour: timePerHour, // Map timePerHour directly
-        recordNumber: Number(recordNumber || 0),
+        recordNumber: recordNumber === 0 ? null : recordNumber,
         ...pumpData as {
-          p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
-          p3_Time: number; p3_Flow: number; p4_Time: number; p4_Flow: number; 
-          p5_Time: number; p5_Flow: number; p6_Time: number; p6_Flow: number; 
-          p7_Time: number; p7_Flow: number; p8_Time: number; p8_Flow: number; 
-          p9_Time: number; p9_Flow: number; p10_Time: number; p10_Flow: number;
+          p1_Time: number | null; p1_Flow: number | null; p2_Time: number | null; p2_Flow: number | null; 
+          p3_Time: number | null; p3_Flow: number | null; p4_Time: number | null; p4_Flow: number | null; 
+          p5_Time: number | null; p5_Flow: number | null; p6_Time: number | null; p6_Flow: number | null; 
+          p7_Time: number | null; p7_Flow: number | null; p8_Time: number | null; p8_Flow: number | null; 
+          p9_Time: number | null; p9_Flow: number | null; p10_Time: number | null; p10_Flow: number | null;
         },
         totalUptime,
         totalFlow,
@@ -224,41 +230,44 @@ export function PumpStationTable({
         setIsAddDialogOpen(false);
         // Optionally refetch readings
         fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
-      } catch (error) {
-        console.error("Failed to create pump station reading:", error);
+      } catch (error: any) {
+        setAddError(error.message || 'فشل في إضافة قراءة محطة الرفع.');
       } finally {
         setIsSubmittingAdd(false); // Ensure this is correctly set
       }
     };
 
     const handleSaveEditPumpStation = async () => {
+      setEditError(null); // Clear previous errors
       if (!editingPumpStation || !editReadingDate || editTimePerHour === undefined) {
+        setEditError('الرجاء تعبئة جميع الحقول المطلوبة.');
         return;
       }
 
       const siteId = Number(editingPumpStation.siteId); // Site cannot be changed for existing readings
       if (!siteId || Number.isNaN(siteId)) {
+        setEditError('الموقع المحدد غير صالح.');
         return;
       }
 
       const dateTime = new Date(editReadingDate);
       dateTime.setHours(editTimePerHour, 0, 0, 0);
 
-      const totalUptime = editPumpReadings.reduce((sum, pump) => sum + pump.time, 0);
-      const totalFlow = editPumpReadings.reduce((sum, pump) => sum + pump.flow, 0);
+      const totalUptime = editPumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
+      const totalFlow = editPumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
-      // Initialize all pump data fields up to p10_Flow with 0
-      const pumpData: { [key: string]: number } = {};
+      // Initialize all pump data fields up to p10_Flow with null
+      const pumpData: { [key: string]: number | null } = {};
       for (let i = 1; i <= 10; i++) {
-        pumpData[`p${i}_Time`] = 0;
-        pumpData[`p${i}_Flow`] = 0;
+        pumpData[`p${i}_Time`] = null;
+        pumpData[`p${i}_Flow`] = null;
       }
 
-      // Overwrite with actual editPumpReadings data
+      // Overwrite with actual editPumpReadings data, using null for undefined values
       editPumpReadings.forEach((pump, index) => {
         if (index < 10) { // Ensure we don't go beyond p10
-          pumpData[`p${index + 1}_Time`] = pump.time;
-          pumpData[`p${index + 1}_Flow`] = pump.flow;
+          pumpData[`p${index + 1}_Time`] = pump.time ?? null;
+          pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
         }
       });
 
@@ -269,13 +278,13 @@ export function PumpStationTable({
           siteId: siteId,
           timestamp: formatDateTimeForAPI(dateTime),
           timePerHour: editTimePerHour || 0,
-          recordNumber: Number(editRecordNumber) || 0,
+          recordNumber: editRecordNumber === 0 ? null : editRecordNumber,
           ...pumpData as {
-            p1_Time: number; p1_Flow: number; p2_Time: number; p2_Flow: number; 
-            p3_Time: number; p3_Flow: number; p4_Time: number; p4_Flow: number; 
-            p5_Time: number; p5_Flow: number; p6_Time: number; p6_Flow: number; 
-            p7_Time: number; p7_Flow: number; p8_Time: number; p8_Flow: number; 
-            p9_Time: number; p9_Flow: number; p10_Time: number; p10_Flow: number;
+            p1_Time: number | null; p1_Flow: number | null; p2_Time: number | null; p2_Flow: number | null; 
+            p3_Time: number | null; p3_Flow: number | null; p4_Time: number | null; p4_Flow: number | null; 
+            p5_Time: number | null; p5_Flow: number | null; p6_Time: number | null; p6_Flow: number | null; 
+            p7_Time: number | null; p7_Flow: number | null; p8_Time: number | null; p8_Flow: number | null; 
+            p9_Time: number | null; p9_Flow: number | null; p10_Time: number | null; p10_Flow: number | null;
           },
           totalUptime,
           totalFlow,
@@ -286,8 +295,8 @@ export function PumpStationTable({
         setIsEditPumpStationOpen(false);
         // Optionally refetch readings
         fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
-      } catch (error) {
-        console.error("Failed to update pump station reading:", error);
+      } catch (error: any) {
+        setEditError(error.message || 'فشل في تحديث قراءة محطة الرفع.');
       } finally {
         setIsSubmittingEdit(false); // Reset submitting state to false
       }
@@ -380,6 +389,9 @@ export function PumpStationTable({
                   أدخل بيانات القراءة الجديدة
                 </DialogDescription>
               </DialogHeader>
+              {addError && (
+                <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError}</p>
+              )}
               <div key={selectedSiteId} className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -403,6 +415,7 @@ export function PumpStationTable({
                     placeholder="اختر التاريخ"
                     value={readingDate}
                     onChange={(date) => setReadingDate(date ?? undefined)}
+                    maxDate={new Date()} // Disable dates after today
                     />
                   </div>
                 </div>
@@ -450,7 +463,7 @@ export function PumpStationTable({
                       type="number"
                       placeholder="0"
                       value={recordNumber}
-                      onChange={(e) => setRecordNumber(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setRecordNumber(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -485,7 +498,7 @@ export function PumpStationTable({
                         type="number"
                         step="0.1"
                         placeholder="0.0"
-                        value={pumpReadings[index]?.time === undefined ? '' : pumpReadings[index].time}
+                        value={pumpReadings[index]?.time ?? ''}
                         onChange={(e) => handlePumpInputChange(index, 'time', e.target.value)}
                       />
                     </div>
@@ -495,7 +508,7 @@ export function PumpStationTable({
                         type="number"
                         step="0.1"
                         placeholder="0.0"
-                        value={pumpReadings[index]?.flow === undefined ? '' : pumpReadings[index].flow}
+                        value={pumpReadings[index]?.flow ?? ''}
                         onChange={(e) => handlePumpInputChange(index, 'flow', e.target.value)}
                       />
                     </div>
@@ -522,6 +535,9 @@ export function PumpStationTable({
                   قم بتعديل بيانات القراءة
                 </DialogDescription>
               </DialogHeader>
+              {editError && (
+                <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError}</p>
+              )}
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -547,6 +563,7 @@ export function PumpStationTable({
                     placeholder="اختر التاريخ"
                     value={editReadingDate}
                     onChange={(date) => setEditReadingDate(date ?? undefined)}
+                    maxDate={new Date()} // Disable dates after today
                     />
                   </div>
                 </div>
@@ -558,7 +575,7 @@ export function PumpStationTable({
                       type="number"
                       placeholder="0"
                       value={editRecordNumber.toString()}
-                      onChange={(e) => setEditRecordNumber(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setEditRecordNumber(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -596,7 +613,7 @@ export function PumpStationTable({
                         type="number"
                         step="0.1"
                         placeholder="0.0"
-                        value={editPumpReadings[index]?.time?.toString() || ''}
+                        value={editPumpReadings[index]?.time ?? ''}
                         onChange={(e) => handleEditPumpInputChange(index, 'time', e.target.value)}
                       />
                     </div>
@@ -606,7 +623,7 @@ export function PumpStationTable({
                         type="number"
                         step="0.1"
                         placeholder="0.0"
-                        value={editPumpReadings[index]?.flow?.toString() || ''}
+                        value={editPumpReadings[index]?.flow ?? ''}
                         onChange={(e) => handleEditPumpInputChange(index, 'flow', e.target.value)}
                       />
                     </div>
@@ -744,8 +761,8 @@ export function PumpStationTable({
                   return (
                     <TableRow key={index}>
                       <TableCell>مرفعة {index + 1}</TableCell>
-                      <TableCell style={{ color: pumpTimeColor }}>{pump.time.toFixed(1)}</TableCell>
-                      <TableCell style={{ color: pumpFlowColor }}>{pump.flow.toFixed(1)}</TableCell>
+                      <TableCell style={{ color: pumpTimeColor }}>{pump.time ?? 'N/A'}</TableCell>
+                      <TableCell style={{ color: pumpFlowColor }}>{pump.flow ?? 'N/A'}</TableCell>
                       <TableCell>
                         <Button 
                           variant="ghost" 
