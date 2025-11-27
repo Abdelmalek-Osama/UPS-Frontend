@@ -38,17 +38,20 @@ export function FlowCalculations() {
   const { sites, loading: sitesLoading, error: sitesError } = useSitesData();
 
   useEffect(() => {
+    console.log('useEffect (selectedSite) triggered. Current selectedSite:', selectedSite); // Debug log
     if (sites.length > 0 && !selectedSite) {
       setSelectedSite(sites[0].id.toString()); 
     }
   }, [sites, selectedSite]);
 
   useEffect(() => {
+    console.log('useEffect (selectedSite) triggered. Current selectedSite:', selectedSite); // Debug log
     if (!selectedSite) {
       return;
     }
 
     const fetchFlowCalculation = async () => {
+      console.log('fetchFlowCalculation called for site:', selectedSite); // Debug log
       setConstantsLoading(true);
       setConstantsError(null);
       setSaveSuccessMessage(null);
@@ -58,6 +61,7 @@ export function FlowCalculations() {
         const response = await apiService.get<ApiResponse<FlowCalculationDto>>(
           `/v1/FlowCalculation/${selectedSite}`
         );
+        console.log('API response received in fetchFlowCalculation:', response); // Debug log
 
         const flowData = response?.data;
 
@@ -193,11 +197,11 @@ export function FlowCalculations() {
               </div>
             ))}
 
-            {!constantsLoading && formulaConstants.length === 0 && (
+            {/* {!constantsLoading && formulaConstants.length === 0 && (
               <p className="text-gray-500 text-center col-span-full">
                 لا توجد ثوابت متاحة لهذا الموقع.
               </p>
-            )}
+            )} */}
           </div>
 
           <div className="flex justify-start ">
