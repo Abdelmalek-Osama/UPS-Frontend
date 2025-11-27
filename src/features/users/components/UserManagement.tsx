@@ -19,16 +19,21 @@ import { EditUserDialog } from './EditUserDialog';
 import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
 import { Spinner } from '../../../components/ui/spinner';
 import { getUserIdFromToken } from '../../../shared/utils/jwtService';
+import { refreshAccessToken } from '../../../shared/utils/apiService';
+import { setAuthCookies, getRefreshToken, removeAuthCookies } from '../../../shared/utils/cookieService';
+import { toast } from 'react-toastify';
 
-export function UserManagement() {
+interface UserManagementProps {
+  refreshCurrentUser: () => void;
+}
+
+export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
   const { users, availableSites, toggleUserActive, loading, error, fetchUsers } = useUsersData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
   const loggedInUserId = getUserIdFromToken();
-
-  console.log('Logged In User ID:', loggedInUserId);
 
   const handleResetPassword = (user: UserDto) => {
     setSelectedUser(user);
@@ -50,6 +55,39 @@ export function UserManagement() {
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
     fetchUsers();
+  };
+
+  const handleUserRoleChange = async (userId: string) => {
+    const refreshToken = getRefreshToken();
+
+    if (refreshToken) {
+      try {
+        const response = await refreshAccessToken(refreshToken);
+        if (response.isSuccess && response.data) {
+          const { accessToken, refreshToken: newRefreshToken, accessTokenExpiryDate } = response.data;
+          setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
+          refreshCurrentUser(); // Call to refresh the current user's role in App.tsx
+          toast.success('User role updated successfully!');
+          // Optionally, you might want to force a re-render of components that depend on the user's role
+          // For now, refreshing the token and cookies should be sufficient for immediate application
+        } else {
+          console.error('Failed to refresh token:', response.message);
+          toast.error('Failed to refresh token. Please log in again.');
+          removeAuthCookies();
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Error during token refresh:', error);
+        toast.error('An error occurred during token refresh. Please log in again.');
+        removeAuthCookies();
+        window.location.href = '/login';
+      }
+    } else {
+      console.warn('No refresh token found. User will be logged out.');
+      removeAuthCookies();
+      window.location.reload(); // Force re-login if no refresh token
+    }
+    fetchUsers(); // Always refetch the user list
   };
 
   if (loading) {
@@ -102,7 +140,6 @@ export function UserManagement() {
             </TableHeader>
             <TableBody>
               {users.map((user) => {
-                console.log(`User ID: ${user.id}, LoggedIn ID: ${loggedInUserId}, Disabled: ${user.id === loggedInUserId}`);
                 return (
                   <TableRow key={user.id}>
                     <TableCell>
@@ -170,6 +207,8 @@ export function UserManagement() {
         onOpenChange={setIsEditDialogOpen}
         user={selectedUser}
         onEditSuccess={handleEditSuccess}
+        loggedInUserId={loggedInUserId}
+        onUserRoleChange={handleUserRoleChange}
       />
 
       <ResetPasswordDialog 
