@@ -62,12 +62,15 @@ export function AlarmConfiguration() {
   const [isSubmittingCommEdit, setIsSubmittingCommEdit] = useState(false);
   const [hasThresholdChanges, setHasThresholdChanges] = useState(false);
   const [hasCommunicationChanges, setHasCommunicationChanges] = useState(false);
+  const [thresholdSubmissionError, setThresholdSubmissionError] = useState<string | null>(null);
+  const [communicationSubmissionError, setCommunicationSubmissionError] = useState<string | null>(null);
 
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
 
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
     setIsSubmittingThresholdAdd(true);
+    setThresholdSubmissionError(null); // Clear previous errors
     const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
 
     if (!siteId || !alarmName || !field || !operator) {
@@ -98,8 +101,10 @@ export function AlarmConfiguration() {
         setIsAddThresholdOpen(false);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
-        console.error('Error creating threshold alarm:', result.message);
+        setThresholdSubmissionError(result.message || 'Failed to create threshold alarm.');
       }
+    } catch (error: any) {
+      setThresholdSubmissionError(error.message || 'An unexpected error occurred.');
     } finally {
       setIsSubmittingThresholdAdd(false);
     }
@@ -107,6 +112,7 @@ export function AlarmConfiguration() {
 
   const handleSubmitCommunicationAlarm = async () => {
     setIsSubmittingCommAdd(true);
+    setCommunicationSubmissionError(null); // Clear previous errors
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
 
     if (!siteId || !alarmName) {
@@ -134,8 +140,10 @@ export function AlarmConfiguration() {
         setIsAddCommOpen(false);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
-        console.error('Error creating communication alarm:', result.message);
+        setCommunicationSubmissionError(result.message || 'Failed to create communication alarm.');
       }
+    } catch (error: any) {
+      setCommunicationSubmissionError(error.message || 'An unexpected error occurred.');
     } finally {
       setIsSubmittingCommAdd(false);
     }
@@ -430,6 +438,7 @@ export function AlarmConfiguration() {
                     availableFields={availableFields}
                     onSubmit={handleSubmitThresholdAlarm}
                     isSubmitting={isSubmittingThresholdAdd}
+                    submissionError={thresholdSubmissionError}
                     setEmails={setThresholdEmails}
                     setPhones={setThresholdPhones}
                   />
@@ -476,6 +485,7 @@ export function AlarmConfiguration() {
                     sitesError={sitesError}
                     onSubmit={handleSubmitCommunicationAlarm}
                     isSubmitting={isSubmittingCommAdd}
+                    submissionError={communicationSubmissionError}
                     setEmails={setCommunicationEmails}
                     setPhones={setCommunicationPhones}
                   />
