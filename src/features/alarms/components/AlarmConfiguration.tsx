@@ -2,47 +2,48 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '../../../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { Plus, Edit, AlertTriangle, WifiOff, Mail, Phone } from 'lucide-react';
 import { useAlarmsData } from '../hooks/useAlarmsData';
-import { 
-  Dialog, 
-  DialogTrigger, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
 } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
-import { 
-  Select, 
-  SelectTrigger, 
-  SelectValue, 
-  SelectContent, 
-  SelectItem 
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
 } from '../../../components/ui/select';
-import { 
-  CreateThresholdAlarmRequest, 
-  CreateCommunicationAlarmRequest, 
+import {
+  CreateThresholdAlarmRequest,
+  CreateCommunicationAlarmRequest,
   AlarmMethod,
   Severity
 } from '../types/index';
-import apiService from '../../../shared/utils/apiService'; // Import apiService
+import apiService, { ApiResponse } from '../../../shared/utils/apiService'; // Import apiService
 import Loader from '../../../components/ui/Loader'; // Import Loader component
 
 const FIELD_MAP: { [key: string]: number } = {
   USWL: 0,
-  DSWL: 1,
+  DSWL1: 1,
+  DSWL2: 26,
   Battery: 2,
   P1_Time: 3,
   P1_Flow: 4,
@@ -70,12 +71,12 @@ const FIELD_MAP: { [key: string]: number } = {
 };
 
 const OPERATOR_MAP: { [key: string]: number } = {
-  '<' : 0,
-  '<=' : 1,
-  '>' : 2,
-  '>=' : 3,
-  '==' : 4,
-  '!=' : 5,
+  '<': 0,
+  '<=': 1,
+  '>': 2,
+  '>=': 3,
+  '==': 4,
+  '!=': 5,
 };
 
 const mapNumberToOperator: { [key: number]: string } = {
@@ -103,12 +104,13 @@ const mapOperatorToNumber = (operator: string): number => {
   return mappedValue;
 };
 
-const mapSeverityToNumber = (severity: 'Warning' | 'Critical'): number => 
-    severity === 'Warning' ? 0 : 1;
+const mapSeverityToNumber = (severity: 'Warning' | 'Critical'): number =>
+  severity === 'Warning' ? 0 : 1;
 
 const mapNumberToField: { [key: number]: string } = {
   0: 'USWL',
-  1: 'DSWL',
+  1: 'DSWL1',
+  26: 'DSWL2',
   2: 'Battery',
   3: 'P1_Time',
   4: 'P1_Flow',
@@ -137,7 +139,8 @@ const mapNumberToField: { [key: number]: string } = {
 
 const FIELDS = [
   'USWL',
-  'DSWL',
+  'DSWL1',
+  'DSWL2',
   'Battery',
   'P1_Time',
   'P1_Flow',
@@ -193,6 +196,21 @@ interface CommunicationAlarmForm {
   hours: number;
   emails: string[];
   phones: string[];
+}
+
+interface SiteDetails {
+  id: number;
+  code: string;
+  name: string;
+  siteType: string;
+  canal: string;
+  longitude: number;
+  latitude: number;
+  directorateName: string;
+  hasUS: boolean;
+  hasDS1: boolean;
+  hasDS2: boolean;
+  numPumps: number;
 }
 
 const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
@@ -251,7 +269,7 @@ export function AlarmConfiguration() {
     };
     fetchSites();
   }, []);
-  
+
   const [activeTab, setActiveTab] = useState('threshold');
   const [isAddThresholdOpen, setIsAddThresholdOpen] = useState(false);
   const [isEditThresholdOpen, setIsEditThresholdOpen] = useState(false);
@@ -267,11 +285,50 @@ export function AlarmConfiguration() {
   const [hasThresholdChanges, setHasThresholdChanges] = useState(false); // New state to track changes in threshold form
   const [hasCommunicationChanges, setHasCommunicationChanges] = useState(false); // New state to track changes in communication form
 
+  const [availableFields, setAvailableFields] = useState<string[]>(FIELDS);
+  const [isFetchingSiteDetails, setIsFetchingSiteDetails] = useState(false);
+
+  useEffect(() => {
+    const fetchSiteDetails = async () => {
+      if (!newThresholdAlarmForm.siteId) {
+        setAvailableFields(FIELDS);
+        return;
+      }
+
+      setIsFetchingSiteDetails(true);
+      try {
+        const response = await apiService.get<ApiResponse<SiteDetails>>(`/v1/Sites/${newThresholdAlarmForm.siteId}`);
+        if (response.isSuccess && response.data) {
+          const site = response.data;
+          const newFields = ['Calculated_flow', 'Total_uptime', 'Total_flow', 'Battery'];
+
+          if (site.hasUS) newFields.push('USWL');
+          if (site.hasDS1) newFields.push('DSWL1');
+          if (site.hasDS2) newFields.push('DSWL2');
+
+          for (let i = 1; i <= site.numPumps; i++) {
+            newFields.push(`P${i}_Time`);
+            newFields.push(`P${i}_Flow`);
+          }
+
+          setAvailableFields(newFields);
+        }
+      } catch (error) {
+        console.error("Error fetching site details", error);
+        setAvailableFields(FIELDS);
+      } finally {
+        setIsFetchingSiteDetails(false);
+      }
+    };
+
+    fetchSiteDetails();
+  }, [newThresholdAlarmForm.siteId]);
+
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
     setIsSubmittingThresholdAdd(true); // Set submitting state to true
     const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
-    
+
     if (!siteId || !alarmName || !field || !operator) {
       console.error('Missing required threshold alarm fields');
       setIsSubmittingThresholdAdd(false); // Reset on validation failure
@@ -310,7 +367,7 @@ export function AlarmConfiguration() {
   const handleSubmitCommunicationAlarm = async () => {
     setIsSubmittingCommAdd(true); // Set submitting state to true
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
-    
+
     if (!siteId || !alarmName) {
       console.error('Missing required communication alarm fields');
       setIsSubmittingCommAdd(false); // Reset on validation failure
@@ -406,17 +463,17 @@ export function AlarmConfiguration() {
       const matchingSite = sites.find(s => s.name === alarm.site);
       siteId = matchingSite?.id;
     }
-    
+
     // If still no siteId, try to find by trimming and case-insensitive match
     if (!siteId && alarm.site) {
       const matchingSite = sites.find(s => s.name.trim().toLowerCase() === alarm.site.trim().toLowerCase());
       siteId = matchingSite?.id;
     }
-    
+
     // Separate emails and phones from recipients
     const emails: string[] = [];
     const phones: string[] = [];
-    
+
     if (alarm.recipients && Array.isArray(alarm.recipients)) {
       alarm.recipients.forEach((recipient: string) => {
         const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -428,7 +485,7 @@ export function AlarmConfiguration() {
         }
       });
     }
-    
+
     const formData = {
       id: alarm.id, // Populate ID for editing
       siteId: siteId || null, // Use null if still undefined
@@ -445,18 +502,18 @@ export function AlarmConfiguration() {
     setNewThresholdAlarmForm(formData);
     setHasThresholdChanges(false); // Reset changes tracker when form is populated
   };
-  
+
   const populateCommunicationAlarmFormForEdit = (alarm: any) => {
     const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
     const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-    
+
     // Find siteId from sites array if not present in alarm
     let siteId = alarm.siteId;
     if (!siteId && alarm.siteName) {
       const matchingSite = sites.find(s => s.name === alarm.siteName);
       siteId = matchingSite?.id;
     }
-    
+
     setNewCommunicationAlarmForm({
       id: alarm.alarmId, // Populate ID for editing
       siteId: siteId,
@@ -469,7 +526,7 @@ export function AlarmConfiguration() {
     });
     setHasCommunicationChanges(false); // Reset changes tracker when form is populated
   };
-  
+
   const mapFieldToNumber = (field: string): number => {
     const mappedValue = FIELD_MAP[field];
     if (mappedValue === undefined) {
@@ -486,7 +543,7 @@ export function AlarmConfiguration() {
     return mappedValue;
   };
 
-  const mapSeverityToNumber = (severity: 'Warning' | 'Critical'): number => 
+  const mapSeverityToNumber = (severity: 'Warning' | 'Critical'): number =>
     severity === 'Warning' ? 0 : 1;
 
   // Recipient management
@@ -584,7 +641,7 @@ export function AlarmConfiguration() {
     if (!currentThresholdAlarm) return;
 
     const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
-    
+
     if (!siteId || !alarmName || !field || !operator) {
       console.error('Missing required threshold alarm fields');
       setIsSubmittingThresholdEdit(false); // Reset on validation failure
@@ -626,7 +683,7 @@ export function AlarmConfiguration() {
     if (!currentCommunicationAlarm) return;
 
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
-    
+
     if (!siteId || !alarmName) {
       console.error('Missing required communication alarm fields');
       setIsSubmittingCommEdit(false); // Reset on validation failure
@@ -670,7 +727,7 @@ export function AlarmConfiguration() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="threshold">
-            <AlertTriangle className="ml-2 h-4 w-4"/>
+            <AlertTriangle className="ml-2 h-4 w-4" />
             تنبيهات القيم الحدية
           </TabsTrigger>
           <TabsTrigger value="communication">
@@ -686,492 +743,492 @@ export function AlarmConfiguration() {
               <Loader />
             </div>
           ) : (
-          <Card>
-            <CardHeader className="flex justify-between items-center" dir="rtl">
-              <CardTitle className="text-right">
-                تنبيهات القيم الحدية ({thresholdAlarms.length})
-              </CardTitle>
-            
-              <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="ml-2 h-4 w-4" />
-                    إضافة تنبيه جديد
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
-                  <DialogHeader>
-                    <DialogTitle className="text-right">إضافة تنبيه قيمة حدية</DialogTitle>
-                    <DialogDescription className="text-right">
-                      تكوين تنبيه جديد عند تجاوز قيمة معينة
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>الموقع</Label>
-                      <Select 
-                        onValueChange={(value) => setNewThresholdAlarmForm(prev => ({ 
-                          ...prev, 
-                          siteId: parseInt(value) 
-                        }))} 
-                        value={newThresholdAlarmForm.siteId?.toString() || ""}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر الموقع" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sitesLoading ? (
-                            <SelectItem value="0">جاري التحميل...</SelectItem>
-                          ) : sitesError ? (
-                            <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                          ) : (
-                            sites.map(site => (
-                              <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <Card>
+              <CardHeader className="flex justify-between items-center" dir="rtl">
+                <CardTitle className="text-right">
+                  تنبيهات القيم الحدية ({thresholdAlarms.length})
+                </CardTitle>
 
-                    <div className="space-y-2">
-                      <Label>اسم التنبيه</Label>
-                      <Input 
-                        type="text" 
-                        placeholder="اسم التنبيه" 
-                        value={newThresholdAlarmForm.alarmName} 
-                        onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                          ...prev, 
-                          alarmName: e.target.value 
-                        }))} 
-                      />
-                    </div>
+                <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="ml-2 h-4 w-4" />
+                      إضافة تنبيه جديد
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+                    <DialogHeader>
+                      <DialogTitle className="text-right">إضافة تنبيه قيمة حدية</DialogTitle>
+                      <DialogDescription className="text-right">
+                        تكوين تنبيه جديد عند تجاوز قيمة معينة
+                      </DialogDescription>
+                    </DialogHeader>
 
-                    <div className="space-y-2">
-                      <Label>الحقل</Label>
-                      <Select 
-                        onValueChange={(value) => setNewThresholdAlarmForm(prev => ({ 
-                          ...prev, 
-                          field: value 
-                        }))} 
-                        value={newThresholdAlarmForm.field}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر الحقل" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {FIELDS.map(field => (
-                            <SelectItem key={field} value={field}>{field}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label>المعامل</Label>
-                        <Select 
-                          onValueChange={(value) => setNewThresholdAlarmForm(prev => ({ 
-                            ...prev, 
-                            operator: value 
-                          }))} 
-                          value={newThresholdAlarmForm.operator}
+                        <Label>الموقع</Label>
+                        <Select
+                          onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
+                            ...prev,
+                            siteId: parseInt(value)
+                          }))}
+                          value={newThresholdAlarmForm.siteId?.toString() || ""}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="اختر المعامل" />
+                            <SelectValue placeholder="اختر الموقع" />
                           </SelectTrigger>
                           <SelectContent>
-                            {OPERATORS.map(op => (
-                              <SelectItem key={op} value={op}>{op}</SelectItem>
+                            {sitesLoading ? (
+                              <SelectItem value="0">جاري التحميل...</SelectItem>
+                            ) : sitesError ? (
+                              <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                            ) : (
+                              sites.map(site => (
+                                <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>اسم التنبيه</Label>
+                        <Input
+                          type="text"
+                          placeholder="اسم التنبيه"
+                          value={newThresholdAlarmForm.alarmName}
+                          onChange={(e) => setNewThresholdAlarmForm(prev => ({
+                            ...prev,
+                            alarmName: e.target.value
+                          }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>الحقل</Label>
+                        <Select
+                          onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
+                            ...prev,
+                            field: value
+                          }))}
+                          value={newThresholdAlarmForm.field}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر الحقل" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableFields.map(field => (
+                              <SelectItem key={field} value={field}>{field}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>المعامل</Label>
+                          <Select
+                            onValueChange={(value) => setNewThresholdAlarmForm(prev => ({
+                              ...prev,
+                              operator: value
+                            }))}
+                            value={newThresholdAlarmForm.operator}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="اختر المعامل" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {OPERATORS.map(op => (
+                                <SelectItem key={op} value={op}>{op}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>القيمة الحدية</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="12.5"
+                            value={newThresholdAlarmForm.threshold}
+                            onChange={(e) => setNewThresholdAlarmForm(prev => ({
+                              ...prev,
+                              threshold: parseFloat(e.target.value) || 0
+                            }))}
+                          />
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
-                        <Label>القيمة الحدية</Label>
-                        <Input 
-                          type="number" 
-                          step="0.1" 
-                          placeholder="12.5" 
-                          value={newThresholdAlarmForm.threshold} 
-                          onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                            ...prev, 
-                            threshold: parseFloat(e.target.value) || 0
-                          }))} 
-                        />
+                        <Label>مستوى الخطورة</Label>
+                        <Select
+                          onValueChange={(value: 'Warning' | 'Critical') => setNewThresholdAlarmForm(prev => ({
+                            ...prev,
+                            severity: value
+                          }))}
+                          value={newThresholdAlarmForm.severity}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر المستوى" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Warning">تحذير</SelectItem>
+                            <SelectItem value="Critical">حرج</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label>مستوى الخطورة</Label>
-                      <Select 
-                        onValueChange={(value: 'Warning' | 'Critical') => setNewThresholdAlarmForm(prev => ({ 
-                          ...prev, 
-                          severity: value 
-                        }))} 
-                        value={newThresholdAlarmForm.severity}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر المستوى" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Warning">تحذير</SelectItem>
-                          <SelectItem value="Critical">حرج</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>اللون</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          type="color" 
-                          className="w-20" 
-                          value={newThresholdAlarmForm.color} 
-                          onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                            ...prev, 
-                            color: e.target.value 
-                          }))} 
-                        />
-                        <Input 
-                          type="text" 
-                          className="flex-1" 
-                          value={newThresholdAlarmForm.color} 
-                          onChange={(e) => setNewThresholdAlarmForm(prev => ({ 
-                            ...prev, 
-                            color: e.target.value 
-                          }))} 
-                        />
+                      <div className="space-y-2">
+                        <Label>اللون</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="color"
+                            className="w-20"
+                            value={newThresholdAlarmForm.color}
+                            onChange={(e) => setNewThresholdAlarmForm(prev => ({
+                              ...prev,
+                              color: e.target.value
+                            }))}
+                          />
+                          <Input
+                            type="text"
+                            className="flex-1"
+                            value={newThresholdAlarmForm.color}
+                            onChange={(e) => setNewThresholdAlarmForm(prev => ({
+                              ...prev,
+                              color: e.target.value
+                            }))}
+                          />
+                        </div>
                       </div>
+
+                      <RecipientInput
+                        type="email"
+                        forAlarmType="threshold"
+                        recipients={newThresholdAlarmForm.emails}
+                        setRecipients={setThresholdEmails}
+                        setHasChanges={() => { }} // No need to track changes for add dialog
+                      />
+
+                      <RecipientInput
+                        type="phone"
+                        forAlarmType="threshold"
+                        recipients={newThresholdAlarmForm.phones}
+                        setRecipients={setThresholdPhones}
+                        setHasChanges={() => { }} // No need to track changes for add dialog
+                      />
                     </div>
 
-                    <RecipientInput 
-                      type="email" 
-                      forAlarmType="threshold" 
-                      recipients={newThresholdAlarmForm.emails} 
-                      setRecipients={setThresholdEmails}
-                      setHasChanges={() => {}} // No need to track changes for add dialog
-                    />
-                    
-                    <RecipientInput 
-                      type="phone" 
-                      forAlarmType="threshold" 
-                      recipients={newThresholdAlarmForm.phones} 
-                      setRecipients={setThresholdPhones}
-                      setHasChanges={() => {}} // No need to track changes for add dialog
-                    />
-                  </div>
+                    <DialogFooter>
+                      <div className="w-full flex justify-start gap-2">
+                        <Button variant="outline" onClick={() => setIsAddThresholdOpen(false)}>
+                          إلغاء
+                        </Button>
+                        <Button onClick={handleSubmitThresholdAlarm} disabled={isSubmittingThresholdAdd || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} loadingText="جاري الإضافة..." isLoading={isSubmittingThresholdAdd}>
+                          إضافة التنبيه
+                        </Button>
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
 
-                  <DialogFooter>
-                    <div className="w-full flex justify-start gap-2">
-                      <Button variant="outline" onClick={() => setIsAddThresholdOpen(false)}>
-                        إلغاء
-                      </Button>
-                      <Button onClick={handleSubmitThresholdAlarm} disabled={isSubmittingThresholdAdd || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} loadingText="جاري الإضافة..." isLoading={isSubmittingThresholdAdd}>
-                        إضافة التنبيه
-                      </Button>
-                    </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                    <TableHead className="text-right">اللون</TableHead>
-                    <TableHead className="text-right">الحقل</TableHead>
-                    <TableHead className="text-right">الشرط</TableHead>
-                    <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">الخطورة</TableHead>
-                    <TableHead className="text-right">الموقع</TableHead>
-                    <TableHead className="text-right">الاسم</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {thresholdAlarms.map((alarm) => (
-                    <TableRow key={alarm.id}>
-                      <TableCell className="text-right">
-                        <Dialog open={isEditThresholdOpen && currentThresholdAlarm?.id === alarm.id} onOpenChange={setIsEditThresholdOpen}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => {
-                                populateThresholdAlarmFormForEdit(alarm);
-                                // Set currentThresholdAlarm after populating the form
-                                setCurrentThresholdAlarm({
-                                  id: alarm.id,
-                                  siteId: alarm.siteId,
-                                  alarmName: alarm.alarmName,
-                                  site: alarm.site,
-                                  field: alarm.field,
-                                  operator: alarm.operator,
-                                  threshold: alarm.threshold,
-                                  color: alarm.color,
-                                  severity: alarm.severity,
-                                  emails: [],
-                                  phones: [],
-                                });
-                                setIsEditThresholdOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
-                            <DialogHeader>
-                              <DialogTitle className="text-right">تعديل تنبيه قيمة حدية</DialogTitle>
-                              <DialogDescription className="text-right">
-                                تعديل تكوين التنبيه الحالي
-                              </DialogDescription>
-                            </DialogHeader>
-                            
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>الموقع</Label>
-                                {currentThresholdAlarm ? (
-                                  <Input type="text" value={currentThresholdAlarm.site} disabled />
-                                ) : (
-                                  <Select 
-                                    onValueChange={(value) => {
-                                      setNewThresholdAlarmForm(prev => ({
-                                        ...prev, 
-                                        siteId: parseInt(value)
-                                      }));
-                                      setHasThresholdChanges(true);
-                                    }}
-                                    value={newThresholdAlarmForm.siteId?.toString() || ""}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="اختر الموقع" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {sitesLoading ? (
-                                        <SelectItem value="0">جاري التحميل...</SelectItem>
-                                      ) : sitesError ? (
-                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                      ) : (
-                                        sites.map(site => (
-                                          <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              </div>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">إجراءات</TableHead>
+                      <TableHead className="text-right">اللون</TableHead>
+                      <TableHead className="text-right">الحقل</TableHead>
+                      <TableHead className="text-right">الشرط</TableHead>
+                      <TableHead className="text-right">المستلمون</TableHead>
+                      <TableHead className="text-right">الخطورة</TableHead>
+                      <TableHead className="text-right">الموقع</TableHead>
+                      <TableHead className="text-right">الاسم</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {thresholdAlarms.map((alarm) => (
+                      <TableRow key={alarm.id}>
+                        <TableCell className="text-right">
+                          <Dialog open={isEditThresholdOpen && currentThresholdAlarm?.id === alarm.id} onOpenChange={setIsEditThresholdOpen}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  populateThresholdAlarmFormForEdit(alarm);
+                                  // Set currentThresholdAlarm after populating the form
+                                  setCurrentThresholdAlarm({
+                                    id: alarm.id,
+                                    siteId: alarm.siteId,
+                                    alarmName: alarm.alarmName,
+                                    site: alarm.site,
+                                    field: alarm.field,
+                                    operator: alarm.operator,
+                                    threshold: alarm.threshold,
+                                    color: alarm.color,
+                                    severity: alarm.severity,
+                                    emails: [],
+                                    phones: [],
+                                  });
+                                  setIsEditThresholdOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+                              <DialogHeader>
+                                <DialogTitle className="text-right">تعديل تنبيه قيمة حدية</DialogTitle>
+                                <DialogDescription className="text-right">
+                                  تعديل تكوين التنبيه الحالي
+                                </DialogDescription>
+                              </DialogHeader>
 
-                              <div className="space-y-2">
-                                <Label>اسم التنبيه</Label>
-                                <Input 
-                                  type="text" 
-                                  placeholder="اسم التنبيه" 
-                                  value={newThresholdAlarmForm.alarmName} 
-                                  onChange={(e) => {
-                                    setNewThresholdAlarmForm(prev => ({
-                                      ...prev, 
-                                      alarmName: e.target.value 
-                                    }));
-                                    setHasThresholdChanges(true);
-                                  }}
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>الحقل</Label>
-                                <Select 
-                                  onValueChange={(value) => {
-                                    setNewThresholdAlarmForm(prev => ({
-                                      ...prev, 
-                                      field: value 
-                                    }));
-                                    setHasThresholdChanges(true);
-                                  }}
-                                  value={newThresholdAlarmForm.field}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر الحقل" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {FIELDS.map(field => (
-                                      <SelectItem key={field} value={field}>{field}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-4 py-4">
                                 <div className="space-y-2">
-                                  <Label>المعامل</Label>
-                                  <Select 
-                                    onValueChange={(value) => {
+                                  <Label>الموقع</Label>
+                                  {currentThresholdAlarm ? (
+                                    <Input type="text" value={currentThresholdAlarm.site} disabled />
+                                  ) : (
+                                    <Select
+                                      onValueChange={(value) => {
+                                        setNewThresholdAlarmForm(prev => ({
+                                          ...prev,
+                                          siteId: parseInt(value)
+                                        }));
+                                        setHasThresholdChanges(true);
+                                      }}
+                                      value={newThresholdAlarmForm.siteId?.toString() || ""}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="اختر الموقع" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {sitesLoading ? (
+                                          <SelectItem value="0">جاري التحميل...</SelectItem>
+                                        ) : sitesError ? (
+                                          <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                                        ) : (
+                                          sites.map(site => (
+                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>اسم التنبيه</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="اسم التنبيه"
+                                    value={newThresholdAlarmForm.alarmName}
+                                    onChange={(e) => {
                                       setNewThresholdAlarmForm(prev => ({
-                                        ...prev, 
-                                        operator: value 
+                                        ...prev,
+                                        alarmName: e.target.value
                                       }));
                                       setHasThresholdChanges(true);
                                     }}
-                                    value={newThresholdAlarmForm.operator}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>الحقل</Label>
+                                  <Select
+                                    onValueChange={(value) => {
+                                      setNewThresholdAlarmForm(prev => ({
+                                        ...prev,
+                                        field: value
+                                      }));
+                                      setHasThresholdChanges(true);
+                                    }}
+                                    value={newThresholdAlarmForm.field}
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder="اختر المعامل" />
+                                      <SelectValue placeholder="اختر الحقل" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {OPERATORS.map(op => (
-                                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                                      {availableFields.map(field => (
+                                        <SelectItem key={field} value={field}>{field}</SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
-                                
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label>المعامل</Label>
+                                    <Select
+                                      onValueChange={(value) => {
+                                        setNewThresholdAlarmForm(prev => ({
+                                          ...prev,
+                                          operator: value
+                                        }));
+                                        setHasThresholdChanges(true);
+                                      }}
+                                      value={newThresholdAlarmForm.operator}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="اختر المعامل" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {OPERATORS.map(op => (
+                                          <SelectItem key={op} value={op}>{op}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <Label>القيمة الحدية</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.1"
+                                      placeholder="12.5"
+                                      value={newThresholdAlarmForm.threshold}
+                                      onChange={(e) => {
+                                        setNewThresholdAlarmForm(prev => ({
+                                          ...prev,
+                                          threshold: parseFloat(e.target.value) || 0
+                                        }));
+                                        setHasThresholdChanges(true);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
                                 <div className="space-y-2">
-                                  <Label>القيمة الحدية</Label>
-                                  <Input 
-                                    type="number" 
-                                    step="0.1" 
-                                    placeholder="12.5" 
-                                    value={newThresholdAlarmForm.threshold} 
-                                    onChange={(e) => {
+                                  <Label>مستوى الخطورة</Label>
+                                  <Select
+                                    onValueChange={(value: 'Warning' | 'Critical') => {
                                       setNewThresholdAlarmForm(prev => ({
-                                        ...prev, 
-                                        threshold: parseFloat(e.target.value) || 0
+                                        ...prev,
+                                        severity: value
                                       }));
                                       setHasThresholdChanges(true);
                                     }}
-                                  />
+                                    value={newThresholdAlarmForm.severity}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="اختر المستوى" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Warning">تحذير</SelectItem>
+                                      <SelectItem value="Critical">حرج</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
-                              </div>
 
-                              <div className="space-y-2">
-                                <Label>مستوى الخطورة</Label>
-                                <Select 
-                                  onValueChange={(value: 'Warning' | 'Critical') => {
-                                    setNewThresholdAlarmForm(prev => ({
-                                      ...prev, 
-                                      severity: value 
-                                    }));
-                                    setHasThresholdChanges(true);
-                                  }}
-                                  value={newThresholdAlarmForm.severity}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر المستوى" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Warning">تحذير</SelectItem>
-                                    <SelectItem value="Critical">حرج</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>اللون</Label>
-                                <div className="flex gap-2">
-                                  <Input 
-                                    type="color" 
-                                    className="w-20" 
-                                    value={newThresholdAlarmForm.color} 
-                                    onChange={(e) => {
-                                      setNewThresholdAlarmForm(prev => ({
-                                        ...prev, 
-                                        color: e.target.value 
-                                      }));
-                                      setHasThresholdChanges(true);
-                                    }}
-                                  />
-                                  <Input 
-                                    type="text" 
-                                    className="flex-1" 
-                                    value={newThresholdAlarmForm.color} 
-                                    onChange={(e) => {
-                                      setNewThresholdAlarmForm(prev => ({
-                                        ...prev, 
-                                        color: e.target.value 
-                                      }));
-                                      setHasThresholdChanges(true);
-                                    }}
-                                  />
+                                <div className="space-y-2">
+                                  <Label>اللون</Label>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="color"
+                                      className="w-20"
+                                      value={newThresholdAlarmForm.color}
+                                      onChange={(e) => {
+                                        setNewThresholdAlarmForm(prev => ({
+                                          ...prev,
+                                          color: e.target.value
+                                        }));
+                                        setHasThresholdChanges(true);
+                                      }}
+                                    />
+                                    <Input
+                                      type="text"
+                                      className="flex-1"
+                                      value={newThresholdAlarmForm.color}
+                                      onChange={(e) => {
+                                        setNewThresholdAlarmForm(prev => ({
+                                          ...prev,
+                                          color: e.target.value
+                                        }));
+                                        setHasThresholdChanges(true);
+                                      }}
+                                    />
+                                  </div>
                                 </div>
+
+                                <RecipientInput
+                                  type="email"
+                                  forAlarmType="threshold"
+                                  recipients={newThresholdAlarmForm.emails}
+                                  setRecipients={setThresholdEmails}
+                                  setHasChanges={setHasThresholdChanges}
+                                />
+
+                                <RecipientInput
+                                  type="phone"
+                                  forAlarmType="threshold"
+                                  recipients={newThresholdAlarmForm.phones}
+                                  setRecipients={setThresholdPhones}
+                                  setHasChanges={setHasThresholdChanges}
+                                />
                               </div>
 
-                              <RecipientInput 
-                                type="email" 
-                                forAlarmType="threshold" 
-                                recipients={newThresholdAlarmForm.emails} 
-                                setRecipients={setThresholdEmails}
-                                setHasChanges={setHasThresholdChanges}
-                              />
-                              
-                              <RecipientInput 
-                                type="phone" 
-                                forAlarmType="threshold" 
-                                recipients={newThresholdAlarmForm.phones} 
-                                setRecipients={setThresholdPhones}
-                                setHasChanges={setHasThresholdChanges}
-                              />
-                            </div>
-
-                            <DialogFooter>
-                              <div className="w-full flex justify-start gap-2">
-                                <Button variant="outline" onClick={() => setIsEditThresholdOpen(false)}>
-                                  إلغاء
-                                </Button>
-                                <Button 
-                                  onClick={handleEditThresholdAlarm} 
-                                  disabled={isSubmittingThresholdEdit || !hasThresholdChanges || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator} 
-                                  loadingText="جاري الحفظ..." 
-                                  isLoading={isSubmittingThresholdEdit}
-                                >
-                                  حفظ التغييرات
-                                </Button>
-                              </div>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div 
-                          className="w-6 h-6 rounded border"
-                          style={{ backgroundColor: alarm.color }}
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline">{mapNumberToField[alarm.field]}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {mapNumberToOperator[alarm.operator]} {alarm.threshold}
-                        </code>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
-                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                            const isPhone = /^\d{11}$/.test(recipient);
-                            return (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline">{alarm.severity}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">{alarm.site}</TableCell>
-                      <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                              <DialogFooter>
+                                <div className="w-full flex justify-start gap-2">
+                                  <Button variant="outline" onClick={() => setIsEditThresholdOpen(false)}>
+                                    إلغاء
+                                  </Button>
+                                  <Button
+                                    onClick={handleEditThresholdAlarm}
+                                    disabled={isSubmittingThresholdEdit || !hasThresholdChanges || !newThresholdAlarmForm.siteId || !newThresholdAlarmForm.alarmName || !newThresholdAlarmForm.field || !newThresholdAlarmForm.operator}
+                                    loadingText="جاري الحفظ..."
+                                    isLoading={isSubmittingThresholdEdit}
+                                  >
+                                    حفظ التغييرات
+                                  </Button>
+                                </div>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div
+                            className="w-6 h-6 rounded border"
+                            style={{ backgroundColor: alarm.color }}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline">{mapNumberToField[alarm.field]}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            {mapNumberToOperator[alarm.operator]} {alarm.threshold}
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
+                              const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                              const isPhone = /^\d{11}$/.test(recipient);
+                              return (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                  {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                  {recipient}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline">{alarm.severity}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">{alarm.site}</TableCell>
+                        <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
@@ -1182,327 +1239,327 @@ export function AlarmConfiguration() {
               <Loader />
             </div>
           ) : (
-          <Card>
-            <CardHeader className="flex justify-between items-center" dir="rtl">
-              <CardTitle className="text-right">
-                تنبيهات فقدان الاتصال ({communicationAlarms.length})
-              </CardTitle>
-              
-              <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}> {/* Reset form on add click */}
-                    <Plus className="ml-2 h-4 w-4" />
-                    إضافة تنبيه جديد
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
-                  <DialogHeader>
-                    <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
-                    <DialogDescription className="text-right">
-                      تكوين تنبيه عند انقطاع البيانات لفترة محددة
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>الموقع</Label>
-                      <Select 
-                        onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({ 
-                          ...prev, 
-                          siteId: parseInt(value) 
-                        }))} 
-                        value={newCommunicationAlarmForm.siteId?.toString() || ""}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر الموقع" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sitesLoading ? (
-                            <SelectItem value="0">جاري التحميل...</SelectItem>
-                          ) : sitesError ? (
-                            <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                          ) : (
-                            sites.map(site => (
-                              <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <Card>
+              <CardHeader className="flex justify-between items-center" dir="rtl">
+                <CardTitle className="text-right">
+                  تنبيهات فقدان الاتصال ({communicationAlarms.length})
+                </CardTitle>
 
-                    <div className="space-y-2">
-                      <Label>اسم التنبيه</Label>
-                      <Input 
-                        type="text" 
-                        placeholder="اسم التنبيه" 
-                        value={newCommunicationAlarmForm.alarmName} 
-                        onChange={(e) => setNewCommunicationAlarmForm(prev => ({ 
-                          ...prev, 
-                          alarmName: e.target.value 
-                        }))} 
+                <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}> {/* Reset form on add click */}
+                      <Plus className="ml-2 h-4 w-4" />
+                      إضافة تنبيه جديد
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+                    <DialogHeader>
+                      <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
+                      <DialogDescription className="text-right">
+                        تكوين تنبيه عند انقطاع البيانات لفترة محددة
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>الموقع</Label>
+                        <Select
+                          onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({
+                            ...prev,
+                            siteId: parseInt(value)
+                          }))}
+                          value={newCommunicationAlarmForm.siteId?.toString() || ""}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر الموقع" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sitesLoading ? (
+                              <SelectItem value="0">جاري التحميل...</SelectItem>
+                            ) : sitesError ? (
+                              <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                            ) : (
+                              sites.map(site => (
+                                <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>اسم التنبيه</Label>
+                        <Input
+                          type="text"
+                          placeholder="اسم التنبيه"
+                          value={newCommunicationAlarmForm.alarmName}
+                          onChange={(e) => setNewCommunicationAlarmForm(prev => ({
+                            ...prev,
+                            alarmName: e.target.value
+                          }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>عدد الساعات</Label>
+                        <Input
+                          type="number"
+                          placeholder="2"
+                          value={newCommunicationAlarmForm.hours}
+                          onChange={(e) => setNewCommunicationAlarmForm(prev => ({
+                            ...prev,
+                            hours: parseInt(e.target.value) || 0
+                          }))}
+                        />
+                        <p className="text-xs text-gray-500">
+                          سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>مستوى الخطورة</Label>
+                        <Select
+                          onValueChange={(value: 'Warning' | 'Critical') => setNewCommunicationAlarmForm(prev => ({
+                            ...prev,
+                            severity: value
+                          }))}
+                          value={newCommunicationAlarmForm.severity}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر المستوى" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Warning">تحذير</SelectItem>
+                            <SelectItem value="Critical">حرج</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <RecipientInput
+                        type="email"
+                        forAlarmType="communication"
+                        recipients={newCommunicationAlarmForm.emails}
+                        setRecipients={setCommunicationEmails}
+                        setHasChanges={() => { }} // No need to track changes for add dialog
+                      />
+
+                      <RecipientInput
+                        type="phone"
+                        forAlarmType="communication"
+                        recipients={newCommunicationAlarmForm.phones}
+                        setRecipients={setCommunicationPhones}
+                        setHasChanges={() => { }} // No need to track changes for add dialog
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>عدد الساعات</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="2" 
-                        value={newCommunicationAlarmForm.hours} 
-                        onChange={(e) => setNewCommunicationAlarmForm(prev => ({ 
-                          ...prev, 
-                          hours: parseInt(e.target.value) || 0 
-                        }))} 
-                      />
-                      <p className="text-xs text-gray-500">
-                        سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
-                      </p>
-                    </div>
+                    <DialogFooter>
+                      <div className="w-full flex justify-start gap-2">
+                        <Button variant="outline" onClick={() => setIsAddCommOpen(false)}>
+                          إلغاء
+                        </Button>
+                        <Button onClick={handleSubmitCommunicationAlarm} disabled={isSubmittingCommAdd || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الإضافة..." isLoading={isSubmittingCommAdd}>
+                          إضافة التنبيه
+                        </Button>
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
 
-                    <div className="space-y-2">
-                      <Label>مستوى الخطورة</Label>
-                      <Select 
-                        onValueChange={(value: 'Warning' | 'Critical') => setNewCommunicationAlarmForm(prev => ({ 
-                          ...prev, 
-                          severity: value 
-                        }))} 
-                        value={newCommunicationAlarmForm.severity}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر المستوى" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Warning">تحذير</SelectItem>
-                          <SelectItem value="Critical">حرج</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">إجراءات</TableHead>
+                      <TableHead className="text-right">المستلمون</TableHead>
+                      <TableHead className="text-right">عدد الساعات</TableHead>
+                      <TableHead className="text-right">الموقع</TableHead>
+                      <TableHead className="text-right">الاسم</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {communicationAlarms.map((alarm) => (
+                      <TableRow key={alarm.alarmId}>
+                        <TableCell className="text-right">
+                          <Dialog open={isEditCommOpen && currentCommunicationAlarm?.id === alarm.alarmId} onOpenChange={setIsEditCommOpen}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  // Transform CommunicationAlarm to CommunicationAlarmForm for setCurrentCommunicationAlarm
+                                  const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+                                  const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+                                  setCurrentCommunicationAlarm({
+                                    id: alarm.alarmId,
+                                    siteId: alarm.siteId,
+                                    alarmName: alarm.alarmName,
+                                    site: alarm.siteName || '',
+                                    severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+                                    hours: alarm.numHours || 0,
+                                    emails: emails,
+                                    phones: phones,
+                                  });
+                                  populateCommunicationAlarmFormForEdit(alarm);
+                                  setIsEditCommOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+                              <DialogHeader>
+                                <DialogTitle className="text-right">تعديل تنبيه فقدان اتصال</DialogTitle>
+                                <DialogDescription className="text-right">
+                                  تعديل تكوين التنبيه الحالي
+                                </DialogDescription>
+                              </DialogHeader>
 
-                    <RecipientInput 
-                      type="email" 
-                      forAlarmType="communication" 
-                      recipients={newCommunicationAlarmForm.emails} 
-                      setRecipients={setCommunicationEmails}
-                      setHasChanges={() => {}} // No need to track changes for add dialog
-                    />
-                    
-                    <RecipientInput 
-                      type="phone" 
-                      forAlarmType="communication" 
-                      recipients={newCommunicationAlarmForm.phones} 
-                      setRecipients={setCommunicationPhones}
-                      setHasChanges={() => {}} // No need to track changes for add dialog
-                    />
-                  </div>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label>الموقع</Label>
+                                  {currentCommunicationAlarm ? (
+                                    <Input type="text" value={currentCommunicationAlarm.site} disabled />
+                                  ) : (
+                                    <Select
+                                      onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({
+                                        ...prev,
+                                        siteId: parseInt(value)
+                                      }))}
+                                      value={newCommunicationAlarmForm.siteId?.toString() || ""}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="اختر الموقع" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {sitesLoading ? (
+                                          <SelectItem value="0">جاري التحميل...</SelectItem>
+                                        ) : sitesError ? (
+                                          <SelectItem value="0" disabled>{sitesError}</SelectItem>
+                                        ) : (
+                                          sites.map(site => (
+                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
 
-                  <DialogFooter>
-                    <div className="w-full flex justify-start gap-2">
-                      <Button variant="outline" onClick={() => setIsAddCommOpen(false)}>
-                        إلغاء
-                      </Button>
-                      <Button onClick={handleSubmitCommunicationAlarm} disabled={isSubmittingCommAdd || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الإضافة..." isLoading={isSubmittingCommAdd}>
-                        إضافة التنبيه
-                      </Button>
-                    </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                    <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">عدد الساعات</TableHead>
-                    <TableHead className="text-right">الموقع</TableHead>
-                    <TableHead className="text-right">الاسم</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {communicationAlarms.map((alarm) => (
-                    <TableRow key={alarm.alarmId}>
-                      <TableCell className="text-right">
-                        <Dialog open={isEditCommOpen && currentCommunicationAlarm?.id === alarm.alarmId} onOpenChange={setIsEditCommOpen}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                // Transform CommunicationAlarm to CommunicationAlarmForm for setCurrentCommunicationAlarm
-                                const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-                                const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-                                setCurrentCommunicationAlarm({
-                                  id: alarm.alarmId,
-                                  siteId: alarm.siteId,
-                                  alarmName: alarm.alarmName,
-                                  site: alarm.siteName || '',
-                                  severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
-                                  hours: alarm.numHours || 0,
-                                  emails: emails,
-                                  phones: phones,
-                                });
-                                populateCommunicationAlarmFormForEdit(alarm);
-                                setIsEditCommOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4"/>
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
-                            <DialogHeader>
-                              <DialogTitle className="text-right">تعديل تنبيه فقدان اتصال</DialogTitle>
-                              <DialogDescription className="text-right">
-                                تعديل تكوين التنبيه الحالي
-                              </DialogDescription>
-                            </DialogHeader>
-                            
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>الموقع</Label>
-                                {currentCommunicationAlarm ? (
-                                  <Input type="text" value={currentCommunicationAlarm.site} disabled />
-                                ) : (
-                                  <Select 
-                                    onValueChange={(value) => setNewCommunicationAlarmForm(prev => ({
-                                      ...prev, 
-                                      siteId: parseInt(value)
-                                    }))} 
-                                    value={newCommunicationAlarmForm.siteId?.toString() || ""}
+                                <div className="space-y-2">
+                                  <Label>اسم التنبيه</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="اسم التنبيه"
+                                    value={newCommunicationAlarmForm.alarmName}
+                                    onChange={(e) => {
+                                      setNewCommunicationAlarmForm(prev => ({
+                                        ...prev,
+                                        alarmName: e.target.value
+                                      }));
+                                      setHasCommunicationChanges(true);
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>عدد الساعات</Label>
+                                  <Input
+                                    type="number"
+                                    placeholder="2"
+                                    value={newCommunicationAlarmForm.hours}
+                                    onChange={(e) => {
+                                      setNewCommunicationAlarmForm(prev => ({
+                                        ...prev,
+                                        hours: parseInt(e.target.value) || 0
+                                      }));
+                                      setHasCommunicationChanges(true);
+                                    }}
+                                  />
+                                  <p className="text-xs text-gray-500">
+                                    سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>مستوى الخطورة</Label>
+                                  <Select
+                                    onValueChange={(value: 'Warning' | 'Critical') => {
+                                      setNewCommunicationAlarmForm(prev => ({
+                                        ...prev,
+                                        severity: value
+                                      }));
+                                      setHasCommunicationChanges(true);
+                                    }}
+                                    value={newCommunicationAlarmForm.severity}
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder="اختر الموقع" />
+                                      <SelectValue placeholder="اختر المستوى" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {sitesLoading ? (
-                                        <SelectItem value="0">جاري التحميل...</SelectItem>
-                                      ) : sitesError ? (
-                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                      ) : (
-                                        sites.map(site => (
-                                          <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                                        ))
-                                      )}
+                                      <SelectItem value="Warning">تحذير</SelectItem>
+                                      <SelectItem value="Critical">حرج</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                )}
-                              </div>
+                                </div>
 
-                              <div className="space-y-2">
-                                <Label>اسم التنبيه</Label>
-                                <Input 
-                                  type="text" 
-                                  placeholder="اسم التنبيه" 
-                                  value={newCommunicationAlarmForm.alarmName} 
-                                  onChange={(e) => {
-                                    setNewCommunicationAlarmForm(prev => ({
-                                      ...prev, 
-                                      alarmName: e.target.value 
-                                    }));
-                                    setHasCommunicationChanges(true);
-                                  }}
+                                <RecipientInput
+                                  type="email"
+                                  forAlarmType="communication"
+                                  recipients={newCommunicationAlarmForm.emails}
+                                  setRecipients={setCommunicationEmails}
+                                  setHasChanges={setHasCommunicationChanges}
+                                />
+
+                                <RecipientInput
+                                  type="phone"
+                                  forAlarmType="communication"
+                                  recipients={newCommunicationAlarmForm.phones}
+                                  setRecipients={setCommunicationPhones}
+                                  setHasChanges={setHasCommunicationChanges}
                                 />
                               </div>
 
-                              <div className="space-y-2">
-                                <Label>عدد الساعات</Label>
-                                <Input 
-                                  type="number" 
-                                  placeholder="2" 
-                                  value={newCommunicationAlarmForm.hours} 
-                                  onChange={(e) => {
-                                    setNewCommunicationAlarmForm(prev => ({
-                                      ...prev, 
-                                      hours: parseInt(e.target.value) || 0 
-                                    }));
-                                    setHasCommunicationChanges(true);
-                                  }}
-                                />
-                                <p className="text-xs text-gray-500">
-                                  سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
-                                </p>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>مستوى الخطورة</Label>
-                                <Select 
-                                  onValueChange={(value: 'Warning' | 'Critical') => {
-                                    setNewCommunicationAlarmForm(prev => ({
-                                      ...prev, 
-                                      severity: value 
-                                    }));
-                                    setHasCommunicationChanges(true);
-                                  }}
-                                  value={newCommunicationAlarmForm.severity}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر المستوى" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Warning">تحذير</SelectItem>
-                                    <SelectItem value="Critical">حرج</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <RecipientInput 
-                                type="email" 
-                                forAlarmType="communication" 
-                                recipients={newCommunicationAlarmForm.emails} 
-                                setRecipients={setCommunicationEmails}
-                                setHasChanges={setHasCommunicationChanges}
-                              />
-                              
-                              <RecipientInput 
-                                type="phone" 
-                                forAlarmType="communication" 
-                                recipients={newCommunicationAlarmForm.phones} 
-                                setRecipients={setCommunicationPhones}
-                                setHasChanges={setHasCommunicationChanges}
-                              />
-                            </div>
-
-                            <DialogFooter>
-                              <div className="w-full flex justify-start gap-2">
-                                <Button variant="outline" onClick={() => setIsEditCommOpen(false)}>
-                                  إلغاء
-                                </Button>
-                                <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !hasCommunicationChanges || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
-                                  حفظ التغييرات
-                                </Button>
-                              </div>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap gap-1 justify-end">
-                          {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
-                            <Badge key={`email-${idx}`} variant="secondary" className="text-xs">
-                              <Mail className="ml-1 h-3 w-3" /> {email.trim()}
-                            </Badge>
-                          ))}
-                          {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
-                            <Badge key={`phone-${idx}`} variant="secondary" className="text-xs">
-                              <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline" dir="rtl">
-                          {alarm.numHours === 1 ? `${alarm.numHours} ساعة ` : `${alarm.numHours} ساعات`}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
-                      <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                              <DialogFooter>
+                                <div className="w-full flex justify-start gap-2">
+                                  <Button variant="outline" onClick={() => setIsEditCommOpen(false)}>
+                                    إلغاء
+                                  </Button>
+                                  <Button onClick={handleEditCommunicationAlarm} disabled={isSubmittingCommEdit || !hasCommunicationChanges || !newCommunicationAlarmForm.siteId || !newCommunicationAlarmForm.alarmName || !newCommunicationAlarmForm.hours} loadingText="جاري الحفظ..." isLoading={isSubmittingCommEdit}>
+                                    حفظ التغييرات
+                                  </Button>
+                                </div>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
+                              <Badge key={`email-${idx}`} variant="secondary" className="text-xs">
+                                <Mail className="ml-1 h-3 w-3" /> {email.trim()}
+                              </Badge>
+                            ))}
+                            {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
+                              <Badge key={`phone-${idx}`} variant="secondary" className="text-xs">
+                                <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" dir="rtl">
+                            {alarm.numHours === 1 ? `${alarm.numHours} ساعة ` : `${alarm.numHours} ساعات`}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
+                        <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>    </div>
