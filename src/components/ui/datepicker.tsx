@@ -17,6 +17,7 @@ interface DatePickerProps {
 
 export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: DatePickerProps) {
   const [internalDate, setInternalDate] = useState<Date | undefined>(value)
+  const [popoverOpen, setPopoverOpen] = useState(false)
 
   useEffect(() => {
     setInternalDate(value);
@@ -27,10 +28,11 @@ export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: D
   const handleSelect = (selected: Date | undefined) => {
     setInternalDate(selected)
     onChange?.(selected)
+    setPopoverOpen(false) // Close the popover after selecting a date
   }
 
   return (
-    <Popover>
+    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
