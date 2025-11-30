@@ -243,6 +243,12 @@ export const registerUser = async (userData: any): Promise<UserDto> => {
   return response.data;
 };
 
+export const logoutUser = async (): Promise<ApiResponse<any>> => {
+  const response = await axiosInstance.post<ApiResponse<any>>('/v1/Auth/logout');
+  removeAuthCookies();
+  return response.data;
+};
+
 /**
  * Download file as blob
  * @param endpoint - API endpoint (e.g., '/v1/readings/export')
@@ -312,6 +318,7 @@ const apiService = {
   refreshAccessToken,
   loginUser,
   registerUser,
+  logoutUser,
   downloadFile,
   instance: axiosInstance,
 };

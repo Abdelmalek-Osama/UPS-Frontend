@@ -12,6 +12,7 @@ import {ReadingsManagement} from './features/readings/components/ReadingsManagem
 import {SitesManagement} from './features/sites/components/SitesManagement';
 import {UserManagement} from './features/users/components/UserManagement';
 import { getAccessToken, removeAuthCookies } from './shared/utils/cookieService';
+import apiService from './shared/utils/apiService';
 // import { AuthResponse } from './shared/utils/apiService'; // No longer needed for App.tsx directly
 
 
@@ -137,11 +138,18 @@ export default function App() {
   //   navigate('/');
   // };
 
-  const handleLogout = () => {
-    removeAuthCookies();
-    sessionStorage.setItem('isLogged', 'false'); // Clear isLogged in sessionStorage
-    setCurrentUser(null);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await apiService.logoutUser();
+    } catch (error) {
+      console.error("Error during logout API call:", error);
+      // Optionally, show a toast notification for logout error
+    } finally {
+      removeAuthCookies();
+      sessionStorage.setItem('isLogged', 'false'); // Clear isLogged in sessionStorage
+      setCurrentUser(null);
+      navigate('/login');
+    }
   };
 
   // if (!isAuthenticated) {
