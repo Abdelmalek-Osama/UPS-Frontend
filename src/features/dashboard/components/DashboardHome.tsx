@@ -87,14 +87,13 @@ export function DashboardHome() {
           <CardHeader>
             <CardTitle>التدفق خلال 24 ساعة</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
                 <YAxis 
                   label={{ value: 'م³/س', angle: -90, position: 'insideLeft', dy:-20 }} 
-                  tick={{dx: -25}}
                 />
                 <Tooltip />
                 <Legend />
@@ -108,14 +107,13 @@ export function DashboardHome() {
           <CardHeader>
             <CardTitle>المواقع حسب المديرية</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={directorateData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis 
                   label={{value: 'عدد المواقع', angle: -90, position: 'insideLeft', dy:-20 }} 
-                  tick={{dx: -15}}
                 />
                 <Tooltip />
                 <Legend />
@@ -146,7 +144,7 @@ export function DashboardHome() {
                     {alarm.type === 'communication' && <WifiOff className="h-4 w-4 text-red-700" />}
                     {alarm.type === 'flow' && <Droplets className="h-4 w-4 text-yellow-700" />}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <p className="text-sm break-words">{alarm.site}</p>
                       <Badge variant={alarm.severity === 'Critical' ? 'destructive' : 'outline'}>
@@ -181,7 +179,7 @@ export function DashboardHome() {
                       <Power className="h-4 w-4 text-green-700" />
                     )}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm break-words">{reading.site}</p>
                     <div className="text-xs text-gray-600 mt-1 space-y-0.5 break-words">
                       {reading.type === 'WaterLevel' ? (
