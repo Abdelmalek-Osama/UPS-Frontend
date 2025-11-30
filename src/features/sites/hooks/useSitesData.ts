@@ -11,7 +11,7 @@ export function useSitesData() {
     const fetchSites = async () => {
       try {
         setLoading(true);
-        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Lookups/Lookup/Sites');
+        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites/all');
         setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
       } catch (err) {
         setError('Failed to fetch sites');
@@ -31,7 +31,12 @@ export function useSitesData() {
 
 export function useFilteredSites(sites: Site[], filters: SiteFilters) {
   return sites.filter(site => {
-    const matchesSearch = site.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
+    const matchesSearch = (
+      site.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      (site.code && site.code.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+      (site.directorateName && site.directorateName.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+      (site.canal && site.canal.toLowerCase().includes(filters.searchTerm.toLowerCase()))
+    );
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
     const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
     const matchesCanal = filters.canal === 'all' || (site.canal && site.canal === filters.canal);
