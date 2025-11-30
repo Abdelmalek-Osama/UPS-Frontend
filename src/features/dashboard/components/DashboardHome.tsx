@@ -148,12 +148,12 @@ export function DashboardHome() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
-                      <p className="text-sm">{alarm.site}</p>
+                      <p className="text-sm break-words">{alarm.site}</p>
                       <Badge variant={alarm.severity === 'Critical' ? 'destructive' : 'outline'}>
                         {alarm.severity === 'Critical' ? 'حرج' : 'تحذير'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{alarm.message}</p>
+                    <p className="text-sm text-gray-600 mt-1 break-words">{alarm.message}</p>
                     <p className="text-xs text-gray-400 mt-1">{alarm.time}</p>
                   </div>
                 </div>
@@ -182,8 +182,8 @@ export function DashboardHome() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm">{reading.site}</p>
-                    <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+                    <p className="text-sm break-words">{reading.site}</p>
+                    <div className="text-xs text-gray-600 mt-1 space-y-0.5 break-words">
                       {reading.type === 'WaterLevel' ? (
                         <>
                           <p>USWL: {reading.uswl} م • DSWL: {reading.dswl} م</p>

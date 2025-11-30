@@ -11,7 +11,7 @@ export function useSitesData() {
     const fetchSites = async () => {
       try {
         setLoading(true);
-        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites');
+        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Lookups/Lookup/Sites');
         setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
       } catch (err) {
         setError('Failed to fetch sites');
@@ -30,47 +30,11 @@ export function useSitesData() {
 }
 
 export function useFilteredSites(sites: Site[], filters: SiteFilters) {
-  console.log('--- Debugging useFilteredSites ---');
-  console.log('Search Term (raw):', filters.searchTerm);
-
-  const lowerCaseSearchTerm = filters.searchTerm.toLowerCase();
-  console.log('Search Term (lowercase):', lowerCaseSearchTerm);
-
   return sites.filter(site => {
-    // Log individual site properties and their lowercased versions
-    console.log('  Processing Site ID:', site.id, 'Name:', site.name);
-    const siteNameLower = site.name.toLowerCase();
-    const siteCodeLower = site.code?.toLowerCase(); // Use optional chaining for safety
-    const directorateNameLower = site.directorateName?.toLowerCase(); // Use optional chaining for safety
-    const canalLower = site.canal?.toLowerCase(); // Use optional chaining for safety
-
-    console.log('    Site Name Lowercased:', siteNameLower);
-    console.log('    Site Code Lowercased:', site.code, '->', siteCodeLower);
-    console.log('    Directorate Name Lowercased:', site.directorateName, '->', directorateNameLower);
-    console.log('    Canal Lowercased:', site.canal, '->', canalLower);
-
-    const matchesSearch = (
-      siteNameLower.includes(lowerCaseSearchTerm) ||
-      (siteCodeLower && siteCodeLower.includes(lowerCaseSearchTerm)) ||
-      (directorateNameLower && directorateNameLower.includes(lowerCaseSearchTerm)) ||
-      (canalLower && canalLower.includes(lowerCaseSearchTerm))
-    );
-
+    const matchesSearch = site.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
     const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
     const matchesCanal = filters.canal === 'all' || (site.canal && site.canal === filters.canal);
-
-    console.log('    Condition: matches name:', siteNameLower.includes(lowerCaseSearchTerm));
-    console.log('    Condition: matches code:', (siteCodeLower && siteCodeLower.includes(lowerCaseSearchTerm)));
-    console.log('    Condition: matches directorate:', (directorateNameLower && directorateNameLower.includes(lowerCaseSearchTerm)));
-    console.log('    Condition: matches canal:', (canalLower && canalLower.includes(lowerCaseSearchTerm)));
-
-    console.log('    Matches Search (any field):', matchesSearch);
-    console.log('    Matches Type Filter:', matchesType);
-    console.log('    Matches Directorate Filter:', matchesDirectorate);
-    console.log('    Matches Canal Filter:', matchesCanal);
-    console.log('    Overall Site Match:', matchesSearch && matchesType && matchesDirectorate && matchesCanal);
-
     return matchesSearch && matchesType && matchesDirectorate && matchesCanal;
   });
 }
