@@ -31,7 +31,12 @@ export function useSitesData() {
 
 export function useFilteredSites(sites: Site[], filters: SiteFilters) {
   return sites.filter(site => {
-    const matchesSearch = site.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
+    const matchesSearch = (
+      site.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      site.code.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      site.directorateName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      (site.canal && site.canal.toLowerCase().includes(filters.searchTerm.toLowerCase()))
+    );
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
     const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
     const matchesCanal = filters.canal === 'all' || (site.canal && site.canal === filters.canal);
