@@ -151,11 +151,16 @@ export function ReadingsManagement() {
     let apiFromDate = fromDate;
     let apiToDate = toDate;
 
-    if (apiFromDate === undefined || apiToDate === undefined) {
-      // If both are undefined, use the default 10-hour range for the API call
-      apiToDate = new Date();
+    // If fromDate is not set, default to the beginning of today
+    if (apiFromDate === undefined) {
       apiFromDate = new Date();
-      apiFromDate.setHours(apiFromDate.getHours() - 10);
+      apiFromDate.setHours(0, 0, 0, 0);
+    }
+
+    // If toDate is not set, default to the end of today
+    if (apiToDate === undefined) {
+      apiToDate = new Date();
+      apiToDate.setHours(23, 59, 59, 999);
     }
 
     fetchPumpStationReadings(
