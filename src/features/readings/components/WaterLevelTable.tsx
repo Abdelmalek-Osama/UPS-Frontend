@@ -17,6 +17,7 @@ import { Input } from '../../../components/ui/input';
 import { DatePicker } from '../../../components/ui/datepicker';
 import type { SiteLookupOption, WaterLevelReading } from '../types';
 import { getColorCategory, formatDateTimeForAPI } from '../utils/utils';
+import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 
 interface SiteConfiguration {
   id: number;
@@ -135,12 +136,8 @@ export function WaterLevelTable({
     const fetchSiteData = async () => {
       if (selectedSiteForAdd) {
         try {
-          const response = await fetch(`https://localhost:7123/api/v1/Sites/${selectedSiteForAdd}`);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setSelectedSiteData(data.data);
+          const response = await apiService.get<ApiResponse<SiteConfiguration>>(`/v1/Sites/${selectedSiteForAdd}`);
+          setSelectedSiteData(response.data);
         } catch (error) {
           console.error("Failed to fetch site data:", error);
           setSelectedSiteData(null);
