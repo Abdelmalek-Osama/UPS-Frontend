@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -112,14 +112,24 @@ export function WaterLevelTable({
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const prevDialogOpenRef = useRef(false);
 
+  // Initialize selectedSiteForAdd only when dialog first opens (not on every render)
   useEffect(() => {
-    if (selectedSiteId) {
-      setSelectedSiteForAdd(selectedSiteId);
-    } else if (sites.length > 0 && !selectedSiteForAdd) {
-      setSelectedSiteForAdd(String(sites[0].id));
+    const wasClosed = !prevDialogOpenRef.current;
+    const isNowOpen = isAddDialogOpen;
+    
+    if (isNowOpen && wasClosed && !selectedSiteForAdd) {
+      // Dialog just opened - initialize with selectedSiteId if available, otherwise first site
+      if (selectedSiteId) {
+        setSelectedSiteForAdd(selectedSiteId);
+      } else if (sites.length > 0) {
+        setSelectedSiteForAdd(String(sites[0].id));
+      }
     }
-  }, [sites, selectedSiteForAdd, selectedSiteId]);
+    
+    prevDialogOpenRef.current = isAddDialogOpen;
+  }, [isAddDialogOpen, selectedSiteId, sites, selectedSiteForAdd]);
 
   useEffect(() => {
     const fetchSiteData = async () => {
@@ -150,6 +160,8 @@ export function WaterLevelTable({
       setDswl2('');
       setBattery('');
       setAddError(null); // Clear error on dialog close
+      // Reset selectedSiteForAdd when dialog closes so it can be initialized fresh next time
+      setSelectedSiteForAdd('');
     }
   }, [isAddDialogOpen]);
 
