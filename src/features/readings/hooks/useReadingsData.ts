@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse, PumpStationApiResponse } from '../types';
+import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse, PumpStationApiResponse, CreatePumpStationReadingRequest } from '../types';
 import { toast } from 'react-toastify';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
@@ -9,7 +9,10 @@ export function useReadingsData(selectedSiteId: string) {
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
   const [isPumpEditOpen, setIsPumpEditOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // General loading state
+  const [isLoading, setIsLoading] = useState(false); // General loading state for data operations (create/update/export)
+  const [isLoadingSites, setIsLoadingSites] = useState(false); // Separate loading state for sites lookup
+  const [isLoadingWaterLevel, setIsLoadingWaterLevel] = useState(false); // Loading state for water level readings
+  const [isLoadingPumpStation, setIsLoadingPumpStation] = useState(false); // Loading state for pump station readings
 
   const [sites, setSites] = useState<SiteLookupOption[]>([]);
   const [sitesError, setSitesError] = useState<string | null>(null);
@@ -48,9 +51,6 @@ export function useReadingsData(selectedSiteId: string) {
     setIsEditWaterLevelOpen(true);
   };
 
-  const handleExport = () => {
-    toast.info('سيتم تصدير البيانات إلى ملف Excel');
-  };
 
   interface CreateWaterLevelReadingRequest {
     siteId: number;
@@ -64,35 +64,6 @@ export function useReadingsData(selectedSiteId: string) {
     isManual: boolean;
   }
 
-  interface CreatePumpStationReadingRequest {
-    siteId: number;
-    timestamp: string;
-    timePerHour: number;
-    recordNumber: number;
-    p1_Time: number;
-    p1_Flow: number;
-    p2_Time: number;
-    p2_Flow: number;
-    p3_Time: number;
-    p3_Flow: number;
-    p4_Time: number;
-    p4_Flow: number;
-    p5_Time: number;
-    p5_Flow: number;
-    p6_Time: number;
-    p6_Flow: number;
-    p7_Time: number;
-    p7_Flow: number;
-    p8_Time: number;
-    p8_Flow: number;
-    p9_Time: number;
-    p9_Flow: number;
-    p10_Time: number;
-    p10_Flow: number;
-    totalUptime: number;
-    totalFlow: number;
-    isManual: boolean;
-  }
 
   const createWaterLevelReading = useCallback(
     async (data: CreateWaterLevelReadingRequest) => {
@@ -191,7 +162,7 @@ export function useReadingsData(selectedSiteId: string) {
   );
 
   const fetchSitesLookup = useCallback(async () => {
-    setIsLoading(true); // Start loading
+    setIsLoadingSites(true); // Use separate loading state for sites
     try {
       setSitesError(null);
       const response = await apiService.get<SiteLookupOption[] | { data: SiteLookupOption[] }>('/v1/Lookups/Lookup/Sites');
@@ -200,7 +171,7 @@ export function useReadingsData(selectedSiteId: string) {
       console.error('Error fetching lookup sites', error);
       setSitesError('تعذر تحميل قائمة المواقع');
     } finally {
-      setIsLoading(false); // End loading
+      setIsLoadingSites(false); // End loading
     }
   }, []);
 
@@ -238,7 +209,7 @@ export function useReadingsData(selectedSiteId: string) {
       const query = params.toString();
       const endpoint = `/v1/readings/water-level/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
-      setIsLoading(true); // Start loading
+      setIsLoadingWaterLevel(true); // Use separate loading state
       setWaterLevelError(null);
 
       try {
@@ -256,7 +227,7 @@ export function useReadingsData(selectedSiteId: string) {
         setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
         setWaterLevelReadings([]);
       } finally {
-        setIsLoading(false); // End loading
+        setIsLoadingWaterLevel(false); // End loading
       }
     },
     []
@@ -279,7 +250,7 @@ export function useReadingsData(selectedSiteId: string) {
       const query = params.toString();
       const endpoint = `/v1/readings/pump-station/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
-      setIsLoading(true); // Start loading
+      setIsLoadingPumpStation(true); // Use separate loading state
       setPumpStationError(null);
 
       try {
@@ -324,7 +295,7 @@ export function useReadingsData(selectedSiteId: string) {
         setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
         setPumpStationReadings([]);
       } finally {
-        setIsLoading(false); // End loading
+        setIsLoadingPumpStation(false); // End loading
       }
     },
     []
@@ -367,7 +338,6 @@ export function useReadingsData(selectedSiteId: string) {
     sitesError,
     handleViewPumpDetails,
     handleEditPump,
-    handleExport,
     // Edit dialog state and handlers
     isEditPumpStationOpen,
     setIsEditPumpStationOpen,
@@ -380,6 +350,9 @@ export function useReadingsData(selectedSiteId: string) {
     setEditingWaterLevel,
     handleEditWaterLevel,
     selectedSite,
-    isLoading,
+    isLoading, // For create/update/export operations
+    isLoadingWaterLevel, // For water level readings fetch
+    isLoadingPumpStation, // For pump station readings fetch
+    isLoadingSites, // For sites lookup
   };
 }

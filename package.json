@@ -54,6 +54,7 @@
             "sonner": "^2.0.3",
             "tailwind-merge": "*",
             "vaul": "^1.1.2",
+            "xlsx": "^0.18.5",
             "yup": "^1.7.1"
       },
       "devDependencies": {

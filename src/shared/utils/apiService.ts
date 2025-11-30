@@ -243,6 +243,62 @@ export const registerUser = async (userData: any): Promise<UserDto> => {
   return response.data;
 };
 
+/**
+ * Download file as blob
+ * @param endpoint - API endpoint (e.g., '/v1/readings/export')
+ * @param filename - Suggested filename for the download
+ * @param options - Optional Axios request options including query params
+ */
+export async function downloadFile(
+  endpoint: string,
+  filename: string,
+  options?: RequestOptions
+): Promise<void> {
+  try {
+    const response = await axiosInstance.get(endpoint, {
+      ...options,
+      responseType: 'blob',
+    });
+
+    // Try to get filename from Content-Disposition header if available
+    let downloadFilename = filename;
+    const contentDisposition = response.headers['content-disposition'];
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+        // Handle UTF-8 encoded filenames
+        if (downloadFilename.startsWith('UTF-8\'\'')) {
+          downloadFilename = decodeURIComponent(downloadFilename.replace(/^UTF-8''/, ''));
+        }
+      }
+    }
+
+    // Determine content type from response or blob
+    const contentType = response.headers['content-type'] || response.data.type || 'application/octet-stream';
+    
+    // Create a blob from the response with proper content type
+    const blob = new Blob([response.data], { type: contentType });
+    
+    // Create a temporary URL for the blob
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a temporary anchor element and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = downloadFilename;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('Error downloading file', error);
+    throw error;
+  }
+}
+
 // Export axios instance for direct use if needed
 export { axiosInstance };
 
@@ -256,6 +312,7 @@ const apiService = {
   refreshAccessToken,
   loginUser,
   registerUser,
+  downloadFile,
   instance: axiosInstance,
 };
 

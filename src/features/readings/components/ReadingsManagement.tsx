@@ -41,10 +41,12 @@ import {
 import { useReadingsData } from '../hooks/useReadingsData';
 import { WaterLevelTable } from './WaterLevelTable';
 import { PumpStationTable } from './PumpStationTable';
-import type { PumpStationReading } from '../types';
+import type { PumpStationReading, WaterLevelReading } from '../types';
 import { DatePicker } from '../../../components/ui/datepicker';
 import Loader from '../../../components/ui/Loader';
 import { formatDateTimeForAPI } from '../utils/utils';
+import * as XLSX from 'xlsx';
+import { toast } from 'react-toastify';
 
 export function ReadingsManagement() {
   const [activeTab, setActiveTab] = useState('waterLevel');
@@ -52,7 +54,6 @@ export function ReadingsManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const {
-    handleExport,
     waterLevelReadings,
     pumpStationReadings,
     sites,
@@ -69,7 +70,10 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
-    isLoading, // Use the consolidated isLoading state
+    isLoading, // For create/update operations
+    isLoadingWaterLevel, // For water level readings fetch
+    isLoadingPumpStation, // For pump station readings fetch
+    isLoadingSites, // For sites lookup
     waterLevelError,
     pumpStationError,
     fetchPumpStationReadings,
@@ -83,6 +87,9 @@ export function ReadingsManagement() {
       setSelectedSiteId(String(sites[0].id));
     }
   }, [sites, selectedSiteId]);
+
+  // Show loader if sites are loading or if we don't have a selected site yet (initial load)
+  const isInitialLoading = isLoadingSites || (sites.length === 0 && !selectedSiteId);
 
   const formatDate = (date?: Date) => {
     if (!date) return undefined;
@@ -128,7 +135,8 @@ export function ReadingsManagement() {
       return;
     }
     fetchWaterLevelReadings(siteNumericId, fromDate ? formatDate(fromDate) : undefined, toDate ? formatDate(toDate) : undefined);
-  }, [selectedSiteId, fromDate, toDate, fetchWaterLevelReadings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSiteId, fromDate, toDate]);
 
   // Added useEffect for fetching pump station readings
   useEffect(() => {
@@ -155,7 +163,8 @@ export function ReadingsManagement() {
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
       apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
     );
-  }, [selectedSiteId, fromDate, toDate, fetchPumpStationReadings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSiteId, fromDate, toDate]);
 
 
   // const handleViewPumpDetails = (reading: PumpStationReading) => {
@@ -168,6 +177,117 @@ export function ReadingsManagement() {
     setToDate(undefined);
     localStorage.removeItem('fromDate');
     localStorage.removeItem('toDate');
+  };
+
+  // Client-side Excel export functions (no API calls)
+  const handleWaterLevelExport = () => {
+    if (!selectedSiteId) {
+      toast.error('الرجاء اختيار موقع أولاً');
+      return;
+    }
+
+    if (!waterLevelReadings || waterLevelReadings.length === 0) {
+      toast.error('لا توجد بيانات للتصدير');
+      return;
+    }
+
+    try {
+      // Prepare water level readings data for Excel
+      const worksheetData = waterLevelReadings.map((reading: WaterLevelReading) => ({
+        'الموقع': reading.site || '',
+        'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString('ar-SA') : '',
+        'USWL': reading.uswl ?? '',
+        'DSWL1': reading.dswL1 ?? '',
+        'DSWL2': reading.dswL2 ?? '',
+        'البطارية': reading.battery ?? '',
+        'التدفق المحسوب': reading.calculatedFlow ?? '',
+        'رقم السجل': reading.recordNumber ?? '',
+        'يدوي': reading.isManual ? 'نعم' : 'لا',
+      }));
+
+      // Generate filename
+      const siteNumericId = Number(selectedSiteId);
+      const dateSuffix = fromDate && toDate
+        ? `_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`
+        : fromDate
+        ? `_from_${fromDate.toISOString().split('T')[0]}`
+        : toDate
+        ? `_to_${toDate.toISOString().split('T')[0]}`
+        : '';
+      const filename = `water_level_readings_site_${siteNumericId}${dateSuffix}.xlsx`;
+
+      // Create workbook and worksheet
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'قراءات القناطر');
+
+      // Generate Excel file and download (client-side, no API call)
+      XLSX.writeFile(workbook, filename);
+      toast.success('تم تصدير البيانات بنجاح');
+    } catch (error: any) {
+      console.error('Error exporting water level data', error);
+      toast.error('حدث خطأ أثناء تصدير البيانات');
+    }
+  };
+
+  const handlePumpStationExport = () => {
+    if (!selectedSiteId) {
+      toast.error('الرجاء اختيار موقع أولاً');
+      return;
+    }
+
+    if (!pumpStationReadings || pumpStationReadings.length === 0) {
+      toast.error('لا توجد بيانات للتصدير');
+      return;
+    }
+
+    try {
+      // Prepare pump station readings data for Excel
+      const worksheetData = pumpStationReadings.map((reading: PumpStationReading) => {
+        const pumpData: any = {
+          'الموقع': reading.site || '',
+          'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString('ar-SA') : '',
+          'US Level': reading.usLevel ?? '',
+          'DS1 Level': reading.ds1Level ?? '',
+          'DS2 Level': reading.ds2Level ?? '',
+          'إجمالي وقت التشغيل': reading.totalUptime ?? '',
+          'إجمالي التدفق': reading.totalFlow ?? '',
+          'رقم السجل': reading.recordNumber ?? '',
+          'يدوي': reading.isManual ? 'نعم' : 'لا',
+        };
+
+        // Add pump data for each pump
+        reading.pumps.forEach((pump, index) => {
+          pumpData[`مرفعة ${index + 1} - وقت التشغيل`] = pump.time ?? '';
+          pumpData[`مرفعة ${index + 1} - التدفق`] = pump.flow ?? '';
+        });
+
+        return pumpData;
+      });
+
+      // Generate filename
+      const siteNumericId = Number(selectedSiteId);
+      const dateSuffix = fromDate && toDate
+        ? `_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`
+        : fromDate
+        ? `_from_${fromDate.toISOString().split('T')[0]}`
+        : toDate
+        ? `_to_${toDate.toISOString().split('T')[0]}`
+        : '';
+      const filename = `pump_station_readings_site_${siteNumericId}${dateSuffix}.xlsx`;
+
+      // Create workbook and worksheet
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'قراءات محطات رفع');
+
+      // Generate Excel file and download (client-side, no API call)
+      XLSX.writeFile(workbook, filename);
+      toast.success('تم تصدير البيانات بنجاح');
+    } catch (error: any) {
+      console.error('Error exporting pump station data', error);
+      toast.error('حدث خطأ أثناء تصدير البيانات');
+    }
   };
 
   return (
@@ -241,7 +361,7 @@ export function ReadingsManagement() {
         </TabsList>
 
         <TabsContent value="waterLevel" className="mt-6">
-          {isLoading ? (
+          {isInitialLoading || isLoadingWaterLevel ? (
             <div className="flex justify-center items-center h-48">
               <Loader />
             </div>
@@ -251,12 +371,12 @@ export function ReadingsManagement() {
               isAddDialogOpen={isAddDialogOpen} 
               setIsAddDialogOpen={setIsAddDialogOpen}
               sites={sites}
-              handleExport={handleExport}
+              handleExport={handleWaterLevelExport}
               isEditWaterLevelOpen={isEditWaterLevelOpen}
               setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
               editingWaterLevel={editingWaterLevel}
               handleEditWaterLevel={handleEditWaterLevel}
-              isLoading={isLoading}
+              isLoading={isLoading || isLoadingWaterLevel}
               error={waterLevelError}
               createWaterLevelReading={createWaterLevelReading}
               updateWaterLevelReading={updateWaterLevelReading}
@@ -271,7 +391,7 @@ export function ReadingsManagement() {
 
 
         <TabsContent value="pumpStation" className="mt-6">
-          {isLoading ? (
+          {isInitialLoading || isLoadingPumpStation ? (
             <div className="flex justify-center items-center h-48">
               <Loader />
             </div>
@@ -282,7 +402,7 @@ export function ReadingsManagement() {
               isAddDialogOpen={isAddDialogOpen}
               setIsAddDialogOpen={setIsAddDialogOpen}
               sites={sites}
-              handleExport={handleExport}
+              handleExport={handlePumpStationExport}
               isEditPumpStationOpen={isEditPumpStationOpen}
               setIsEditPumpStationOpen={setIsEditPumpStationOpen}
               editingPumpStation={editingPumpStation}
@@ -291,7 +411,7 @@ export function ReadingsManagement() {
               selectedSiteId={selectedSiteId}
               startDate={fromDate ?? undefined}
               endDate={toDate ?? undefined}
-              isLoading={isLoading}
+              isLoading={isLoading || isLoadingPumpStation}
               error={pumpStationError}
               fetchPumpStationReadings={fetchPumpStationReadings}
               createPumpStationReading={createPumpStationReading}
