@@ -188,21 +188,21 @@ export function PumpStationTable({
       const dateTime = new Date(readingDate);
       dateTime.setHours(timePerHour, 0, 0, 0); // Use timePerHour for hours
 
-      const formattedTimestamp = dateTime.toISOString(); // Use toISOString() directly
+      const formattedTimestamp = formatDateTimeForAPI(dateTime); // Use toISOString() directly
 
       const totalUptime = pumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
       const totalFlow = pumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
-      // Initialize all pump data fields up to p10_Flow with null
+      // Initialize all pump data fields up to numberOfPumps with null
       const pumpData: { [key: string]: number | null } = {};
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= numberOfPumps; i++) {
         pumpData[`p${i}_Time`] = null;
         pumpData[`p${i}_Flow`] = null;
       }
 
       // Overwrite with actual pumpReadings data, using null for undefined values
       pumpReadings.forEach((pump, index) => {
-        if (index < 10) { // Ensure we don't go beyond p10
+        if (index < numberOfPumps) { // Ensure we don't go beyond the actual number of pumps
           pumpData[`p${index + 1}_Time`] = pump.time ?? null;
           pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
         }
@@ -228,8 +228,15 @@ export function PumpStationTable({
       try {
         await createPumpStationReading(requestBody);
         setIsAddDialogOpen(false);
-        // Optionally refetch readings
-        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
+        // Always refetch readings for the current day after creating a new one
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+        fetchPumpStationReadings(
+          Number(selectedSiteId),
+          formatDateTimeForAPI(startOfToday),
+          formatDateTimeForAPI(endOfToday, true)
+        );
       } catch (error: any) {
         setAddError(error.message || 'فشل في إضافة قراءة محطة الرفع.');
       } finally {
@@ -256,16 +263,16 @@ export function PumpStationTable({
       const totalUptime = editPumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
       const totalFlow = editPumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
-      // Initialize all pump data fields up to p10_Flow with null
+      // Initialize all pump data fields up to numberOfPumps with null
       const pumpData: { [key: string]: number | null } = {};
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= numberOfPumps; i++) {
         pumpData[`p${i}_Time`] = null;
         pumpData[`p${i}_Flow`] = null;
       }
 
       // Overwrite with actual editPumpReadings data, using null for undefined values
       editPumpReadings.forEach((pump, index) => {
-        if (index < 10) { // Ensure we don't go beyond p10
+        if (index < numberOfPumps) { // Ensure we don't go beyond the actual number of pumps
           pumpData[`p${index + 1}_Time`] = pump.time ?? null;
           pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
         }
@@ -470,7 +477,7 @@ export function PumpStationTable({
                     <Label>الوقت</Label>
                     <Select
                       dir="rtl"
-                      value={timePerHour?.toString() || ''}
+                      value={timePerHour?.toString().padStart(2, '0') || ''}
                       onValueChange={(value) => setTimePerHour(value === '' ? undefined : parseFloat(value))}
                     >
                       <SelectTrigger>
@@ -582,7 +589,7 @@ export function PumpStationTable({
                     <Label>الوقت</Label>
                     <Select
                       dir="rtl"
-                      value={editTimePerHour?.toString() || ''}
+                      value={editTimePerHour?.toString().padStart(2, '0') || ''}
                       onValueChange={(value) => setEditTimePerHour(value === '' ? undefined : parseFloat(value))}
                     >
                       <SelectTrigger>

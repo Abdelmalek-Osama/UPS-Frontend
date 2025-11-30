@@ -16,7 +16,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Input } from '../../../components/ui/input';
 import { DatePicker } from '../../../components/ui/datepicker';
 import type { SiteLookupOption, WaterLevelReading } from '../types';
-import { getColorCategory } from '../utils/utils';
+import { getColorCategory, formatDateTimeForAPI } from '../utils/utils';
 
 interface SiteConfiguration {
   id: number;
@@ -226,7 +226,7 @@ export function WaterLevelTable({
     try {
       await createWaterLevelReading({
         siteId,
-        timestamp: dateTime.toISOString(),
+        timestamp: formatDateTimeForAPI(dateTime),
         timePerHour: 0,
         recordNumber: 0,
         uswl: uswl === '' ? 0 : Number(uswl),
@@ -285,7 +285,7 @@ export function WaterLevelTable({
       await updateWaterLevelReading({
         id: editingWaterLevel.id,
         siteId,
-        timestamp: dateTime.toISOString(),
+        timestamp: formatDateTimeForAPI(dateTime),
         timePerHour: 0,
         recordNumber: editingWaterLevel.recordNumber ?? 0,
         uswl: editUswl === '' ? 0 : Number(editUswl),
