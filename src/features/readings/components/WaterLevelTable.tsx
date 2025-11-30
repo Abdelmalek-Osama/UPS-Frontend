@@ -211,6 +211,12 @@ export function WaterLevelTable({
       return;
     }
 
+    // Validate battery voltage - must be positive and greater than zero
+    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery)))) {
+      setAddError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+      return;
+    }
+
     // Combine date and time into ISO timestamp
     const [hours] = readingTime.split(':');
     const dateTime = new Date(readingDate);
@@ -223,10 +229,10 @@ export function WaterLevelTable({
         timestamp: dateTime.toISOString(),
         timePerHour: 0,
         recordNumber: 0,
-        uswl: uswl === '' ? null : Number(uswl),
-        dswL1: dswl === '' ? null : Number(dswl),
-        dswL2: dswl2 === '' ? null : Number(dswl2),
-        battery: battery === '' ? null : Number(battery),
+        uswl: uswl === '' ? 0 : Number(uswl),
+        dswL1: dswl === '' ? 0 : Number(dswl),
+        dswL2: dswl2 === '' ? 0 : Number(dswl2),
+        battery: battery === '' ? 0 : Number(battery),
         isManual: true,
       });
 
@@ -264,6 +270,12 @@ export function WaterLevelTable({
       return;
     }
 
+    // Validate battery voltage - must be positive and greater than zero
+    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery)))) {
+      setEditError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+      return;
+    }
+
     const [hours] = editReadingTime.split(':');
     const dateTime = new Date(editReadingDate);
     dateTime.setHours(Number(hours), 0, 0, 0);
@@ -276,10 +288,10 @@ export function WaterLevelTable({
         timestamp: dateTime.toISOString(),
         timePerHour: 0,
         recordNumber: editingWaterLevel.recordNumber ?? 0,
-        uswl: editUswl === '' ? null : Number(editUswl),
-        dswL1: editDswl === '' ? null : Number(editDswl),
-        dswL2: editDswl2 === '' ? null : Number(editDswl2),
-        battery: editBattery === '' ? null : Number(editBattery),
+        uswl: editUswl === '' ? 0 : Number(editUswl),
+        dswL1: editDswl === '' ? 0 : Number(editDswl),
+        dswL2: editDswl2 === '' ? 0 : Number(editDswl2),
+        battery: editBattery === '' ? 0 : Number(editBattery),
         isManual: editingWaterLevel.isManual ?? true,
       });
 
@@ -436,9 +448,16 @@ export function WaterLevelTable({
                     <Input
                       type="number"
                       step="0.1"
+                      min="0.1"
                       placeholder="12.8"
                       value={battery}
-                      onChange={(e) => setBattery(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, but prevent negative values and zero
+                        if (value === '' || (Number(value) > 0 && !Number.isNaN(Number(value)))) {
+                          setBattery(value);
+                        }
+                      }}
                     />
                   </div>
 
@@ -564,9 +583,16 @@ export function WaterLevelTable({
                     <Input
                       type="number"
                       step="0.1"
+                      min="0.1"
                       placeholder="12.8"
                       value={editBattery}
-                      onChange={(e) => setEditBattery(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, but prevent negative values and zero
+                        if (value === '' || (Number(value) > 0 && !Number.isNaN(Number(value)))) {
+                          setEditBattery(value);
+                        }
+                      }}
                     />
                   </div>
 
@@ -644,7 +670,7 @@ export function WaterLevelTable({
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'USWL') }}>{reading.uswl.toFixed(2)}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'USWL') }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
                   )}
                   {showDSWL1 && (
                     <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'DSWL1') }}>{reading.dswL1?.toFixed(2)}</TableCell>
@@ -653,7 +679,7 @@ export function WaterLevelTable({
                     <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'DSWL2') }}>{reading.dswL2?.toFixed(2)}</TableCell>
                   )}
                   <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Battery') }}>
-                    {reading.battery.toFixed(2)}
+                    {reading.battery?.toFixed(2) ?? ''}
                   </TableCell>
                   <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'CalculatedFlow') }}>
                     <div className="flex items-center justify-start gap-2">
