@@ -6,8 +6,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
-//const API_BASE_URL = 'https://localhost:7123/api/';
-const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+const API_BASE_URL = 'https://localhost:7123/api/';
+//const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 
 
 /**
@@ -276,20 +276,20 @@ export async function downloadFile(
 
     // Determine content type from response or blob
     const contentType = response.headers['content-type'] || response.data.type || 'application/octet-stream';
-    
+
     // Create a blob from the response with proper content type
     const blob = new Blob([response.data], { type: contentType });
-    
+
     // Create a temporary URL for the blob
     const url = window.URL.createObjectURL(blob);
-    
+
     // Create a temporary anchor element and trigger download
     const link = document.createElement('a');
     link.href = url;
     link.download = downloadFilename;
     document.body.appendChild(link);
     link.click();
-    
+
     // Clean up
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);

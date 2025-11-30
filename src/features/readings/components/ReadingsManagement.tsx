@@ -20,10 +20,10 @@ import {
 import { Label } from '../../../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { Calendar } from '../../../components/ui/calendar';
-import { 
-  Plus, 
-  Download, 
-  Upload, 
+import {
+  Plus,
+  Download,
+  Upload,
   CalendarIcon,
   AlertCircle,
   Edit,
@@ -99,7 +99,7 @@ export function ReadingsManagement() {
     return `${year}-${month}-${day}`;
   };
 
-  
+
   const [fromDate, setFromDate] = useState<Date | undefined>(() => {
     const storedFromDate = localStorage.getItem('fromDate');
     return storedFromDate ? new Date(storedFromDate) : undefined;
@@ -134,7 +134,27 @@ export function ReadingsManagement() {
     if (Number.isNaN(siteNumericId)) {
       return;
     }
-    fetchWaterLevelReadings(siteNumericId, fromDate ? formatDate(fromDate) : undefined, toDate ? formatDate(toDate) : undefined);
+
+    let apiFromDate = fromDate;
+    let apiToDate = toDate;
+
+    // If fromDate is not set, default to the beginning of today
+    if (apiFromDate === undefined) {
+      apiFromDate = new Date();
+      apiFromDate.setHours(0, 0, 0, 0);
+    }
+
+    // If toDate is not set, default to the end of today
+    if (apiToDate === undefined) {
+      apiToDate = new Date();
+      apiToDate.setHours(23, 59, 59, 999);
+    }
+
+    fetchWaterLevelReadings(
+      siteNumericId,
+      apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId, fromDate, toDate]);
 
@@ -215,10 +235,10 @@ export function ReadingsManagement() {
       const dateSuffix = fromDate && toDate
         ? `_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`
         : fromDate
-        ? `_from_${fromDate.toISOString().split('T')[0]}`
-        : toDate
-        ? `_to_${toDate.toISOString().split('T')[0]}`
-        : '';
+          ? `_from_${fromDate.toISOString().split('T')[0]}`
+          : toDate
+            ? `_to_${toDate.toISOString().split('T')[0]}`
+            : '';
       const filename = `water_level_readings_site_${siteNumericId}${dateSuffix}.xlsx`;
 
       // Create workbook and worksheet
@@ -275,10 +295,10 @@ export function ReadingsManagement() {
       const dateSuffix = fromDate && toDate
         ? `_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`
         : fromDate
-        ? `_from_${fromDate.toISOString().split('T')[0]}`
-        : toDate
-        ? `_to_${toDate.toISOString().split('T')[0]}`
-        : '';
+          ? `_from_${fromDate.toISOString().split('T')[0]}`
+          : toDate
+            ? `_to_${toDate.toISOString().split('T')[0]}`
+            : '';
       const filename = `pump_station_readings_site_${siteNumericId}${dateSuffix}.xlsx`;
 
       // Create workbook and worksheet
@@ -308,10 +328,10 @@ export function ReadingsManagement() {
           <h2 className="text-2xl font-bold">إدارة القراءات</h2>
           <p className="text-gray-500 mt-1">عرض وتحرير قراءات المواقع</p>
         </div>
-        
-        
+
+
       </div>
-      
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -353,14 +373,14 @@ export function ReadingsManagement() {
           </div>
         </CardContent>
       </Card>
-      
+
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="waterLevel">قراءات القناطر</TabsTrigger>
-          <TabsTrigger 
-            value="pumpStation" 
+          <TabsTrigger
+            value="pumpStation"
             disabled={selectedSite?.data?.numPumps === 0}
           >قراءات محطات رفع</TabsTrigger>
         </TabsList>
@@ -371,9 +391,9 @@ export function ReadingsManagement() {
               <Loader />
             </div>
           ) : (
-            <WaterLevelTable 
-              readings={waterLevelReadings} 
-              isAddDialogOpen={isAddDialogOpen} 
+            <WaterLevelTable
+              readings={waterLevelReadings}
+              isAddDialogOpen={isAddDialogOpen}
               setIsAddDialogOpen={setIsAddDialogOpen}
               sites={sites}
               handleExport={handleWaterLevelExport}
@@ -401,8 +421,8 @@ export function ReadingsManagement() {
               <Loader />
             </div>
           ) : (
-            <PumpStationTable 
-              readings={pumpStationReadings} 
+            <PumpStationTable
+              readings={pumpStationReadings}
               // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
               isAddDialogOpen={isAddDialogOpen}
               setIsAddDialogOpen={setIsAddDialogOpen}
@@ -427,8 +447,8 @@ export function ReadingsManagement() {
           )}
         </TabsContent>
       </Tabs>
-      
-    
+
+
       {/* Pump Details Dialog */}
       {/* <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
         <DialogContent className="sm:max-w-[700px]" dir="rtl">
