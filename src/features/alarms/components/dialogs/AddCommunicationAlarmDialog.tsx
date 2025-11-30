@@ -32,10 +32,11 @@ interface AddCommunicationAlarmDialogProps {
     isSubmitting: boolean;
     setEmails: (emails: string[]) => void;
     setPhones: (phones: string[]) => void;
+    submissionError: string | null; // New prop for submission errors
 }
 
-export function AddCommunicationAlarmDialog({
-    open,
+export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddCommunicationAlarmDialogProps>((
+    {open,
     onOpenChange,
     form,
     setForm,
@@ -45,11 +46,12 @@ export function AddCommunicationAlarmDialog({
     onSubmit,
     isSubmitting,
     setEmails,
-    setPhones
-}: AddCommunicationAlarmDialogProps) {
+    setPhones,
+    submissionError
+}: AddCommunicationAlarmDialogProps, ref) => {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
                     <DialogDescription className="text-right">
@@ -150,6 +152,9 @@ export function AddCommunicationAlarmDialog({
                 </div>
 
                 <DialogFooter>
+                    {submissionError && (
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                    )}
                     <div className="w-full flex justify-start gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
                             إلغاء
@@ -167,4 +172,4 @@ export function AddCommunicationAlarmDialog({
             </DialogContent>
         </Dialog>
     );
-}
+});

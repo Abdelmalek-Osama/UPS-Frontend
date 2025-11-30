@@ -34,10 +34,11 @@ interface AddThresholdAlarmDialogProps {
     isSubmitting: boolean;
     setEmails: (emails: string[]) => void;
     setPhones: (phones: string[]) => void;
+    submissionError: string | null;
 }
 
-export function AddThresholdAlarmDialog({
-    open,
+export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThresholdAlarmDialogProps>((
+    {open,
     onOpenChange,
     form,
     setForm,
@@ -48,11 +49,12 @@ export function AddThresholdAlarmDialog({
     onSubmit,
     isSubmitting,
     setEmails,
-    setPhones
-}: AddThresholdAlarmDialogProps) {
+    setPhones,
+    submissionError
+}: AddThresholdAlarmDialogProps, ref) => {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">إضافة تنبيه قيمة حدية</DialogTitle>
                     <DialogDescription className="text-right">
@@ -217,6 +219,9 @@ export function AddThresholdAlarmDialog({
                 </div>
 
                 <DialogFooter>
+                     {submissionError && (
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                    )} 
                     <div className="w-full flex justify-start gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
                             إلغاء
@@ -234,4 +239,4 @@ export function AddThresholdAlarmDialog({
             </DialogContent>
         </Dialog>
     );
-}
+});

@@ -8,14 +8,21 @@ interface JwtPayload {
 
 export function getUserIdFromToken(): string | null {
   const token = getAccessToken();
-  if (token) {
-    try {
-      const decodedToken = jwtDecode<JwtPayload>(token);
-      return decodedToken.nameid;
-    } catch (error) {
-      console.error('Error decoding JWT token:', error);
-      return null;
-    }
+  if (!token) {
+    return null;
   }
-  return null;
+
+  // Add a check to ensure the token has at least two dots (header.payload.signature)
+  if (token.split('.').length < 3) {
+    console.error('Error decoding JWT token: Invalid token format (missing parts)');
+    return null;
+  }
+
+  try {
+    const decodedToken = jwtDecode<JwtPayload>(token);
+    return decodedToken.nameid;
+  } catch (error) {
+    console.error('Error decoding JWT token:', error);
+    return null;
+  }
 }

@@ -228,8 +228,8 @@ export async function patch<T, D = unknown>(
   return response.data;
 }
 
-export const refreshAccessToken = async (refreshToken: string): Promise<AuthResponse> => {
-  const response = await axiosInstance.post<AuthResponse>('/v1/Auth/refresh', { refreshToken });
+export const refreshAccessToken = async (refreshToken: string): Promise<ApiResponse<AuthResponse>> => {
+  const response = await axiosInstance.post<ApiResponse<AuthResponse>>('/v1/Auth/refresh', { refreshToken });
   return response.data;
 };
 

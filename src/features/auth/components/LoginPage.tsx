@@ -32,13 +32,8 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
         sessionStorage.setItem('isLogged', 'true');
         navigate('/');
       } else {
-        // Handle API response with isSuccess: false
-        let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error from backend
-        if (response.message.toLowerCase().includes('invalid credentials')) {
-          errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-        } else if (response.message.toLowerCase().includes('user is not active')) {
-          errorMessage = 'هذا المستخدم غير نشط. يرجى الاتصال بالمسؤول.';
-        }
+        // Prioritize displaying the backend's error message if available, otherwise use a generic one.
+        const errorMessage = response.message || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
         setLoginError(errorMessage);
         setLoading(false); // Re-enable button on unsuccessful login response
       }
@@ -49,23 +44,13 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
 
       if (error.isAxiosError) {
         if (error.response && error.response.data && typeof error.response.data.message === 'string') {
-          const backendMessage = error.response.data.message.toLowerCase();
-          if (backendMessage.includes('invalid credentials')) {
-            errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-          } else if (backendMessage.includes('user is not active')) {
-            errorMessage = 'هذا المستخدم غير نشط. يرجى الاتصال بالمسؤول.';
-          } else if (backendMessage.includes('request failed with status code 401')) {
-            errorMessage = 'فشل المصادقة. يرجى تسجيل الدخول مرة أخرى.'; // Authentication failed.
-          } else if (backendMessage.includes('network error')) {
-            errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Network error.
-          } else {
-            errorMessage = 'حدث خطأ غير متوقع من الخادم. يرجى المحاولة مرة أخرى.'; // Unexpected server error.
-          }
+          // Use the backend's error message directly
+          errorMessage = error.response.data.message;
         } else if (error.message && error.message.toLowerCase().includes('network error')) {
           errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Network error.
-        } else if (error.message) {
-          // For any other specific error.message that might come from Axios or other unhandled errors
-          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Generic unexpected error.
+        } else {
+          // Fallback for non-Axios or unknown errors or if specific message is not available
+          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
         }
       } else if (typeof error === 'string' && error.toLowerCase().includes('network error')) {
         errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.';

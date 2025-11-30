@@ -24,9 +24,10 @@ import type { User } from '../features/auth';
 interface DashboardLayoutProps {
   currentUser: User;
   onLogout: () => void;
+  refreshCurrentUser: () => void;
 }
 
-export function DashboardLayout({ currentUser, onLogout }: DashboardLayoutProps) {
+export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 

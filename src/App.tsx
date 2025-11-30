@@ -24,6 +24,32 @@ export default function App() {
   const [loadingAuth, setLoadingAuth] = useState(true); // New loading state for auth
   const [userLoaded, setUserLoaded] = useState(false); // New state to track if currentUser is loaded
 
+  const refreshCurrentUser = () => {
+    console.log('App.tsx: refreshCurrentUser called');
+    const token = getAccessToken();
+    if (token) {
+      const decodedToken = parseJwt(token);
+      if (decodedToken) {
+        setCurrentUser({
+          id: decodedToken.sub, // Assuming 'sub' is the user ID
+          username: decodedToken.userName || decodedToken.email,
+          email: decodedToken.email,
+          fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
+          role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
+        });
+        setUserLoaded(true);
+      } else {
+        console.log('App.tsx: Failed to decode token during refresh.');
+        setCurrentUser(null);
+        setUserLoaded(false);
+      }
+    } else {
+      console.log('App.tsx: No token found during refresh.');
+      setCurrentUser(null);
+      setUserLoaded(false);
+    }
+  };
+
   useEffect(() => {
     console.log('App.tsx: useEffect triggered');
     console.log('App.tsx: isAuthenticated initially:', isAuthenticated);
@@ -130,7 +156,7 @@ export default function App() {
         element={
           loadingAuth ? null : ( // Render null while authentication is loading
             isAuthenticated && userLoaded ? (
-              <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} />
+              <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} refreshCurrentUser={refreshCurrentUser} />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -147,7 +173,7 @@ export default function App() {
           path="users" 
           element={
             currentUser?.role === 'Admin' ? (
-              <UserManagement />
+              <UserManagement refreshCurrentUser={refreshCurrentUser} />
             ) : (
               <Navigate to="/" replace />
             )

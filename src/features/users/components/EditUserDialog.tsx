@@ -26,6 +26,8 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
   user: UserDto | null;
   onEditSuccess: () => void;
+  loggedInUserId: string | null;
+  onUserRoleChange: (userId: string) => void;
 }
 
 interface UpdateUserResponse {
@@ -33,7 +35,7 @@ interface UpdateUserResponse {
   user: UserDto;
 }
 
-export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: EditUserDialogProps) {
+export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, loggedInUserId, onUserRoleChange }: EditUserDialogProps) {
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'Admin' | 'Operator'>('Operator');
   const [isActive, setIsActive] = useState(true);
@@ -82,6 +84,9 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess }: Edit
 
       toast.success('تم تحديث بيانات المستخدم بنجاح');
       onEditSuccess();
+      if (user.id === loggedInUserId) {
+        onUserRoleChange(user.id);
+      }
       onOpenChange(false);
     } catch (error: any) {
       toast.error(`فشل تحديث بيانات المستخدم: ${error.message}`);
