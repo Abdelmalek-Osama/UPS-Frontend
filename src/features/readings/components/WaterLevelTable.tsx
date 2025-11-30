@@ -119,7 +119,7 @@ export function WaterLevelTable({
   useEffect(() => {
     const wasClosed = !prevDialogOpenRef.current;
     const isNowOpen = isAddDialogOpen;
-    
+
     if (isNowOpen && wasClosed && !selectedSiteForAdd) {
       // Dialog just opened - initialize with selectedSiteId if available, otherwise first site
       if (selectedSiteId) {
@@ -128,7 +128,7 @@ export function WaterLevelTable({
         setSelectedSiteForAdd(String(sites[0].id));
       }
     }
-    
+
     prevDialogOpenRef.current = isAddDialogOpen;
   }, [isAddDialogOpen, selectedSiteId, sites, selectedSiteForAdd]);
 
