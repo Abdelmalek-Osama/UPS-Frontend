@@ -12,145 +12,33 @@ import {ReadingsManagement} from './features/readings/components/ReadingsManagem
 import {SitesManagement} from './features/sites/components/SitesManagement';
 import {UserManagement} from './features/users/components/UserManagement';
 import { getAccessToken, removeAuthCookies } from './shared/utils/cookieService';
+import apiService from './shared/utils/apiService';
+import { AuthProvider, useAuth } from './shared/contexts/AuthContext'; // Import AuthProvider and useAuth
 // import { AuthResponse } from './shared/utils/apiService'; // No longer needed for App.tsx directly
 
 
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  return (
+    <AuthProvider>
+      <AuthRoutes />
+    </AuthProvider>
+  );
+}
+
+function AuthRoutes() {
+  const { isAuthenticated, currentUser, loadingAuth, userLoaded, handleLogout, refreshCurrentUser } = useAuth();
   const navigate = useNavigate();
 
-  const isAuthenticated = !!getAccessToken() && sessionStorage.getItem('isLogged') === 'true';
-  const [loadingAuth, setLoadingAuth] = useState(true); // New loading state for auth
-  const [userLoaded, setUserLoaded] = useState(false); // New state to track if currentUser is loaded
-
-  const refreshCurrentUser = () => {
-    console.log('App.tsx: refreshCurrentUser called');
-    const token = getAccessToken();
-    if (token) {
-      const decodedToken = parseJwt(token);
-      if (decodedToken) {
-        setCurrentUser({
-          id: decodedToken.sub, // Assuming 'sub' is the user ID
-          username: decodedToken.userName || decodedToken.email,
-          email: decodedToken.email,
-          fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
-          role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
-        });
-        setUserLoaded(true);
-      } else {
-        console.log('App.tsx: Failed to decode token during refresh.');
-        setCurrentUser(null);
-        setUserLoaded(false);
-      }
-    } else {
-      console.log('App.tsx: No token found during refresh.');
-      setCurrentUser(null);
-      setUserLoaded(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log('App.tsx: useEffect triggered');
-    console.log('App.tsx: isAuthenticated initially:', isAuthenticated);
-    const checkAuthStatus = async () => {
-      console.log('App.tsx: checkAuthStatus started');
-      if (isAuthenticated) {
-        console.log('App.tsx: User is authenticated, checking token...');
-        const token = getAccessToken();
-        if (token) {
-          console.log('App.tsx: Token found, decoding...');
-          const decodedToken = parseJwt(token);
-          if (decodedToken) {
-            console.log('App.tsx: Decoded token:', decodedToken);
-            setCurrentUser({
-              id: decodedToken.sub, // Assuming 'sub' is the user ID
-              username: decodedToken.userName || decodedToken.email,
-              email: decodedToken.email,
-              fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
-              role: decodedToken.role || decodedToken.Role, // Assuming 'role' is in the token
-            });
-            setUserLoaded(true); // User data has been successfully loaded
-            console.log('App.tsx: currentUser set, userLoaded true');
-          } else {
-            console.log('App.tsx: Failed to decode token.');
-            setCurrentUser(null);
-            setUserLoaded(false);
-          }
-        } else {
-          console.log('App.tsx: No token found.');
-          setCurrentUser(null);
-          setUserLoaded(false);
-        }
-      } else {
-        console.log('App.tsx: User is NOT authenticated.');
-        setCurrentUser(null);
-        setUserLoaded(false);
-        setLoadingAuth(false);
-      }
-    };
-    
-    checkAuthStatus();
-    setLoadingAuth(false); // Ensure loading state is always resolved
-
-    // Navigate to dashboard after successful login if on login page
-    if (isAuthenticated && userLoaded && window.location.pathname === '/login') {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, userLoaded, navigate]); // Add userLoaded to dependency array
-
-  console.log('App.tsx: Render - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser, 'loadingAuth:', loadingAuth, 'userLoaded:', userLoaded, 'path:', window.location.pathname);
-  
-  // Helper function to decode JWT with proper UTF-8 support for Arabic characters
-  const parseJwt = (token: string) => {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      
-      // Properly decode UTF-8 characters (including Arabic)
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      
-      const decoded = JSON.parse(jsonPayload);
-      console.log('Decoded JWT:', decoded); // Log the decoded token
-      return decoded;
-    } catch (e) {
-      console.error('Error decoding JWT:', e); // Log decoding errors
-      return null;
-    }
-  };
-
-
-  // const handleLogin = (authResponse: AuthResponse) => {
-  //   // In a real app, you would decode the accessToken to get user details
-  //   // For now, we'll use mock data or details from authResponse
-  //   setCurrentUser({
-  //     id: 1, // This should come from the decoded token or API
-  //     username: authResponse.userName || authResponse.email,
-  //     email: authResponse.email,
-  //     role: authResponse.role // Assuming role is available in AuthResponse
-  //   });
-  //   navigate('/');
-  // };
-
-  const handleLogout = () => {
-    removeAuthCookies();
-    sessionStorage.setItem('isLogged', 'false'); // Clear isLogged in sessionStorage
-    setCurrentUser(null);
-    navigate('/login');
-  };
-
-  // if (!isAuthenticated) {
-  //   return <LoginPage onLogin={handleLogin} />;
-  // }
+  // If not authenticated, redirect to login page
+  if (!loadingAuth && !isAuthenticated && window.location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/logout" element={<LogoutTrigger />} />
       <Route 
         path="/" 
         element={
@@ -184,3 +72,11 @@ export default function App() {
     </Routes>
   );
 }
+
+const LogoutTrigger: React.FC = () => {
+  const { handleLogout } = useAuth();
+  useEffect(() => {
+    handleLogout();
+  }, [handleLogout]);
+  return null;
+};

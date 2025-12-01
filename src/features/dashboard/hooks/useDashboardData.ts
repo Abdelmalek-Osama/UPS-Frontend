@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FlowDataPoint, DirectorateData, ActiveAlarm, RecentReading, DashboardStats } from '../types';
+import { useAuth } from '../../../shared/contexts/AuthContext'; // Import useAuth
 
 export function useDashboardData() {
   const [flowData, setFlowData] = useState<FlowDataPoint[]>([
@@ -43,10 +44,24 @@ export function useDashboardData() {
     uptimePercentage: 92.7,
   });
 
+  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
+
   // In a real app, you would fetch data from an API here
   useEffect(() => {
+    // Clear simulated data if not authenticated
+    if (!isAuthenticated) {
+      setFlowData([]);
+      setDirectorateData([]);
+      setActiveAlarms([]);
+      setRecentReadings([]);
+      setStats({
+        totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
+        warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
+        totalStations: 0, uptimePercentage: 0
+      });
+    }
     // Simulated data fetching
-  }, []);
+  }, [isAuthenticated]);
 
   return {
     flowData,
