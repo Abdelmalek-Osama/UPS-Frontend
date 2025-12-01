@@ -135,17 +135,24 @@ export function ReadingsManagement() {
       return;
     }
 
+    // Only fetch when:
+    // - both fromDate and toDate are undefined (initial/default load), OR
+    // - both fromDate and toDate are set and fromDate <= toDate
+    const bothUnset = fromDate === undefined && toDate === undefined;
+    const bothSetAndValid = fromDate !== undefined && toDate !== undefined && fromDate.getTime() <= toDate.getTime();
+
+    if (!bothUnset && !bothSetAndValid) {
+      // Do not trigger API call when only one of the dates is selected or dates are invalid
+      return;
+    }
+
     let apiFromDate = fromDate;
     let apiToDate = toDate;
 
-    // If fromDate is not set, default to the beginning of today
-    if (apiFromDate === undefined) {
+    // If both dates are unset, default to today's range
+    if (bothUnset) {
       apiFromDate = new Date();
       apiFromDate.setHours(0, 0, 0, 0);
-    }
-
-    // If toDate is not set, default to the end of today
-    if (apiToDate === undefined) {
       apiToDate = new Date();
       apiToDate.setHours(23, 59, 59, 999);
     }
@@ -168,17 +175,20 @@ export function ReadingsManagement() {
       return;
     }
 
+    // Only fetch when both dates are unset (initial load) or both are set and valid
+    const bothUnset = fromDate === undefined && toDate === undefined;
+    const bothSetAndValid = fromDate !== undefined && toDate !== undefined && fromDate.getTime() <= toDate.getTime();
+
+    if (!bothUnset && !bothSetAndValid) {
+      return;
+    }
+
     let apiFromDate = fromDate;
     let apiToDate = toDate;
 
-    // If fromDate is not set, default to the beginning of today
-    if (apiFromDate === undefined) {
+    if (bothUnset) {
       apiFromDate = new Date();
       apiFromDate.setHours(0, 0, 0, 0);
-    }
-
-    // If toDate is not set, default to the end of today
-    if (apiToDate === undefined) {
       apiToDate = new Date();
       apiToDate.setHours(23, 59, 59, 999);
     }
@@ -451,7 +461,7 @@ export function ReadingsManagement() {
 
       {/* Pump Details Dialog */}
       {/* <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
-        <DialogContent className="sm:max-w-[700px]" dir="rtl">
+        <DialogContent className="sm:max-w-[700px]" dir="rtlI">
           <DialogHeader>
             <DialogTitle className="text-right">تفاصيل قراءات المرفعات</DialogTitle>
             <DialogDescription className="text-right">
