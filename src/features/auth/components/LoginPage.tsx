@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Lock, Mail, Droplets, Eye, EyeOff } from 'lucide-react';
 import apiService, { AuthResponse, ApiResponse } from '../../../shared/utils/apiService';
-import { setAuthCookies } from '../../../shared/utils/cookieService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 interface LoginPageProps {
   // onLogin: (authResponse: AuthResponse) => void; // No longer needed
@@ -19,6 +19,15 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
   const navigate = useNavigate(); // Re-introducing navigate here
   const [loading, setLoading] = useState(false); // Add loading state
   const [loginError, setLoginError] = useState<string | null>(null); // New state for login error message
+  const [loginSuccessful, setLoginSuccessful] = useState(false); // New state to track successful login
+  const { login, userLoaded } = useAuth(); // Use login and userLoaded from AuthContext
+
+  // Effect to navigate after successful login and user data is loaded
+  useEffect(() => {
+    if (loginSuccessful && userLoaded) {
+      navigate('/');
+    }
+  }, [loginSuccessful, userLoaded, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +37,9 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
       const response: ApiResponse<AuthResponse> = await apiService.loginUser({ userName: email, password });
       if (response.isSuccess) {
         const { accessToken, refreshToken, accessTokenExpiryDate } = response.data;
-        setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
-        sessionStorage.setItem('isLogged', 'true');
-        navigate('/');
+        // Use the login function from AuthContext to handle cookies and state update
+        login(accessToken, refreshToken, new Date(accessTokenExpiryDate));
+        setLoginSuccessful(true); // Set login successful instead of navigating immediately
       } else {
         // Prioritize displaying the backend's error message if available, otherwise use a generic one.
         const errorMessage = response.message || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';

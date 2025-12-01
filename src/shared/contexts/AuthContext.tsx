@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAccessToken, removeAuthCookies } from '../utils/cookieService';
+import { getAccessToken, removeAuthCookies, setAuthCookies } from '../utils/cookieService';
 import apiService from '../utils/apiService'; // Import default export
 import { setLogoutCallback } from '../utils/apiService'; // Import named export separately
 import type { User } from '../../features/auth/types';
@@ -12,6 +12,7 @@ interface AuthContextType {
   userLoaded: boolean;
   handleLogout: () => Promise<void>;
   refreshCurrentUser: () => void;
+  login: (accessToken: string, refreshToken: string, accessTokenExpiryDate: Date) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,6 +105,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuthStatus();
   }, [isAuthenticated, refreshCurrentUser]);
 
+  const login = useCallback((accessToken: string, refreshToken: string, accessTokenExpiryDate: Date) => {
+    setAuthCookies(accessToken, refreshToken, accessTokenExpiryDate);
+    sessionStorage.setItem('isLogged', 'true');
+    refreshCurrentUser();
+  }, [refreshCurrentUser]);
+
   // Expose logout function to apiService
   useEffect(() => {
     setLogoutCallback(handleLogout);
@@ -117,6 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       userLoaded,
       handleLogout,
       refreshCurrentUser,
+      login,
     }}>
       {children}
     </AuthContext.Provider>
