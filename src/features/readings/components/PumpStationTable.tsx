@@ -234,15 +234,23 @@ export function PumpStationTable({
       try {
         await createPumpStationReading(requestBody);
         setIsAddDialogOpen(false);
-        // Always refetch readings for the current day after creating a new one
-        const today = new Date();
-        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
-        fetchPumpStationReadings(
-          Number(selectedSiteId),
-          formatDateTimeForAPI(startOfToday),
-          formatDateTimeForAPI(endOfToday, true)
-        );
+        // Conditionally refetch readings based on existing date range or current day
+        if (startDate && endDate) {
+          fetchPumpStationReadings(
+            Number(selectedSiteId),
+            formatDateTimeForAPI(startDate),
+            formatDateTimeForAPI(endDate, true)
+          );
+        } else {
+          const today = new Date();
+          const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+          const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+          fetchPumpStationReadings(
+            Number(selectedSiteId),
+            formatDateTimeForAPI(startOfToday),
+            formatDateTimeForAPI(endOfToday, true)
+          );
+        }
       } catch (error: any) {
         setAddError(error.message || 'فشل في إضافة قراءة محطة الرفع.');
       } finally {
@@ -415,9 +423,7 @@ export function PumpStationTable({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" value={selectedSiteId || ''} onValueChange={(value) => {
-                      // Site selection handled by parent
-                    }}>
+                    <Select dir="rtl" value={selectedSiteId || ''} disabled>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
@@ -573,11 +579,7 @@ export function PumpStationTable({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
-                    <Select dir="rtl" value={editingPumpStation?.siteId?.toString() || ""} onValueChange={(value) => {
-                      if (editingPumpStation) {
-                        setEditingPumpStation(prev => prev ? { ...prev, siteId: Number(value) } : null);
-                      }
-                    }}>
+                    <Select dir="rtl" value={editingPumpStation?.siteId?.toString() || ""} disabled>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الموقع" />
                       </SelectTrigger>
