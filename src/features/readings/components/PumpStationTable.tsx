@@ -184,6 +184,12 @@ export function PumpStationTable({
         return;
       }
 
+      // Validate record number - must be positive and greater than zero
+      if (recordNumber <= 0 || Number.isNaN(recordNumber)) {
+        setAddError('رقم السجل يجب أن يكون أكبر من صفر.');
+        return;
+      }
+
       setIsSubmittingAdd(true); // Set submitting state to true
       const dateTime = new Date(readingDate);
       dateTime.setHours(timePerHour, 0, 0, 0); // Use timePerHour for hours
@@ -254,6 +260,12 @@ export function PumpStationTable({
       const siteId = Number(editingPumpStation.siteId); // Site cannot be changed for existing readings
       if (!siteId || Number.isNaN(siteId)) {
         setEditError('الموقع المحدد غير صالح.');
+        return;
+      }
+
+      // Validate record number - must be positive and greater than zero
+      if (editRecordNumber <= 0 || Number.isNaN(editRecordNumber)) {
+        setEditError('رقم السجل يجب أن يكون أكبر من صفر.');
         return;
       }
 
@@ -468,9 +480,21 @@ export function PumpStationTable({
                     <Label>رقم السجل</Label>
                     <Input
                       type="number"
+                      min="1"
                       placeholder="0"
                       value={recordNumber}
-                      onChange={(e) => setRecordNumber(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, but prevent zero and negative values
+                        if (value === '') {
+                          setRecordNumber(0);
+                        } else {
+                          const num = parseFloat(value);
+                          if (!Number.isNaN(num) && num > 0) {
+                            setRecordNumber(num);
+                          }
+                        }
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -580,9 +604,21 @@ export function PumpStationTable({
                     <Label>رقم السجل</Label>
                     <Input
                       type="number"
+                      min="1"
                       placeholder="0"
                       value={editRecordNumber.toString()}
-                      onChange={(e) => setEditRecordNumber(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string, but prevent zero and negative values
+                        if (value === '') {
+                          setEditRecordNumber(0);
+                        } else {
+                          const num = parseFloat(value);
+                          if (!Number.isNaN(num) && num > 0) {
+                            setEditRecordNumber(num);
+                          }
+                        }
+                      }}
                     />
                   </div>
                   <div className="space-y-2">

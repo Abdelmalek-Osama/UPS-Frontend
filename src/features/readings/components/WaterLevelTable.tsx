@@ -237,7 +237,8 @@ export function WaterLevelTable({
         siteId,
         timestamp: formatDateTimeForAPI(dateTime),
         timePerHour: 0,
-        recordNumber: 0,
+        // Ensure recordNumber is at least 1 for new readings
+        recordNumber: 1,
         uswl: uswl === '' ? 0 : Number(uswl),
         dswL1: dswl === '' ? 0 : Number(dswl),
         dswL2: dswl2 === '' ? 0 : Number(dswl2),
@@ -296,7 +297,8 @@ export function WaterLevelTable({
         siteId,
         timestamp: formatDateTimeForAPI(dateTime),
         timePerHour: 0,
-        recordNumber: editingWaterLevel.recordNumber ?? 0,
+        // Ensure recordNumber is at least 1 when updating
+        recordNumber: Math.max(1, editingWaterLevel.recordNumber ?? 1),
         uswl: editUswl === '' ? 0 : Number(editUswl),
         dswL1: editDswl === '' ? 0 : Number(editDswl),
         dswL2: editDswl2 === '' ? 0 : Number(editDswl2),
