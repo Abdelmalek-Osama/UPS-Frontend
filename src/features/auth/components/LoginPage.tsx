@@ -7,6 +7,7 @@ import { Lock, Mail, Droplets, Eye, EyeOff } from 'lucide-react';
 import apiService, { AuthResponse, ApiResponse } from '../../../shared/utils/apiService';
 import { setAuthCookies } from '../../../shared/utils/cookieService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 interface LoginPageProps {
   // onLogin: (authResponse: AuthResponse) => void; // No longer needed
@@ -19,6 +20,7 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
   const navigate = useNavigate(); // Re-introducing navigate here
   const [loading, setLoading] = useState(false); // Add loading state
   const [loginError, setLoginError] = useState<string | null>(null); // New state for login error message
+  const { triggerAuthRefresh } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,7 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
         const { accessToken, refreshToken, accessTokenExpiryDate } = response.data;
         setAuthCookies(accessToken, refreshToken, new Date(accessTokenExpiryDate));
         sessionStorage.setItem('isLogged', 'true');
+        triggerAuthRefresh();
         navigate('/');
       } else {
         // Prioritize displaying the backend's error message if available, otherwise use a generic one.
