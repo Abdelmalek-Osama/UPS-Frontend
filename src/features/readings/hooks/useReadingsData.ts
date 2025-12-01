@@ -3,6 +3,7 @@ import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLeve
 import { toast } from 'react-toastify';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
+import { useAuth } from '../../../shared/contexts/AuthContext'; // Import useAuth
 
 export function useReadingsData(selectedSiteId: string) {
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
@@ -30,6 +31,8 @@ export function useReadingsData(selectedSiteId: string) {
   const [selectedSite, setSelectedSite] = useState<ApiResponse<Site> | null>(null);
 
   const [pumpStationReadings, setPumpStationReadings] = useState<PumpStationReading[]>([]);
+
+  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
   const handleViewPumpDetails = (reading: PumpStationReading) => {
     setSelectedReading(reading);
@@ -67,6 +70,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const createWaterLevelReading = useCallback(
     async (data: CreateWaterLevelReadingRequest) => {
+      if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
         const response = await apiService.post<ApiResponse<any>>(
@@ -84,7 +88,7 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    []
+    [isAuthenticated]
   );
 
   interface UpdateWaterLevelReadingRequest extends CreateWaterLevelReadingRequest {
@@ -97,6 +101,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const updateWaterLevelReading = useCallback(
     async (data: UpdateWaterLevelReadingRequest) => {
+      if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
         const response = await apiService.put<ApiResponse<any>>(
@@ -114,11 +119,12 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    []
+    [isAuthenticated]
   );
 
   const createPumpStationReading = useCallback(
     async (data: CreatePumpStationReadingRequest) => {
+      if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
         const response = await apiService.post<ApiResponse<any>>(
@@ -136,11 +142,12 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    []
+    [isAuthenticated]
   );
 
   const updatePumpStationReading = useCallback(
     async (data: UpdatePumpStationReadingRequest) => {
+      if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
         const response = await apiService.put<ApiResponse<any>>(
@@ -158,22 +165,35 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    []
+    [isAuthenticated]
   );
 
-  const fetchSitesLookup = useCallback(async () => {
+  const fetchSitesLookup = useCallback(async (signal?: AbortSignal) => {
+    if (!isAuthenticated) {
+      setSites([]);
+      setIsLoadingSites(false);
+      return;
+    }
     setIsLoadingSites(true); // Use separate loading state for sites
     try {
       setSitesError(null);
-      const response = await apiService.get<SiteLookupOption[] | { data: SiteLookupOption[] }>('/v1/Lookups/Lookup/Sites');
-      setSites(Array.isArray(response) ? response : (response as { data: SiteLookupOption[] }).data ?? []);
+      const response = await apiService.get<SiteLookupOption[] | { data: SiteLookupOption[] }>('/v1/Lookups/Lookup/Sites', { signal });
+      if (!signal?.aborted) {
+        setSites(Array.isArray(response) ? response : (response as { data: SiteLookupOption[] }).data ?? []);
+      }
     } catch (error) {
-      console.error('Error fetching lookup sites', error);
-      setSitesError('تعذر تحميل قائمة المواقع');
+      if (error.name === 'AbortError') {
+        console.log('Fetch sites lookup aborted');
+      } else {
+        console.error('Error fetching lookup sites', error);
+        setSitesError('تعذر تحميل قائمة المواقع');
+      }
     } finally {
-      setIsLoadingSites(false); // End loading
+      if (!signal?.aborted) {
+        setIsLoadingSites(false); // End loading
+      }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const mapReading = (reading: WaterLevelReadingApiResponse): WaterLevelReading => ({
     id: reading.id,
@@ -193,9 +213,10 @@ export function useReadingsData(selectedSiteId: string) {
   });
 
   const fetchWaterLevelReadings = useCallback(
-    async (siteId?: number, startDate?: string, endDate?: string) => {
-      if (!siteId) {
+    async (siteId?: number, startDate?: string, endDate?: string, signal?: AbortSignal) => {
+      if (!isAuthenticated || !siteId) {
         setWaterLevelReadings([]);
+        setIsLoadingWaterLevel(false);
         return;
       }
 
@@ -213,30 +234,39 @@ export function useReadingsData(selectedSiteId: string) {
       setWaterLevelError(null);
 
       try {
-        const response = await apiService.get<ApiResponse<WaterLevelReadingApiResponse[]> | WaterLevelReadingApiResponse[]>(endpoint);
+        const response = await apiService.get<ApiResponse<WaterLevelReadingApiResponse[]> | WaterLevelReadingApiResponse[]>(endpoint, { signal });
 
-        const payload = Array.isArray(response)
-          ? response
-          : Array.isArray(response.data)
-            ? response.data
-            : [];
+        if (!signal?.aborted) {
+          const payload = Array.isArray(response)
+            ? response
+            : Array.isArray(response.data)
+              ? response.data
+              : [];
 
-        setWaterLevelReadings(payload.map(mapReading));
+          setWaterLevelReadings(payload.map(mapReading));
+        }
       } catch (error: any) {
-        console.error('Error fetching water level readings', error);
-        setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
-        setWaterLevelReadings([]);
+        if (error.name === 'AbortError') {
+          console.log('Fetch water level readings aborted');
+        } else {
+          console.error('Error fetching water level readings', error);
+          setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
+          setWaterLevelReadings([]);
+        }
       } finally {
-        setIsLoadingWaterLevel(false); // End loading
+        if (!signal?.aborted) {
+          setIsLoadingWaterLevel(false); // End loading
+        }
       }
     },
-    []
+    [isAuthenticated]
   );
 
   const fetchPumpStationReadings = useCallback(
-    async (siteId?: number, startDate?: string, endDate?: string) => {
-      if (!siteId) {
+    async (siteId?: number, startDate?: string, endDate?: string, signal?: AbortSignal) => {
+      if (!isAuthenticated || !siteId) {
         setPumpStationReadings([]);
+        setIsLoadingPumpStation(false);
         return;
       }
 
@@ -254,72 +284,94 @@ export function useReadingsData(selectedSiteId: string) {
       setPumpStationError(null);
 
       try {
-        const response = await apiService.get<ApiResponse<PumpStationApiResponse[]> | PumpStationApiResponse[]>(endpoint);
+        const response = await apiService.get<ApiResponse<PumpStationApiResponse[]> | PumpStationApiResponse[]>(endpoint, { signal });
 
-        const payload = Array.isArray(response)
-          ? response
-          : Array.isArray(response.data)
-            ? response.data
-            : [];
+        if (!signal?.aborted) {
+          const payload = Array.isArray(response)
+            ? response
+            : Array.isArray(response.data)
+              ? response.data
+              : [];
 
-        setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
-          id: reading.id,
-          site: reading.siteName,
-          siteId: reading.siteId, // Include siteId in mapping
-          timestamp: reading.timestamp,
-          timePerHour: reading.timePerHour, // Include timePerHour in mapping
-          recordNumber: reading.recordNumber, // Include recordNumber in mapping
-          usLevel: reading.usLevel,
-          ds1Level: reading.ds1Level,
-          ds2Level: reading.ds2Level,
-          pumps: [
-            { time: reading.p1_Time, flow: reading.p1_Flow },
-            { time: reading.p2_Time, flow: reading.p2_Flow },
-            { time: reading.p3_Time, flow: reading.p3_Flow },
-            { time: reading.p4_Time, flow: reading.p4_Flow },
-            { time: reading.p5_Time, flow: reading.p5_Flow },
-            { time: reading.p6_Time, flow: reading.p6_Flow },
-            { time: reading.p7_Time, flow: reading.p7_Flow },
-            { time: reading.p8_Time, flow: reading.p8_Flow },
-            { time: reading.p9_Time, flow: reading.p9_Flow },
-            { time: reading.p10_Time, flow: reading.p10_Flow },
-          ].filter(pump => pump.time > 0 || pump.flow > 0),
-          totalUptime: reading.totalUptime,
-          totalFlow: reading.totalFlow,
-          hasAlarm: false, // Assuming no alarm status in API for now
-          isManual: reading.isManual, // Include isManual in mapping
-          alarms: reading.alarms, // Include alarms in mapping
-        })));
+          setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
+            id: reading.id,
+            site: reading.siteName,
+            siteId: reading.siteId, // Include siteId in mapping
+            timestamp: reading.timestamp,
+            timePerHour: reading.timePerHour, // Include timePerHour in mapping
+            recordNumber: reading.recordNumber, // Include recordNumber in mapping
+            usLevel: reading.usLevel,
+            ds1Level: reading.ds1Level,
+            ds2Level: reading.ds2Level,
+            pumps: [
+              { time: reading.p1_Time, flow: reading.p1_Flow },
+              { time: reading.p2_Time, flow: reading.p2_Flow },
+              { time: reading.p3_Time, flow: reading.p3_Flow },
+              { time: reading.p4_Time, flow: reading.p4_Flow },
+              { time: reading.p5_Time, flow: reading.p5_Flow },
+              { time: reading.p6_Time, flow: reading.p6_Flow },
+              { time: reading.p7_Time, flow: reading.p7_Flow },
+              { time: reading.p8_Time, flow: reading.p8_Flow },
+              { time: reading.p9_Time, flow: reading.p9_Flow },
+              { time: reading.p10_Time, flow: reading.p10_Flow },
+            ].filter(pump => pump.time > 0 || pump.flow > 0),
+            totalUptime: reading.totalUptime,
+            totalFlow: reading.totalFlow,
+            hasAlarm: false, // Assuming no alarm status in API for now
+            isManual: reading.isManual, // Include isManual in mapping
+            alarms: reading.alarms, // Include alarms in mapping
+          })));
+        }
       } catch (error: any) {
-        console.error('Error fetching pump station readings', error);
-        setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
-        setPumpStationReadings([]);
+        if (error.name === 'AbortError') {
+          console.log('Fetch pump station readings aborted');
+        } else {
+          console.error('Error fetching pump station readings', error);
+          setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
+          setPumpStationReadings([]);
+        }
       } finally {
-        setIsLoadingPumpStation(false); // End loading
+        if (!signal?.aborted) {
+          setIsLoadingPumpStation(false); // End loading
+        }
       }
     },
-    []
+    [isAuthenticated]
   );
 
   useEffect(() => {
-    fetchSitesLookup();
+    const abortController = new AbortController();
+    fetchSitesLookup(abortController.signal);
+    return () => abortController.abort();
   }, [fetchSitesLookup]);
 
   useEffect(() => {
-    const fetchSelectedSiteDetails = async () => {
+    const fetchSelectedSiteDetails = async (signal?: AbortSignal) => {
+      if (!isAuthenticated) {
+        setSelectedSite(null);
+        return;
+      }
       if (selectedSiteId) {
         try {
-          const response = await apiService.get<ApiResponse<Site>>(`/v1/Sites/${selectedSiteId}`);
-          setSelectedSite(response);
+          const response = await apiService.get<ApiResponse<Site>>(`/v1/Sites/${selectedSiteId}`, { signal });
+          if (!signal?.aborted) {
+            setSelectedSite(response);
+          }
         } catch (err) {
-          console.error("Failed to fetch selected site details:", err);
-          setSelectedSite(null);
+          if (err.name === 'AbortError') {
+            console.log('Fetch selected site details aborted');
+          } else {
+            console.error("Failed to fetch selected site details:", err);
+            setSelectedSite(null);
+          }
         }
       }
     };
 
-    fetchSelectedSiteDetails();
-  }, [selectedSiteId]);
+    const abortController = new AbortController();
+    fetchSelectedSiteDetails(abortController.signal);
+    return () => abortController.abort();
+  }, [selectedSiteId, isAuthenticated]);
 
   return {
     waterLevelReadings,

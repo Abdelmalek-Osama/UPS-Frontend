@@ -1,28 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Site, SiteFilters } from '../types';
 import apiService from '../../../../src/shared/utils/apiService';
+import { useAuth } from '../../../../src/shared/contexts/AuthContext'; // Import useAuth
 
 export function useSitesData() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
   useEffect(() => {
-    const fetchSites = async () => {
+    const fetchSites = async (signal?: AbortSignal) => {
+      if (!isAuthenticated) {
+        setSites([]);
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
-        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites/all');
-        setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
-      } catch (err) {
-        setError('Failed to fetch sites');
-        console.error('Error fetching sites:', err);
+        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal });
+        if (!signal?.aborted) {
+          setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.log('Fetch sites aborted');
+        } else {
+          setError('Failed to fetch sites');
+          console.error('Error fetching sites:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchSites();
-  }, []);
+    const abortController = new AbortController();
+    fetchSites(abortController.signal);
+    return () => abortController.abort();
+  }, [isAuthenticated]); // Add isAuthenticated to dependency array
 
   const directorates = Array.from(new Set(sites?.map(site => site.directorateName) || []));
 
@@ -48,29 +65,41 @@ export function useSiteByNameDirectorateType(name?: string, directorateId?: stri
   const [site, setSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
   useEffect(() => {
-    const fetchSite = async () => {
-      if (!name || !directorateId || !type) {
+    const fetchSite = async (signal?: AbortSignal) => {
+      if (!isAuthenticated || !name || !directorateId || !type) {
         setSite(null);
+        setLoading(false);
         return;
       }
       setLoading(true);
       setError(null);
       try {
         const endpoint = `/Site/by-name-directorate-type?name=${name}&directorateId=${directorateId}&type=${type}`;
-        const response = await apiService.get<Site>(endpoint);
-        setSite(response);
-      } catch (err) {
-        setError('Failed to fetch site');
-        console.error('Error fetching site by name, directorate, type:', err);
+        const response = await apiService.get<Site>(endpoint, { signal });
+        if (!signal?.aborted) {
+          setSite(response);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.log('Fetch site by name, directorate, type aborted');
+        } else {
+          setError('Failed to fetch site');
+          console.error('Error fetching site by name, directorate, type:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchSite();
-  }, [name, directorateId, type]);
+    const abortController = new AbortController();
+    fetchSite(abortController.signal);
+    return () => abortController.abort();
+  }, [name, directorateId, type, isAuthenticated]); // Add isAuthenticated to dependency array
 
   return { site, loading, error };
 }
@@ -79,29 +108,41 @@ export function useSiteById(id?: string) {
   const [site, setSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
   useEffect(() => {
-    const fetchSite = async () => {
-      if (!id) {
+    const fetchSite = async (signal?: AbortSignal) => {
+      if (!isAuthenticated || !id) {
         setSite(null);
+        setLoading(false);
         return;
       }
       setLoading(true);
       setError(null);
       try {
         const endpoint = `/Site/${id}`;
-        const response = await apiService.get<Site>(endpoint);
-        setSite(response);
-      } catch (err) {
-        setError('Failed to fetch site by ID');
-        console.error('Error fetching site by ID:', err);
+        const response = await apiService.get<Site>(endpoint, { signal });
+        if (!signal?.aborted) {
+          setSite(response);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.log('Fetch site by ID aborted');
+        } else {
+          setError('Failed to fetch site by ID');
+          console.error('Error fetching site by ID:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchSite();
-  }, [id]);
+    const abortController = new AbortController();
+    fetchSite(abortController.signal);
+    return () => abortController.abort();
+  }, [id, isAuthenticated]); // Add isAuthenticated to dependency array
 
   return { site, loading, error };
 }

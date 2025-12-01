@@ -1,8 +1,8 @@
 import Cookies from 'js-cookie';
 
 export const setAuthCookies = (accessToken: string, refreshToken: string, accessTokenExpiry: Date) => {
-  Cookies.set('accessToken', accessToken, { expires: accessTokenExpiry });
-  Cookies.set('refreshToken', refreshToken, { expires: 7 }); // Refresh token typically has a longer expiry, e.g., 7 days
+  Cookies.set('accessToken', accessToken, { expires: accessTokenExpiry, path: '/' });
+  Cookies.set('refreshToken', refreshToken, { expires: 7, path: '/' }); // Refresh token typically has a longer expiry, e.g., 7 days
 };
 
 export const getAccessToken = () => {
@@ -15,6 +15,6 @@ export const getRefreshToken = () => {
 };
 
 export const removeAuthCookies = () => {
-  Cookies.remove('accessToken');
-  Cookies.remove('refreshToken');
+  Cookies.remove('accessToken', { path: '/' });
+  Cookies.remove('refreshToken', { path: '/' });
 };

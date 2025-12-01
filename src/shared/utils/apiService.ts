@@ -6,6 +6,14 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 
+let onLogoutCallback: (() => void) | null = null;
+
+export const setLogoutCallback = (callback: () => void) => {
+  onLogoutCallback = callback;
+};
+
+let logoutInitiated = false; // New flag to prevent multiple logout triggers
+
 //const API_BASE_URL = 'https://localhost:7123/api/';
 const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 
@@ -14,6 +22,17 @@ const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
  * Create axios instance with default configuration
  */
 const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000, // 10 seconds
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+/**
+ * Create a separate axios instance for refresh token requests without interceptors
+ */
+const axiosRefreshInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000, // 10 seconds
   headers: {
@@ -102,7 +121,8 @@ axiosInstance.interceptors.response.use(
 
           if (refreshToken) {
             try {
-              const response = await axiosInstance.post<ApiResponse<AuthResponse>>(`/v1/Auth/refresh`, { refreshToken });
+              console.log('apiService: Attempting to refresh token...');
+              const response = await axiosRefreshInstance.post<ApiResponse<AuthResponse>>(`/v1/Auth/refresh`, { refreshToken });
               const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data.data;
               setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
               axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -112,14 +132,34 @@ axiosInstance.interceptors.response.use(
               processQueue(null, accessToken);
               return axiosInstance(originalRequest);
             } catch (refreshError: any) {
+              console.error('apiService: Refresh token failed.', refreshError);
               removeAuthCookies();
               processQueue(refreshError, null);
               console.error('Unable to refresh token', refreshError);
+              if (!logoutInitiated && onLogoutCallback) {
+                console.log('apiService: Calling onLogoutCallback...');
+                logoutInitiated = true; // Set flag to true
+                onLogoutCallback(); // Call callback before throwing error
+              } else if (!logoutInitiated) {
+                console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback.');
+                logoutInitiated = true; // Set flag to true
+                window.location.href = '/logout'; // Fallback if callback not set
+              }
               throw refreshError;
             }
           } else {
+            console.log('apiService: No refresh token available.');
             removeAuthCookies();
             processQueue(new Error('No refresh token available'), null);
+            if (!logoutInitiated && onLogoutCallback) {
+              console.log('apiService: Calling onLogoutCallback (no refresh token)...');
+              logoutInitiated = true; // Set flag to true
+              onLogoutCallback(); // Call callback before throwing error
+            } else if (!logoutInitiated) {
+              console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback (no refresh token).');
+              logoutInitiated = true; // Set flag to true
+              window.location.href = '/logout'; // Fallback if callback not set
+            }
             throw new Error('No refresh token available');
           }
         } else {
@@ -138,6 +178,10 @@ axiosInstance.interceptors.response.use(
         }
       } finally {
         isRefreshing = false;
+        // Reset logoutInitiated after a short delay to allow subsequent logins if needed
+        setTimeout(() => {
+          logoutInitiated = false;
+        }, 1000);
       }
     } else if (error.response) {
       // Server responded with error
