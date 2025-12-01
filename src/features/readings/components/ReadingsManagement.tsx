@@ -100,27 +100,8 @@ export function ReadingsManagement() {
   };
 
 
-  const [fromDate, setFromDate] = useState<Date | undefined>(() => {
-    const storedFromDate = localStorage.getItem('fromDate');
-    return storedFromDate ? new Date(storedFromDate) : undefined;
-  });
-  const [toDate, setToDate] = useState<Date | undefined>(() => {
-    const storedToDate = localStorage.getItem('toDate');
-    return storedToDate ? new Date(storedToDate) : undefined;
-  });
-
-  useEffect(() => {
-    if (fromDate) {
-      localStorage.setItem('fromDate', fromDate.toISOString());
-    } else {
-      localStorage.removeItem('fromDate');
-    }
-    if (toDate) {
-      localStorage.setItem('toDate', toDate.toISOString());
-    } else {
-      localStorage.removeItem('toDate');
-    }
-  }, [fromDate, toDate]);
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
 
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   // const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
@@ -210,8 +191,6 @@ export function ReadingsManagement() {
   const handleResetDates = () => {
     setFromDate(undefined);
     setToDate(undefined);
-    localStorage.removeItem('fromDate');
-    localStorage.removeItem('toDate');
   };
 
   // Client-side Excel export functions (no API calls)
