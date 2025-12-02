@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAccessToken, removeAuthCookies, setAuthCookies } from '../utils/cookieService';
-import apiService from '../utils/apiService'; // Import default export
+import { getAccessToken, setAuthCookies } from '../utils/cookieService';
+import apiService, { clearAllUserData } from '../utils/apiService'; // Import default export and named export
 import { setLogoutCallback } from '../utils/apiService'; // Import named export separately
 import type { User } from '../../features/auth/types';
 
@@ -80,8 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error("Error during logout API call:", error);
     } finally {
       // console.log('AuthContext: Clearing auth cookies and session storage.');
-      removeAuthCookies();
-      sessionStorage.setItem('isLogged', 'false');
+      clearAllUserData(); // Centralized function to clear all user data
       setCurrentUser(null);
       // console.log('AuthContext: Navigating to login.');
       navigate('/login');
@@ -98,6 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         setCurrentUser(null);
         setUserLoaded(false);
+        // clearAllUserData(); // Removed: This was causing issues during initial render/unmounting.
       }
       setLoadingAuth(false);
     };

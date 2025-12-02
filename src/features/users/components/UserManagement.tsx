@@ -20,7 +20,8 @@ import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
 import { Spinner } from '../../../components/ui/spinner';
 import { getUserIdFromToken } from '../../../shared/utils/jwtService';
 import { refreshAccessToken } from '../../../shared/utils/apiService';
-import { setAuthCookies, getRefreshToken, removeAuthCookies } from '../../../shared/utils/cookieService';
+import { setAuthCookies, getRefreshToken } from '../../../shared/utils/cookieService';
+import { clearAllUserData } from '../../../shared/utils/apiService'; // Import clearAllUserData
 import { toast } from 'react-toastify';
 
 interface UserManagementProps {
@@ -73,18 +74,18 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
         } else {
           console.error('Failed to refresh token:', response.message);
           toast.error('Failed to refresh token. Please log in again.');
-          removeAuthCookies();
+          clearAllUserData(); // Clear all data on failed token refresh
           window.location.href = '/login';
         }
       } catch (error) {
         console.error('Error during token refresh:', error);
         toast.error('An error occurred during token refresh. Please log in again.');
-        removeAuthCookies();
+        clearAllUserData(); // Clear all data on error during token refresh
         window.location.href = '/login';
       }
     } else {
       console.warn('No refresh token found. User will be logged out.');
-      removeAuthCookies();
+      clearAllUserData(); // Clear all data if no refresh token
       window.location.reload(); // Force re-login if no refresh token
     }
     fetchUsers(); // Always refetch the user list

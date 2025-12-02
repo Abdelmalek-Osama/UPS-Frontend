@@ -133,7 +133,7 @@ axiosInstance.interceptors.response.use(
               return axiosInstance(originalRequest);
             } catch (refreshError: any) {
               console.error('apiService: Refresh token failed.', refreshError);
-              removeAuthCookies();
+              clearAllUserData(); // Clear all user data on refresh token failure
               processQueue(refreshError, null);
               console.error('Unable to refresh token', refreshError);
               if (!logoutInitiated && onLogoutCallback) {
@@ -149,7 +149,7 @@ axiosInstance.interceptors.response.use(
             }
           } else {
             console.log('apiService: No refresh token available.');
-            removeAuthCookies();
+            clearAllUserData(); // Clear all user data if no refresh token
             processQueue(new Error('No refresh token available'), null);
             if (!logoutInitiated && onLogoutCallback) {
               console.log('apiService: Calling onLogoutCallback (no refresh token)...');
@@ -289,8 +289,16 @@ export const registerUser = async (userData: any): Promise<UserDto> => {
 
 export const logoutUser = async (): Promise<ApiResponse<any>> => {
   const response = await axiosInstance.post<ApiResponse<any>>('/v1/Auth/logout');
-  removeAuthCookies();
+  clearAllUserData(); // Use the centralized function
   return response.data;
+};
+
+export const clearAllUserData = () => {
+  removeAuthCookies();
+  localStorage.clear();
+  sessionStorage.clear();
+  // Also explicitly set isLogged to false in session storage
+  sessionStorage.setItem('isLogged', 'false');
 };
 
 /**
