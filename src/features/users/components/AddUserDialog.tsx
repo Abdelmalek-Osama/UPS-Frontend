@@ -61,10 +61,32 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!username) newErrors.username = 'اسم المستخدم مطلوب';
-    if (!fullName) newErrors.fullName = 'الاسم الكامل مطلوب'; // Validation for FullName
+    if (!username) {
+      newErrors.username = 'اسم المستخدم مطلوب';
+    } else if (username.trim() !== username) {
+      newErrors.username = 'اسم المستخدم لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
+    } else if (username.includes(' ')) {
+      newErrors.username = 'اسم المستخدم لا يمكن أن يحتوي على مسافات داخلية';
+    } else if (username.length < 2) {
+      newErrors.username = 'اسم المستخدم يجب أن يتكون من حرفين على الأقل';
+    } else if (!/^[\p{L}]+$/u.test(username)) {
+      newErrors.username = 'اسم المستخدم يجب أن يحتوي على حروف إنجليزية أو عربية فقط';
+    } else if (/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(username)) {
+      newErrors.username = 'اسم المستخدم لا يمكن أن يكون بريد إلكتروني';
+    }
+    if (!fullName.trim()) { // Trim here for initial check
+      newErrors.fullName = 'الاسم الكامل مطلوب';
+    } else if (fullName.length > 100) {
+      newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
+    } else if (!/^[\p{L}]{3,}(?:[\s-][\p{L}]{3,})+$/u.test(fullName.trim())) {
+      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 3 أحرف على الأقل';
+    }
     if (!email) {
       newErrors.email = 'البريد الإلكتروني مطلوب';
+    } else if (email.trim() !== email) {
+      newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
+    } else if (email.includes(' ')) {
+      newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات داخلية';
     } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
       newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
     }
@@ -96,10 +118,10 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
 
     try {
       const userData = {
-        UserName: username, // Changed to UserName for backend compatibility
+        UserName: username.trim(), // Changed to UserName for backend compatibility and trim for validation
         email,
         password,
-        FullName: fullName, // Added FullName
+        FullName: fullName.trim(), // Trim fullName before sending to backend
         Role: role, // Changed to Role for backend compatibility
         // active, // Removed, handled by backend
         // assignedSites: role === 'Admin' ? [] : assignedSites, // Removed, handled by backend
@@ -116,9 +138,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setActive(true);
       setAssignedSites([]);
       setErrors({});
+      setApiError(null); // Clear API error on success
       onOpenChange(false);
     } catch (error: any) {
-      setApiError('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقًا.'); // Set generic error message
+      const errorMessage = error.response?.data?.message || 'حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقًا.';
+      setApiError(errorMessage);
       // toast.error('Failed to register user. Please try again later.');
     } finally {
       setIsSubmittingAddUser(false); // Reset submitting state to false

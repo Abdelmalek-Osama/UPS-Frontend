@@ -55,8 +55,12 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!fullName || fullName.trim() === '') {
+    if (!fullName.trim()) { // Trim here for initial check
       newErrors.fullName = 'الاسم الكامل مطلوب';
+    } else if (fullName.length > 100) {
+      newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
+    } else if (!/^[\p{L}]{3,}(?:[\s-][\p{L}]{3,})+$/u.test(fullName.trim())) {
+      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 3 أحرف إنجليزية أو عربية على الأقل';
     }
     if (!role) {
       newErrors.role = 'الدور مطلوب';
@@ -126,7 +130,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
               disabled={isSubmitting}
             />
             {errors.fullName && (
-              <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
+              <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>
             )}
           </div>
 
