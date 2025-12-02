@@ -114,6 +114,7 @@ export function WaterLevelTable({
   const [addError, setAddError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const prevDialogOpenRef = useRef(false);
+  const [editSelectedSiteData, setEditSelectedSiteData] = useState<SiteConfiguration | null>(null);
 
   // Initialize selectedSiteForAdd only when dialog first opens (not on every render)
   useEffect(() => {
@@ -183,6 +184,23 @@ export function WaterLevelTable({
       setEditError(null); // Clear error on dialog close
     }
   }, [isEditWaterLevelOpen, editingWaterLevel, sites]);
+
+  useEffect(() => {
+    const fetchEditSiteData = async () => {
+      if (isEditWaterLevelOpen && editSelectedSiteId) {
+        try {
+          const response = await apiService.get<ApiResponse<SiteConfiguration>>(`/v1/Sites/${editSelectedSiteId}`);
+          setEditSelectedSiteData(response.data);
+        } catch (error) {
+          console.error("Failed to fetch edit site data:", error);
+          setEditSelectedSiteData(null);
+        }
+      } else if (!isEditWaterLevelOpen) {
+        setEditSelectedSiteData(null); // Clear data when dialog closes
+      }
+    };
+    fetchEditSiteData();
+  }, [isEditWaterLevelOpen, editSelectedSiteId]);
 
   useEffect(() => {
     if (!isEditWaterLevelOpen) {
@@ -377,7 +395,7 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>الموقع</Label>
-                      <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd}>
+                      <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd} disabled>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر الموقع" />
                         </SelectTrigger>
@@ -512,7 +530,7 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>الموقع</Label>
-                      <Select dir="rtl" value={editSelectedSiteId} onValueChange={setEditSelectedSiteId}>
+                      <Select dir="rtl" value={editSelectedSiteId} onValueChange={setEditSelectedSiteId} disabled>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر الموقع" />
                         </SelectTrigger>
@@ -552,7 +570,7 @@ export function WaterLevelTable({
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    {selectedSiteData?.hasUS && (
+                    {editSelectedSiteData?.hasUS && (
                       <div className="space-y-2">
                         <Label>USWL (متر)</Label>
                         <Input
@@ -564,7 +582,7 @@ export function WaterLevelTable({
                         />
                       </div>
                     )}
-                    {(selectedSiteData?.hasDS1) && (
+                    {(editSelectedSiteData?.hasDS1) && (
                       <div className="space-y-2">
                         <Label>DSWL1 (متر)</Label>
                         <Input
@@ -576,7 +594,7 @@ export function WaterLevelTable({
                         />
                       </div>
                     )}
-                    {(selectedSiteData?.hasDS2) && (
+                    {(editSelectedSiteData?.hasDS2) && (
                       <div className="space-y-2">
                         <Label>DSWL2 (متر)</Label>
                         <Input
@@ -620,9 +638,9 @@ export function WaterLevelTable({
                       !editReadingDate ||
                       !editReadingTime ||
                       !editSelectedSiteId ||
-                      (selectedSiteData?.hasUS && editUswl === '') ||
-                      (selectedSiteData?.hasDS1 && editDswl === '') ||
-                      (selectedSiteData?.hasDS2 && editDswl2 === '') ||
+                      (editSelectedSiteData?.hasUS && editUswl === '') ||
+                      (editSelectedSiteData?.hasDS1 && editDswl === '') ||
+                      (editSelectedSiteData?.hasDS2 && editDswl2 === '') ||
                       editBattery === ''
                     }
                     loadingText="جاري الحفظ..."
