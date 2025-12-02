@@ -194,6 +194,14 @@ export function PumpStationTable({
       const dateTime = new Date(readingDate);
       dateTime.setHours(timePerHour, 0, 0, 0); // Use timePerHour for hours
 
+      // Validate that the combined datetime is not in the future
+      const now = new Date();
+      if (dateTime.getTime() > now.getTime()) {
+        setAddError('لا يمكن إضافة قراءة في المستقبل.');
+        setIsSubmittingAdd(false);
+        return;
+      }
+
       const formattedTimestamp = formatDateTimeForAPI(dateTime); // Use toISOString() directly
 
       const totalUptime = pumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
@@ -280,6 +288,13 @@ export function PumpStationTable({
       const dateTime = new Date(editReadingDate);
       dateTime.setHours(editTimePerHour, 0, 0, 0);
 
+      // Validate that the combined datetime is not in the future
+      const now = new Date();
+      if (dateTime.getTime() > now.getTime()) {
+        setEditError('لا يمكن إضافة قراءة في المستقبل.');
+        return;
+      }
+
       const totalUptime = editPumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
       const totalFlow = editPumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
@@ -320,8 +335,19 @@ export function PumpStationTable({
 
         setEditingPumpStation(null);
         setIsEditPumpStationOpen(false);
-        // Optionally refetch readings
-        fetchPumpStationReadings(Number(selectedSiteId), startDate ? formatDateTimeForAPI(startDate) : undefined, endDate ? formatDateTimeForAPI(endDate, true) : undefined);
+        // Conditionally refetch readings based on existing date range or current day
+        if (startDate && endDate) {
+          fetchPumpStationReadings(Number(selectedSiteId), formatDateTimeForAPI(startDate), formatDateTimeForAPI(endDate, true));
+        } else {
+          const today = new Date();
+          const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+          const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+          fetchPumpStationReadings(
+            Number(selectedSiteId),
+            formatDateTimeForAPI(startOfToday),
+            formatDateTimeForAPI(endOfToday, true)
+          );
+        }
       } catch (error: any) {
         setEditError(error.message || 'فشل في تحديث قراءة محطة الرفع.');
       } finally {
@@ -379,15 +405,20 @@ export function PumpStationTable({
         return hours; // If no date is selected, all hours are theoretically available for selection
       }
 
-      const isToday = selectedDate.toDateString() === now.toDateString();
+      // Compare dates at midnight to avoid timezone issues
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const selectedMidnight = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
 
-      if (isToday) {
+      if (selectedMidnight.getTime() === todayMidnight.getTime()) {
+        // Today: only allow hours up to and including the current hour
         return hours.filter(hour => hour <= currentHour);
-      } else if (selectedDate.getTime() > now.getTime()) {
-        return []; // Future date, no hours should be selectable
+      } else if (selectedMidnight.getTime() > todayMidnight.getTime()) {
+        // Future date: no hours should be selectable
+        return [];
       }
 
-      return hours; // Past date, all hours are available
+      // Past date: all hours are available
+      return hours;
     };
 
   return (
