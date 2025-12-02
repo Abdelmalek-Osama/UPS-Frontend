@@ -81,7 +81,7 @@ export function useReadingsData(selectedSiteId: string) {
         return response;
       } catch (error: any) {
         console.error('Error creating water level reading', error);
-        const errorMessage = error?.message || 'حدث خطأ أثناء إضافة القراءة';
+        const errorMessage = (error as Error).message;
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -112,7 +112,7 @@ export function useReadingsData(selectedSiteId: string) {
         return response;
       } catch (error: any) {
         console.error('Error updating water level reading', error);
-        const errorMessage = error?.message || 'حدث خطأ أثناء تحديث القراءة';
+        const errorMessage = (error as Error).message;
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -135,7 +135,7 @@ export function useReadingsData(selectedSiteId: string) {
         return response;
       } catch (error: any) {
         console.error('Error creating pump station reading', error);
-        const errorMessage = error?.message || 'حدث خطأ أثناء إضافة قراءة محطة الرفع';
+        const errorMessage = (error as Error).message;
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -158,7 +158,7 @@ export function useReadingsData(selectedSiteId: string) {
         return response;
       } catch (error: any) {
         console.error('Error updating pump station reading', error);
-        const errorMessage = error?.message || 'حدث خطأ أثناء تحديث قراءة محطة الرفع';
+        const errorMessage = (error as Error).message;
         toast.error(errorMessage);
         throw error;
       } finally {
@@ -186,7 +186,7 @@ export function useReadingsData(selectedSiteId: string) {
         console.log('Fetch sites lookup aborted');
       } else {
         console.error('Error fetching lookup sites', error);
-        setSitesError('تعذر تحميل قائمة المواقع');
+        setSitesError((error as Error).message);
       }
     } finally {
       if (!signal?.aborted) {
@@ -250,7 +250,7 @@ export function useReadingsData(selectedSiteId: string) {
           console.log('Fetch water level readings aborted');
         } else {
           console.error('Error fetching water level readings', error);
-          setWaterLevelError(error?.message || 'حدث خطأ أثناء جلب القراءات');
+          setWaterLevelError((error as Error).message);
           setWaterLevelReadings([]);
         }
       } finally {
@@ -327,7 +327,7 @@ export function useReadingsData(selectedSiteId: string) {
           console.log('Fetch pump station readings aborted');
         } else {
           console.error('Error fetching pump station readings', error);
-          setPumpStationError(error?.message || 'حدث خطأ أثناء جلب قراءات محطات الرفع');
+          setPumpStationError((error as Error).message);
           setPumpStationReadings([]);
         }
       } finally {

@@ -154,7 +154,7 @@ export function AlarmEvents() {
 
       setAlarmEvents(mappedEvents);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }

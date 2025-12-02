@@ -113,6 +113,8 @@ export function WaterLevelTable({
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [addSiteDataError, setAddSiteDataError] = useState<string | null>(null);
+  const [editSiteDataError, setEditSiteDataError] = useState<string | null>(null);
   const prevDialogOpenRef = useRef(false);
   const [editSelectedSiteData, setEditSelectedSiteData] = useState<SiteConfiguration | null>(null);
 
@@ -139,9 +141,11 @@ export function WaterLevelTable({
         try {
           const response = await apiService.get<ApiResponse<SiteConfiguration>>(`/v1/Sites/${selectedSiteForAdd}`);
           setSelectedSiteData(response.data);
+          setAddSiteDataError(null);
         } catch (error) {
           console.error("Failed to fetch site data:", error);
           setSelectedSiteData(null);
+          setAddSiteDataError((error as Error).message);
         }
       }
     };
@@ -158,6 +162,7 @@ export function WaterLevelTable({
       setDswl2('');
       setBattery('');
       setAddError(null); // Clear error on dialog close
+      setAddSiteDataError(null); // Clear site data error on dialog close
       // Reset selectedSiteForAdd when dialog closes so it can be initialized fresh next time
       setSelectedSiteForAdd('');
     }
@@ -182,6 +187,7 @@ export function WaterLevelTable({
       setEditBattery(editingWaterLevel.battery?.toString() ?? '');
     } else if (!isEditWaterLevelOpen) {
       setEditError(null); // Clear error on dialog close
+      setEditSiteDataError(null); // Clear site data error on dialog close
     }
   }, [isEditWaterLevelOpen, editingWaterLevel, sites]);
 
@@ -191,9 +197,11 @@ export function WaterLevelTable({
         try {
           const response = await apiService.get<ApiResponse<SiteConfiguration>>(`/v1/Sites/${editSelectedSiteId}`);
           setEditSelectedSiteData(response.data);
+          setEditSiteDataError(null);
         } catch (error) {
           console.error("Failed to fetch edit site data:", error);
           setEditSelectedSiteData(null);
+          setEditSiteDataError((error as Error).message);
         }
       } else if (!isEditWaterLevelOpen) {
         setEditSelectedSiteData(null); // Clear data when dialog closes
@@ -333,7 +341,7 @@ export function WaterLevelTable({
         );
       }
     } catch (error: any) {
-      setAddError(error.message || 'فشل في إضافة القراءة.');
+      setAddError((error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -408,7 +416,7 @@ export function WaterLevelTable({
         );
       }
     } catch (error: any) {
-      setEditError(error.message || 'فشل في تحديث القراءة.');
+      setEditError((error as Error).message);
     } finally {
       setIsSubmittingEdit(false);
     }
@@ -449,6 +457,9 @@ export function WaterLevelTable({
             </Button>
 
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+              if (!open && (addError || addSiteDataError)) {
+                return;
+              }
               setIsAddDialogOpen(open);
               setIsSubmitting(false); // Unconditionally reset submitting state when dialog opens or closes
             }}>
@@ -465,8 +476,8 @@ export function WaterLevelTable({
                     أدخل بيانات القراءة الجديدة
                   </DialogDescription>
                 </DialogHeader>
-                {addError && (
-                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError}</p>
+                {(addError || addSiteDataError) && (
+                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError || addSiteDataError}</p>
                 )}
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -592,7 +603,12 @@ export function WaterLevelTable({
             </Dialog>
 
             {/* Edit Dialog */}
-            <Dialog open={isEditWaterLevelOpen} onOpenChange={setIsEditWaterLevelOpen}>
+            <Dialog open={isEditWaterLevelOpen} onOpenChange={(open) => {
+              if (!open && (editError || editSiteDataError)) {
+                return;
+              }
+              setIsEditWaterLevelOpen(open);
+            }}>
               <DialogContent className="sm:max-w-[600px]" dir="rtl">
                 <DialogHeader>
                   <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
@@ -600,8 +616,8 @@ export function WaterLevelTable({
                     قم بتعديل بيانات القراءة
                   </DialogDescription>
                 </DialogHeader>
-                {editError && (
-                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError}</p>
+                {(editError || editSiteDataError) && (
+                  <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError || editSiteDataError}</p>
                 )}
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">

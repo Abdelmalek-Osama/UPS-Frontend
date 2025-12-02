@@ -79,7 +79,7 @@ export function FlowCalculations() {
         setFormulaConstants([]);
         setCalculationMethod('');
         setConstantsError(
-          error instanceof Error ? error.message : 'حدث خطأ أثناء جلب بيانات المعادلة'
+          (error as Error).message
         );
       } finally {
         setConstantsLoading(false);
@@ -118,7 +118,7 @@ export function FlowCalculations() {
       toast.success('تم حفظ المعاملات بنجاح');
 
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'تعذر حفظ المعاملات، يرجى المحاولة مرة أخرى.');
+      toast.error((error as Error).message);
     } finally {
       setSavingConstants(false);
     }

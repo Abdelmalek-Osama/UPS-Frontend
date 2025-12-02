@@ -53,7 +53,13 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     submissionError
 }: AddThresholdAlarmDialogProps, ref) => {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={(newOpen) => {
+            if (!newOpen && submissionError) {
+                // Prevent closing if there's a submission error
+                return;
+            }
+            onOpenChange(newOpen);
+        }}>
             <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">إضافة تنبيه قيمة حدية</DialogTitle>

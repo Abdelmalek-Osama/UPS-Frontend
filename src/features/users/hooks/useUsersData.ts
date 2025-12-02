@@ -27,7 +27,7 @@ export function useUsersData() {
       if (err.name === 'AbortError') {
         console.log('Fetch users aborted');
       } else {
-        setError(err.message || 'Failed to fetch users');
+        setError((err as Error).message);
       }
     } finally {
       if (!signal?.aborted) {
@@ -58,7 +58,7 @@ export function useUsersData() {
       await apiService.patch(`/v1/Users/${userId}`, { isActive: !users.find(u => u.id === userId)?.isActive });
     } catch (err: any) {
       // If API call fails, revert UI (or re-fetch for simplicity)
-      toast.error(`فشل تغيير حالة المستخدم: ${err.message}`);
+      toast.error((err as Error).message);
       fetchUsers(); // Re-fetch to ensure data consistency
     }
   };

@@ -29,18 +29,22 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false); // New state for reset password submission
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (!open) {
       setNewPassword('');
       setConfirmPassword('');
       setErrors([]);
+      setSubmissionError(null); // Clear submission error
       setIsSubmittingResetPassword(false); // Reset submitting state on dialog close
     }
   }, [open]);
 
   const handleSubmit = async () => {
     setIsSubmittingResetPassword(true); // Set submitting state to true
+    setErrors([]); // Clear previous validation errors
+    setSubmissionError(null); // Clear previous submission errors
     const currentErrors: string[] = [];
 
     if (!newPassword) {
@@ -76,7 +80,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     }
 
     if (!user) {
-      // toast.error("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم.");
+      setSubmissionError("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم."); // Set error for undefined user
       setIsSubmittingResetPassword(false); // Reset if user is not defined
       return;
     }
@@ -89,6 +93,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       // toast.success("تمت إعادة تعيين كلمة المرور بنجاح.");
       onOpenChange(false);
     } catch (error: any) {
+      setSubmissionError((error as Error).message);
       // toast.error( "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
     } finally {
       setIsSubmittingResetPassword(false); // Reset submitting state to false
@@ -96,7 +101,12 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen && (errors.length > 0 || submissionError)) {
+        return; // Prevent closing if there are validation or submission errors
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">إعادة تعيين كلمة المرور</DialogTitle>
@@ -168,6 +178,9 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           </div>
         </div>
         <DialogFooter>
+          {submissionError && (
+            <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
