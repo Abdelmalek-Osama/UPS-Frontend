@@ -83,12 +83,15 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     }
     if (!email) {
       newErrors.email = 'البريد الإلكتروني مطلوب';
-    } else if (email.trim() !== email) {
-      newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
-    } else if (email.includes(' ')) {
-      newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات داخلية';
-    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
+    } else {
+
+      if (email.startsWith(' ') || email.endsWith(' ')) {
+        newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
+      } else if (email.includes(' ')) {
+        newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات داخلية';
+      } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+        newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
+      }
     }
     if (!password) {
       newErrors.password = 'كلمة المرور مطلوبة';
@@ -119,7 +122,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     try {
       const userData = {
         UserName: username.trim(), // Changed to UserName for backend compatibility and trim for validation
-        email,
+        email, // Removed .trim() here
         password,
         FullName: fullName.trim(), // Trim fullName before sending to backend
         Role: role, // Changed to Role for backend compatibility
@@ -183,10 +186,12 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input
                 id="email"
-                type="email"
+                type="text" // Changed from "email" to "text"
                 placeholder="user@irrigation.gov.eg"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
                 autoComplete="off"
               />
               {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
