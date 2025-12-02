@@ -167,13 +167,15 @@ export function PumpStationTable({
 
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
-      newPumpReadings[index] = { ...newPumpReadings[index], [field]: value === '' ? null : parseFloat(value) };
+      const numValue = parseFloat(value);
+      newPumpReadings[index] = { ...newPumpReadings[index], [field]: value === '' || Number.isNaN(numValue) || numValue < 0 ? null : numValue };
       setPumpReadings(newPumpReadings);
     };
 
     const handleEditPumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newEditPumpReadings = [...editPumpReadings];
-      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: value === '' ? null : parseFloat(value) };
+      const numValue = parseFloat(value);
+      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: value === '' || Number.isNaN(numValue) || numValue < 0 ? null : numValue };
       setEditPumpReadings(newEditPumpReadings);
     };
 
@@ -187,6 +189,17 @@ export function PumpStationTable({
       // Validate record number - must be positive and greater than zero
       if (recordNumber <= 0 || Number.isNaN(recordNumber)) {
         setAddError('رقم السجل يجب أن يكون أكبر من صفر.');
+        return;
+      }
+
+      // Validate pump readings for non-negative values
+      const hasInvalidPumpValue = pumpReadings.some(pump => 
+        (pump.time !== null && pump.time < 0) || (pump.flow !== null && pump.flow < 0)
+      );
+
+      if (hasInvalidPumpValue) {
+        setAddError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
+        setIsSubmittingAdd(false);
         return;
       }
 
@@ -208,17 +221,17 @@ export function PumpStationTable({
       const totalFlow = pumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
       // Initialize all pump data fields up to numberOfPumps with null
-      const pumpData: { [key: string]: number | null } = {};
+      const pumpData: { [key: string]: number } = {}; // Change type to number
       for (let i = 1; i <= numberOfPumps; i++) {
-        pumpData[`p${i}_Time`] = null;
-        pumpData[`p${i}_Flow`] = null;
+        pumpData[`p${i}_Time`] = 0; // Initialize with 0 instead of null
+        pumpData[`p${i}_Flow`] = 0; // Initialize with 0 instead of null
       }
 
-      // Overwrite with actual pumpReadings data, using null for undefined values
+      // Overwrite with actual pumpReadings data, using 0 for undefined values
       pumpReadings.forEach((pump, index) => {
         if (index < numberOfPumps) { // Ensure we don't go beyond the actual number of pumps
-          pumpData[`p${index + 1}_Time`] = pump.time ?? null;
-          pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
+          pumpData[`p${index + 1}_Time`] = pump.time ?? 0; // Use 0 instead of null
+          pumpData[`p${index + 1}_Flow`] = pump.flow ?? 0; // Use 0 instead of null
         }
       });
 
@@ -295,21 +308,32 @@ export function PumpStationTable({
         return;
       }
 
+      // Validate pump readings for non-negative values
+      const hasInvalidPumpValue = editPumpReadings.some(pump => 
+        (pump.time !== null && pump.time < 0) || (pump.flow !== null && pump.flow < 0)
+      );
+
+      if (hasInvalidPumpValue) {
+        setEditError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
+        setIsSubmittingEdit(false);
+        return;
+      }
+
       const totalUptime = editPumpReadings.reduce((sum, pump) => sum + (pump.time ?? 0), 0);
       const totalFlow = editPumpReadings.reduce((sum, pump) => sum + (pump.flow ?? 0), 0);
 
       // Initialize all pump data fields up to numberOfPumps with null
-      const pumpData: { [key: string]: number | null } = {};
+      const pumpData: { [key: string]: number } = {}; // Change type to number
       for (let i = 1; i <= numberOfPumps; i++) {
-        pumpData[`p${i}_Time`] = null;
-        pumpData[`p${i}_Flow`] = null;
+        pumpData[`p${i}_Time`] = 0; // Initialize with 0 instead of null
+        pumpData[`p${i}_Flow`] = 0; // Initialize with 0 instead of null
       }
 
-      // Overwrite with actual editPumpReadings data, using null for undefined values
+      // Overwrite with actual editPumpReadings data, using 0 for undefined values
       editPumpReadings.forEach((pump, index) => {
         if (index < numberOfPumps) { // Ensure we don't go beyond the actual number of pumps
-          pumpData[`p${index + 1}_Time`] = pump.time ?? null;
-          pumpData[`p${index + 1}_Flow`] = pump.flow ?? null;
+          pumpData[`p${index + 1}_Time`] = pump.time ?? 0; // Use 0 instead of null
+          pumpData[`p${index + 1}_Flow`] = pump.flow ?? 0; // Use 0 instead of null
         }
       });
 
@@ -519,16 +543,18 @@ export function PumpStationTable({
                       type="number"
                       min="1"
                       placeholder="0"
-                      value={recordNumber}
+                      value={recordNumber === 0 ? '' : recordNumber}
                       onChange={(e) => {
                         const value = e.target.value;
-                        // Allow empty string, but prevent zero and negative values
                         if (value === '') {
                           setRecordNumber(0);
                         } else {
                           const num = parseFloat(value);
                           if (!Number.isNaN(num) && num > 0) {
                             setRecordNumber(num);
+                          } else if (num < 0) {
+                             // Optionally provide feedback to the user or reset the input
+                            setAddError('رقم السجل يجب أن يكون رقماً موجباً.');
                           }
                         }
                       }}
@@ -639,16 +665,18 @@ export function PumpStationTable({
                       type="number"
                       min="1"
                       placeholder="0"
-                      value={editRecordNumber.toString()}
+                      value={editRecordNumber === 0 ? '' : editRecordNumber.toString()}
                       onChange={(e) => {
                         const value = e.target.value;
-                        // Allow empty string, but prevent zero and negative values
                         if (value === '') {
                           setEditRecordNumber(0);
                         } else {
                           const num = parseFloat(value);
                           if (!Number.isNaN(num) && num > 0) {
                             setEditRecordNumber(num);
+                            setEditError(null); // Clear error if input becomes valid
+                          } else if (num < 0) {
+                            setEditError('رقم السجل يجب أن يكون رقماً موجباً.');
                           }
                         }
                       }}
