@@ -34,12 +34,14 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
   const [fullName, setFullName] = useState(''); // New state for FullName
   const [role, setRole] = useState<'Admin' | 'Operator' | ''>('');
   const [active, setActive] = useState(true);
   const [assignedSites, setAssignedSites] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // New state for confirm password visibility
   const [apiError, setApiError] = useState<string | null>(null); // New state for API errors
   const [isSubmittingAddUser, setIsSubmittingAddUser] = useState(false); // New state for add user submission
 
@@ -49,11 +51,14 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setUsername('');
       setEmail('');
       setPassword('');
+      setConfirmPassword(''); // Clear confirm password on dialog open
       setFullName('');
       setRole('');
       setActive(true);
       setAssignedSites([]);
       setErrors({});
+      setShowPassword(false); // Clear password visibility on dialog open
+      setShowConfirmPassword(false); // Clear confirm password visibility on dialog open
       setApiError(null); // Clear API error on dialog open
       setIsSubmittingAddUser(false); // Reset submitting state on dialog open
     }
@@ -104,6 +109,9 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     } else if (!/[a-z]/.test(password)) {
       newErrors.password = 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل';
     }
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'كلمة المرور وتأكيد كلمة المرور غير متطابقين';
+    }
     if (!role) newErrors.role = 'الدور مطلوب';
     if (role === 'Operator' && assignedSites.length === 0) {
       newErrors.assignedSites = 'يجب تخصيص موقع واحد على الأقل للمشغلين';
@@ -136,6 +144,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setUsername('');
       setEmail('');
       setPassword('');
+      setConfirmPassword(''); // Clear confirm password on dialog open
       setFullName(''); // Clear fullName
       setRole('');
       setActive(true);
@@ -238,18 +247,46 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">الدور</Label>
-              <Select onValueChange={(value: 'Admin' | 'Operator') => setRole(value)} value={role}>
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="اختر الدور" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">مسؤول (Admin)</SelectItem>
-                  <SelectItem value="Operator">مشغل (Operator)</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
+              <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  )}
+                </Button>
+              </div>
+              {errors.confirmPassword && <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>}
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">الدور</Label>
+            <Select onValueChange={(value: 'Admin' | 'Operator') => setRole(value)} value={role}>
+              <SelectTrigger id="role">
+                <SelectValue placeholder="اختر الدور" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Admin">مسؤول (Admin)</SelectItem>
+                <SelectItem value="Operator">مشغل (Operator)</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
           </div>
         </div>
         {role === 'Operator' && (
@@ -287,7 +324,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleAddUser} disabled={isSubmittingAddUser || !username || !email || !password || !fullName || !role || (role === 'Operator' && assignedSites.length === 0)} loadingText="جاري الإضافة..." isLoading={isSubmittingAddUser}>
+          <Button onClick={handleAddUser} disabled={isSubmittingAddUser || !username || !email || !password || !confirmPassword || !fullName || !role || (role === 'Operator' && assignedSites.length === 0)} loadingText="جاري الإضافة..." isLoading={isSubmittingAddUser}>
             إضافة المستخدم
           </Button>
         </DialogFooter>
