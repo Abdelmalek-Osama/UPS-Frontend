@@ -225,6 +225,37 @@ export function WaterLevelTable({
     return `${year}-${month}-${day}`;
   };
 
+  /**
+   * Get available hours based on selected date
+   * For today's date: filter to only hours up to the current hour
+   * For past dates: all 24 hours available
+   * For future dates: no hours available (but DatePicker prevents this)
+   */
+  const getAvailableHours = (selectedDate?: Date) => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    if (!selectedDate) {
+      return hours; // If no date selected, theoretically all hours available
+    }
+
+    // Compare dates at midnight to avoid timezone issues
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const selectedMidnight = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
+
+    if (selectedMidnight.getTime() === todayMidnight.getTime()) {
+      // Today: only allow hours up to and including the current hour
+      return hours.filter(hour => hour <= currentHour);
+    } else if (selectedMidnight.getTime() > todayMidnight.getTime()) {
+      // Future date: no hours should be selectable
+      return [];
+    }
+
+    // Past date: all hours are available
+    return hours;
+  };
+
   const handleAddReading = async () => {
     setAddError(null); // Clear previous errors
     if (!readingDate || !readingTime || !selectedSiteForAdd) {
@@ -248,6 +279,13 @@ export function WaterLevelTable({
     const [hours] = readingTime.split(':');
     const dateTime = new Date(readingDate);
     dateTime.setHours(Number(hours), 0, 0, 0);
+
+    // Validate that the combined datetime is not in the future
+    const now = new Date();
+    if (dateTime.getTime() > now.getTime()) {
+      setAddError('لا يمكن إضافة قراءة في المستقبل.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -276,7 +314,23 @@ export function WaterLevelTable({
       // Refresh readings
       const siteNumericId = Number(selectedSiteId);
       if (!Number.isNaN(siteNumericId)) {
-        await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+        let apiFromDate = fromDate;
+        let apiToDate = toDate;
+
+        // If both dates are unset, default to today's range
+        const bothUnset = fromDate === undefined && toDate === undefined;
+        if (bothUnset) {
+          apiFromDate = new Date();
+          apiFromDate.setHours(0, 0, 0, 0);
+          apiToDate = new Date();
+          apiToDate.setHours(23, 59, 59, 999);
+        }
+
+        await fetchWaterLevelReadings(
+          siteNumericId,
+          apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+        );
       }
     } catch (error: any) {
       setAddError(error.message || 'فشل في إضافة القراءة.');
@@ -308,6 +362,13 @@ export function WaterLevelTable({
     const dateTime = new Date(editReadingDate);
     dateTime.setHours(Number(hours), 0, 0, 0);
 
+    // Validate that the combined datetime is not in the future
+    const now = new Date();
+    if (dateTime.getTime() > now.getTime()) {
+      setEditError('لا يمكن إضافة قراءة في المستقبل.');
+      return;
+    }
+
     setIsSubmittingEdit(true);
     try {
       await updateWaterLevelReading({
@@ -328,7 +389,23 @@ export function WaterLevelTable({
 
       const siteNumericId = Number(selectedSiteId);
       if (!Number.isNaN(siteNumericId)) {
-        await fetchWaterLevelReadings(siteNumericId, formatDate(fromDate), formatDate(toDate));
+        let apiFromDate = fromDate;
+        let apiToDate = toDate;
+
+        // If both dates are unset, default to today's range
+        const bothUnset = fromDate === undefined && toDate === undefined;
+        if (bothUnset) {
+          apiFromDate = new Date();
+          apiFromDate.setHours(0, 0, 0, 0);
+          apiToDate = new Date();
+          apiToDate.setHours(23, 59, 59, 999);
+        }
+
+        await fetchWaterLevelReadings(
+          siteNumericId,
+          apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+        );
       }
     } catch (error: any) {
       setEditError(error.message || 'فشل في تحديث القراءة.');
@@ -423,8 +500,8 @@ export function WaterLevelTable({
                         <SelectValue placeholder="اختر الساعة" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 24 }, (_, i) => {
-                          const hour = i.toString().padStart(2, '0');
+                        {getAvailableHours(readingDate).map((hourNum) => {
+                          const hour = hourNum.toString().padStart(2, '0');
                           return (
                             <SelectItem key={hour} value={`${hour}:00`}>
                               {`${hour}:00`}
@@ -558,8 +635,8 @@ export function WaterLevelTable({
                         <SelectValue placeholder="اختر الساعة" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 24 }, (_, i) => {
-                          const hour = i.toString().padStart(2, '0');
+                        {getAvailableHours(editReadingDate).map((hourNum) => {
+                          const hour = hourNum.toString().padStart(2, '0');
                           return (
                             <SelectItem key={hour} value={`${hour}:00`}>
                               {`${hour}:00`}
