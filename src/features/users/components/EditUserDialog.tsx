@@ -41,6 +41,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // Update form when user changes
   useEffect(() => {
@@ -49,6 +50,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       setRole(user.role);
       setIsActive(user.isActive);
       setErrors({});
+      setSubmissionError(null); // Clear submission error on dialog open
       setIsSubmitting(false); // Reset submitting state on dialog open
     }
   }, [user]);
@@ -93,7 +95,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       }
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(`فشل تحديث بيانات المستخدم: ${error.message}`);
+      setSubmissionError((error as Error).message);
+      // toast.error(`فشل تحديث بيانات المستخدم: ${error.message}`); // Removed toast
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +112,12 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen && submissionError) {
+        return; // Prevent closing if there's a submission error
+      }
+      handleClose();
+    }}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
@@ -173,6 +181,9 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
         </div>
 
         <DialogFooter>
+          {submissionError && (
+            <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+          )}
           <Button 
             variant="outline" 
             onClick={handleClose}

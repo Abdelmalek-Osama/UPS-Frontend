@@ -35,6 +35,7 @@ interface EditCommunicationAlarmDialogProps {
     setHasChanges: (hasChanges: boolean) => void;
     setEmails: (emails: string[]) => void;
     setPhones: (phones: string[]) => void;
+    submissionError: string | null;
 }
 
 export function EditCommunicationAlarmDialog({
@@ -51,10 +52,17 @@ export function EditCommunicationAlarmDialog({
     hasChanges,
     setHasChanges,
     setEmails,
-    setPhones
+    setPhones,
+    submissionError
 }: EditCommunicationAlarmDialogProps) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={(newOpen) => {
+            if (!newOpen && submissionError) {
+                // Prevent closing if there's a submission error
+                return;
+            }
+            onOpenChange(newOpen);
+        }}>
             <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">تعديل تنبيه فقدان اتصال</DialogTitle>
@@ -169,6 +177,9 @@ export function EditCommunicationAlarmDialog({
                 </div>
 
                 <DialogFooter>
+                    {submissionError && (
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                    )}
                     <div className="w-full flex justify-start gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
                             إلغاء
