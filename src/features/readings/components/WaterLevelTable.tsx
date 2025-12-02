@@ -803,7 +803,7 @@ export function WaterLevelTable({
                   <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Battery') }}>
                     {reading.battery?.toFixed(2) ?? ''}
                   </TableCell>
-                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'CalculatedFlow') }}>
+                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Calculated_flow') }}>
                     <div className="flex items-center justify-start gap-2">
                       <span>{reading.calculatedFlow.toFixed(2)} م³/س</span>
                     </div>
