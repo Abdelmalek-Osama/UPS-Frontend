@@ -215,7 +215,6 @@ export function ReadingsManagement() {
         'DSWL2': reading.dswL2 ?? '',
         'البطارية': reading.battery ?? '',
         'التدفق المحسوب': reading.calculatedFlow ?? '',
-        'رقم السجل': reading.recordNumber ?? '',
         'يدوي': reading.isManual ? 'نعم' : 'لا',
       }));
 
