@@ -83,8 +83,8 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       newErrors.fullName = 'الاسم الكامل مطلوب';
     } else if (fullName.length > 100) {
       newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
-    } else if (!/^[\p{L}]{3,}(?:[\s-][\p{L}]{3,})+$/u.test(fullName.trim())) {
-      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 3 أحرف على الأقل';
+    } else if (!/^[\p{L}]{2,}(?:[\s-][\p{L}]{2,})+$/u.test(fullName.trim())) {
+      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 2 أحرف على الأقل';
     }
     if (!email) {
       newErrors.email = 'البريد الإلكتروني مطلوب';

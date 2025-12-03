@@ -69,15 +69,17 @@ export function PumpStationTable({
   selectedSite,
   handleEditPump, // Added handleEditPump to destructuring
 }: PumpStationTableProps) {
-    const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null }[]>([]);
+    const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
     const [recordNumber, setRecordNumber] = useState<number>(0);
     const [timePerHour, setTimePerHour] = useState<number | undefined>(undefined);
+    const [recordNumberError, setRecordNumberError] = useState<string | null>(null); // New state for record number error
 
     const [editActivePumpsCount, setEditActivePumpsCount] = useState<number>(0);
     const [editReadingDate, setEditReadingDate] = useState<Date | undefined>();
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
+    const [editRecordNumberError, setEditRecordNumberError] = useState<string | null>(null); // New state for edit record number error
     const [editTimePerHour, setEditTimePerHour] = useState<number | undefined>(undefined);
     const [editPumpReadings, setEditPumpReadings] = useState<{ time: number | null; flow: number | null }[]>([]);
     const [isSubmittingAdd, setIsSubmittingAdd] = useState(false); // New state for add dialog submission
@@ -110,6 +112,7 @@ export function PumpStationTable({
         setTimePerHour(undefined);
         setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: null, flow: null })));
         setAddError(null); // Clear error on dialog close
+        setRecordNumberError(null); // Clear record number error on dialog close
       }
     }, [isAddDialogOpen, selectedSite?.numPumps]);
 
@@ -127,6 +130,7 @@ export function PumpStationTable({
         setEditPumpReadings(editingPumpStation.pumps.map(pump => ({ time: pump.time ?? null, flow: pump.flow ?? null })) || []); // Map to new type
       } else if (!isEditPumpStationOpen) {
         setEditError(null); // Clear error on dialog close
+        setEditRecordNumberError(null); // Clear edit record number error on dialog close
       }
     }, [isEditPumpStationOpen, editingPumpStation]);
 
@@ -168,7 +172,11 @@ export function PumpStationTable({
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
       const numValue = parseFloat(value);
-      newPumpReadings[index] = { ...newPumpReadings[index], [field]: value === '' || Number.isNaN(numValue) || numValue < 0 ? null : numValue };
+      newPumpReadings[index] = { 
+        ...newPumpReadings[index], 
+        [field]: value === '' || Number.isNaN(numValue) ? null : numValue,
+        [`${field}Error`]: (value !== '' && (Number.isNaN(numValue) || numValue < 0)) ? 'يجب أن يكون رقماً موجباً.' : null
+      };
       setPumpReadings(newPumpReadings);
     };
 
@@ -187,8 +195,8 @@ export function PumpStationTable({
       }
 
       // Validate record number - must be positive and greater than zero
-      if (recordNumber <= 0 || Number.isNaN(recordNumber)) {
-        setAddError('رقم السجل يجب أن يكون أكبر من صفر.');
+      if (recordNumber <= 0 || Number.isNaN(recordNumber) || recordNumberError) {
+        setAddError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
         return;
       }
 
@@ -197,7 +205,7 @@ export function PumpStationTable({
         (pump.time !== null && pump.time < 0) || (pump.flow !== null && pump.flow < 0)
       );
 
-      if (hasInvalidPumpValue) {
+      if (hasInvalidPumpValue || pumpReadings.some(pump => pump.timeError || pump.flowError)) {
         setAddError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
         setIsSubmittingAdd(false);
         return;
@@ -293,8 +301,8 @@ export function PumpStationTable({
       }
 
       // Validate record number - must be positive and greater than zero
-      if (editRecordNumber <= 0 || Number.isNaN(editRecordNumber)) {
-        setEditError('رقم السجل يجب أن يكون أكبر من صفر.');
+      if (editRecordNumber <= 0 || Number.isNaN(editRecordNumber) || editRecordNumberError) {
+        setEditError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
         return;
       }
 
@@ -548,17 +556,21 @@ export function PumpStationTable({
                         const value = e.target.value;
                         if (value === '') {
                           setRecordNumber(0);
+                          setRecordNumberError(null); // Clear error when input is empty
                         } else {
                           const num = parseFloat(value);
                           if (!Number.isNaN(num) && num > 0) {
                             setRecordNumber(num);
-                          } else if (num < 0) {
-                             // Optionally provide feedback to the user or reset the input
-                            setAddError('رقم السجل يجب أن يكون رقماً موجباً.');
+                            setRecordNumberError(null); // Clear error if input becomes valid
+                          } else {
+                            setRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.'); // Set error for 0, negative, or NaN
                           }
                         }
                       }}
                     />
+                    {recordNumberError && (
+                      <p className="text-red-600 text-sm text-right mt-1">{recordNumberError}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>الوقت</Label>
@@ -591,20 +603,28 @@ export function PumpStationTable({
                       <Input
                         type="number"
                         step="0.1"
+                        min="0"
                         placeholder="0.0"
                         value={pumpReadings[index]?.time ?? ''}
                         onChange={(e) => handlePumpInputChange(index, 'time', e.target.value)}
                       />
+                      {pumpReadings[index]?.timeError && (
+                        <p className="text-red-600 text-sm text-right mt-1">{pumpReadings[index].timeError}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>مضخة {index + 1} التدفق (م³/س)</Label>
                       <Input
                         type="number"
                         step="0.1"
+                        min="0"
                         placeholder="0.0"
                         value={pumpReadings[index]?.flow ?? ''}
                         onChange={(e) => handlePumpInputChange(index, 'flow', e.target.value)}
                       />
+                      {pumpReadings[index]?.flowError && (
+                        <p className="text-red-600 text-sm text-right mt-1">{pumpReadings[index].flowError}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -613,7 +633,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
+                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined || !!recordNumberError || pumpReadings.some(pump => pump.timeError || pump.flowError)} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
                   حفظ القراءة
                 </Button>
               </DialogFooter>
@@ -670,17 +690,21 @@ export function PumpStationTable({
                         const value = e.target.value;
                         if (value === '') {
                           setEditRecordNumber(0);
+                          setEditRecordNumberError(null); // Clear error when input is empty
                         } else {
                           const num = parseFloat(value);
                           if (!Number.isNaN(num) && num > 0) {
                             setEditRecordNumber(num);
-                            setEditError(null); // Clear error if input becomes valid
-                          } else if (num < 0) {
-                            setEditError('رقم السجل يجب أن يكون رقماً موجباً.');
+                            setEditRecordNumberError(null); // Clear error if input becomes valid
+                          } else {
+                            setEditRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.'); // Set error for 0, negative, or NaN
                           }
                         }
                       }}
                     />
+                    {editRecordNumberError && (
+                      <p className="text-red-600 text-sm text-right mt-1">{editRecordNumberError}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>الوقت</Label>
@@ -716,6 +740,7 @@ export function PumpStationTable({
                       <Input
                         type="number"
                         step="0.1"
+                        min="0"
                         placeholder="0.0"
                         value={editPumpReadings[index]?.time ?? ''}
                         onChange={(e) => handleEditPumpInputChange(index, 'time', e.target.value)}
@@ -726,6 +751,7 @@ export function PumpStationTable({
                       <Input
                         type="number"
                         step="0.1"
+                        min="0"
                         placeholder="0.0"
                         value={editPumpReadings[index]?.flow ?? ''}
                         onChange={(e) => handleEditPumpInputChange(index, 'flow', e.target.value)}
@@ -738,7 +764,7 @@ export function PumpStationTable({
                 <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
                   إلغاء
                 </Button>
-                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
+                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined || !!editRecordNumberError} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
                   حفظ التعديلات
                 </Button>
               </DialogFooter>

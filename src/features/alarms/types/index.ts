@@ -1,3 +1,5 @@
+import { AddCommunicationAlarmDialogProps } from "../components/dialogs/AddCommunicationAlarmDialog";
+
 export interface Site {
   id: number;
   name: string;
@@ -11,6 +13,7 @@ export interface ThresholdAlarmForm {
   field: string;
   operator: string;
   threshold: number;
+  thresholdError?: string; // Add this line
   color: string;
   severity: 'Warning' | 'Critical';
   emails: string[];
@@ -24,6 +27,7 @@ export interface CommunicationAlarmForm {
   site: string;
   severity: 'Warning' | 'Critical';
   hours: number;
+  hoursError?: string; // Add this line
   emails: string[];
   phones: string[];
 }

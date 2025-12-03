@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -55,6 +55,20 @@ export function EditCommunicationAlarmDialog({
     setPhones,
     submissionError
 }: EditCommunicationAlarmDialogProps) {
+    useEffect(() => {
+        if (currentAlarm && currentAlarm.hours < 0) {
+            setForm(prev => ({
+                ...prev,
+                hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+            }));
+        } else if (currentAlarm && currentAlarm.hours >= 0) {
+            setForm(prev => ({
+                ...prev,
+                hoursError: undefined
+            }));
+        }
+    }, [currentAlarm, setForm]);
+
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
             if (!newOpen && submissionError) {
@@ -123,15 +137,37 @@ export function EditCommunicationAlarmDialog({
                         <Input
                             type="number"
                             placeholder="2"
+                            min="0"
                             value={form.hours}
                             onChange={(e) => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    hours: parseInt(e.target.value) || 0
-                                }));
+                                const inputValue = e.target.value;
+                                const parsedValue = parseInt(inputValue);
+
+                                if (inputValue === '') {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: 0,
+                                        hoursError: undefined
+                                    }));
+                                } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: Math.max(0, parsedValue),
+                                        hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                    }));
+                                } else {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: parsedValue,
+                                        hoursError: undefined
+                                    }));
+                                }
                                 setHasChanges(true);
                             }}
                         />
+                        {form.hoursError && (
+                            <p className="text-red-600 text-sm">{form.hoursError}</p>
+                        )}
                         <p className="text-xs text-gray-500">
                             سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
                         </p>
@@ -185,8 +221,12 @@ export function EditCommunicationAlarmDialog({
                             إلغاء
                         </Button>
                         <Button
-                            onClick={onSubmit}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.hours}
+                            onClick={() => {
+                                if (!form.hoursError) {
+                                    onSubmit();
+                                }
+                            }}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.hours || !!form.hoursError}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >
