@@ -38,7 +38,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const [fullName, setFullName] = useState(''); // New state for FullName
   const [role, setRole] = useState<'Admin' | 'Operator' | ''>('');
   const [active, setActive] = useState(true);
-  const [assignedSites, setAssignedSites] = useState<string[]>([]);
+  const [assignedSites, setAssignedSites] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false); // New state for password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // New state for confirm password visibility
@@ -134,8 +134,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
         password,
         FullName: fullName.trim(), // Trim fullName before sending to backend
         Role: role, // Changed to Role for backend compatibility
-        // active, // Removed, handled by backend
-        // assignedSites: role === 'Admin' ? [] : assignedSites, // Removed, handled by backend
+        sitesIds: role === 'Operator' ? assignedSites : [], // Add sitesIds to the payload
       };
       // We no longer expect tokens from the registerUser response
       await apiService.registerUser(userData);
@@ -161,11 +160,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     }
   };
 
-  const toggleSiteAssignment = (siteName: string) => {
-    if (assignedSites.includes(siteName)) {
-      setAssignedSites(assignedSites.filter(s => s !== siteName));
+  const toggleSiteAssignment = (siteId: number) => {
+    if (assignedSites.includes(siteId)) {
+      setAssignedSites(assignedSites.filter(s => s !== siteId));
     } else {
-      setAssignedSites([...assignedSites, siteName]);
+      setAssignedSites([...assignedSites, siteId]);
     }
   };
 
@@ -221,7 +220,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
               <div className="relative">
-              <Input
+                <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
@@ -295,12 +294,12 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
               {availableSites.map(site => (
                 <div key={site.id} className="flex items-center gap-2">
-                  <Checkbox 
+                  <Checkbox
                     id={`site-${site.id}`}
-                    checked={assignedSites.includes(site.name)}
-                    onCheckedChange={() => toggleSiteAssignment(site.name)}
+                    checked={assignedSites.includes(site.id)}
+                    onCheckedChange={() => toggleSiteAssignment(site.id)}
                   />
-                  <label 
+                  <label
                     htmlFor={`site-${site.id}`}
                     className="text-sm cursor-pointer flex-1"
                   >
