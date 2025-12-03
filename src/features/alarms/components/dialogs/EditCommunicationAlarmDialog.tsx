@@ -226,7 +226,7 @@ export function EditCommunicationAlarmDialog({
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.hours || !!form.hoursError}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >

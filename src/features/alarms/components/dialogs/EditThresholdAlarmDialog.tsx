@@ -308,7 +308,7 @@ export function EditThresholdAlarmDialog({
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !form.operator || !form.threshold || !!form.thresholdError}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >
