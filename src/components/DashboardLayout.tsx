@@ -32,12 +32,12 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
   const location = useLocation();
 
   const allMenuItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator'] },
+    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/', roles: ['Admin'] },
     { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
     { id: 'readings', label: 'القراءات', icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
-    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
+    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms', roles: ['Admin'] },
     { id: 'alarm-events', label: 'أحداث التنبيهات', icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
-    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
+    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations', roles: ['Admin'] },
     { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
   ];
 

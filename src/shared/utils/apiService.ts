@@ -301,6 +301,8 @@ export const clearAllUserData = () => {
   sessionStorage.clear();
   // Also explicitly set isLogged to false in session storage
   sessionStorage.setItem('isLogged', 'false');
+  // Explicitly remove Authorization header from axios instance defaults
+  delete axiosInstance.defaults.headers.common['Authorization'];
 };
 
 /**
