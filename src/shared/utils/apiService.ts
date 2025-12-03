@@ -5,6 +5,7 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
+import type { Site } from '../../features/sites/types';
 
 let onLogoutCallback: (() => void) | null = null;
 
@@ -78,8 +79,9 @@ export interface UserDto {
   email: string;
   fullName: string;
   role: 'Admin' | 'Operator';
+  sites?: Site[]; // Added sites property as an array of Site objects
   isActive: boolean;
-  createdAt: Date;
+  createdAt: string;
   updatedAt?: Date;
   lastLoginAt?: Date;
 }
