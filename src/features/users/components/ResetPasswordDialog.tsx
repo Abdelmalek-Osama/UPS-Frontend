@@ -12,8 +12,7 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
-// import { ToastContainer, toast } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import type { User } from '../types';
 
 interface ResetPasswordDialogProps {
@@ -86,15 +85,18 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     }
 
     try {
-      await apiService.post('/v1/Auth/reset-password', {
+      const response = await apiService.post<any>('/v1/Auth/reset-password', {
         email: user.email,
         newPassword,
       });
-      // toast.success("تمت إعادة تعيين كلمة المرور بنجاح.");
+      
+      // Display success message in Arabic
+      toast.success("تم تغيير كلمة السر بنجاح");
       onOpenChange(false);
     } catch (error: any) {
-      setSubmissionError((error as Error).message);
-      // toast.error( "حدث خطأ أثناء إعادة تعيين كلمة المرور.");
+      const errorMessage = (error as Error).message || 'حدث خطأ أثناء إعادة تعيين كلمة المرور';
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmittingResetPassword(false); // Reset submitting state to false
     }
@@ -111,7 +113,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
         <DialogHeader>
           <DialogTitle className="text-right">إعادة تعيين كلمة المرور</DialogTitle>
           <DialogDescription className="text-right">
-            إعادة تعيين كلمة المرور للمستخدم: {user?.userName}
+            {user?.userName && `إعادة تعيين كلمة المرور للمستخدم: ${user?.userName}`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -189,11 +191,6 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           </Button>
         </DialogFooter>
       </DialogContent>
-      {/* <ToastContainer 
-        position="bottom-right" 
-        toastClassName="custom-toast"
-        bodyClassName="custom-toast-body"
-      /> */}
     </Dialog>
   );
 }
