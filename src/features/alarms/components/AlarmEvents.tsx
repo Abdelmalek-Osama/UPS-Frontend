@@ -402,9 +402,9 @@ export function AlarmEvents() {
                     </Card>
                   ))}
                 </div>
-                ) : (
+                
                   <div className="text-center py-8">لا توجد تنبيهات لعرضها.</div>
-                )
+                
             </TabsContent>
           </Tabs>
         )
