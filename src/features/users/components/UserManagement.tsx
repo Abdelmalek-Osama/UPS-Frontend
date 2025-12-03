@@ -16,7 +16,7 @@ import { useUsersData } from '../hooks/useUsersData';
 import { AddUserDialog } from './AddUserDialog';
 import { ResetPasswordDialog } from './ResetPasswordDialog';
 import { EditUserDialog } from './EditUserDialog';
-import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto
+import type { UserDto } from '../../../shared/utils/apiService'; // Use UserDto -  // Minor change to trigger re-evaluation
 import { Spinner } from '../../../components/ui/spinner';
 import { getUserIdFromToken } from '../../../shared/utils/jwtService';
 import { refreshAccessToken } from '../../../shared/utils/apiService';
@@ -210,6 +210,7 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
         onEditSuccess={handleEditSuccess}
         loggedInUserId={loggedInUserId}
         onUserRoleChange={handleUserRoleChange}
+        availableSites={availableSites}
       />
 
       <ResetPasswordDialog 

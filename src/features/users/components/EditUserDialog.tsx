@@ -18,8 +18,10 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { Switch } from '../../../components/ui/switch';
+import { Checkbox } from '../../../components/ui/checkbox';
 import apiService, { UserDto } from '../../../shared/utils/apiService';
 import { toast } from 'react-toastify';
+import type { Site } from '../../sites/types';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -28,6 +30,7 @@ interface EditUserDialogProps {
   onEditSuccess: () => void;
   loggedInUserId: string | null;
   onUserRoleChange: (userId: string) => void;
+  availableSites?: Site[];
 }
 
 interface UpdateUserResponse {
@@ -35,10 +38,11 @@ interface UpdateUserResponse {
   user: UserDto;
 }
 
-export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, loggedInUserId, onUserRoleChange }: EditUserDialogProps) {
+export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, loggedInUserId, onUserRoleChange, availableSites = [] }: EditUserDialogProps) {
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'Admin' | 'Operator'>('Operator');
   const [isActive, setIsActive] = useState(true);
+  const [assignedSites, setAssignedSites] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -49,11 +53,17 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       setFullName(user.fullName);
       setRole(user.role);
       setIsActive(user.isActive);
+      // Initialize assignedSites based on user's role and existing sites
+      setAssignedSites(
+        user.role === 'Operator' && user.sites
+          ? user.sites.map(site => site.id)
+          : []
+      );
       setErrors({});
       setSubmissionError(null); // Clear submission error on dialog open
       setIsSubmitting(false); // Reset submitting state on dialog open
     }
-  }, [user]);
+  }, [user, availableSites]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -67,8 +77,21 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
     if (!role) {
       newErrors.role = 'الدور مطلوب';
     }
+    if (role === 'Operator' && assignedSites.length === 0) {
+      newErrors.assignedSites = 'يجب تخصيص موقع واحد على الأقل للمشغلين';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const toggleSiteAssignment = (siteId: number) => {
+    setAssignedSites(prev => {
+      if (prev.includes(siteId)) {
+        return prev.filter(id => id !== siteId);
+      } else {
+        return [...prev, siteId];
+      }
+    });
   };
 
   const handleEditUser = async () => {
@@ -81,6 +104,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
         fullName: fullName.trim(),
         role,
         isActive,
+        sitesIds: role === 'Operator' ? assignedSites : [],
       };
 
       const response = await apiService.patch<UpdateUserResponse>(
@@ -162,6 +186,34 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
               <p className="text-red-500 text-xs mt-1">{errors.role}</p>
             )}
           </div>
+
+          {role === 'Operator' && availableSites && availableSites.length > 0 && (
+            <div className="space-y-2">
+              <Label>تخصيص المواقع (للمشغلين فقط)</Label>
+              <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
+                {availableSites.map(site => (
+                  <div key={site.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`site-${site.id}`}
+                      checked={assignedSites.includes(site.id)}
+                      onCheckedChange={() => toggleSiteAssignment(site.id)}
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor={`site-${site.id}`}
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {site.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {errors.assignedSites && <p className="text-red-600 text-xs mt-1">{errors.assignedSites}</p>}
+              <p className="text-xs text-gray-500">
+                المسؤولون لديهم وصول لجميع المواقع تلقائياً
+              </p>
+            </div>
+          )}
 
           {/* Active Status */}
           {/* <div className="flex items-center justify-between">

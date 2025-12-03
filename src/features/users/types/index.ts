@@ -5,7 +5,7 @@ export interface User {
   fullName: string;
   role: 'Admin' | 'Operator';
   isActive: boolean;
-  createdAt: Date;
+  createdAt: string;
   updatedAt?: Date;
   lastLoginAt?: Date;
 }
