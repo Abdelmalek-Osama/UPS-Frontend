@@ -20,7 +20,7 @@ import {
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site } from '../../types';
 
-interface AddCommunicationAlarmDialogProps {
+export interface AddCommunicationAlarmDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     form: CommunicationAlarmForm;
@@ -110,12 +110,36 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         <Input
                             type="number"
                             placeholder="2"
+                            min="0"
                             value={form.hours}
-                            onChange={(e) => setForm(prev => ({
-                                ...prev,
-                                hours: parseInt(e.target.value) || 0
-                            }))}
+                            onChange={(e) => {
+                                const inputValue = e.target.value;
+                                const parsedValue = parseInt(inputValue);
+
+                                if (inputValue === '') {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: 0,
+                                        hoursError: undefined
+                                    }));
+                                } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: Math.max(0, parsedValue),
+                                        hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                    }));
+                                } else {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        hours: parsedValue,
+                                        hoursError: undefined
+                                    }));
+                                }
+                            }}
                         />
+                        {form.hoursError && (
+                            <p className="text-red-600 text-sm">{form.hoursError}</p>
+                        )}
                         <p className="text-xs text-gray-500">
                             سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
                         </p>
@@ -166,8 +190,12 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             إلغاء
                         </Button>
                         <Button
-                            onClick={onSubmit}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.hours}
+                            onClick={() => {
+                                if (!form.hoursError) {
+                                    onSubmit();
+                                }
+                            }}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.hours || !!form.hoursError}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >

@@ -97,9 +97,13 @@ export function WaterLevelTable({
   const [readingDate, setReadingDate] = useState<Date | undefined>();
   const [readingTime, setReadingTime] = useState<string>('');
   const [uswl, setUswl] = useState<string>('');
+  const [uswlError, setUswlError] = useState<string | null>(null); // New state for USWL error
   const [dswl, setDswl] = useState<string>('');
+  const [dswlError, setDswlError] = useState<string | null>(null); // New state for DSWL1 error
   const [dswl2, setDswl2] = useState<string>('');
+  const [dswl2Error, setDswl2Error] = useState<string | null>(null); // New state for DSWL2 error
   const [battery, setBattery] = useState<string>('');
+  const [batteryError, setBatteryError] = useState<string | null>(null); // New state for battery error
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSiteForAdd, setSelectedSiteForAdd] = useState<string>('');
   const [selectedSiteData, setSelectedSiteData] = useState<SiteConfiguration | null>(null);
@@ -107,9 +111,13 @@ export function WaterLevelTable({
   const [editReadingTime, setEditReadingTime] = useState<string>('');
   const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
   const [editUswl, setEditUswl] = useState<string>('');
+  const [editUswlError, setEditUswlError] = useState<string | null>(null); // New state for edit USWL error
   const [editDswl, setEditDswl] = useState<string>('');
+  const [editDswlError, setEditDswlError] = useState<string | null>(null); // New state for edit DSWL1 error
   const [editDswl2, setEditDswl2] = useState<string>('');
+  const [editDswl2Error, setEditDswl2Error] = useState<string | null>(null); // New state for edit DSWL2 error
   const [editBattery, setEditBattery] = useState<string>('');
+  const [editBatteryError, setEditBatteryError] = useState<string | null>(null); // New state for edit battery error
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
@@ -163,6 +171,10 @@ export function WaterLevelTable({
       setBattery('');
       setAddError(null); // Clear error on dialog close
       setAddSiteDataError(null); // Clear site data error on dialog close
+      setUswlError(null);
+      setDswlError(null);
+      setDswl2Error(null);
+      setBatteryError(null);
       // Reset selectedSiteForAdd when dialog closes so it can be initialized fresh next time
       setSelectedSiteForAdd('');
     }
@@ -188,8 +200,21 @@ export function WaterLevelTable({
     } else if (!isEditWaterLevelOpen) {
       setEditError(null); // Clear error on dialog close
       setEditSiteDataError(null); // Clear site data error on dialog close
+      setEditUswlError(null);
+      setEditDswlError(null);
+      setEditDswl2Error(null);
+      setEditBatteryError(null);
     }
   }, [isEditWaterLevelOpen, editingWaterLevel, sites]);
+
+  useEffect(() => {
+    if (isEditWaterLevelOpen && editingWaterLevel) {
+      if (editingWaterLevel.uswl < 0) setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditUswlError(null);
+      if (editingWaterLevel.dswL1 < 0) setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswlError(null);
+      if (editingWaterLevel.dswL2 < 0) setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswl2Error(null);
+      if (editingWaterLevel.battery <= 0) setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.'); else setEditBatteryError(null);
+    }
+  }, [isEditWaterLevelOpen, editingWaterLevel]);
 
   useEffect(() => {
     const fetchEditSiteData = async () => {
@@ -278,7 +303,7 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery)))) {
+    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery))) || batteryError) {
       setAddError('قيمة البطارية يجب أن تكون أكبر من صفر.');
       return;
     }
@@ -361,7 +386,7 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery)))) {
+    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery))) || editBatteryError) {
       setEditError('قيمة البطارية يجب أن تكون أكبر من صفر.');
       return;
     }
@@ -529,10 +554,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="125.4"
                           value={uswl}
-                          onChange={(e) => setUswl(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setUswl('');
+                              setUswlError(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setUswl(inputValue); // Keep invalid input for user to correct
+                              setUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setUswl(inputValue);
+                              setUswlError(null);
+                            }
+                          }}
                         />
+                        {uswlError && (
+                          <p className="text-red-600 text-sm text-right mt-1">{uswlError}</p>
+                        )}
                       </div>
                     )}
                     {(selectedSiteData?.hasDS1) && (
@@ -541,10 +584,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="122.1"
                           value={dswl}
-                          onChange={(e) => setDswl(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setDswl('');
+                              setDswlError(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setDswl(inputValue);
+                              setDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setDswl(inputValue);
+                              setDswlError(null);
+                            }
+                          }}
                         />
+                        {dswlError && (
+                          <p className="text-red-600 text-sm text-right mt-1">{dswlError}</p>
+                        )}
                       </div>
                     )}
                     {(selectedSiteData?.hasDS2) && (
@@ -553,10 +614,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="122.1"
                           value={dswl2}
-                          onChange={(e) => setDswl2(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setDswl2('');
+                              setDswl2Error(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setDswl2(inputValue);
+                              setDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setDswl2(inputValue);
+                              setDswl2Error(null);
+                            }
+                          }}
                         />
+                        {dswl2Error && (
+                          <p className="text-red-600 text-sm text-right mt-1">{dswl2Error}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -569,13 +648,24 @@ export function WaterLevelTable({
                       placeholder="12.8"
                       value={battery}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow empty string, but prevent negative values and zero
-                        if (value === '' || (Number(value) > 0 && !Number.isNaN(Number(value)))) {
-                          setBattery(value);
+                        const inputValue = e.target.value;
+                        const parsedValue = parseFloat(inputValue);
+
+                        if (inputValue === '') {
+                          setBattery('');
+                          setBatteryError(null);
+                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                          setBattery(inputValue);
+                          setBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+                        } else {
+                          setBattery(inputValue);
+                          setBatteryError(null);
                         }
                       }}
                     />
+                    {batteryError && (
+                      <p className="text-red-600 text-sm text-right mt-1">{batteryError}</p>
+                    )}
                   </div>
 
                 </div>
@@ -592,7 +682,8 @@ export function WaterLevelTable({
                       (selectedSiteData?.hasUS && uswl === '') ||
                       (selectedSiteData?.hasDS1 && dswl === '') ||
                       (selectedSiteData?.hasDS2 && dswl2 === '') ||
-                      battery === ''
+                      battery === '' ||
+                      !!uswlError || !!dswlError || !!dswl2Error || !!batteryError
                     }
                     loadingText="جاري الحفظ..."
                     isLoading={isSubmitting}>
@@ -669,10 +760,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="125.4"
                           value={editUswl}
-                          onChange={(e) => setEditUswl(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setEditUswl('');
+                              setEditUswlError(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setEditUswl(inputValue);
+                              setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setEditUswl(inputValue);
+                              setEditUswlError(null);
+                            }
+                          }}
                         />
+                        {editUswlError && (
+                          <p className="text-red-600 text-sm text-right mt-1">{editUswlError}</p>
+                        )}
                       </div>
                     )}
                     {(editSelectedSiteData?.hasDS1) && (
@@ -681,10 +790,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="122.1"
                           value={editDswl}
-                          onChange={(e) => setEditDswl(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setEditDswl('');
+                              setEditDswlError(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setEditDswl(inputValue);
+                              setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setEditDswl(inputValue);
+                              setEditDswlError(null);
+                            }
+                          }}
                         />
+                        {editDswlError && (
+                          <p className="text-red-600 text-sm text-right mt-1">{editDswlError}</p>
+                        )}
                       </div>
                     )}
                     {(editSelectedSiteData?.hasDS2) && (
@@ -693,10 +820,28 @@ export function WaterLevelTable({
                         <Input
                           type="number"
                           step="0.1"
+                          min="0"
                           placeholder="122.1"
                           value={editDswl2}
-                          onChange={(e) => setEditDswl2(e.target.value)}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            const parsedValue = parseFloat(inputValue);
+
+                            if (inputValue === '') {
+                              setEditDswl2('');
+                              setEditDswl2Error(null);
+                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                              setEditDswl2(inputValue);
+                              setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else {
+                              setEditDswl2(inputValue);
+                              setEditDswl2Error(null);
+                            }
+                          }}
                         />
+                        {editDswl2Error && (
+                          <p className="text-red-600 text-sm text-right mt-1">{editDswl2Error}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -709,13 +854,24 @@ export function WaterLevelTable({
                       placeholder="12.8"
                       value={editBattery}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow empty string, but prevent negative values and zero
-                        if (value === '' || (Number(value) > 0 && !Number.isNaN(Number(value)))) {
-                          setEditBattery(value);
+                        const inputValue = e.target.value;
+                        const parsedValue = parseFloat(inputValue);
+
+                        if (inputValue === '') {
+                          setEditBattery('');
+                          setEditBatteryError(null);
+                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                          setEditBattery(inputValue);
+                          setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+                        } else {
+                          setEditBattery(inputValue);
+                          setEditBatteryError(null);
                         }
                       }}
                     />
+                    {editBatteryError && (
+                      <p className="text-red-600 text-sm text-right mt-1">{editBatteryError}</p>
+                    )}
                   </div>
 
                 </div>
@@ -734,7 +890,8 @@ export function WaterLevelTable({
                       (editSelectedSiteData?.hasUS && editUswl === '') ||
                       (editSelectedSiteData?.hasDS1 && editDswl === '') ||
                       (editSelectedSiteData?.hasDS2 && editDswl2 === '') ||
-                      editBattery === ''
+                      editBattery === '' ||
+                      !!editUswlError || !!editDswlError || !!editDswl2Error || !!editBatteryError
                     }
                     loadingText="جاري الحفظ..."
                     isLoading={isSubmittingEdit}

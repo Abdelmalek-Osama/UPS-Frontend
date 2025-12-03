@@ -154,13 +154,37 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             <Input
                                 type="number"
                                 step="0.1"
+                                min="0"
                                 placeholder="12.5"
                                 value={form.threshold}
-                                onChange={(e) => setForm(prev => ({
-                                    ...prev,
-                                    threshold: parseFloat(e.target.value) || 0
-                                }))}
+                                onChange={(e) => {
+                                    const inputValue = e.target.value;
+                                    const parsedValue = parseFloat(inputValue);
+
+                                    if (inputValue === '') {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            threshold: 0,
+                                            thresholdError: undefined
+                                        }));
+                                    } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            threshold: Math.max(0, parsedValue),
+                                            thresholdError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                        }));
+                                    } else {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            threshold: parsedValue,
+                                            thresholdError: undefined
+                                        }));
+                                    }
+                                }}
                             />
+                             {form.thresholdError && (
+                                <p className="text-red-600 text-sm">{form.thresholdError}</p>
+                            )}
                         </div>
                     </div>
 
@@ -233,8 +257,12 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             إلغاء
                         </Button>
                         <Button
-                            onClick={onSubmit}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator}
+                            onClick={() => {
+                                if (!form.thresholdError) {
+                                    onSubmit();
+                                }
+                            }}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >

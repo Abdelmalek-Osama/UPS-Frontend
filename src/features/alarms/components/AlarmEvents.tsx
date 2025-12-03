@@ -245,10 +245,7 @@ export function AlarmEvents() {
                 التنبيهات التي تم إنشاؤها تلقائياً من قراءات أجهزة الاستشعار وبيانات محطات الضخ
               </p>
             </div>
-            <Button onClick={handleExport}>
-              <Download className="ml-2 h-4 w-4" />
-              تصدير CSV
-            </Button>
+            
           </div>
         </CardHeader>
       </Card>
