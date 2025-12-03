@@ -209,7 +209,7 @@ export function ReadingsManagement() {
       // Prepare water level readings data for Excel
       const worksheetData = waterLevelReadings.map((reading: WaterLevelReading) => ({
         'الموقع': reading.site || '',
-        'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString('ar-SA') : '',
+        'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString() : '',
         'USWL': reading.uswl ?? '',
         'DSWL1': reading.dswL1 ?? '',
         'DSWL2': reading.dswL2 ?? '',
