@@ -195,7 +195,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.hours || !!form.hoursError}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >

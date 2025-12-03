@@ -262,7 +262,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >
