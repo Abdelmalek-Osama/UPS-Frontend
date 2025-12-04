@@ -456,17 +456,21 @@ export function WaterLevelTable({
   // Calculate total column count for colSpan
   const totalColumns = 5 + (showUSWL ? 1 : 0) + (showDSWL1 ? 1 : 0) + (showDSWL2 ? 1 : 0);
 
-  const getAlarmColor = (reading: WaterLevelReading, fieldName: string) => {
+  const getAlarmStatus = (reading: WaterLevelReading, fieldName: string) => {
     const relevantAlarms = reading.alarms?.filter(alarm => alarm.fieldName === fieldName);
-    if (!relevantAlarms || relevantAlarms.length === 0) return undefined;
+    if (!relevantAlarms || relevantAlarms.length === 0) return { colorCode: undefined, hasAlarm: false };
 
     const hasRedAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'red');
-    if (hasRedAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'red')?.colorCode;
+    if (hasRedAlarm) return { colorCode: relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'red')?.colorCode, hasAlarm: true };
 
     const hasYellowAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'yellow');
-    if (hasYellowAlarm) return relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'yellow')?.colorCode;
+    if (hasYellowAlarm) return { colorCode: relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'yellow')?.colorCode, hasAlarm: true };
 
-    return undefined;
+    return { colorCode: undefined, hasAlarm: false };
+  };
+
+  const hasAlarmForField = (reading: WaterLevelReading, fieldName: string) => {
+    return getAlarmStatus(reading, fieldName).hasAlarm;
   };
 
   return (
@@ -944,23 +948,24 @@ export function WaterLevelTable({
                 </TableRow>
               )}
 
-              {!isLoading && !error && readings.map((reading) => (
+              {!isLoading && !error && readings.map((reading) => {
+                return (
                 <TableRow key={reading.id}>
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'USWL') }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
                   )}
                   {showDSWL1 && (
-                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'DSWL1') }}>{reading.dswL1?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
                   )}
                   {showDSWL2 && (
-                    <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'DSWL2') }}>{reading.dswL2?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
                   )}
-                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Battery') }}>
+                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
                     {reading.battery?.toFixed(2) ?? ''}
                   </TableCell>
-                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Calculated_flow') }}>
+                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Calculated_flow').colorCode, fontWeight: hasAlarmForField(reading, 'Calculated_flow') ? 'bold' : 'normal' }}>
                     <div className="flex items-center justify-start gap-2">
                       <span>{reading.calculatedFlow.toFixed(2)} م³/س</span>
                     </div>
@@ -977,7 +982,7 @@ export function WaterLevelTable({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </div>
