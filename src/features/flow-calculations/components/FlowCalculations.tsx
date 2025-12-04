@@ -183,7 +183,8 @@ export function FlowCalculations() {
             {formulaConstants.map((value, index) => (
               <div key={`constant-${index}`} className="space-y-2">
                 <Label htmlFor={`constant-${index}`}>
-                  {`C${index + 1}`} <span className="text-gray-500">(ثابت)</span>
+                  {index === 0 ? 'a' : index === 1 ? 'b' : index === 2 ? 'c' : `C${index + 1}`}{" "}
+                  <span className="text-gray-500">(ثابت)</span>
                 </Label>
                 <Input
                   id={`constant-${index}`}
