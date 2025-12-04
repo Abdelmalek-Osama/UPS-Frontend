@@ -19,20 +19,21 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
-import { OPERATORS } from '../../utils/alarmConstants';
+import { OPERATORS, INITIAL_THRESHOLD_FORM } from '../../utils/alarmConstants';
 
-const INITIAL_FORM_STATE: ThresholdAlarmForm = {
-    id: 0,
-    siteId: null,
-    alarmName: "",
-    site: "",
-    field: "",
-    operator: "",
-    threshold: 0,
-    color: "#fbbf24",
-    severity: "Warning",
-    emails: [],
-    phones: [],
+// Utility function to validate color input
+const isValidColor = (color: string): boolean => {
+    // Regex for Hex color codes (e.g., #RRGGBB or #RGB)
+    const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    // Regex for RGB color codes (e.g., rgb(0, 0, 0))
+    const rgbRegex = /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/;
+    // Regex for RGBA color codes (e.g., rgba(0, 0, 0, 0.5))
+    const rgbaRegex = /^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0(\.\d+)?|1(\.0+)?)\s*\)$/;
+
+    // Basic check for common named colors (you might want a more comprehensive list)
+    const namedColors = ['red', 'blue', 'green', 'black', 'white', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray'];
+
+    return hexRegex.test(color) || rgbRegex.test(color) || rgbaRegex.test(color) || namedColors.includes(color.toLowerCase());
 };
 
 interface AddThresholdAlarmDialogProps {
@@ -73,7 +74,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                 return;
             }
             if (!newOpen) {
-                setForm(INITIAL_FORM_STATE);
+                setForm(INITIAL_THRESHOLD_FORM);
                 setEmails([]);
                 setPhones([]);
             }
@@ -235,19 +236,28 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                 value={form.color}
                                 onChange={(e) => setForm(prev => ({
                                     ...prev,
-                                    color: e.target.value
+                                    color: e.target.value,
+                                    colorError: undefined // Clear error when using color picker
                                 }))}
                             />
                             <Input
                                 type="text"
                                 className="flex-1"
+                                placeholder="e.g. #FF0000 OR rgb(255,0,0) OR red"
                                 value={form.color}
-                                onChange={(e) => setForm(prev => ({
-                                    ...prev,
-                                    color: e.target.value
-                                }))}
+                                onChange={(e) => {
+                                    const inputValue = e.target.value;
+                                    setForm(prev => ({
+                                        ...prev,
+                                        color: inputValue,
+                                        colorError: isValidColor(inputValue) ? undefined : "صيغة اللون غير صالحة"
+                                    }));
+                                }}
                             />
                         </div>
+                        {form.colorError && (
+                            <p className="text-red-600 text-sm">{form.colorError}</p>
+                        )}
                     </div>
 
                     <RecipientInput
@@ -277,11 +287,11 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.thresholdError) {
+                                if (!form.thresholdError && !form.colorError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || !!form.colorError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >

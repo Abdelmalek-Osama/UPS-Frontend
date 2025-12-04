@@ -15,6 +15,7 @@ export interface ThresholdAlarmForm {
   threshold: number;
   thresholdError?: string; // Add this line
   color: string;
+  colorError?: string; // Re-add this line
   severity: 'Warning' | 'Critical';
   emails: string[];
   phones: string[];
