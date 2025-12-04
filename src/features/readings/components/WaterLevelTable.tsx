@@ -209,10 +209,29 @@ export function WaterLevelTable({
 
   useEffect(() => {
     if (isEditWaterLevelOpen && editingWaterLevel) {
-      if (editingWaterLevel.uswl < 0) setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditUswlError(null);
-      if (editingWaterLevel.dswL1 < 0) setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswlError(null);
-      if (editingWaterLevel.dswL2 < 0) setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswl2Error(null);
-      if (editingWaterLevel.battery <= 0) setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.'); else setEditBatteryError(null);
+      if (editingWaterLevel.uswl != null && editingWaterLevel.uswl < 0) {
+        setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditUswlError(null);
+      }
+
+      if (editingWaterLevel.dswL1 != null && editingWaterLevel.dswL1 < 0) {
+        setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditDswlError(null);
+      }
+
+      if (editingWaterLevel.dswL2 != null && editingWaterLevel.dswL2 < 0) {
+        setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditDswl2Error(null);
+      }
+
+      if (editingWaterLevel.battery != null && editingWaterLevel.battery <= 0) {
+        setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+      } else {
+        setEditBatteryError(null);
+      }
     }
   }, [isEditWaterLevelOpen, editingWaterLevel]);
 
