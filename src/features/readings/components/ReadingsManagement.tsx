@@ -88,6 +88,32 @@ export function ReadingsManagement() {
     }
   }, [sites, selectedSiteId]);
 
+  useEffect(() => {
+    if (selectedSite && selectedSite.data) {
+      const site = selectedSite.data;
+
+      const supportsWaterLevel = site.siteType === 'WaterLevel' || site.hasUS || site.hasDS1 || site.hasDS2;
+      const supportsPumpStation = site.siteType === 'Pumps' || (site.numPumps && site.numPumps > 0);
+
+      if (activeTab === 'pumpStation' && !supportsPumpStation) {
+        if (supportsWaterLevel) {
+          setActiveTab('waterLevel');
+        } else {
+          // If pumpStation is not supported and waterLevel is also not supported,
+          // we don't force a switch, as there's no valid alternative. The table will likely be empty.
+        }
+      } else if (activeTab === 'waterLevel' && !supportsWaterLevel) {
+        if (supportsPumpStation) {
+          setActiveTab('pumpStation');
+        } else {
+          // If waterLevel is not supported and pumpStation is also not supported,
+          // we don't force a switch, as there's no valid alternative. The table will likely be empty.
+        }
+      }
+      // If the activeTab IS supported, or if the site supports both, do nothing (allow manual switch)
+    }
+  }, [selectedSite, activeTab]);
+
   // Show loader if sites are loading or if we don't have a selected site yet (initial load)
   const isInitialLoading = isLoadingSites || (sites.length === 0 && !selectedSiteId);
 
