@@ -26,7 +26,7 @@ export interface CommunicationAlarmForm {
   siteId: number | null;
   alarmName: string;
   site: string;
-  severity: 'Warning' | 'Critical';
+  //severity: 'Warning' | 'Critical';
   hours: number;
   hoursError?: string; // Add this line
   emails: string[];
@@ -82,7 +82,7 @@ export interface CreateCommunicationAlarmRequest {
   phones: string;
   method: AlarmMethod;
   communicationLoss: {
-    severity: number;
+    //severity: number;
     numHours: number;
   };
 }

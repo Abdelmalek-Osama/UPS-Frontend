@@ -145,7 +145,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         </p>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                         <Label>مستوى الخطورة</Label>
                         <Select
                             onValueChange={(value: 'Warning' | 'Critical') => setForm(prev => ({
@@ -162,7 +162,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                 <SelectItem value="Critical">حرج</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     <RecipientInput
                         type="email"
