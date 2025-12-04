@@ -408,6 +408,25 @@ export function PumpStationTable({
       return undefined;
     };
     
+    const getAlarmStatus = (reading: PumpStationReading, fieldName: string) => {
+      const relevantAlarms = reading.alarms?.filter(alarm => alarm.fieldName === fieldName);
+      if (!relevantAlarms || relevantAlarms.length === 0) return { colorCode: undefined, hasAlarm: false };
+
+      // Prioritize red alarms
+      const hasRedAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'red');
+      if (hasRedAlarm) return { colorCode: relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'red')?.colorCode, hasAlarm: true };
+
+      // Then consider yellow alarms
+      const hasYellowAlarm = relevantAlarms.some(alarm => getColorCategory(alarm.colorCode) === 'yellow');
+      if (hasYellowAlarm) return { colorCode: relevantAlarms.find(alarm => getColorCategory(alarm.colorCode) === 'yellow')?.colorCode, hasAlarm: true };
+
+      return { colorCode: undefined, hasAlarm: false };
+    };
+    
+    const hasAlarmForField = (reading: PumpStationReading, fieldName: string) => {
+      return getAlarmStatus(reading, fieldName).hasAlarm;
+    };
+
     // Determine number of pumps based on first reading's pumps array or site configuration
     const firstReading = readings.length > 0 ? readings[0] : null;
     const totalPumps = firstReading?.pumps?.length || selectedSite?.numPumps || 0;
@@ -820,25 +839,17 @@ export function PumpStationTable({
                 </TableRow>
               )}
               {!isLoading && !error && readings.map((reading) => {
+                const hasAlarms = reading.alarms && reading.alarms.length > 0;
                 return (
-                <TableRow key={reading.id}>
+                <TableRow key={reading.id} >
                   <TableCell className="text-right font-medium">{reading.site}</TableCell>
                   <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
                   {/* Removed US, DS1, DS2 table cells */}
                   {/* {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => {
-                    const pump = reading.pumps?.[i];
-                    return (
-                      <React.Fragment key={i}>
-                        <TableCell className="text-right">{pump?.time?.toFixed(1) || 'N/A'} ساعة</TableCell>
-                        <TableCell className="text-right">{pump?.flow?.toFixed(1) || 'N/A'} م³/س</TableCell>
-                      </React.Fragment>
-                    );
-                  })} */}
-                  <TableCell className="text-right">{reading.totalUptime.toFixed(1)} ساعة</TableCell>
-                  <TableCell className="text-right">{reading.totalFlow.toFixed(1)} م³/س</TableCell>
+                  <TableCell className="text-right" style={{ fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} ساعة</TableCell>
+                  <TableCell className="text-right" style={{ fontWeight: getAlarmColor(reading, 'TotalFlow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} م³/س</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button 
@@ -885,14 +896,14 @@ export function PumpStationTable({
               </TableHeader>
               <TableBody>
                 {selectedReading?.pumps.map((pump, index) => {
-                  const pumpTimeColor = getAlarmColor(selectedReading, `P${index + 1}_Time`);
-                  const pumpFlowColor = getAlarmColor(selectedReading, `P${index + 1}_Flow`);
+                  const pumpTimeAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_Time`);
+                  const pumpFlowAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_Flow`);
                   
                   return (
                     <TableRow key={index}>
                       <TableCell>مرفعة {index + 1}</TableCell>
-                      <TableCell style={{ color: pumpTimeColor }}>{pump.time ?? 'N/A'}</TableCell>
-                      <TableCell style={{ color: pumpFlowColor }}>{pump.flow ?? 'N/A'}</TableCell>
+                      <TableCell style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
+                      <TableCell style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
                       <TableCell>
                         <Button 
                           variant="ghost" 

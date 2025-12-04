@@ -21,6 +21,20 @@ import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS } from '../../utils/alarmConstants';
 
+const INITIAL_FORM_STATE: ThresholdAlarmForm = {
+    id: 0,
+    siteId: null,
+    alarmName: "",
+    site: "",
+    field: "",
+    operator: "",
+    threshold: 0,
+    color: "#fbbf24",
+    severity: "Warning",
+    emails: [],
+    phones: [],
+};
+
 interface AddThresholdAlarmDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -57,6 +71,11 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
             if (!newOpen && submissionError) {
                 // Prevent closing if there's a submission error
                 return;
+            }
+            if (!newOpen) {
+                setForm(INITIAL_FORM_STATE);
+                setEmails([]);
+                setPhones([]);
             }
             onOpenChange(newOpen);
         }}>
