@@ -1,19 +1,19 @@
 "use client";
 
 import * as React from "react";
-import * as SelectPrimitive from "@radix-ui/react-select@2.1.6";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from "lucide-react@0.487.0";
+} from "lucide-react";
 
 import { cn } from "./utils";
 
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+  return <SelectPrimitive.Root dir="rtl" data-slot="select" {...props} />;
 }
 
 function SelectGroup({
@@ -116,7 +116,10 @@ function SelectItem({
       )}
       {...props}
     >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+      <span 
+      className="absolute  flex size-3.5 items-center justify-center"
+      style={{left: '0.5rem', right: 'auto'}}
+      >
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>

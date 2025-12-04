@@ -1,9 +1,8 @@
-import React from 'react';
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Badge } from '../../../components/ui/badge';
 import { 
   Table, 
   TableBody, 
@@ -11,17 +10,15 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from './ui/table';
+} from '../../../components/ui/table';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import { Label } from './ui/label';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+} from '../../../components/ui/select';
+import { Calendar } from '../../../components/ui/calendar';
 import { 
   FileText, 
   Download, 
@@ -30,27 +27,27 @@ import {
   UserCircle,
   MapPin,
   Edit3,
-  Plus,
-  Trash2
 } from 'lucide-react';
-
-interface AuditLog {
-  id: number;
-  timestamp: string;
-  user: string;
-  action: 'create' | 'update' | 'delete';
-  site: string;
-  field: string;
-  oldValue: string;
-  newValue: string;
-  readingId: number;
-}
+import { getActionIcon, getActionLabel, getActionColor } from '../utils/formatters';
+import type { AuditLog } from '../types';
+import {DatePicker} from '../../../components/ui/datepicker';
+import { useSitesData } from '../../sites/hooks/useSitesData';
+import { toast } from 'react-toastify';
 
 export function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUser, setFilterUser] = useState('all');
   const [filterSite, setFilterSite] = useState('all');
   const [filterAction, setFilterAction] = useState('all');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const { sites, loading: sitesLoading, error: sitesError } = useSitesData();
+
+  useEffect(() => {
+    if (sites.length > 0 && filterSite === 'all') {
+      setFilterSite(sites[0].name);
+    }
+  }, [sites, filterSite]);
+  
 
   const auditLogs: AuditLog[] = [
     {
@@ -58,7 +55,7 @@ export function AuditLogs() {
       timestamp: '2025-11-03 11:45:32',
       user: 'أحمد محمود',
       action: 'update',
-      site: 'مستوى المياه - القاهرة 01',
+      site: 'القناطر - القاهرة 01',
       field: 'USWL',
       oldValue: '125.2',
       newValue: '125.4',
@@ -69,64 +66,20 @@ export function AuditLogs() {
       timestamp: '2025-11-03 11:30:15',
       user: 'محمد علي',
       action: 'create',
-      site: 'محطة الضخ - الجيزة 01',
+      site: 'محطة رفع - الجيزة 01',
       field: 'P1_time',
       oldValue: '-',
       newValue: '3.5',
       readingId: 1235
     },
-    {
-      id: 3,
-      timestamp: '2025-11-03 10:22:48',
-      user: 'أحمد محمود',
-      action: 'update',
-      site: 'مستوى المياه - القاهرة 01',
-      field: 'Battery',
-      oldValue: '12.3',
-      newValue: '12.4',
-      readingId: 1233
-    },
-    {
-      id: 4,
-      timestamp: '2025-11-03 09:15:20',
-      user: 'فاطمة حسن',
-      action: 'delete',
-      site: 'مستوى المياه - الإسكندرية 01',
-      field: 'DSWL',
-      oldValue: '95.1',
-      newValue: '-',
-      readingId: 1232
-    },
-    {
-      id: 5,
-      timestamp: '2025-11-03 08:45:10',
-      user: 'محمد علي',
-      action: 'update',
-      site: 'محطة الضخ - الدقهلية 02',
-      field: 'P2_flow',
-      oldValue: '49.8',
-      newValue: '50.1',
-      readingId: 1231
-    },
-    {
-      id: 6,
-      timestamp: '2025-11-02 23:30:05',
-      user: 'أحمد محمود',
-      action: 'create',
-      site: 'مستوى المياه - القاهرة 01',
-      field: 'USWL',
-      oldValue: '-',
-      newValue: '125.2',
-      readingId: 1230
-    },
   ];
 
   const users = ['أحمد محمود', 'محمد علي', 'فاطمة حسن'];
-  const sites = [
-    'مستوى المياه - القاهرة 01',
-    'محطة الضخ - الجيزة 01',
-    'مستوى المياه - الإسكندرية 01',
-    'محطة الضخ - الدقهلية 02',
+  const sitesList = [
+    'القناطر - القاهرة 01',
+    'محطة رفع - الجيزة 01',
+    'القناطر - الإسكندرية 01',
+    'محطة رفع - الدقهلية 02',
   ];
 
   const filteredLogs = auditLogs.filter(log => {
@@ -140,47 +93,8 @@ export function AuditLogs() {
     return matchesSearch && matchesUser && matchesSite && matchesAction;
   });
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case 'create':
-        return <Plus className="h-4 w-4" />;
-      case 'update':
-        return <Edit3 className="h-4 w-4" />;
-      case 'delete':
-        return <Trash2 className="h-4 w-4" />;
-      default:
-        return <FileText className="h-4 w-4" />;
-    }
-  };
-
-  const getActionLabel = (action: string) => {
-    switch (action) {
-      case 'create':
-        return 'إضافة';
-      case 'update':
-        return 'تحديث';
-      case 'delete':
-        return 'حذف';
-      default:
-        return action;
-    }
-  };
-
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case 'create':
-        return 'bg-green-100 text-green-700';
-      case 'update':
-        return 'bg-blue-100 text-blue-700';
-      case 'delete':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
   const handleExport = () => {
-    alert('سيتم تصدير سجل التدقيق إلى ملف Excel');
+    toast.info('سيتم تصدير سجل التدقيق إلى ملف Excel');
   };
 
   return (
@@ -228,7 +142,7 @@ export function AuditLogs() {
               <SelectContent>
                 <SelectItem value="all">جميع المواقع</SelectItem>
                 {sites.map(site => (
-                  <SelectItem key={site} value={site}>{site}</SelectItem>
+                  <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -243,17 +157,11 @@ export function AuditLogs() {
                 <SelectItem value="delete">حذف</SelectItem>
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start">
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  التاريخ
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+                placeholder="التاريخ"
+                value={selectedDate}
+                onChange={setSelectedDate}
+            />
           </div>
         </CardContent>
       </Card>

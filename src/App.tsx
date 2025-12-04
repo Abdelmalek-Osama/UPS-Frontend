@@ -1,35 +1,82 @@
-import { useState } from 'react';
-import { LoginPage } from './components/LoginPage';
+import React, { useState, useEffect } from 'react';
+import { LoginPage } from './features/auth';
 import { DashboardLayout } from './components/DashboardLayout';
+import type { User } from './features/auth/types';
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { DashboardHome } from './features/dashboard';
+import {AlarmConfiguration} from './features/alarms/components/AlarmConfiguration';
+import { AlarmEvents } from './features/alarms/components/AlarmEvents';
+// import {LoginPage} from './features/auth/components/LoginPage';
+import {FlowCalculations} from './features/flow-calculations/components/FlowCalculations';
+import {ReadingsManagement} from './features/readings/components/ReadingsManagement';
+import {SitesManagement} from './features/sites/components/SitesManagement';
+import {UserManagement} from './features/users/components/UserManagement';
+import { getAccessToken, removeAuthCookies } from './shared/utils/cookieService';
+import apiService from './shared/utils/apiService';
+import { AuthProvider, useAuth } from './shared/contexts/AuthContext'; // Import AuthProvider and useAuth
+// import { AuthResponse } from './shared/utils/apiService'; // No longer needed for App.tsx directly
+
+
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{
-    id: number;
-    username: string;
-    email: string;
-    role: 'Admin' | 'Operator';
-  } | null>(null);
+  return (
+    <AuthProvider>
+      <AuthRoutes />
+    </AuthProvider>
+  );
+}
 
-  const handleLogin = (email: string, password: string) => {
-    // Mock authentication - in production, this would call an API
-    setCurrentUser({
-      id: 1,
-      username: 'أحمد محمود',
-      email: email,
-      role: 'Admin'
-    });
-    setIsAuthenticated(true);
-  };
+function AuthRoutes() {
+  const { isAuthenticated, currentUser, loadingAuth, userLoaded, handleLogout, refreshCurrentUser } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-  };
-
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+  // If not authenticated, redirect to login page
+  if (!loadingAuth && !isAuthenticated && window.location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
   }
 
-  return <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} />;
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/logout" element={<LogoutTrigger />} />
+      <Route 
+        path="/" 
+        element={
+          loadingAuth ? null : ( // Render null while authentication is loading
+            isAuthenticated && userLoaded ? (
+              <DashboardLayout currentUser={currentUser!} onLogout={handleLogout} refreshCurrentUser={refreshCurrentUser} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          )
+        }
+      >
+        <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
+        <Route path="alarms" element={currentUser?.role === 'Admin' ? <AlarmConfiguration /> : <Navigate to="/sites" replace />} />
+        <Route path="alarms/events" element={<AlarmEvents />} />
+        <Route path="calculations" element={<FlowCalculations />} />
+        <Route path="readings" element={<ReadingsManagement />} />
+        <Route path="sites" element={<SitesManagement />} />
+        <Route 
+          path="users" 
+          element={
+            currentUser?.role === 'Admin' ? (
+              <UserManagement refreshCurrentUser={refreshCurrentUser} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+        {/* <Route path="*" element={<PageNotFound />} /> */}
+      </Route>
+    </Routes>
+  );
 }
+
+const LogoutTrigger: React.FC = () => {
+  const { handleLogout } = useAuth();
+  useEffect(() => {
+    handleLogout();
+  }, [handleLogout]);
+  return null;
+};
