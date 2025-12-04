@@ -314,8 +314,7 @@ export function AlarmEvents() {
                       {filteredEvents.map((event) => (
                         <TableRow 
                           key={event.id} 
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleRowClick(event)}
+                          className="hover:bg-gray-50"
                         >
                           <TableCell className="text-right">#{event.id}</TableCell>
                           <TableCell className="text-right">{event.alarmName}</TableCell>
@@ -354,8 +353,7 @@ export function AlarmEvents() {
                   {filteredEvents.map((event) => (
                     <Card 
                       key={event.id} 
-                      className="border shadow-sm hover:border-blue-200 transition cursor-pointer"
-                      onClick={() => handleRowClick(event)}
+                      className="border shadow-sm hover:border-blue-200 transition"
                     >
                       <CardHeader className="space-y-1">
                         <div className="flex items-center justify-between gap-2">
