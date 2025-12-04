@@ -132,7 +132,7 @@ export function AlarmConfiguration() {
       phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email,
       communicationLoss: {
-        severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
+        //severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
       },
     };
@@ -267,7 +267,7 @@ export function AlarmConfiguration() {
       siteId: siteId,
       alarmName: alarm.alarmName,
       site: alarm.siteName || '',
-      severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+      //severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
       hours: alarm.numHours || 0,
       emails: emails,
       phones: phones,
@@ -337,7 +337,7 @@ export function AlarmConfiguration() {
       phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email,
       communicationLoss: {
-        severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
+        //severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
       },
     };
@@ -382,7 +382,7 @@ export function AlarmConfiguration() {
       siteId: alarm.siteId,
       alarmName: alarm.alarmName,
       site: alarm.siteName || '',
-      severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+      //severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
       hours: alarm.numHours || 0,
       emails: emails,
       phones: phones,
