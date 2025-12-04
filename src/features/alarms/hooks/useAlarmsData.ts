@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { ValueThresholdAlarm, CommunicationAlarm, ThresholdAlarmResponse, CommunicationAlarmResponse, CreateThresholdAlarmRequest, CreateCommunicationAlarmRequest } from '../types';
+import type { ValueThresholdAlarm, CreateThresholdAlarmRequest, CreateCommunicationAlarmRequest, CommunicationAlarmResponse } from '../types';
 import { Severity } from '../types'; // Import Severity enum
-import apiService from '../../../shared/utils/apiService';
+import apiService, { ApiResponse } from '../../../shared/utils/apiService';
  
 export function useAlarmsData() {
   const [thresholdAlarms, setThresholdAlarms] = useState<ValueThresholdAlarm[]>([]);
@@ -9,7 +9,7 @@ export function useAlarmsData() {
   const [communicationAlarms, setCommunicationAlarms] = useState<CommunicationAlarmResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Added loading state
  
-  const mapToValueThresholdAlarm = (apiAlarm: ThresholdAlarmResponse): ValueThresholdAlarm => {
+  const mapToValueThresholdAlarm = (apiAlarm: any): ValueThresholdAlarm => {
     const recipients = [
       ...(apiAlarm.emails ? apiAlarm.emails.split(',').map(s => s.trim()).filter(Boolean) : []),
       ...(apiAlarm.phones ? apiAlarm.phones.split(',').map(s => s.trim()).filter(Boolean) : []),
@@ -20,9 +20,8 @@ export function useAlarmsData() {
       siteId: apiAlarm.siteId,
       site: apiAlarm.siteName,
       alarmName: apiAlarm.alarmName,
-      method: apiAlarm.method, // Use actual method from API
-      field: String(apiAlarm.fieldName), // Assuming fieldName is a number that needs to be converted to a string
-      operator: String(apiAlarm.operator), // Assuming operator is a number that needs to be converted to a string
+      field: apiAlarm.fieldName, // Assign as number
+      operator: apiAlarm.operator, // Assign as number
       threshold: apiAlarm.thresholdValue,
       color: apiAlarm.colorCode,
       severity: apiAlarm.severity === 0 ? 'Warning' : 'Critical', // Assuming 0 is Warning, 1 is Critical
@@ -33,19 +32,25 @@ export function useAlarmsData() {
   const fetchAlarms = async () => {
     setIsLoading(true); // Set loading to true before fetching
     try {
-      const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmResponse[] }>('/v1/alarm/threshold');
+      console.log('Fetching threshold alarms...');
+      const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: any[] }>('/v1/alarm/threshold');
+      console.log('Threshold alarms API response:', thresholdResponse);
       if (thresholdResponse.isSuccess) {
         setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
+      } else {
+        console.error('Failed to fetch threshold alarms, isSuccess was false:', thresholdResponse);
       }
  
+      console.log('Fetching communication alarms...');
       const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
+      console.log('Communication alarms API response:', communicationResponse);
       if (communicationResponse.isSuccess) {
         setCommunicationAlarms(communicationResponse.data);
       } else {
         console.error("Failed to fetch communication alarms, isSuccess was false:", communicationResponse);
       }
     } catch (error) {
-      console.error('Failed to fetch alarms:', error); // Log the actual error object
+      console.error('An error occurred while fetching alarms:', error); // Log the actual error object
     } finally {
       setIsLoading(false); // Set loading to false after fetching (success or failure)
     }

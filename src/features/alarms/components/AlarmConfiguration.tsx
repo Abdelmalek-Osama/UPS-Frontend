@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Plus, AlertTriangle, WifiOff } from 'lucide-react';
 import { Dialog, DialogTrigger } from '../../../components/ui/dialog';
 import Loader from '../../../components/ui/Loader';
+import { useOutletContext } from 'react-router-dom';
+import { User } from '../../auth';
 
 // Hooks
 import { useAlarmsData } from '../hooks/useAlarmsData';
@@ -34,6 +36,7 @@ import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDial
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
 
 export function AlarmConfiguration() {
+  const { currentUser } = useOutletContext<{ currentUser: User }>();
   const {
     thresholdAlarms,
     communicationAlarms,
@@ -420,29 +423,31 @@ export function AlarmConfiguration() {
                   تنبيهات القيم الحدية ({thresholdAlarms.length})
                 </CardTitle>
 
-                <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="ml-2 h-4 w-4" />
-                      إضافة تنبيه جديد
-                    </Button>
-                  </DialogTrigger>
-                  <AddThresholdAlarmDialog
-                    open={isAddThresholdOpen}
-                    onOpenChange={setIsAddThresholdOpen}
-                    form={newThresholdAlarmForm}
-                    setForm={setNewThresholdAlarmForm}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
-                    sitesError={sitesError}
-                    availableFields={availableFields}
-                    onSubmit={handleSubmitThresholdAlarm}
-                    isSubmitting={isSubmittingThresholdAdd}
-                    submissionError={thresholdSubmissionError}
-                    setEmails={setThresholdEmails}
-                    setPhones={setThresholdPhones}
-                  />
-                </Dialog>
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="ml-2 h-4 w-4" />
+                        إضافة تنبيه جديد
+                      </Button>
+                    </DialogTrigger>
+                    <AddThresholdAlarmDialog
+                      open={isAddThresholdOpen}
+                      onOpenChange={setIsAddThresholdOpen}
+                      form={newThresholdAlarmForm}
+                      setForm={setNewThresholdAlarmForm}
+                      sites={sites}
+                      sitesLoading={sitesLoading}
+                      sitesError={sitesError}
+                      availableFields={availableFields}
+                      onSubmit={handleSubmitThresholdAlarm}
+                      isSubmitting={isSubmittingThresholdAdd}
+                      submissionError={thresholdSubmissionError}
+                      setEmails={setThresholdEmails}
+                      setPhones={setThresholdPhones}
+                    />
+                  </Dialog>
+                )}
               </CardHeader>
 
               <CardContent>
@@ -468,28 +473,30 @@ export function AlarmConfiguration() {
                   تنبيهات فقدان الاتصال ({communicationAlarms.length})
                 </CardTitle>
 
-                <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}>
-                      <Plus className="ml-2 h-4 w-4" />
-                      إضافة تنبيه جديد
-                    </Button>
-                  </DialogTrigger>
-                  <AddCommunicationAlarmDialog
-                    open={isAddCommOpen}
-                    onOpenChange={setIsAddCommOpen}
-                    form={newCommunicationAlarmForm}
-                    setForm={setNewCommunicationAlarmForm}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
-                    sitesError={sitesError}
-                    onSubmit={handleSubmitCommunicationAlarm}
-                    isSubmitting={isSubmittingCommAdd}
-                    submissionError={communicationSubmissionError}
-                    setEmails={setCommunicationEmails}
-                    setPhones={setCommunicationPhones}
-                  />
-                </Dialog>
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        إضافة تنبيه جديد
+                      </Button>
+                    </DialogTrigger>
+                    <AddCommunicationAlarmDialog
+                      open={isAddCommOpen}
+                      onOpenChange={setIsAddCommOpen}
+                      form={newCommunicationAlarmForm}
+                      setForm={setNewCommunicationAlarmForm}
+                      sites={sites}
+                      sitesLoading={sitesLoading}
+                      sitesError={sitesError}
+                      onSubmit={handleSubmitCommunicationAlarm}
+                      isSubmitting={isSubmittingCommAdd}
+                      submissionError={communicationSubmissionError}
+                      setEmails={setCommunicationEmails}
+                      setPhones={setCommunicationPhones}
+                    />
+                  </Dialog>
+                )}
               </CardHeader>
 
               <CardContent>
@@ -520,6 +527,7 @@ export function AlarmConfiguration() {
         setHasChanges={setHasThresholdChanges}
         setEmails={setThresholdEmails}
         setPhones={setThresholdPhones}
+        submissionError={thresholdSubmissionError}
       />
 
       <EditCommunicationAlarmDialog
@@ -537,6 +545,7 @@ export function AlarmConfiguration() {
         setHasChanges={setHasCommunicationChanges}
         setEmails={setCommunicationEmails}
         setPhones={setCommunicationPhones}
+        submissionError={communicationSubmissionError}
       />
     </div>
   );

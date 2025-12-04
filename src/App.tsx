@@ -52,7 +52,7 @@ function AuthRoutes() {
         }
       >
         <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
-        <Route path="alarms" element={currentUser?.role === 'Admin' ? <AlarmConfiguration /> : <Navigate to="/sites" replace />} />
+        <Route path="alarms" element={ <AlarmConfiguration />} />
         <Route path="alarms/events" element={<AlarmEvents />} />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
