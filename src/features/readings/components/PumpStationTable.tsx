@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -90,6 +90,10 @@ export function PumpStationTable({
     const [addError, setAddError] = useState<string | null>(null); // New state for add dialog error
     const [editError, setEditError] = useState<string | null>(null); // New state for edit dialog error
 
+    // Refs for auto-scrolling in dialogs
+    const addDialogScrollRef = useRef<HTMLDivElement>(null);
+    const editDialogScrollRef = useRef<HTMLDivElement>(null);
+
     // Extracted values for clearer conditional rendering
     const shouldShowUSLevel = selectedSite?.hasUS ?? false;
     const shouldShowDS1Level = selectedSite?.hasDS1 ?? false;
@@ -159,6 +163,22 @@ export function PumpStationTable({
         }
       }
     }, [editReadingDate, editTimePerHour]);
+
+    // Auto-scroll to bottom when pump readings are added in Add dialog
+    useEffect(() => {
+      if (addDialogScrollRef.current && pumpReadings.length > 0) {
+        const scrollContainer = addDialogScrollRef.current;
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }, [pumpReadings.length]);
+
+    // Auto-scroll to bottom when pump readings are added in Edit dialog
+    useEffect(() => {
+      if (editDialogScrollRef.current && editPumpReadings.length > 0) {
+        const scrollContainer = editDialogScrollRef.current;
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }, [editPumpReadings.length]);
 
     const formatTimestamp = (value: string) => {
       if (!value) return '--';
@@ -472,6 +492,94 @@ export function PumpStationTable({
       return hours;
     };
 
+    // Style objects for dialogs (matching AddThresholdAlarmDialog pattern)
+    const dialogContentStyle: React.CSSProperties = {
+      width: '95vw',
+      maxWidth: '600px',
+      height: '80vh',
+      maxHeight: '80vh',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: 0,
+      overflow: 'hidden',
+      direction: 'rtl'
+    };
+
+    const headerContainerStyle: React.CSSProperties = {
+      paddingLeft: '1.5rem',
+      paddingRight: '1.5rem',
+      paddingTop: '1.5rem',
+      paddingBottom: '1rem',
+      flexShrink: 0,
+      borderBottom: '1px solid hsl(var(--border))'
+    };
+
+    const titleStyle: React.CSSProperties = {
+      textAlign: 'right'
+    };
+
+    const descriptionStyle: React.CSSProperties = {
+      textAlign: 'right'
+    };
+
+    const errorTextStyle: React.CSSProperties = {
+      color: '#dc2626',
+      fontSize: '0.875rem',
+      textAlign: 'right',
+      marginTop: '0.5rem'
+    };
+
+    const scrollContainerStyle: React.CSSProperties = {
+      flex: 1,
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      paddingLeft: '1.5rem',
+      paddingRight: '1.5rem',
+      paddingTop: '1rem',
+      paddingBottom: '1rem',
+      minHeight: 0,
+      WebkitOverflowScrolling: 'touch',
+      height: 0
+    };
+
+    const contentWrapperStyle: React.CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1rem'
+    };
+
+    const gridContainerStyle: React.CSSProperties = {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      gap: '1rem'
+    };
+
+    const fieldContainerStyle: React.CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem'
+    };
+
+    const footerContainerStyle: React.CSSProperties = {
+      paddingLeft: '1.5rem',
+      paddingRight: '1.5rem',
+      paddingTop: '1rem',
+      paddingBottom: '1.5rem',
+      flexShrink: 0,
+      borderTop: '1px solid hsl(var(--border))'
+    };
+
+    const footerStyle: React.CSSProperties = {
+      marginTop: 0
+    };
+
+    const footerButtonsContainerStyle: React.CSSProperties = {
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'flex-start',
+      gap: '0.5rem'
+    };
+
   return (
     <Card >
       <CardHeader>
@@ -491,19 +599,22 @@ export function PumpStationTable({
                 إضافة قراءة يدوية
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
-              <DialogHeader>
-                <DialogTitle className="text-right">إضافة قراءة يدوية</DialogTitle>
-                <DialogDescription className="text-right">
-                  أدخل بيانات القراءة الجديدة
-                </DialogDescription>
-              </DialogHeader>
-              {addError && (
-                <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError}</p>
-              )}
-              <div key={selectedSiteId} className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <DialogContent style={dialogContentStyle}>
+              <div style={headerContainerStyle}>
+                <DialogHeader>
+                  <DialogTitle style={titleStyle}>إضافة قراءة يدوية</DialogTitle>
+                  <DialogDescription style={descriptionStyle}>
+                    أدخل بيانات القراءة الجديدة
+                  </DialogDescription>
+                </DialogHeader>
+                {addError && (
+                  <p style={{ ...errorTextStyle, marginTop: '0.5rem' }}>{addError}</p>
+                )}
+              </div>
+              <div ref={addDialogScrollRef} style={scrollContainerStyle}>
+                <div key={selectedSiteId} style={contentWrapperStyle}>
+                <div style={gridContainerStyle}>
+                  <div style={fieldContainerStyle}>
                     <Label>الموقع</Label>
                     <Select dir="rtl" value={selectedSiteId || ''} disabled>
                       <SelectTrigger>
@@ -516,7 +627,7 @@ export function PumpStationTable({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>التاريخ</Label>
                     <DatePicker 
                     placeholder="اختر التاريخ"
@@ -528,7 +639,7 @@ export function PumpStationTable({
                 </div>
                 {/* Removed USWL, DSWL, Battery, Record Number, Time Per Hour fields as per user request */}
                 {/* {shouldShowUSLevel && (
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>المستوى العلوي (US)</Label>
                     <Input
                       type="number"
@@ -540,7 +651,7 @@ export function PumpStationTable({
                   </div>
                 )} */}
                 {/* {shouldShowDS1Level && (
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>المستوى السفلي 1 (DS1)</Label>
                     <Input
                       type="number"
@@ -552,7 +663,7 @@ export function PumpStationTable({
                   </div>
                 )} */}
                 {/* {shouldShowDS2Level && (
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>المستوى السفلي 2 (DS2)</Label>
                     <Input
                       type="number"
@@ -563,8 +674,8 @@ export function PumpStationTable({
                     />
                   </div>
                 )} */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div style={gridContainerStyle}>
+                  <div style={fieldContainerStyle}>
                     <Label>رقم السجل</Label>
                     <Input
                       type="number"
@@ -588,10 +699,10 @@ export function PumpStationTable({
                       }}
                     />
                     {recordNumberError && (
-                      <p className="text-red-600 text-sm text-right mt-1">{recordNumberError}</p>
+                      <p style={errorTextStyle}>{recordNumberError}</p>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>الوقت</Label>
                     <Select
                       dir="rtl"
@@ -616,8 +727,8 @@ export function PumpStationTable({
                 </div>
 
                 {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
-                  <div key={index} className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div key={index} style={gridContainerStyle}>
+                    <div style={fieldContainerStyle}>
                       <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
                       <Input
                         type="number"
@@ -628,10 +739,10 @@ export function PumpStationTable({
                         onChange={(e) => handlePumpInputChange(index, 'time', e.target.value)}
                       />
                       {pumpReadings[index]?.timeError && (
-                        <p className="text-red-600 text-sm text-right mt-1">{pumpReadings[index].timeError}</p>
+                        <p style={errorTextStyle}>{pumpReadings[index].timeError}</p>
                       )}
                     </div>
-                    <div className="space-y-2">
+                    <div style={fieldContainerStyle}>
                       <Label>مضخة {index + 1} التدفق (م³/س)</Label>
                       <Input
                         type="number"
@@ -642,38 +753,46 @@ export function PumpStationTable({
                         onChange={(e) => handlePumpInputChange(index, 'flow', e.target.value)}
                       />
                       {pumpReadings[index]?.flowError && (
-                        <p className="text-red-600 text-sm text-right mt-1">{pumpReadings[index].flowError}</p>
+                        <p style={errorTextStyle}>{pumpReadings[index].flowError}</p>
                       )}
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  إلغاء
-                </Button>
-                <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined || !!recordNumberError || pumpReadings.some(pump => pump.timeError || pump.flowError)} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
-                  حفظ القراءة
-                </Button>
-              </DialogFooter>
+              <div style={footerContainerStyle}>
+                <DialogFooter style={footerStyle}>
+                  <div style={footerButtonsContainerStyle}>
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined || !!recordNumberError || pumpReadings.some(pump => pump.timeError || pump.flowError)} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
+                      حفظ القراءة
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
 
           {/* Edit Dialog */}
           <Dialog open={isEditPumpStationOpen} onOpenChange={setIsEditPumpStationOpen}>
-            <DialogContent className="sm:max-w-[600px]" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
-              <DialogHeader>
-                <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
-                <DialogDescription className="text-right">
-                  قم بتعديل بيانات القراءة
-                </DialogDescription>
-              </DialogHeader>
-              {editError && (
-                <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError}</p>
-              )}
-              <div className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <DialogContent style={dialogContentStyle}>
+              <div style={headerContainerStyle}>
+                <DialogHeader>
+                  <DialogTitle style={titleStyle}>تعديل القراءة</DialogTitle>
+                  <DialogDescription style={descriptionStyle}>
+                    قم بتعديل بيانات القراءة
+                  </DialogDescription>
+                </DialogHeader>
+                {editError && (
+                  <p style={{ ...errorTextStyle, marginTop: '0.5rem' }}>{editError}</p>
+                )}
+              </div>
+              <div ref={editDialogScrollRef} style={scrollContainerStyle}>
+                <div style={contentWrapperStyle}>
+                <div style={gridContainerStyle}>
+                  <div style={fieldContainerStyle}>
                     <Label>الموقع</Label>
                     <Select dir="rtl" value={editingPumpStation?.siteId?.toString() || ""} disabled>
                       <SelectTrigger>
@@ -686,7 +805,7 @@ export function PumpStationTable({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>التاريخ</Label>
                     <DatePicker 
                     placeholder="اختر التاريخ"
@@ -697,8 +816,8 @@ export function PumpStationTable({
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div style={gridContainerStyle}>
+                  <div style={fieldContainerStyle}>
                     <Label>رقم السجل</Label>
                     <Input
                       type="number"
@@ -722,10 +841,10 @@ export function PumpStationTable({
                       }}
                     />
                     {editRecordNumberError && (
-                      <p className="text-red-600 text-sm text-right mt-1">{editRecordNumberError}</p>
+                      <p style={errorTextStyle}>{editRecordNumberError}</p>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div style={fieldContainerStyle}>
                     <Label>الوقت</Label>
                     <Select
                       dir="rtl"
@@ -753,8 +872,8 @@ export function PumpStationTable({
                
 
                 {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
-                  <div key={index} className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div key={index} style={gridContainerStyle}>
+                    <div style={fieldContainerStyle}>
                       <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
                       <Input
                         type="number"
@@ -765,7 +884,7 @@ export function PumpStationTable({
                         onChange={(e) => handleEditPumpInputChange(index, 'time', e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div style={fieldContainerStyle}>
                       <Label>مضخة {index + 1} التدفق (م³/س)</Label>
                       <Input
                         type="number"
@@ -778,15 +897,20 @@ export function PumpStationTable({
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
-                  إلغاء
-                </Button>
-                <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined || !!editRecordNumberError} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
-                  حفظ التعديلات
-                </Button>
-              </DialogFooter>
+              <div style={footerContainerStyle}>
+                <DialogFooter style={footerStyle}>
+                  <div style={footerButtonsContainerStyle}>
+                    <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined || !!editRecordNumberError} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
+                      حفظ التعديلات
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
             </div>
