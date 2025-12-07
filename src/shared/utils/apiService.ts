@@ -123,7 +123,6 @@ axiosInstance.interceptors.response.use(
 
           if (refreshToken) {
             try {
-              console.log('apiService: Attempting to refresh token...');
               const response = await axiosRefreshInstance.post<ApiResponse<AuthResponse>>(`/v1/Auth/refresh`, { refreshToken });
               const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data.data;
               setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
@@ -134,31 +133,24 @@ axiosInstance.interceptors.response.use(
               processQueue(null, accessToken);
               return axiosInstance(originalRequest);
             } catch (refreshError: any) {
-              console.error('apiService: Refresh token failed.', refreshError);
               clearAllUserData(); // Clear all user data on refresh token failure
               processQueue(refreshError, null);
-              console.error('Unable to refresh token', refreshError);
               if (!logoutInitiated && onLogoutCallback) {
-                console.log('apiService: Calling onLogoutCallback...');
                 logoutInitiated = true; // Set flag to true
                 onLogoutCallback(); // Call callback before throwing error
               } else if (!logoutInitiated) {
-                console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback.');
                 logoutInitiated = true; // Set flag to true
                 window.location.href = '/logout'; // Fallback if callback not set
               }
               throw refreshError;
             }
           } else {
-            console.log('apiService: No refresh token available.');
             clearAllUserData(); // Clear all user data if no refresh token
             processQueue(new Error('No refresh token available'), null);
             if (!logoutInitiated && onLogoutCallback) {
-              console.log('apiService: Calling onLogoutCallback (no refresh token)...');
               logoutInitiated = true; // Set flag to true
               onLogoutCallback(); // Call callback before throwing error
             } else if (!logoutInitiated) {
-              console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback (no refresh token).');
               logoutInitiated = true; // Set flag to true
               window.location.href = '/logout'; // Fallback if callback not set
             }

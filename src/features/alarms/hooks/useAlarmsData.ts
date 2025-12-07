@@ -32,18 +32,14 @@ export function useAlarmsData() {
   const fetchAlarms = async () => {
     setIsLoading(true); // Set loading to true before fetching
     try {
-      console.log('Fetching threshold alarms...');
       const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: any[] }>('/v1/alarm/threshold');
-      console.log('Threshold alarms API response:', thresholdResponse);
       if (thresholdResponse.isSuccess) {
         setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
       } else {
         console.error('Failed to fetch threshold alarms, isSuccess was false:', thresholdResponse);
       }
  
-      console.log('Fetching communication alarms...');
       const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
-      console.log('Communication alarms API response:', communicationResponse);
       if (communicationResponse.isSuccess) {
         setCommunicationAlarms(communicationResponse.data);
       } else {
