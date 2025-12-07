@@ -95,7 +95,7 @@ export function EditThresholdAlarmDialog({
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="w-[95vw] max-w-[600px] overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">تعديل تنبيه قيمة حدية</DialogTitle>
                     <DialogDescription className="text-right">
@@ -103,7 +103,7 @@ export function EditThresholdAlarmDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
+                <div className="space-y-6 py-4">
                     <div className="space-y-2">
                         <Label>الموقع</Label>
                         {currentAlarm ? (
