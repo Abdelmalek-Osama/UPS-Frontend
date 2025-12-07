@@ -173,7 +173,7 @@ export function EditCommunicationAlarmDialog({
                         </p>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                         <Label>مستوى الخطورة</Label>
                         <Select
                             onValueChange={(value: 'Warning' | 'Critical') => {
@@ -193,7 +193,7 @@ export function EditCommunicationAlarmDialog({
                                 <SelectItem value="Critical">حرج</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     <RecipientInput
                         type="email"
