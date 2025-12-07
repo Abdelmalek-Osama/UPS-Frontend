@@ -19,7 +19,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
-import { OPERATORS, INITIAL_THRESHOLD_FORM } from '../../utils/alarmConstants';
+import { OPERATORS, INITIAL_THRESHOLD_FORM, OPERATOR_LABELS } from '../../utils/alarmConstants';
 
 // Utility function to validate color input
 const isValidColor = (color: string): boolean => {
@@ -283,7 +283,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                     </SelectTrigger>
                                     <SelectContent>
                                         {OPERATORS.map(op => (
-                                            <SelectItem key={op} value={op}>{op}</SelectItem>
+                                            <SelectItem key={op} value={op}>{OPERATOR_LABELS[op] || op}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
