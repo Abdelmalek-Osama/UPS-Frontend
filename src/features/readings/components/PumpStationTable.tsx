@@ -491,7 +491,7 @@ export function PumpStationTable({
                 إضافة قراءة يدوية
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]" dir="rtl">
+            <DialogContent className="sm:max-w-[600px]" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right">إضافة قراءة يدوية</DialogTitle>
                 <DialogDescription className="text-right">
@@ -501,7 +501,7 @@ export function PumpStationTable({
               {addError && (
                 <p className="text-red-600 text-right text-sm px-6 -mt-2">{addError}</p>
               )}
-              <div key={selectedSiteId} className="space-y-4 py-4">
+              <div key={selectedSiteId} className="space-y-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
@@ -661,7 +661,7 @@ export function PumpStationTable({
 
           {/* Edit Dialog */}
           <Dialog open={isEditPumpStationOpen} onOpenChange={setIsEditPumpStationOpen}>
-            <DialogContent className="sm:max-w-[600px]" dir="rtl">
+            <DialogContent className="sm:max-w-[600px]" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
               <DialogHeader>
                 <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
                 <DialogDescription className="text-right">
@@ -671,7 +671,7 @@ export function PumpStationTable({
               {editError && (
                 <p className="text-red-600 text-right text-sm px-6 -mt-2">{editError}</p>
               )}
-              <div className="space-y-4 py-4">
+              <div className="space-y-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>الموقع</Label>
