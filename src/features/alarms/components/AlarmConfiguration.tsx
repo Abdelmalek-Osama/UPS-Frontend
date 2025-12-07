@@ -5,7 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Plus, AlertTriangle, WifiOff } from 'lucide-react';
 import { Dialog, DialogTrigger } from '../../../components/ui/dialog';
 import Loader from '../../../components/ui/Loader';
-import { useOutletContext } from 'react-router-dom';
+// import { useOutletContext } from 'react-router-dom';
+// Import useAuth from AuthContext
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { User } from '../../auth';
 
 // Hooks
@@ -36,7 +38,18 @@ import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDial
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
 
 export function AlarmConfiguration() {
-  const { currentUser } = useOutletContext<{ currentUser: User }>();
+  // const { currentUser: outletCurrentUser } = useOutletContext<{ currentUser: User }>();
+  const { loadingAuth, userLoaded, currentUser } = useAuth();
+
+  // If authentication is still loading or user data hasn't been loaded yet, show a loader
+  if (loadingAuth || !userLoaded || !currentUser) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
+
   const {
     thresholdAlarms,
     communicationAlarms,
@@ -170,16 +183,16 @@ export function AlarmConfiguration() {
 
   // Set default site when sites load
   useEffect(() => {
-    if (sites.length > 0 && newThresholdAlarmForm.siteId === null) {
+    if (sites.length > 0 && newThresholdAlarmForm.siteId === 0) {
       setNewThresholdAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
-  }, [sites, newThresholdAlarmForm.siteId]);
+  }, [sites, newThresholdAlarmForm.siteId, sitesLoading]); // Add sitesLoading to dependencies
 
   useEffect(() => {
-    if (sites.length > 0 && newCommunicationAlarmForm.siteId === null) {
+    if (sites.length > 0 && newCommunicationAlarmForm.siteId === 0) {
       setNewCommunicationAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
-  }, [sites, newCommunicationAlarmForm.siteId]);
+  }, [sites, newCommunicationAlarmForm.siteId, sitesLoading]); // Add sitesLoading to dependencies
 
   useEffect(() => {
     if (!isAddThresholdOpen) {
@@ -237,7 +250,7 @@ export function AlarmConfiguration() {
 
     const formData = {
       id: alarm.id,
-      siteId: siteId || null,
+      siteId: siteId || 0,
       alarmName: alarm.alarmName,
       site: alarm.site,
       field: mapNumberToField[parseInt(alarm.field)],
@@ -264,7 +277,7 @@ export function AlarmConfiguration() {
 
     setNewCommunicationAlarmForm({
       id: alarm.alarmId,
-      siteId: siteId,
+      siteId: siteId || 0,
       alarmName: alarm.alarmName,
       site: alarm.siteName || '',
       //severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',

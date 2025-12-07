@@ -1,4 +1,17 @@
-import { AddCommunicationAlarmDialogProps } from "../components/dialogs/AddCommunicationAlarmDialog";
+export interface AddCommunicationAlarmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  form: CommunicationAlarmForm;
+  setForm: React.Dispatch<React.SetStateAction<CommunicationAlarmForm>>;
+  sites: Site[];
+  sitesLoading: boolean;
+  sitesError: string | null;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  setEmails: (emails: string[]) => void;
+  setPhones: (phones: string[]) => void;
+  submissionError: string | null;
+}
 
 export interface Site {
   id: number;
