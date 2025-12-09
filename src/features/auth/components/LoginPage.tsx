@@ -51,7 +51,13 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
       // Handle network errors or errors thrown before the response interceptor
       let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error for catch block
 
-      if (error.isAxiosError) {
+      if (error instanceof Error && error.message) {
+         if (error.message.toLowerCase().includes('network error')) {
+            errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.';
+         } else {
+            errorMessage = error.message;
+         }
+      } else if (error.isAxiosError) {
         if (error.response && error.response.data && typeof error.response.data.message === 'string') {
           // Use the backend's error message directly
           errorMessage = error.response.data.message;

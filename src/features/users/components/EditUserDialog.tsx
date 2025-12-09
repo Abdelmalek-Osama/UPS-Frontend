@@ -120,7 +120,6 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       onOpenChange(false);
     } catch (error: any) {
       setSubmissionError((error as Error).message);
-      // toast.error(`فشل تحديث بيانات المستخدم: ${error.message}`); // Removed toast
     } finally {
       setIsSubmitting(false);
     }
