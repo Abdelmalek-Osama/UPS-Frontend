@@ -20,6 +20,7 @@ import {
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, OPERATOR_LABELS } from '../../utils/alarmConstants';
+import { validateAlarmName } from '../../utils/validation';
 
 // Utility function to validate color input
 const isValidColor = (color: string): boolean => {
@@ -73,6 +74,8 @@ export function EditThresholdAlarmDialog({
     setPhones,
     submissionError
 }: EditThresholdAlarmDialogProps) {
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
     useEffect(() => {
         if (currentAlarm && currentAlarm.threshold < 0) {
             setForm(prev => ({
@@ -148,9 +151,14 @@ export function EditThresholdAlarmDialog({
                                     ...prev,
                                     alarmName: e.target.value
                                 }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
                                 setHasChanges(true);
                             }}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -326,11 +334,11 @@ export function EditThresholdAlarmDialog({
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.thresholdError && !form.colorError) {
+                                if (!form.thresholdError && !form.colorError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !!alarmNameError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >

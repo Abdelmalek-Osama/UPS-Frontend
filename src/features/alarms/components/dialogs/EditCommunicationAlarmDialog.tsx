@@ -19,6 +19,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site } from '../../types';
+import { validateAlarmName } from '../../utils/validation';
 
 interface EditCommunicationAlarmDialogProps {
     open: boolean;
@@ -55,6 +56,8 @@ export function EditCommunicationAlarmDialog({
     setPhones,
     submissionError
 }: EditCommunicationAlarmDialogProps) {
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
     useEffect(() => {
         if (currentAlarm && currentAlarm.hours < 0) {
             setForm(prev => ({
@@ -127,9 +130,14 @@ export function EditCommunicationAlarmDialog({
                                     ...prev,
                                     alarmName: e.target.value
                                 }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
                                 setHasChanges(true);
                             }}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -222,11 +230,11 @@ export function EditCommunicationAlarmDialog({
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.hoursError) {
+                                if (!form.hoursError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !!form.hoursError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >
