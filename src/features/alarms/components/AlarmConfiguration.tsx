@@ -9,6 +9,7 @@ import Loader from '../../../components/ui/Loader';
 // Import useAuth from AuthContext
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { User } from '../../auth';
+import { toast } from 'react-toastify';
 
 // Hooks
 import { useAlarmsData } from '../hooks/useAlarmsData';
@@ -114,13 +115,18 @@ export function AlarmConfiguration() {
     try {
       const result = await createThresholdAlarm(requestBody);
       if (result.success) {
+        toast.success('تمت إضافة تنبيه القيمة الحدية بنجاح');
         setIsAddThresholdOpen(false);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
-        setThresholdSubmissionError(result.message || 'Failed to create threshold alarm.');
+        const errorMessage = result.message || 'Failed to create threshold alarm.';
+        toast.error(errorMessage);
+        setThresholdSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      setThresholdSubmissionError(error.message || 'An unexpected error occurred.');
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setThresholdSubmissionError(errorMessage);
     } finally {
       setIsSubmittingThresholdAdd(false);
     }
@@ -153,13 +159,18 @@ export function AlarmConfiguration() {
     try {
       const result = await createCommunicationAlarm(requestBody);
       if (result.success) {
+        toast.success('تمت إضافة تنبيه فقدان الاتصال بنجاح');
         setIsAddCommOpen(false);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
-        setCommunicationSubmissionError(result.message || 'Failed to create communication alarm.');
+        const errorMessage = result.message || 'Failed to create communication alarm.';
+        toast.error(errorMessage);
+        setCommunicationSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      setCommunicationSubmissionError(error.message || 'An unexpected error occurred.');
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setCommunicationSubmissionError(errorMessage);
     } finally {
       setIsSubmittingCommAdd(false);
     }
@@ -319,12 +330,20 @@ export function AlarmConfiguration() {
     try {
       const result = await updateThresholdAlarm(currentThresholdAlarm.id, requestBody);
       if (result.success) {
+        toast.success('تم تحديث تنبيه القيمة الحدية بنجاح');
         setIsEditThresholdOpen(false);
         setCurrentThresholdAlarm(null);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
         console.error('Error updating threshold alarm:', result.message);
+        const errorMessage = result.message || 'Failed to update threshold alarm.';
+        toast.error(errorMessage);
+        setThresholdSubmissionError(errorMessage);
       }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setThresholdSubmissionError(errorMessage);
     } finally {
       setIsSubmittingThresholdEdit(false);
     }
@@ -358,12 +377,20 @@ export function AlarmConfiguration() {
     try {
       const result = await updateCommunicationAlarm(currentCommunicationAlarm.id, requestBody);
       if (result.success) {
+        toast.success('تم تحديث تنبيه فقدان الاتصال بنجاح');
         setIsEditCommOpen(false);
         setCurrentCommunicationAlarm(null);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
         console.error('Error updating communication alarm:', result.message);
+        const errorMessage = result.message || 'Failed to update communication alarm.';
+        toast.error(errorMessage);
+        setCommunicationSubmissionError(errorMessage);
       }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setCommunicationSubmissionError(errorMessage);
     } finally {
       setIsSubmittingCommEdit(false);
     }
