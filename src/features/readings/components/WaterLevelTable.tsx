@@ -322,8 +322,8 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery))) || batteryError) {
-      setAddError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (batteryError) {
+      setAddError(batteryError); // Use the specific batteryError message
       return;
     }
 
@@ -405,8 +405,8 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery))) || editBatteryError) {
-      setEditError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (editBatteryError) {
+      setEditError(editBatteryError); // Use the specific editBatteryError message
       return;
     }
 
@@ -665,9 +665,8 @@ export function WaterLevelTable({
                   <div className="space-y-2">
                     <Label>البطارية (فولت)</Label>
                     <Input
-                      type="number"
+                      type="text" // Changed from "number" to "text"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={battery}
                       onChange={(e) => {
@@ -677,7 +676,10 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setBattery('');
                           setBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (!/^-?\d*(\.\d*)?$/.test(inputValue)) {
+                          setBattery(inputValue);
+                          setBatteryError('المدخل يجب أن يكون أرقام فقط.'); // Error for non-numeric input
+                        } else if (parsedValue < 0) { // Changed condition to parsedValue < 0
                           setBattery(inputValue);
                           setBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
                         } else {
@@ -871,9 +873,8 @@ export function WaterLevelTable({
                   <div className="space-y-2">
                     <Label>البطارية (فولت)</Label>
                     <Input
-                      type="number"
+                      type="text" // Changed from "number" to "text"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={editBattery}
                       onChange={(e) => {
@@ -883,7 +884,10 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setEditBattery('');
                           setEditBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (!/^-?\d*(\.\d*)?$/.test(inputValue)) {
+                          setEditBattery(inputValue);
+                          setEditBatteryError('المدخل يجب أن يكون أرقام فقط.'); // Error for non-numeric input
+                        } else if (parsedValue < 0) { // Changed condition to parsedValue < 0
                           setEditBattery(inputValue);
                           setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
                         } else {
