@@ -972,8 +972,8 @@ export function PumpStationTable({
                   {/* {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
                   {/* {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  <TableCell className="text-right" style={{ fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} ساعة</TableCell>
-                  <TableCell className="text-right" style={{ fontWeight: getAlarmColor(reading, 'TotalFlow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} م³/س</TableCell>
+                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'TotalUptime'), fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} ساعة</TableCell>
+                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Total_flow'), fontWeight: getAlarmColor(reading, 'Total_flow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} م³/س</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button 
@@ -1020,8 +1020,8 @@ export function PumpStationTable({
               </TableHeader>
               <TableBody>
                 {selectedReading?.pumps.map((pump, index) => {
-                  const pumpTimeAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_Time`);
-                  const pumpFlowAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_Flow`);
+                  const pumpTimeAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_time`);
+                  const pumpFlowAlarmStatus = getAlarmStatus(selectedReading, `P${index + 1}_flow`);
                   
                   return (
                     <TableRow key={index}>
