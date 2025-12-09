@@ -20,6 +20,7 @@ import {
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, INITIAL_THRESHOLD_FORM, OPERATOR_LABELS } from '../../utils/alarmConstants';
+import { validateAlarmName } from '../../utils/validation';
 
 // Utility function to validate color input
 const isValidColor = (color: string): boolean => {
@@ -68,6 +69,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     submissionError
 }: AddThresholdAlarmDialogProps, ref) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
     // Auto-scroll to bottom when emails or phones are added
     useEffect(() => {
@@ -241,11 +243,18 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                 type="text"
                                 placeholder="اسم التنبيه"
                                 value={form.alarmName}
-                                onChange={(e) => setForm(prev => ({
-                                    ...prev,
-                                    alarmName: e.target.value
-                                }))}
+                                onChange={(e) => {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        alarmName: e.target.value
+                                    }));
+                                    const error = validateAlarmName(e.target.value);
+                                    setAlarmNameError(error);
+                                }}
                             />
+                            {alarmNameError && (
+                                <p style={errorTextStyle}>{alarmNameError}</p>
+                            )}
                         </div>
 
                         <div style={fieldContainerStyle}>
@@ -409,11 +418,11 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             </Button>
                             <Button
                                 onClick={() => {
-                                    if (!form.thresholdError && !form.colorError) {
+                                    if (!form.thresholdError && !form.colorError && !alarmNameError) {
                                         onSubmit();
                                     }
                                 }}
-                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || !!form.colorError || (form.emails.length === 0 && form.phones.length === 0)}
+                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || !!form.colorError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
                                 loadingText="جاري الإضافة..."
                                 isLoading={isSubmitting}
                             >

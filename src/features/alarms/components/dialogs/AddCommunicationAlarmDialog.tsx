@@ -19,6 +19,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
+import { validateAlarmName } from '../../utils/validation';
 
 export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddCommunicationAlarmDialogProps>((
     {open,
@@ -34,6 +35,18 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
     setPhones,
     submissionError
 }: AddCommunicationAlarmDialogProps, ref) => {
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
+    const handleAlarmNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newName = e.target.value;
+        setForm(prev => ({
+            ...prev,
+            alarmName: newName
+        }));
+        const error = validateAlarmName(newName);
+        setAlarmNameError(error);
+    };
+
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
             if (!newOpen && submissionError) {
@@ -83,11 +96,11 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             type="text"
                             placeholder="اسم التنبيه"
                             value={form.alarmName}
-                            onChange={(e) => setForm(prev => ({
-                                ...prev,
-                                alarmName: e.target.value
-                            }))}
+                            onChange={handleAlarmNameChange}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -176,11 +189,11 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.hoursError) {
+                                if (!form.hoursError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >
