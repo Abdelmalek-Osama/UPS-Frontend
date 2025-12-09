@@ -439,7 +439,7 @@ export function AlarmConfiguration() {
                 {currentUser.role === 'Admin' && (
                   <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
                     <DialogTrigger asChild>
-                      <Button>
+                      <Button onClick={() => setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM)}>
                         <Plus className="ml-2 h-4 w-4" />
                         إضافة تنبيه جديد
                       </Button>
