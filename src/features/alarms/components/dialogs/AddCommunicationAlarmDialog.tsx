@@ -20,6 +20,7 @@ import {
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
+import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
 
 export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddCommunicationAlarmDialogProps>((
     {open,
@@ -52,6 +53,10 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
             if (!newOpen && submissionError) {
                 // Prevent closing if there's a submission error
                 return;
+            }
+            if (!newOpen) {
+                setForm({ ...INITIAL_COMMUNICATION_FORM });
+                setAlarmNameError(undefined);
             }
             onOpenChange(newOpen);
         }}>

@@ -193,9 +193,8 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                 return;
             }
             if (!newOpen) {
-                setForm(INITIAL_THRESHOLD_FORM);
-                setEmails([]);
-                setPhones([]);
+                setForm({ ...INITIAL_THRESHOLD_FORM });
+                setAlarmNameError(undefined);
             }
             onOpenChange(newOpen);
         }}>
