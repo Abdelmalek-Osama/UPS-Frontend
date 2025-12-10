@@ -48,24 +48,12 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
       }
     } catch (error: any) {
       setLoading(false); // Re-enable button on any error
-      // Handle network errors or errors thrown before the response interceptor
-      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Default generic error as the ultimate fallback
+      // Rely on apiService.ts to provide the most specific error message
+      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Ultimate fallback
 
-      if (error.isAxiosError && error.response && error.response.data) {
-        const apiMessage = error.response.data.message;
-        if (typeof apiMessage === 'string' && apiMessage.trim() !== '') {
-          errorMessage = apiMessage; // Use API message if it's a non-empty string
-        } else {
-          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // API message is empty or not a string
-        }
-      } else if (error instanceof Error && error.message.toLowerCase().includes('network error')) {
-        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Specific network error
-      } else if (typeof error === 'string' && error.toLowerCase().includes('network error')) {
-        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Specific network error as string
-      } else if (error instanceof Error && error.message.trim() !== '') {
-        // Fallback to generic Error message if it's not a network error and not empty
-        errorMessage = error.message;
-      } 
+      if (error instanceof Error && error.message.trim() !== '') {
+        errorMessage = error.message; 
+      }
       setLoginError(errorMessage);
     } finally {
       setLoading(false);

@@ -152,8 +152,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setApiError(null); // Clear API error on success
       onOpenChange(false);
     } catch (error: any) {
-      // apiService throws a standard Error object with the message already extracted
-      const errorMessage = error.message || 'حدث خطأ غير متوقع';
+      // Rely on apiService.ts to provide the most specific error message
+      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Ultimate fallback
+      if (error instanceof Error && error.message.trim() !== '') {
+        errorMessage = error.message;
+      }
       setApiError(errorMessage);
     } finally {
       setIsSubmittingAddUser(false); // Reset submitting state to false
