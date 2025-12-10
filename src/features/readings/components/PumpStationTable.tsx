@@ -81,7 +81,7 @@ export function PumpStationTable({
     const [editRecordNumber, setEditRecordNumber] = useState<number>(0);
     const [editRecordNumberError, setEditRecordNumberError] = useState<string | null>(null); // New state for edit record number error
     const [editTimePerHour, setEditTimePerHour] = useState<number | undefined>(undefined);
-    const [editPumpReadings, setEditPumpReadings] = useState<{ time: number | null; flow: number | null }[]>([]);
+    const [editPumpReadings, setEditPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
     const [isSubmittingAdd, setIsSubmittingAdd] = useState(false); // New state for add dialog submission
     const [isSubmittingEdit, setIsSubmittingEdit] = useState(false); // New state for edit dialog submission
 
@@ -103,7 +103,7 @@ export function PumpStationTable({
     useEffect(() => {
       console.log('useEffect (selectedSite?.numPumps) triggered. selectedSite.numPumps:', selectedSite?.numPumps);
       if (selectedSite?.numPumps) {
-        setPumpReadings(Array.from({ length: selectedSite.numPumps }, () => ({ time: null, flow: null })));
+        setPumpReadings(Array.from({ length: selectedSite.numPumps }, () => ({ time: null, flow: null, timeError: null, flowError: null })));
       } else {
         setPumpReadings([]);
       }
@@ -114,7 +114,7 @@ export function PumpStationTable({
         setReadingDate(undefined);
         setRecordNumber(0);
         setTimePerHour(undefined);
-        setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: null, flow: null })));
+        setPumpReadings(Array.from({ length: selectedSite?.numPumps || 0 }, () => ({ time: null, flow: null, timeError: null, flowError: null })));
         setAddError(null); // Clear error on dialog close
         setRecordNumberError(null); // Clear record number error on dialog close
       }
@@ -131,7 +131,7 @@ export function PumpStationTable({
         setEditReadingDate(editingPumpStation.timestamp ? new Date(editingPumpStation.timestamp) : undefined);
         setEditRecordNumber(editingPumpStation.recordNumber ?? 0); // Use nullish coalescing for safety
         setEditTimePerHour(editingPumpStation.timePerHour === undefined ? undefined : editingPumpStation.timePerHour); // Set to undefined if no time, otherwise use the number
-        setEditPumpReadings(editingPumpStation.pumps.map(pump => ({ time: pump.time ?? null, flow: pump.flow ?? null })) || []); // Map to new type
+        setEditPumpReadings(editingPumpStation.pumps.map(pump => ({ time: pump.time ?? null, flow: pump.flow ?? null, timeError: null, flowError: null })) || []); // Map to new type with error fields
       } else if (!isEditPumpStationOpen) {
         setEditError(null); // Clear error on dialog close
         setEditRecordNumberError(null); // Clear edit record number error on dialog close
@@ -192,18 +192,66 @@ export function PumpStationTable({
     const handlePumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newPumpReadings = [...pumpReadings];
       const numValue = parseFloat(value);
-      newPumpReadings[index] = { 
-        ...newPumpReadings[index], 
-        [field]: value === '' || Number.isNaN(numValue) ? null : numValue,
-        [`${field}Error`]: (value !== '' && (Number.isNaN(numValue) || numValue < 0)) ? 'يجب أن يكون رقماً موجباً.' : null
-      };
+      
+      if (value === '') {
+        newPumpReadings[index] = { 
+          ...newPumpReadings[index], 
+          [field]: null,
+          [`${field}Error`]: null
+        };
+      } else if (isNaN(numValue)) {
+        newPumpReadings[index] = { 
+          ...newPumpReadings[index], 
+          [field]: null,
+          [`${field}Error`]: 'يرجى إدخال رقم صحيح'
+        };
+      } else if (numValue < 0) {
+        newPumpReadings[index] = { 
+          ...newPumpReadings[index], 
+          [field]: numValue,
+          [`${field}Error`]: 'يجب أن يكون رقماً موجباً.'
+        };
+      } else {
+        newPumpReadings[index] = { 
+          ...newPumpReadings[index], 
+          [field]: numValue,
+          [`${field}Error`]: null
+        };
+      }
+      
       setPumpReadings(newPumpReadings);
     };
 
     const handleEditPumpInputChange = (index: number, field: 'time' | 'flow', value: string) => {
       const newEditPumpReadings = [...editPumpReadings];
       const numValue = parseFloat(value);
-      newEditPumpReadings[index] = { ...newEditPumpReadings[index], [field]: value === '' || Number.isNaN(numValue) || numValue < 0 ? null : numValue };
+      
+      if (value === '') {
+        newEditPumpReadings[index] = { 
+          ...newEditPumpReadings[index], 
+          [field]: null,
+          [`${field}Error`]: null
+        };
+      } else if (isNaN(numValue)) {
+        newEditPumpReadings[index] = { 
+          ...newEditPumpReadings[index], 
+          [field]: null,
+          [`${field}Error`]: 'يرجى إدخال رقم صحيح'
+        };
+      } else if (numValue < 0) {
+        newEditPumpReadings[index] = { 
+          ...newEditPumpReadings[index], 
+          [field]: numValue,
+          [`${field}Error`]: 'يجب أن يكون رقماً موجباً.'
+        };
+      } else {
+        newEditPumpReadings[index] = { 
+          ...newEditPumpReadings[index], 
+          [field]: numValue,
+          [`${field}Error`]: null
+        };
+      }
+      
       setEditPumpReadings(newEditPumpReadings);
     };
 
@@ -217,6 +265,17 @@ export function PumpStationTable({
       // Validate record number - must be positive and greater than zero
       if (recordNumber <= 0 || Number.isNaN(recordNumber) || recordNumberError) {
         setAddError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
+        return;
+      }
+
+      // Validate that all pump fields are filled
+      const hasEmptyPumpFields = pumpReadings.some(pump => 
+        pump.time === null || pump.flow === null
+      );
+
+      if (hasEmptyPumpFields) {
+        setAddError('الرجاء تعبئة جميع حقول المضخات.');
+        setIsSubmittingAdd(false);
         return;
       }
 
@@ -336,12 +395,23 @@ export function PumpStationTable({
         return;
       }
 
-      // Validate pump readings for non-negative values
+      // Validate that all pump fields are filled
+      const hasEmptyPumpFields = editPumpReadings.some(pump => 
+        pump.time === null || pump.flow === null
+      );
+
+      if (hasEmptyPumpFields) {
+        setEditError('الرجاء تعبئة جميع حقول المضخات.');
+        setIsSubmittingEdit(false);
+        return;
+      }
+
+      // Validate pump readings for non-negative values and errors
       const hasInvalidPumpValue = editPumpReadings.some(pump => 
         (pump.time !== null && pump.time < 0) || (pump.flow !== null && pump.flow < 0)
       );
 
-      if (hasInvalidPumpValue) {
+      if (hasInvalidPumpValue || editPumpReadings.some(pump => pump.timeError || pump.flowError)) {
         setEditError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
         setIsSubmittingEdit(false);
         return;
@@ -682,18 +752,27 @@ export function PumpStationTable({
                       min="1"
                       placeholder="0"
                       value={recordNumber === 0 ? '' : recordNumber}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setRecordNumberError('يرجى إدخال رقم صحيح');
+                        }
+                      }}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (value === '') {
                           setRecordNumber(0);
-                          setRecordNumberError(null); // Clear error when input is empty
+                          setRecordNumberError(null);
                         } else {
                           const num = parseFloat(value);
-                          if (!Number.isNaN(num) && num > 0) {
+                          if (isNaN(num)) {
+                            setRecordNumberError('يرجى إدخال رقم صحيح');
+                          } else if (num <= 0) {
+                            setRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
                             setRecordNumber(num);
-                            setRecordNumberError(null); // Clear error if input becomes valid
                           } else {
-                            setRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.'); // Set error for 0, negative, or NaN
+                            setRecordNumber(num);
+                            setRecordNumberError(null);
                           }
                         }
                       }}
@@ -736,6 +815,17 @@ export function PumpStationTable({
                         min="0"
                         placeholder="0.0"
                         value={pumpReadings[index]?.time ?? ''}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          if (input.validity.badInput) {
+                            const newPumpReadings = [...pumpReadings];
+                            newPumpReadings[index] = { 
+                              ...newPumpReadings[index], 
+                              timeError: 'يرجى إدخال رقم صحيح'
+                            };
+                            setPumpReadings(newPumpReadings);
+                          }
+                        }}
                         onChange={(e) => handlePumpInputChange(index, 'time', e.target.value)}
                       />
                       {pumpReadings[index]?.timeError && (
@@ -750,6 +840,17 @@ export function PumpStationTable({
                         min="0"
                         placeholder="0.0"
                         value={pumpReadings[index]?.flow ?? ''}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          if (input.validity.badInput) {
+                            const newPumpReadings = [...pumpReadings];
+                            newPumpReadings[index] = { 
+                              ...newPumpReadings[index], 
+                              flowError: 'يرجى إدخال رقم صحيح'
+                            };
+                            setPumpReadings(newPumpReadings);
+                          }
+                        }}
                         onChange={(e) => handlePumpInputChange(index, 'flow', e.target.value)}
                       />
                       {pumpReadings[index]?.flowError && (
@@ -766,7 +867,15 @@ export function PumpStationTable({
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                       إلغاء
                     </Button>
-                    <Button onClick={handleAddReading} disabled={isSubmittingAdd || !readingDate || timePerHour === undefined || !!recordNumberError || pumpReadings.some(pump => pump.timeError || pump.flowError)} loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
+                    <Button onClick={handleAddReading} disabled={
+                      isSubmittingAdd || 
+                      !readingDate || 
+                      timePerHour === undefined || 
+                      recordNumber <= 0 ||
+                      !!recordNumberError || 
+                      pumpReadings.some(pump => pump.timeError || pump.flowError) ||
+                      pumpReadings.some(pump => pump.time === null || pump.flow === null)
+                    } loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
                       حفظ القراءة
                     </Button>
                   </div>
@@ -824,18 +933,27 @@ export function PumpStationTable({
                       min="1"
                       placeholder="0"
                       value={editRecordNumber === 0 ? '' : editRecordNumber.toString()}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setEditRecordNumberError('يرجى إدخال رقم صحيح');
+                        }
+                      }}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (value === '') {
                           setEditRecordNumber(0);
-                          setEditRecordNumberError(null); // Clear error when input is empty
+                          setEditRecordNumberError(null);
                         } else {
                           const num = parseFloat(value);
-                          if (!Number.isNaN(num) && num > 0) {
+                          if (isNaN(num)) {
+                            setEditRecordNumberError('يرجى إدخال رقم صحيح');
+                          } else if (num <= 0) {
+                            setEditRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
                             setEditRecordNumber(num);
-                            setEditRecordNumberError(null); // Clear error if input becomes valid
                           } else {
-                            setEditRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.'); // Set error for 0, negative, or NaN
+                            setEditRecordNumber(num);
+                            setEditRecordNumberError(null);
                           }
                         }
                       }}
@@ -881,8 +999,22 @@ export function PumpStationTable({
                         min="0"
                         placeholder="0.0"
                         value={editPumpReadings[index]?.time ?? ''}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          if (input.validity.badInput) {
+                            const newEditPumpReadings = [...editPumpReadings];
+                            newEditPumpReadings[index] = { 
+                              ...newEditPumpReadings[index], 
+                              timeError: 'يرجى إدخال رقم صحيح'
+                            };
+                            setEditPumpReadings(newEditPumpReadings);
+                          }
+                        }}
                         onChange={(e) => handleEditPumpInputChange(index, 'time', e.target.value)}
                       />
+                      {editPumpReadings[index]?.timeError && (
+                        <p style={errorTextStyle}>{editPumpReadings[index].timeError}</p>
+                      )}
                     </div>
                     <div style={fieldContainerStyle}>
                       <Label>مضخة {index + 1} التدفق (م³/س)</Label>
@@ -892,8 +1024,22 @@ export function PumpStationTable({
                         min="0"
                         placeholder="0.0"
                         value={editPumpReadings[index]?.flow ?? ''}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          if (input.validity.badInput) {
+                            const newEditPumpReadings = [...editPumpReadings];
+                            newEditPumpReadings[index] = { 
+                              ...newEditPumpReadings[index], 
+                              flowError: 'يرجى إدخال رقم صحيح'
+                            };
+                            setEditPumpReadings(newEditPumpReadings);
+                          }
+                        }}
                         onChange={(e) => handleEditPumpInputChange(index, 'flow', e.target.value)}
                       />
+                      {editPumpReadings[index]?.flowError && (
+                        <p style={errorTextStyle}>{editPumpReadings[index].flowError}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -905,7 +1051,16 @@ export function PumpStationTable({
                     <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
                       إلغاء
                     </Button>
-                    <Button onClick={handleSaveEditPumpStation} disabled={isSubmittingEdit || !editingPumpStation || !editReadingDate || editTimePerHour === undefined || !!editRecordNumberError} loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
+                    <Button onClick={handleSaveEditPumpStation} disabled={
+                      isSubmittingEdit || 
+                      !editingPumpStation || 
+                      !editReadingDate || 
+                      editTimePerHour === undefined || 
+                      editRecordNumber <= 0 ||
+                      !!editRecordNumberError || 
+                      editPumpReadings.some(pump => pump.timeError || pump.flowError) ||
+                      editPumpReadings.some(pump => pump.time === null || pump.flow === null)
+                    } loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
                       حفظ التعديلات
                     </Button>
                   </div>
