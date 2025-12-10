@@ -24,7 +24,7 @@ const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
  */
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,7 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 const axiosRefreshInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
