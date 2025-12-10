@@ -42,37 +42,30 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
         setLoginSuccessful(true); // Set login successful instead of navigating immediately
       } else {
         // Prioritize displaying the backend's error message if available, otherwise use a generic one.
-        const errorMessage = response.message || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+        const errorMessage = response.message ? response.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
         setLoginError(errorMessage);
         setLoading(false); // Re-enable button on unsuccessful login response
       }
     } catch (error: any) {
       setLoading(false); // Re-enable button on any error
       // Handle network errors or errors thrown before the response interceptor
-      let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error for catch block
+      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Default generic error as the ultimate fallback
 
-      if (error instanceof Error && error.message) {
-         if (error.message.toLowerCase().includes('network error')) {
-            errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.';
-         } else {
-            errorMessage = error.message;
-         }
-      } else if (error.isAxiosError) {
-        if (error.response && error.response.data && typeof error.response.data.message === 'string') {
-          // Use the backend's error message directly
-          errorMessage = error.response.data.message;
-        } else if (error.message && error.message.toLowerCase().includes('network error')) {
-          errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Network error.
+      if (error.isAxiosError && error.response && error.response.data) {
+        const apiMessage = error.response.data.message;
+        if (typeof apiMessage === 'string' && apiMessage.trim() !== '') {
+          errorMessage = apiMessage; // Use API message if it's a non-empty string
         } else {
-          // Fallback for non-Axios or unknown errors or if specific message is not available
-          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // API message is empty or not a string
         }
+      } else if (error instanceof Error && error.message.toLowerCase().includes('network error')) {
+        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Specific network error
       } else if (typeof error === 'string' && error.toLowerCase().includes('network error')) {
-        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.';
-      } else {
-        // Fallback for non-Axios or unknown errors.
-        errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
-      }
+        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Specific network error as string
+      } else if (error instanceof Error && error.message.trim() !== '') {
+        // Fallback to generic Error message if it's not a network error and not empty
+        errorMessage = error.message;
+      } 
       setLoginError(errorMessage);
     } finally {
       setLoading(false);
