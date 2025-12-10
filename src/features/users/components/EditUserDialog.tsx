@@ -71,7 +71,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       newErrors.fullName = 'الاسم الكامل مطلوب';
     } else if (fullName.length > 100) {
       newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
-    } else if (!/^[\p{L}]{3,}(?:[\s-][\p{L}]{3,})+$/u.test(fullName.trim())) {
+    } else if (!/^[\p{L}]{2,}(?:[\s-][\p{L}]{2,})+$/u.test(fullName.trim())) {
       newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 3 أحرف إنجليزية أو عربية على الأقل';
     }
     if (!role) {
