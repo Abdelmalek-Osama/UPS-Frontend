@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Table,
     TableBody,
@@ -19,24 +20,25 @@ interface ThresholdAlarmTableProps {
 }
 
 export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps) {
+    const { t } = useTranslation();
     return (
-        <Table>
+        <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                    <TableHead className="text-right">اللون</TableHead>
-                    <TableHead className="text-right">الحقل</TableHead>
-                    <TableHead className="text-right">الشرط</TableHead>
-                    <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">الخطورة</TableHead>
-                    <TableHead className="text-right">الموقع</TableHead>
-                    <TableHead className="text-right">الاسم</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.color')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.field')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.operator')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.emailRecipients')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.severity')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.site')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.alarmName')}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {alarms.map((alarm) => (
                     <TableRow key={alarm.id}>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -45,21 +47,21 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <div
                                 className="w-6 h-6 rounded border"
                                 style={{ backgroundColor: alarm.color }}
                             />
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <Badge variant="outline">{mapNumberToField[alarm.field]}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <code className="text-sm bg-gray-100 px-2 py-1 rounded">
                                 {mapNumberToOperator[alarm.operator]} {alarm.threshold}
                             </code>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <div className="flex flex-wrap gap-1 justify-end">
                                 {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
                                     const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
@@ -74,11 +76,11 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
                                 })}
                             </div>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <Badge variant="outline">{alarm.severity}</Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium">{alarm.site}</TableCell>
-                        <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{alarm.site}</TableCell>
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{alarm.alarmName}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>

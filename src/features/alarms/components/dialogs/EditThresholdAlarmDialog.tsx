@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -74,13 +75,14 @@ export function EditThresholdAlarmDialog({
     setPhones,
     submissionError
 }: EditThresholdAlarmDialogProps) {
+    const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (currentAlarm && currentAlarm.threshold < 0) {
             setForm(prev => ({
                 ...prev,
-                thresholdError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                thresholdError: t('validation.invalidNumber')
             }));
         } else if (currentAlarm && currentAlarm.threshold >= 0) {
             setForm(prev => ({
@@ -98,17 +100,17 @@ export function EditThresholdAlarmDialog({
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent className="w-[95vw] max-w-[600px] overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
+            <DialogContent className="w-[95vw] max-w-[600px] overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                    <DialogTitle className="text-right">تعديل تنبيه قيمة حدية</DialogTitle>
-                    <DialogDescription className="text-right">
-                        تعديل تكوين التنبيه الحالي
+                    <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editThresholdAlarm')}</DialogTitle>
+                    <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                        {t('alarms.editThresholdAlarmDescription')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
                     <div className="space-y-2">
-                        <Label>الموقع</Label>
+                        <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
                             <Input type="text" value={currentAlarm.site} disabled />
                         ) : (
@@ -121,13 +123,14 @@ export function EditThresholdAlarmDialog({
                                     setHasChanges(true);
                                 }}
                                 value={form.siteId?.toString() || ""}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر الموقع" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('readings.selectSite')} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {sitesLoading ? (
-                                        <SelectItem value="0">جاري التحميل...</SelectItem>
+                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
                                     ) : sitesError ? (
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
@@ -141,10 +144,10 @@ export function EditThresholdAlarmDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>اسم التنبيه</Label>
+                        <Label>{t('alarms.alarmName')}</Label>
                         <Input
                             type="text"
-                            placeholder="اسم التنبيه"
+                            placeholder={t('alarms.alarmName')}
                             value={form.alarmName}
                             onChange={(e) => {
                                 setForm(prev => ({
@@ -162,7 +165,7 @@ export function EditThresholdAlarmDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>الحقل</Label>
+                        <Label>{t('alarms.field')}</Label>
                         <Select
                             onValueChange={(value) => {
                                 setForm(prev => ({
@@ -172,11 +175,12 @@ export function EditThresholdAlarmDialog({
                                 setHasChanges(true);
                             }}
                             value={form.field}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="اختر الحقل" />
+                            <SelectTrigger className="rtl:flex-row-reverse">
+                                <SelectValue placeholder={t('alarms.field')} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 {availableFields.map(field => (
                                     <SelectItem key={field} value={field}>{field}</SelectItem>
                                 ))}
@@ -186,7 +190,7 @@ export function EditThresholdAlarmDialog({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>المعامل</Label>
+                            <Label>{t('alarms.operator')}</Label>
                             <Select
                                 onValueChange={(value) => {
                                     setForm(prev => ({
@@ -196,11 +200,12 @@ export function EditThresholdAlarmDialog({
                                     setHasChanges(true);
                                 }}
                                 value={form.operator}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر المعامل" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('alarms.operator')} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {OPERATORS.map(op => (
                                         <SelectItem key={op} value={op}>{OPERATOR_LABELS[op] || op}</SelectItem>
                                     ))}
@@ -209,7 +214,7 @@ export function EditThresholdAlarmDialog({
                         </div>
 
                         <div className="space-y-2">
-                            <Label>القيمة الحدية</Label>
+                            <Label>{t('alarms.threshold')}</Label>
                             <Input
                                 type="number"
                                 step="0.1"
@@ -230,7 +235,7 @@ export function EditThresholdAlarmDialog({
                                         setForm(prev => ({
                                             ...prev,
                                             threshold: Math.max(0, parsedValue),
-                                            thresholdError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                            thresholdError: t('validation.invalidNumber')
                                         }));
                                     } else {
                                         setForm(prev => ({
@@ -249,7 +254,7 @@ export function EditThresholdAlarmDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>مستوى الخطورة</Label>
+                        <Label>{t('alarms.severity')}</Label>
                         <Select
                             onValueChange={(value: 'Warning' | 'Critical') => {
                                 setForm(prev => ({
@@ -259,19 +264,20 @@ export function EditThresholdAlarmDialog({
                                 setHasChanges(true);
                             }}
                             value={form.severity}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="اختر المستوى" />
+                            <SelectTrigger className="rtl:flex-row-reverse">
+                                <SelectValue placeholder={t('alarms.severity')} />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Warning">تحذير</SelectItem>
-                                <SelectItem value="Critical">حرج</SelectItem>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                <SelectItem value="Warning">{t('alarms.warning')}</SelectItem>
+                                <SelectItem value="Critical">{t('alarms.critical')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     <div className="space-y-2">
-                        <Label>اللون</Label>
+                        <Label>{t('alarms.color')}</Label>
                         <div className="flex gap-2">
                             <Input
                                 type="color"
@@ -296,7 +302,7 @@ export function EditThresholdAlarmDialog({
                                     setForm(prev => ({
                                         ...prev,
                                         color: inputValue,
-                                        colorError: isValidColor(inputValue) ? undefined : "صيغة اللون غير صالحة"
+                                        colorError: isValidColor(inputValue) ? undefined : t('alarms.invalidColorFormat')
                                     }));
                                     setHasChanges(true);
                                 }}
@@ -330,7 +336,7 @@ export function EditThresholdAlarmDialog({
                     )}
                     <div className="w-full flex justify-start gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            إلغاء
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={() => {
@@ -339,10 +345,10 @@ export function EditThresholdAlarmDialog({
                                 }
                             }}
                             disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !!alarmNameError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
-                            loadingText="جاري الحفظ..."
+                            loadingText={t('alarms.updatingAlarm')}
                             isLoading={isSubmitting}
                         >
-                            حفظ التغييرات
+                            {t('readings.saveChanges')}
                         </Button>
                     </div>
                 </DialogFooter>

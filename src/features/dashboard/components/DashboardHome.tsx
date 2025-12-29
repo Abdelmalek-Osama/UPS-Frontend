@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
@@ -16,66 +17,67 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useDashboardData } from '../hooks/useDashboardData';
 
 export function DashboardHome() {
+  const { t } = useTranslation();
   const { flowData, directorateData, activeAlarms, recentReadings, stats } = useDashboardData();
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl">لوحة التحكم الرئيسية</h2>
-        <p className="text-gray-500 mt-1">نظرة عامة على شبكة الري الوطنية</p>
+        <h2 className="text-2xl">{t('dashboard.title')}</h2>
+        <p className="text-gray-500 mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">إجمالي المواقع</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard.totalSites')}</CardTitle>
             <MapPin className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{stats.totalSites}</div>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="text-green-600">جميع المواقع متصلة</span>
+              <span className="text-green-600">{t('dashboard.allConnected')}</span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">التنبيهات النشطة</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard.activeAlarms')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{stats.activeAlarms}</div>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="text-red-600">{stats.criticalAlarms} حرجة</span> • <span className="text-yellow-600">{stats.warningAlarms} تحذيرات</span>
+              <span className="text-red-600">{stats.criticalAlarms} {t('dashboard.critical')}</span> • <span className="text-yellow-600">{stats.warningAlarms} {t('dashboard.warnings')}</span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">إجمالي التدفق</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard.totalFlow')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.totalFlow.toLocaleString()} م³/س</div>
+            <div className="text-2xl">{stats.totalFlow.toLocaleString()} {t('dashboard.flowPerHour')}</div>
             <p className="text-xs text-green-600 mt-1">
-              ↑ {stats.flowChange}% عن الساعة السابقة
+              ↑ {stats.flowChange}% {t('dashboard.flowChange')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">المحطات النشطة</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard.activeStations')}</CardTitle>
             <Activity className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{stats.activeStations}/{stats.totalStations}</div>
             <p className="text-xs text-gray-500 mt-1">
-              معدل التشغيل: {stats.uptimePercentage}%
+              {t('dashboard.uptimePercentage')}: {stats.uptimePercentage}%
             </p>
           </CardContent>
         </Card>
@@ -85,7 +87,7 @@ export function DashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
         <Card>
           <CardHeader>
-            <CardTitle>التدفق خلال 24 ساعة</CardTitle>
+            <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -93,12 +95,12 @@ export function DashboardHome() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
                 <YAxis 
-                  label={{ value: 'م³/س', angle: -90, position: 'insideLeft', dy:-20 }} 
+                  label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy:-20 }} 
                   tick={{dx: -25}}
                 />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="flow" stroke="#2563eb" name="التدفق" strokeWidth={2} />
+                <Line type="monotone" dataKey="flow" stroke="#2563eb" name={t('readings.totalFlow')} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -106,7 +108,7 @@ export function DashboardHome() {
 
         <Card>
           <CardHeader>
-            <CardTitle>المواقع حسب المديرية</CardTitle>
+            <CardTitle>{t('dashboard.sitesByDirectorate')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -114,13 +116,13 @@ export function DashboardHome() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis 
-                  label={{value: 'عدد المواقع', angle: -90, position: 'insideLeft', dy:-20 }} 
+                  label={{value: t('sites.sitesCount'), angle: -90, position: 'insideLeft', dy:-20 }} 
                   tick={{dx: -15}}
                 />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="sites" fill="#3b82f6" name="إجمالي المواقع" />
-                <Bar dataKey="active" fill="#10b981" name="النشطة" />
+                <Bar dataKey="sites" fill="#3b82f6" name={t('dashboard.totalSites')} />
+                <Bar dataKey="active" fill="#10b981" name={t('common.active')} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -132,8 +134,8 @@ export function DashboardHome() {
         {/* Active Alarms */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>التنبيهات النشطة</CardTitle>
-            <Button variant="outline" size="sm">عرض الكل</Button>
+            <CardTitle>{t('dashboard.activeAlarms')}</CardTitle>
+            <Button variant="outline" size="sm">{t('dashboard.viewAll')}</Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -150,7 +152,7 @@ export function DashboardHome() {
                     <div className="flex items-start justify-between">
                       <p className="text-sm">{alarm.site}</p>
                       <Badge variant={alarm.severity === 'Critical' ? 'destructive' : 'outline'}>
-                        {alarm.severity === 'Critical' ? 'حرج' : 'تحذير'}
+                        {alarm.severity === 'Critical' ? t('dashboard.critical') : t('dashboard.warnings')}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{alarm.message}</p>
@@ -165,8 +167,8 @@ export function DashboardHome() {
         {/* Recent Readings */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>القراءات الأخيرة</CardTitle>
-            <Button variant="outline" size="sm">عرض الكل</Button>
+            <CardTitle>{t('dashboard.recentReadings')}</CardTitle>
+            <Button variant="outline" size="sm">{t('dashboard.viewAll')}</Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -186,13 +188,13 @@ export function DashboardHome() {
                     <div className="text-xs text-gray-600 mt-1 space-y-0.5">
                       {reading.type === 'WaterLevel' ? (
                         <>
-                          <p>USWL: {reading.uswl} م • DSWL: {reading.dswl} م</p>
-                          <p>التدفق المحسوب: {reading.flow} م³/س</p>
+                          <p>{t('readings.uswl')}: {reading.uswl} م • {t('readings.dswl')}: {reading.dswl} م</p>
+                          <p>{t('readings.calculatedFlow')}: {reading.flow} {t('dashboard.flowPerHour')}</p>
                         </>
                       ) : (
                         <>
-                          <p>إجمالي التدفق: {reading.totalFlow} م³/س</p>
-                          <p>وقت التشغيل: {reading.uptime} ساعة</p>
+                          <p>{t('readings.totalFlow')}: {reading.totalFlow} {t('dashboard.flowPerHour')}</p>
+                          <p>{t('readings.uptime')}: {reading.uptime} {t('common.time')}</p>
                         </>
                       )}
                     </div>

@@ -1,11 +1,12 @@
 // components/DatePicker.tsx
 import React, { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Popover, PopoverTrigger, PopoverContent } from "./popover"
 import { Button } from "./button"
 import { Calendar } from "./calendar"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { arSA } from "date-fns/locale"
+import { arSA, enUS } from "date-fns/locale"
 
 interface DatePickerProps {
   placeholder: string
@@ -16,8 +17,10 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: DatePickerProps) {
+  const { t } = useTranslation()
   const [internalDate, setInternalDate] = useState<Date | undefined>(value)
   const [popoverOpen, setPopoverOpen] = useState(false)
+  const locale = t('_rtl') === 'rtl' ? arSA : enUS
 
   useEffect(() => {
     setInternalDate(value);
@@ -36,17 +39,17 @@ export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: D
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="justify-start text-right"
+          className={t('_rtl') === 'rtl' ? "justify-start text-right" : "justify-start text-left"}
         >
-          <CalendarIcon className="ml-2 h-4 w-4" />
-          {date ? format(date, "PPP", { locale: arSA }) : placeholder}
+          <CalendarIcon className={t('_rtl') === 'rtl' ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+          {date ? format(date, "PPP", { locale }) : placeholder}
         </Button>
       </PopoverTrigger>
 
       <PopoverContent
         className="w-auto p-0"
         align="start"
-        dir="rtl"
+        dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
       >
         <Calendar
           mode="single"
@@ -55,7 +58,7 @@ export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: D
           disabled={(date) =>
             (minDate && date < minDate) || (maxDate && date > maxDate)
           }
-          locale={arSA}
+          locale={locale}
         />
       </PopoverContent>
     </Popover>

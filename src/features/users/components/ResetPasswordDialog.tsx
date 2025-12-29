@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ interface ResetPasswordDialogProps {
 }
 
 export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordDialogProps) {
+  const { t } = useTranslation();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -47,27 +49,27 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     const currentErrors: string[] = [];
 
     if (!newPassword) {
-      currentErrors.push('كلمة المرور الجديدة مطلوبة');
+      currentErrors.push(t('validation.passwordNewRequired'));
     } else {
       if (newPassword.length < 8) {
-        currentErrors.push('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+        currentErrors.push(t('validation.passwordMinLength'));
       }
       if (!/[A-Z]/.test(newPassword)) {
-        currentErrors.push('كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل');
+        currentErrors.push(t('validation.passwordNeedsUppercase'));
       }
       if (!/\d/.test(newPassword)) {
-        currentErrors.push('كلمة المرور يجب أن تحتوي على رقم واحد على الأقل');
+        currentErrors.push(t('validation.passwordNeedsNumber'));
       }
       if (!/[a-z]/.test(newPassword)) {
-        currentErrors.push('كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل');
+        currentErrors.push(t('validation.passwordNeedsLowercase'));
       }
     }
 
     if (currentErrors.length === 0) {
       if (!confirmPassword) {
-        currentErrors.push('تأكيد كلمة المرور مطلوب');
+        currentErrors.push(t('validation.confirmPasswordRequired'));
       } else if (newPassword !== confirmPassword) {
-        currentErrors.push('كلمة المرور وتأكيدها غير متطابقين');
+        currentErrors.push(t('validation.confirmPasswordMismatch'));
       }
     }
 
@@ -79,7 +81,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     }
 
     if (!user) {
-      setSubmissionError("تعذر إعادة تعيين كلمة المرور: لم يتم تحديد المستخدم."); // Set error for undefined user
+      setSubmissionError(t('errors.userNotSelected')); // Set error for undefined user
       setIsSubmittingResetPassword(false); // Reset if user is not defined
       return;
     }
@@ -91,10 +93,10 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       });
       
       // Display success message in Arabic
-      toast.success("تم تغيير كلمة السر بنجاح");
+      toast.success(t('users.resetPasswordSuccessMessage'));
       onOpenChange(false);
     } catch (error: any) {
-      const errorMessage = (error as Error).message || 'حدث خطأ أثناء إعادة تعيين كلمة المرور';
+      const errorMessage = (error as Error).message || t('errors.resetPasswordError');
       setSubmissionError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -109,16 +111,16 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent dir="rtl">
+      <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle className="text-right">إعادة تعيين كلمة المرور</DialogTitle>
-          <DialogDescription className="text-right">
-            {user?.userName && `إعادة تعيين كلمة المرور للمستخدم: ${user?.userName}`}
+          <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('dialogs.resetPassword')}</DialogTitle>
+          <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+            {user?.userName && `${t('dialogs.resetPasswordFor')}: ${user?.userName}`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="new-password">كلمة المرور الجديدة</Label>
+            <Label htmlFor="new-password">{t('users.newPassword')}</Label>
             <div className="relative">
               <Input
                 id="new-password"
@@ -144,7 +146,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
+            <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
             <div className="relative">
               <Input
                 id="confirm-password"
@@ -184,10 +186,10 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
           )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            إلغاء
+            {t('common.cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmittingResetPassword || !newPassword || !confirmPassword} loadingText="جاري إعادة التعيين..." isLoading={isSubmittingResetPassword}>
-            إعادة تعيين
+          <Button onClick={handleSubmit} disabled={isSubmittingResetPassword || !newPassword || !confirmPassword} loadingText={t('users.resettingPassword')} isLoading={isSubmittingResetPassword}>
+            {t('buttons.reset')}
           </Button>
         </DialogFooter>
       </DialogContent>

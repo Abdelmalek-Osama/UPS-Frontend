@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
@@ -39,6 +40,7 @@ import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDial
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
 
 export function AlarmConfiguration() {
+  const { t } = useTranslation();
   // const { currentUser: outletCurrentUser } = useOutletContext<{ currentUser: User }>();
   const { loadingAuth, userLoaded, currentUser } = useAuth();
 
@@ -115,7 +117,7 @@ export function AlarmConfiguration() {
     try {
       const result = await createThresholdAlarm(requestBody);
       if (result.success) {
-        toast.success('تمت إضافة تنبيه القيمة الحدية بنجاح');
+        toast.success(t('alarms.addAlarmSuccess'));
         setIsAddThresholdOpen(false);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
@@ -159,7 +161,7 @@ export function AlarmConfiguration() {
     try {
       const result = await createCommunicationAlarm(requestBody);
       if (result.success) {
-        toast.success('تمت إضافة تنبيه فقدان الاتصال بنجاح');
+        toast.success(t('alarms.addCommunicationAlarmSuccess'));
         setIsAddCommOpen(false);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
@@ -330,7 +332,7 @@ export function AlarmConfiguration() {
     try {
       const result = await updateThresholdAlarm(currentThresholdAlarm.id, requestBody);
       if (result.success) {
-        toast.success('تم تحديث تنبيه القيمة الحدية بنجاح');
+        toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditThresholdOpen(false);
         setCurrentThresholdAlarm(null);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
@@ -377,7 +379,7 @@ export function AlarmConfiguration() {
     try {
       const result = await updateCommunicationAlarm(currentCommunicationAlarm.id, requestBody);
       if (result.success) {
-        toast.success('تم تحديث تنبيه فقدان الاتصال بنجاح');
+        toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditCommOpen(false);
         setCurrentCommunicationAlarm(null);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
@@ -432,21 +434,21 @@ export function AlarmConfiguration() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       <div>
-        <h2 className="text-2xl">تكوين التنبيهات</h2>
-        <p className="text-gray-500 mt-1">إدارة تنبيهات القيم وفقدان الاتصال</p>
+        <h2 className="text-2xl">{t('navigation.alarms')}</h2>
+        <p className="text-gray-500 mt-1">{t('alarms.manageAlarmSettings')}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="threshold">
             <AlertTriangle className="ml-2 h-4 w-4" />
-            تنبيهات القيم الحدية
+            {t('alarms.thresholdAlarms')}
           </TabsTrigger>
           <TabsTrigger value="communication">
             <WifiOff className="ml-2 h-4 w-4" />
-            تنبيهات فقدان الاتصال
+            {t('alarms.communicationAlarms')}
           </TabsTrigger>
         </TabsList>
 
@@ -460,7 +462,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className="flex justify-between items-center" dir="rtl">
                 <CardTitle className="text-right">
-                  تنبيهات القيم الحدية ({thresholdAlarms.length})
+                  {t('alarms.thresholdAlarms')} ({thresholdAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -468,7 +470,7 @@ export function AlarmConfiguration() {
                     <DialogTrigger asChild>
                       <Button onClick={() => setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM)}>
                         <Plus className="ml-2 h-4 w-4" />
-                        إضافة تنبيه جديد
+                        {t('alarms.addThresholdAlarm')}
                       </Button>
                     </DialogTrigger>
                     <AddThresholdAlarmDialog
@@ -510,7 +512,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className="flex justify-between items-center" dir="rtl">
                 <CardTitle className="text-right">
-                  تنبيهات فقدان الاتصال ({communicationAlarms.length})
+                  {t('alarms.communicationAlarms')} ({communicationAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -518,7 +520,7 @@ export function AlarmConfiguration() {
                     <DialogTrigger asChild>
                       <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}>
                         <Plus className="ml-2 h-4 w-4" />
-                        إضافة تنبيه جديد
+                        {t('alarms.addCommunicationAlarm')}
                       </Button>
                     </DialogTrigger>
                     <AddCommunicationAlarmDialog

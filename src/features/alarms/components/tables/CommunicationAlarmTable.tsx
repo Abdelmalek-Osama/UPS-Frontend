@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Table,
     TableBody,
@@ -18,22 +19,23 @@ interface CommunicationAlarmTableProps {
 }
 
 export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTableProps) {
+    const { t } = useTranslation();
     return (
-        <Table>
+        <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                    {/* <TableHead className="text-right">الخطورة</TableHead> */}
-                    <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">عدد الساعات</TableHead>
-                    <TableHead className="text-right">الموقع</TableHead>
-                    <TableHead className="text-right">الاسم</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                    {/* <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.severity')}</TableHead> */}
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.emailRecipients')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.hours')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.site')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.alarmName')}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {alarms.map((alarm) => (
                     <TableRow key={alarm.alarmId}>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -42,7 +44,7 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TableCell>
-                        {/* <TableCell className="text-right">
+                        {/* <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             {alarm.severity === 0 && (
                                 <Badge style={{ backgroundColor: '#DAA520' }} dir="rtl">Warning</Badge>
                             )}
@@ -50,7 +52,7 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
                                 <Badge variant="destructive" dir="rtl">Critical</Badge>
                             )}
                         </TableCell> */}
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <div className="flex flex-wrap gap-1 justify-end">
                                 {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
                                     <Badge key={`email-${idx}`} variant="secondary" className="text-xs">
@@ -64,13 +66,13 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
                                 ))}
                             </div>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <Badge variant="outline" dir="rtl">
-                                {alarm.numHours === 1 ? `${alarm.numHours} ساعة ` : `${alarm.numHours} ساعات`}
+                                {alarm.numHours === 1 ? `${alarm.numHours} ${t('alarms.hour')}` : `${alarm.numHours} ${t('alarms.hours')}`}
                             </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
-                        <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'medium'}}>{alarm.siteName}</TableCell>
+                        <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'medium'}}>{alarm.alarmName}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>

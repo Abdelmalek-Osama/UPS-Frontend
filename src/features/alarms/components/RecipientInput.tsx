@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
@@ -20,6 +21,7 @@ export function RecipientInput({
     setRecipients,
     setHasChanges
 }: RecipientInputProps) {
+    const { t } = useTranslation();
     const isEmail = type === 'email';
     const [inputValue, setInputValue] = useState('');
 
@@ -49,7 +51,7 @@ export function RecipientInput({
 
     return (
         <div className="space-y-2">
-            <Label>{isEmail ? 'المستلمون (البريد الإلكتروني)' : 'المستلمون (أرقام الهواتف)'}</Label>
+            <Label>{isEmail ? t('alarms.emailRecipients') : t('alarms.phoneRecipients')}</Label>
             <div className="flex gap-2">
                 <Input
                     type={isEmail ? 'email' : 'tel'}

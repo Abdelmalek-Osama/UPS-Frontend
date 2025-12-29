@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -25,6 +26,7 @@ interface FlowCalculationDto {
 }
 
 export function FlowCalculations() {
+  const { t } = useTranslation();
   const [selectedSite, setSelectedSite] = useState('');
   const [formulaConstants, setFormulaConstants] = useState<number[]>([]);
   const [equation, setEquation] = useState('');
@@ -101,7 +103,7 @@ export function FlowCalculations() {
 
   const handleSaveConstants = async () => {
     if (!selectedSite) {
-      setSaveErrorMessage('يرجى اختيار موقع قبل الحفظ.');
+      setSaveErrorMessage(t('flowCalculations.selectSiteFirst'));
       return;
     }
 
@@ -115,7 +117,7 @@ export function FlowCalculations() {
         `/v1/FlowCalculation/${selectedSite}`,
         payload
       );
-      toast.success('تم حفظ المعاملات بنجاح');
+      toast.success(t('flowCalculations.formulaSaved'));
 
     } catch (error) {
       toast.error((error as Error).message);
@@ -125,11 +127,11 @@ export function FlowCalculations() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl">حسابات التدفق</h2>
-        <p className="text-gray-500 mt-1">تكوين معادلات ومنحنيات حساب التدفق</p>
+        <h2 className="text-2xl">{t('flowCalculations.title')}</h2>
+        <p className="text-gray-500 mt-1">{t('flowCalculations.subtitle')}</p>
       </div>
 
       {/* Site Selection */}
@@ -137,12 +139,12 @@ export function FlowCalculations() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2" >
-              <Label>اختر الموقع</Label>
-              <Select  value={selectedSite} onValueChange={setSelectedSite}>
-                <SelectTrigger>
+              <Label>{t('common.select')} {t('readings.site')}</Label>
+              <Select  value={selectedSite} onValueChange={setSelectedSite} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                <SelectTrigger className="rtl:flex-row-reverse">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                   {sites.map(site => (
                     <SelectItem key={site.id} value={site.id.toString()}>
                       {site.name}
@@ -152,7 +154,7 @@ export function FlowCalculations() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>طريقة الحساب</Label>
+              <Label>{t('flowCalculations.calculationMethod')}</Label>
               <div className="flex items-center h-10 px-3 border rounded-md bg-gray-50">
                 <Badge variant="outline">
                   {calculationMethod || '—'}
@@ -166,12 +168,12 @@ export function FlowCalculations() {
       {/* Formula Configuration */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-right">تكوين المعادلة</CardTitle>
+          <CardTitle className="text-right">{t('flowCalculations.equationConfiguration')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" dir="rtl">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <p className="text-sm text-blue-800 text-center">
-              <strong>المعادلة: </strong> {equation || '—'}
+              <strong>{t('alarms.formula')}: </strong> {equation || '—'}
             </p>
           </div>
 
@@ -184,7 +186,7 @@ export function FlowCalculations() {
               <div key={`constant-${index}`} className="space-y-2">
                 <Label htmlFor={`constant-${index}`}>
                   {index === 0 ? 'a' : index === 1 ? 'b' : index === 2 ? 'c' : `C${index + 1}`}{" "}
-                  <span className="text-gray-500">(ثابت)</span>
+                  <span className="text-gray-500">({t('flowCalculations.constant')})</span>
                 </Label>
                 <Input
                   id={`constant-${index}`}
@@ -209,10 +211,10 @@ export function FlowCalculations() {
             <Button
               disabled={constantsLoading || savingConstants}
               onClick={handleSaveConstants}
-              loadingText="جاري الحفظ..."
+              loadingText={t('flowCalculations.saving')}
               isLoading={savingConstants}
             >
-              حفظ المعاملات
+              {t('flowCalculations.saveConstants')}
             </Button>
           </div>
 

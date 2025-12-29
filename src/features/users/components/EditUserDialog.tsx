@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ interface UpdateUserResponse {
 }
 
 export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, loggedInUserId, onUserRoleChange, availableSites = [] }: EditUserDialogProps) {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'Admin' | 'Operator'>('Operator');
   const [isActive, setIsActive] = useState(true);
@@ -68,17 +70,17 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!fullName.trim()) { // Trim here for initial check
-      newErrors.fullName = 'الاسم الكامل مطلوب';
+      newErrors.fullName = t('validation.fullNameRequired');
     } else if (fullName.length > 100) {
-      newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
+      newErrors.fullName = t('validation.fullNameMaxLength');
     } else if (!/^[\p{L}]{2,}(?:[\s-][\p{L}]{2,})+$/u.test(fullName.trim())) {
-      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 3 أحرف إنجليزية أو عربية على الأقل';
+      newErrors.fullName = t('validation.fullNameFormatEdit');
     }
     if (!role) {
-      newErrors.role = 'الدور مطلوب';
+      newErrors.role = t('validation.roleRequired');
     }
     if (role === 'Operator' && assignedSites.length === 0) {
-      newErrors.assignedSites = 'يجب تخصيص موقع واحد على الأقل للمشغلين';
+      newErrors.assignedSites = t('validation.siteAssignmentRequired');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -112,7 +114,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
         updateData
       );
 
-      toast.success('تم تحديث بيانات المستخدم بنجاح');
+      toast.success(t('users.updateUserDataSuccess'));
       onEditSuccess();
       if (user.id === loggedInUserId) {
         onUserRoleChange(user.id);
@@ -141,21 +143,21 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
       }
       handleClose();
     }}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent className="sm:max-w-[500px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
-          <DialogDescription className="text-right">
-            تعديل معلومات المستخدم: {user.userName}
+          <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('dialogs.editUser')}</DialogTitle>
+          <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+            {t('dialogs.editUserInfo')}: {user.userName}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           {/* Full Name */}
           <div className="space-y-2">
-            <Label htmlFor="fullName">الاسم الكامل</Label>
+            <Label htmlFor="fullName">{t('users.fullName')}</Label>
             <Input
               id="fullName"
-              placeholder="الاسم الكامل"
+              placeholder={t('placeholders.fullName')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={isSubmitting}
@@ -167,18 +169,19 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
 
           {/* Role */}
           <div className="space-y-2">
-            <Label htmlFor="role">الدور</Label>
+            <Label htmlFor="role">{t('users.role')}</Label>
             <Select 
               onValueChange={(value: 'Admin' | 'Operator') => setRole(value)} 
               value={role}
               disabled={isSubmitting}
+              dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
             >
-              <SelectTrigger id="role">
-                <SelectValue placeholder="اختر الدور" />
+              <SelectTrigger id="role" className="rtl:flex-row-reverse">
+                <SelectValue placeholder={t('placeholders.selectRole')} />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Admin">مسؤول (Admin)</SelectItem>
-                <SelectItem value="Operator">مشغل (Operator)</SelectItem>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                <SelectItem value="Admin">{t('users.admin')} (Admin)</SelectItem>
+                <SelectItem value="Operator">{t('users.operator')} (Operator)</SelectItem>
               </SelectContent>
             </Select>
             {errors.role && (
@@ -188,7 +191,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
 
           {role === 'Operator' && availableSites && availableSites.length > 0 && (
             <div className="space-y-2">
-              <Label>تخصيص المواقع (للمشغلين فقط)</Label>
+              <Label>{t('users.sitesForOperators')}</Label>
               <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
                 {availableSites.map(site => (
                   <div key={site.id} className="flex items-center gap-2">
@@ -209,7 +212,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
               </div>
               {errors.assignedSites && <p className="text-red-600 text-xs mt-1">{errors.assignedSites}</p>}
               <p className="text-xs text-gray-500">
-                المسؤولون لديهم وصول لجميع المواقع تلقائياً
+                {t('users.adminsHaveAllAccess')}
               </p>
             </div>
           )}
@@ -240,15 +243,15 @@ export function EditUserDialog({ open, onOpenChange, user, onEditSuccess, logged
             onClick={handleClose}
             disabled={isSubmitting}
           >
-            إلغاء
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={handleEditUser}
             disabled={isSubmitting}
-            loadingText="جاري الحفظ..." 
+            loadingText={t('messages.saving')} 
             isLoading={isSubmitting}
           >
-            حفظ التغييرات
+            {t('buttons.saveChanges')}
           </Button>
         </DialogFooter>
       </DialogContent>

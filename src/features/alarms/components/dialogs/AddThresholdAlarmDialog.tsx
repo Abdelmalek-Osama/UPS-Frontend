@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -68,6 +69,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     setPhones,
     submissionError
 }: AddThresholdAlarmDialogProps, ref) => {
+    const { t } = useTranslation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
@@ -201,9 +203,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
             <DialogContent ref={ref} style={dialogContentStyle}>
                 <div style={headerContainerStyle}>
                     <DialogHeader>
-                        <DialogTitle style={titleStyle}>إضافة تنبيه قيمة حدية</DialogTitle>
+                        <DialogTitle style={titleStyle}>{t('alarms.addThresholdAlarm')}</DialogTitle>
                         <DialogDescription style={descriptionStyle}>
-                            تكوين تنبيه جديد عند تجاوز قيمة معينة
+                            {t('alarms.thresholdAlarmFormula')}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -211,20 +213,21 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                 <div ref={scrollContainerRef} style={scrollContainerStyle}>
                     <div style={contentWrapperStyle}>
                         <div style={fieldContainerStyle}>
-                            <Label>الموقع</Label>
+                            <Label>{t('alarms.site')}</Label>
                             <Select
                                 onValueChange={(value) => setForm(prev => ({
                                     ...prev,
                                     siteId: parseInt(value)
                                 }))}
                                 value={form.siteId?.toString() || ""}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر الموقع" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('readings.selectSite')} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {sitesLoading ? (
-                                        <SelectItem value="0">جاري التحميل...</SelectItem>
+                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
                                     ) : sitesError ? (
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
@@ -237,10 +240,10 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>اسم التنبيه</Label>
+                            <Label>{t('alarms.alarmName')}</Label>
                             <Input
                                 type="text"
-                                placeholder="اسم التنبيه"
+                                placeholder={t('alarms.alarmName')}
                                 value={form.alarmName}
                                 onChange={(e) => {
                                     setForm(prev => ({
@@ -257,18 +260,19 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>الحقل</Label>
+                            <Label>{t('alarms.field')}</Label>
                             <Select
                                 onValueChange={(value) => setForm(prev => ({
                                     ...prev,
                                     field: value
                                 }))}
                                 value={form.field}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر الحقل" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('alarms.field')} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {availableFields.map(field => (
                                         <SelectItem key={field} value={field}>{field}</SelectItem>
                                     ))}
@@ -278,18 +282,19 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
 
                         <div style={gridContainerStyle}>
                             <div style={fieldContainerStyle}>
-                                <Label>المعامل</Label>
+                                <Label>{t('alarms.operator')}</Label>
                                 <Select
                                     onValueChange={(value) => setForm(prev => ({
                                         ...prev,
                                         operator: value
                                     }))}
                                     value={form.operator}
+                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="اختر المعامل" />
+                                    <SelectTrigger className="rtl:flex-row-reverse">
+                                        <SelectValue placeholder={t('alarms.operator')} />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                         {OPERATORS.map(op => (
                                             <SelectItem key={op} value={op}>{OPERATOR_LABELS[op] || op}</SelectItem>
                                         ))}
@@ -298,7 +303,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             </div>
 
                             <div style={fieldContainerStyle}>
-                                <Label>القيمة الحدية</Label>
+                                <Label>{t('alarms.threshold')}</Label>
                                 <Input
                                     type="number"
                                     step="0.1"
@@ -319,7 +324,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                             setForm(prev => ({
                                                 ...prev,
                                                 threshold: Math.max(0, parsedValue),
-                                                thresholdError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                                thresholdError: t('validation.invalidNumber')
                                             }));
                                         } else {
                                             setForm(prev => ({
@@ -337,26 +342,27 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>مستوى الخطورة</Label>
+                            <Label>{t('alarms.severity')}</Label>
                             <Select
                                 onValueChange={(value: 'Warning' | 'Critical') => setForm(prev => ({
                                     ...prev,
                                     severity: value
                                 }))}
                                 value={form.severity}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر المستوى" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('alarms.severity')} />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Warning">تحذير</SelectItem>
-                                    <SelectItem value="Critical">حرج</SelectItem>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                    <SelectItem value="Warning">{t('alarms.warning')}</SelectItem>
+                                    <SelectItem value="Critical">{t('alarms.critical')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>اللون</Label>
+                            <Label>{t('alarms.color')}</Label>
                             <div style={colorInputContainerStyle}>
                                 <Input
                                     type="color"
@@ -378,7 +384,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                         setForm(prev => ({
                                             ...prev,
                                             color: inputValue,
-                                            colorError: isValidColor(inputValue) ? undefined : "صيغة اللون غير صالحة"
+                                            colorError: isValidColor(inputValue) ? undefined : t('alarms.invalidColorFormat')
                                         }));
                                     }}
                                 />
@@ -413,7 +419,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         )}
                         <div style={footerButtonsContainerStyle}>
                             <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                إلغاء
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 onClick={() => {
@@ -422,10 +428,10 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                     }
                                 }}
                                 disabled={isSubmitting || !form.siteId || !form.alarmName || !form.field || !form.operator || !!form.thresholdError || !!form.colorError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
-                                loadingText="جاري الإضافة..."
+                                loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >
-                                إضافة التنبيه
+                                {t('alarms.addThresholdAlarm')}
                             </Button>
                         </div>
                     </DialogFooter>

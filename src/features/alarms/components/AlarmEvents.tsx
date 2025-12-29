@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -81,6 +82,7 @@ interface AlarmEvent {
 }
 
 export function AlarmEvents() {
+  const { t } = useTranslation();
   const [selectedEvent, setSelectedEvent] = useState<AlarmEvent | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,7 +233,7 @@ export function AlarmEvents() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <Card>
         <CardHeader>
@@ -239,10 +241,10 @@ export function AlarmEvents() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-blue-600" />
-                أحداث التنبيهات
+                {t('alarms.events')}
               </CardTitle>
               <p className="text-sm text-gray-500 mt-2">
-                التنبيهات التي تم إنشاؤها تلقائياً من قراءات أجهزة الاستشعار وبيانات محطات الضخ
+                {t('alarms.eventsDescription')}
               </p>
             </div>
             
@@ -263,7 +265,7 @@ export function AlarmEvents() {
               <p className="text-sm text-red-600 mt-1">{error}</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleRefresh}>إعادة المحاولة</Button>
+              <Button onClick={handleRefresh}>{t('common.retry')}</Button>
             </div>
           </CardContent>
         </Card>
@@ -287,27 +289,27 @@ export function AlarmEvents() {
           </CardContent>
         </Card>
         ) : (
-        <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'table' | 'cards')} dir="rtl">
+        <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'table' | 'cards')} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <TabsList className="w-full grid grid-cols-2 md:inline-flex md:w-auto">
-            <TabsTrigger value="table">عرض الجدول</TabsTrigger>
-            <TabsTrigger value="cards">عرض البطاقات</TabsTrigger>
+            <TabsTrigger value="table">{t('alarms.tableView')}</TabsTrigger>
+            <TabsTrigger value="cards">{t('alarms.cardsView')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="table" className="mt-6">
             <Card>
               <CardContent className="pt-6">
-                  <Table>
+                  <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-right">رقم الحدث</TableHead>
-                        <TableHead className="text-right">اسم التنبيه</TableHead>
-                        <TableHead className="text-right hidden sm:table-cell">الموقع</TableHead>
-                        <TableHead className="text-right hidden xl:table-cell">الحقل</TableHead>
-                        <TableHead className="text-right hidden xl:table-cell">القيمة</TableHead>
-                        <TableHead className="text-right hidden xl:table-cell">القيمة الحدية</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">الخطورة</TableHead>
-                        <TableHead className="text-right hidden 2xl:table-cell">رمز اللون</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">وقت الإطلاق</TableHead>
+                        <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.id')}</TableHead>
+                        <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.alarmName')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden sm:table-cell`}>{t('readings.site')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{t('alarms.field')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{t('readings.value')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{t('alarms.threshold')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden md:table-cell`}>{t('alarms.severity')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden 2xl:table-cell`}>{t('alarms.color')}</TableHead>
+                        <TableHead className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden lg:table-cell`}>{t('common.dateTime')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -316,20 +318,20 @@ export function AlarmEvents() {
                           key={event.id} 
                           className="hover:bg-gray-50"
                         >
-                          <TableCell className="text-right">#{event.id}</TableCell>
-                          <TableCell className="text-right">{event.alarmName}</TableCell>
-                          <TableCell className="text-right hidden sm:table-cell">
+                          <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>#{event.id}</TableCell>
+                          <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{event.alarmName}</TableCell>
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden sm:table-cell`}>
                             {event.siteName}
                           </TableCell>
-                          <TableCell className="text-right hidden xl:table-cell">
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>
                             <Badge variant="outline">{event.fieldName}</Badge>
                           </TableCell>
-                          <TableCell className="text-right hidden xl:table-cell">{event.value ?? '—'}</TableCell>
-                          <TableCell className="text-right hidden xl:table-cell">{event.thresholdValue ?? '—'}</TableCell>
-                          <TableCell className="text-right hidden md:table-cell">
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{event.value ?? '—'}</TableCell>
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{event.thresholdValue ?? '—'}</TableCell>
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden md:table-cell`}>
                             {getSeverityBadge(event.severity)}
                           </TableCell>
-                          <TableCell className="text-right hidden 2xl:table-cell">
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden 2xl:table-cell`}>
                             <div className="flex items-center gap-2">
                               <div 
                                 className="w-6 h-6 rounded border shadow-sm"
@@ -337,7 +339,7 @@ export function AlarmEvents() {
                               />
                             </div>
                           </TableCell>
-                          <TableCell className="text-right hidden lg:table-cell text-sm">
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden lg:table-cell text-sm`}>
                             {event.triggeredAt}
                           </TableCell>
                         </TableRow>
@@ -348,7 +350,7 @@ export function AlarmEvents() {
               </Card>
           </TabsContent>
 
-          <TabsContent value="cards" className="mt-6">
+          <TabsContent value="cards" className="mt-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredEvents.map((event) => (
                     <Card 
@@ -367,33 +369,33 @@ export function AlarmEvents() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <p className="font-semibold text-right">{event.alarmName}</p>
-                          <p className="text-sm text-gray-500 text-right">
+                          <p className={`font-semibold ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>{event.alarmName}</p>
+                          <p className={`text-sm text-gray-500 ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
                             {event.siteName}
                           </p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="text-right">
-                            <p className="text-gray-500">الحقل</p>
+                          <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            <p className="text-gray-500">{t('alarms.field')}</p>
                             <Badge variant="outline" className="mt-1">{event.fieldName}</Badge>
                           </div>
-                          <div className="text-right">
-                            <p className="text-gray-500">القيم</p>
+                          <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            <p className="text-gray-500">{t('readings.value')}</p>
                             <p className="mt-1">{event.value ?? '—'} / {event.thresholdValue ?? '—'}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <div className="text-sm text-gray-500">رمز اللون</div>
+                          <div className="text-sm text-gray-500">{t('alarms.color')}</div>
                           <div 
                             className="w-8 h-8 rounded border shadow-sm"
                             style={{ backgroundColor: event.colorCode }}
                           />
                         </div>
 
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-right">
-                          <p className="font-medium mb-1">الرسالة</p>
+                        <div className={`bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
+                          <p className="font-medium mb-1">{t('alarms.message')}</p>
                           <p className="text-gray-600 leading-relaxed">{event.message}</p>
                         </div>
                       </CardContent>
@@ -401,7 +403,7 @@ export function AlarmEvents() {
                   ))}
                 </div>
                 
-                  <div className="text-center py-8">لا توجد تنبيهات لعرضها.</div>
+                  <div className="text-center py-8">{t('alarms.noEventsToDisplay')}</div>
                 
             </TabsContent>
           </Tabs>
@@ -410,16 +412,16 @@ export function AlarmEvents() {
 
       {/* Detail Drawer */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent side="left" className="w-[400px] sm:w-[540px]" dir="rtl">
+        <SheetContent side={t('_rtl') === 'rtl' ? 'left' : 'right'} className="w-[400px] sm:w-[540px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           {selectedEvent && (
             <>
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-blue-600" />
-                  تفاصيل حدث التنبيه
+                  {t('alarms.eventDetails')}
                 </SheetTitle>
                 <SheetDescription>
-                  حدث رقم #{selectedEvent.id}
+                  {t('alarms.eventNumber')} #{selectedEvent.id}
                 </SheetDescription>
               </SheetHeader>
 
@@ -440,29 +442,29 @@ export function AlarmEvents() {
 
                 {/* Alarm Name */}
                 <div>
-                  <Label className="text-gray-500">اسم التنبيه</Label>
+                  <Label className="text-gray-500">{t('alarms.alarmName')}</Label>
                   <p className="mt-1">{selectedEvent.alarmName}</p>
                 </div>
 
                 {/* Site Information */}
                 <div>
-                  <Label className="text-gray-500">اسم الموقع</Label>
+                  <Label className="text-gray-500">{t('readings.site')}</Label>
                   <p className="mt-1">{selectedEvent.siteName}</p>
                 </div>
 
                 {/* Field & Values */}
                 <div className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-gray-500">الحقل المراقب</Label>
+                    <Label className="text-gray-500">{t('alarms.field')}</Label>
                     <Badge variant="outline">{selectedEvent.fieldName}</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>
-                      <Label className="text-gray-500 text-sm">القيمة المسجلة</Label>
+                      <Label className="text-gray-500 text-sm">{t('readings.actualValue')}</Label>
                       <p className="mt-1 text-lg text-right">{selectedEvent.value ?? '—'}</p>
                     </div>
                     <div>
-                      <Label className="text-gray-500 text-sm">القيمة الحدية</Label>
+                      <Label className="text-gray-500 text-sm">{t('alarms.threshold')}</Label>
                       <p className="mt-1 text-lg text-right">{selectedEvent.thresholdValue ?? '—'}</p>
                     </div>
                   </div>
@@ -470,23 +472,23 @@ export function AlarmEvents() {
 
                 {/* Message */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <Label className="text-gray-500">الرسالة الكاملة</Label>
+                  <Label className="text-gray-500">{t('common.message')}</Label>
                   <p className="mt-2 text-sm leading-relaxed">{selectedEvent.message}</p>
                 </div>
 
                 {/* Time Info */}
                 <div>
-                  <Label className="text-gray-500">وقت الإطلاق</Label>
+                  <Label className="text-gray-500">{t('common.dateTime')}</Label>
                   <p className="mt-1 text-sm">{selectedEvent.triggeredAt}</p>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="pt-4 border-t space-y-2">
                   <Button className="w-full" variant="outline">
-                    عرض القراءة الكاملة
+                    {t('alarms.viewFullReading')}
                   </Button>
                   <Button className="w-full" variant="outline">
-                    عرض تكوين التنبيه
+                    {t('alarms.viewAlarmConfiguration')}
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, 
   MapPin, 
@@ -19,6 +20,7 @@ import { ReadingsManagement } from '../features/readings';
 import { AlarmConfiguration } from '../features/alarms';
 import { FlowCalculations } from '../features/flow-calculations';
 import { UserManagement } from '../features/users';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import type { User } from '../features/auth';
 
 interface DashboardLayoutProps {
@@ -28,17 +30,18 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: DashboardLayoutProps) {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
   const allMenuItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/', roles: ['Admin'] },
-    { id: 'sites', label: 'إدارة المواقع', icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
-    { id: 'readings', label: 'القراءات', icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
-    { id: 'alarms', label: 'تكوين التنبيهات', icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
-    { id: 'alarm-events', label: 'أحداث التنبيهات', icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
-    { id: 'calculations', label: 'حسابات التدفق', icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
-    { id: 'users', label: 'إدارة المستخدمين', icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
+    { id: 'dashboard', label: t('navigation.dashboard'), icon: LayoutDashboard, path: '/', roles: ['Admin'] },
+    { id: 'sites', label: t('navigation.sites'), icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
+    { id: 'readings', label: t('navigation.readings'), icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
+    { id: 'alarms', label: t('navigation.alarms'), icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
+    { id: 'alarm-events', label: t('navigation.alarmEvents'), icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
+    { id: 'calculations', label: t('navigation.calculations'), icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
+    { id: 'users', label: t('navigation.users'), icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
   ];
 
   // Filter menu items based on user role
@@ -47,7 +50,7 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
   
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden" dir="rtl">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Top Navigation Bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 w-full">
         <div className="flex items-center justify-between px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
@@ -65,18 +68,19 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
                 <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="font-semibold text-sm sm:text-base truncate">نظام مراقبة الري</h1>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">وزارة الموارد المائية والري</p>
+                <h1 className="font-semibold text-sm sm:text-base truncate">{t('auth.loginTitle')}</h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('auth.loginDescription')}</p>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <div className="text-right hidden sm:block" dir="rtl">
+            <LanguageSwitcher />
+            <div className="text-right hidden sm:block" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
               <p className="text-sm font-medium" style={{ unicodeBidi: 'plaintext' }}>
                 {currentUser.fullName}
               </p>
-              <p className="text-xs text-gray-500">{currentUser.role === 'Admin' ? 'مسؤول' : 'مشغل'}</p>
+              <p className="text-xs text-gray-500">{currentUser.role === 'Admin' ? t('users.admin') : t('users.operator')}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onLogout} className="flex-shrink-0">
               <LogOut className="h-5 w-5" />
