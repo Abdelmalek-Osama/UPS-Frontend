@@ -258,6 +258,14 @@
     "cardsView": "Cards View",
     "emailRecipients": "Email Recipients",
     "phoneRecipients": "Phone Recipients",
+    "operators": {
+      "greaterThan": "Greater than",
+      "lessThan": "Less than",
+      "greaterThanOrEqual": "Greater than or equal",
+      "lessThanOrEqual": "Less than or equal",
+      "equal": "Equal",
+      "notEqual": "Not equal"
+    },
     "events": "Alarm Events",
     "eventDetails": "Event Details",
     "eventNumber": "Event #",

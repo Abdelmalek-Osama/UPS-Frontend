@@ -71,13 +71,15 @@ export const FIELDS = [
 
 export const OPERATORS = ['>', '<', '>=', '<=', '==', '!='];
 
-export const OPERATOR_LABELS: Record<string, string> = {
-    '>': 'اكثر من',
-    '<': 'اقل من',
-    '>=': 'اكثر من او يساوي',
-    '<=': 'اقل من او يساوي',
-    '==': 'يساوي',
-    '!=': 'لا يساوي'
+export const getOperatorLabels = (t: (key: string) => string): Record<string, string> => {
+    return {
+        '>': t('alarms.operators.greaterThan'),
+        '<': t('alarms.operators.lessThan'),
+        '>=': t('alarms.operators.greaterThanOrEqual'),
+        '<=': t('alarms.operators.lessThanOrEqual'),
+        '==': t('alarms.operators.equal'),
+        '!=': t('alarms.operators.notEqual')
+    };
 };
 
 // Assuming ThresholdAlarmForm and CommunicationAlarmForm are defined elsewhere (e.g., in types/index.ts)
@@ -102,7 +104,7 @@ export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
     siteId: 0,
     alarmName: '',
     site: '',
-    severity: 'Warning',
+    // severity: 'Warning',
     hours: 0,
     emails: [],
     phones: [],

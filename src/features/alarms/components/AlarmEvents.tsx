@@ -82,7 +82,7 @@ interface AlarmEvent {
 }
 
 export function AlarmEvents() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedEvent, setSelectedEvent] = useState<AlarmEvent | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +95,15 @@ export function AlarmEvents() {
   const [alarmEvents, setAlarmEvents] = useState<AlarmEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (i18n.language === 'en') {
+      return format(date, 'MM/dd/yyyy HH:mm:ss');
+    } else {
+      return format(date, 'dd/MM/yyyy HH:mm:ss', { locale: ar });
+    }
+  };
 
   const handleTabChange = (value: string) => {
     setActiveView(value as 'table' | 'cards');
@@ -295,8 +304,8 @@ export function AlarmEvents() {
         ) : (
         <Tabs value={activeView} onValueChange={handleTabChange} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <TabsList className="w-full grid grid-cols-2 md:inline-flex md:w-auto">
-            <TabsTrigger value="table">{t('alarms.tableView')}</TabsTrigger>
-            <TabsTrigger value="cards">{t('alarms.cardsView')}</TabsTrigger>
+            <TabsTrigger value="table" className="cursor-pointer">{t('alarms.tableView')}</TabsTrigger>
+            <TabsTrigger value="cards" className="cursor-pointer">{t('alarms.cardsView')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="table" className="mt-6">
@@ -331,7 +340,7 @@ export function AlarmEvents() {
                             <Badge variant="outline">{event.fieldName}</Badge>
                           </TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{event.value ?? '—'}</TableCell>
-                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{event.thresholdValue ?? '—'}</TableCell>
+                          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} text-center hidden xl:table-cell`}>{event.thresholdValue ?? '—'}</TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden md:table-cell`}>
                             {getSeverityBadge(event.severity)}
                           </TableCell>
@@ -344,7 +353,7 @@ export function AlarmEvents() {
                             </div>
                           </TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden lg:table-cell text-sm`}>
-                            {event.triggeredAt}
+                            {formatDate(event.triggeredAt)}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -369,7 +378,7 @@ export function AlarmEvents() {
                           </div>
                           {getSeverityBadge(event.severity)}
                         </div>
-                        <p className="text-sm text-gray-500">{event.triggeredAt}</p>
+                        <p className="text-sm text-gray-500">{formatDate(event.triggeredAt)}</p>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>

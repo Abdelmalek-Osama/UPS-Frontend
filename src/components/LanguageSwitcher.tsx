@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={t('common.switchLanguage') || 'Switch language'}
       >
@@ -43,7 +43,7 @@ export function LanguageSwitcher() {
                 i18n.changeLanguage('en');
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${i18n.language === 'en' ? 'font-semibold' : ''}`}
+              className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${i18n.language === 'en' ? 'font-semibold' : ''}`}
             >
               {t('common.language_en') || 'English'}
             </button>
@@ -52,7 +52,7 @@ export function LanguageSwitcher() {
                 i18n.changeLanguage('ar');
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${i18n.language === 'ar' ? 'font-semibold' : ''}`}
+              className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${i18n.language === 'ar' ? 'font-semibold' : ''}`}
             >
               {t('common.language_ar') || 'العربية'}
             </button>

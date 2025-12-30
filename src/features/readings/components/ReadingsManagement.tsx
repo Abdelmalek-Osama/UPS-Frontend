@@ -393,76 +393,80 @@ export function ReadingsManagement() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="waterLevel">{t('readings.waterLevel')}</TabsTrigger>
-          <TabsTrigger
-            value="pumpStation"
-            disabled={selectedSite?.data?.numPumps === 0}
-          >{t('readings.pumpStation')}</TabsTrigger>
-        </TabsList>
+  <TabsList className="grid w-full grid-cols-2">
+    <TabsTrigger value="waterLevel" className="cursor-pointer">
+      {t('readings.waterLevel')}
+    </TabsTrigger>
+    <TabsTrigger
+      value="pumpStation"
+      disabled={selectedSite?.data?.numPumps === 0}
+      // className={selectedSite?.data?.numPumps === 0 ? "cursor-not-allowed" : "cursor-pointer"}
+      style={selectedSite?.data?.numPumps === 0 ? { cursor: 'not-allowed' } : { cursor: 'pointer' }}
+    >
+      {t('readings.pumpStation')}
+    </TabsTrigger>
+  </TabsList>
 
-        <TabsContent value="waterLevel" className="mt-6">
-          {isInitialLoading || isLoadingWaterLevel ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader />
-            </div>
-          ) : (
-            <WaterLevelTable
-              readings={waterLevelReadings}
-              isAddDialogOpen={isAddDialogOpen}
-              setIsAddDialogOpen={setIsAddDialogOpen}
-              sites={sites}
-              handleExport={handleWaterLevelExport}
-              isEditWaterLevelOpen={isEditWaterLevelOpen}
-              setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
-              editingWaterLevel={editingWaterLevel}
-              handleEditWaterLevel={handleEditWaterLevel}
-              isLoading={isLoading || isLoadingWaterLevel}
-              error={waterLevelError}
-              createWaterLevelReading={createWaterLevelReading}
-              updateWaterLevelReading={updateWaterLevelReading}
-              selectedSiteId={selectedSiteId}
-              fetchWaterLevelReadings={fetchWaterLevelReadings}
-              fromDate={fromDate}
-              toDate={toDate}
-            />
-          )}
+  <TabsContent value="waterLevel" className="mt-6">
+    {isInitialLoading || isLoadingWaterLevel ? (
+      <div className="flex justify-center items-center h-48">
+        <Loader />
+      </div>
+    ) : (
+      <WaterLevelTable
+        readings={waterLevelReadings}
+        isAddDialogOpen={isAddDialogOpen}
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        sites={sites}
+        handleExport={handleWaterLevelExport}
+        isEditWaterLevelOpen={isEditWaterLevelOpen}
+        setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
+        editingWaterLevel={editingWaterLevel}
+        handleEditWaterLevel={handleEditWaterLevel}
+        isLoading={isLoading || isLoadingWaterLevel}
+        error={waterLevelError}
+        createWaterLevelReading={createWaterLevelReading}
+        updateWaterLevelReading={updateWaterLevelReading}
+        selectedSiteId={selectedSiteId}
+        fetchWaterLevelReadings={fetchWaterLevelReadings}
+        fromDate={fromDate}
+        toDate={toDate}
+      />
+    )}
+  </TabsContent>
 
-        </TabsContent>
-
-
-        <TabsContent value="pumpStation" className="mt-6">
-          {isInitialLoading || isLoadingPumpStation ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader />
-            </div>
-          ) : (
-            <PumpStationTable
-              readings={pumpStationReadings}
-              // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
-              isAddDialogOpen={isAddDialogOpen}
-              setIsAddDialogOpen={setIsAddDialogOpen}
-              sites={sites}
-              handleExport={handlePumpStationExport}
-              isEditPumpStationOpen={isEditPumpStationOpen}
-              setIsEditPumpStationOpen={setIsEditPumpStationOpen}
-              editingPumpStation={editingPumpStation}
-              setEditingPumpStation={setEditingPumpStation}
-              handleEditPumpStation={handleEditPumpStation}
-              selectedSiteId={selectedSiteId}
-              startDate={fromDate ?? undefined}
-              endDate={toDate ?? undefined}
-              isLoading={isLoading || isLoadingPumpStation}
-              error={pumpStationError}
-              fetchPumpStationReadings={fetchPumpStationReadings}
-              createPumpStationReading={createPumpStationReading}
-              updatePumpStationReading={updatePumpStationReading}
-              selectedSite={selectedSite?.data ?? null}
-              handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+  <TabsContent value="pumpStation" className="mt-6">
+    {isInitialLoading || isLoadingPumpStation ? (
+      <div className="flex justify-center items-center h-48">
+        <Loader />
+      </div>
+    ) : (
+      <PumpStationTable
+        readings={pumpStationReadings}
+        // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
+        isAddDialogOpen={isAddDialogOpen}
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        sites={sites}
+        handleExport={handlePumpStationExport}
+        isEditPumpStationOpen={isEditPumpStationOpen}
+        setIsEditPumpStationOpen={setIsEditPumpStationOpen}
+        editingPumpStation={editingPumpStation}
+        setEditingPumpStation={setEditingPumpStation}
+        handleEditPumpStation={handleEditPumpStation}
+        selectedSiteId={selectedSiteId}
+        startDate={fromDate ?? undefined}
+        endDate={toDate ?? undefined}
+        isLoading={isLoading || isLoadingPumpStation}
+        error={pumpStationError}
+        fetchPumpStationReadings={fetchPumpStationReadings}
+        createPumpStationReading={createPumpStationReading}
+        updatePumpStationReading={updatePumpStationReading}
+        selectedSite={selectedSite?.data ?? null}
+        handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
+      />
+    )}
+  </TabsContent>
+</Tabs>
 
 
       {/* Pump Details Dialog */}

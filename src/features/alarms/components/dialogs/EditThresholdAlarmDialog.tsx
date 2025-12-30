@@ -20,7 +20,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
-import { OPERATORS, OPERATOR_LABELS } from '../../utils/alarmConstants';
+import { OPERATORS, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
 
 // Utility function to validate color input
@@ -256,7 +256,7 @@ export function EditThresholdAlarmDialog({
                                 </SelectTrigger>
                                 <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {OPERATORS.map(op => (
-                                        <SelectItem key={op} value={op}>{OPERATOR_LABELS[op] || op}</SelectItem>
+                                        <SelectItem key={op} value={op}>{getOperatorLabels(t)[op] || op}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

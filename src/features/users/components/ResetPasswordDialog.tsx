@@ -23,13 +23,16 @@ interface ResetPasswordDialogProps {
 }
 
 export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordDialogProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = t('_rtl') === 'rtl';
+  
+  
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false); // New state for reset password submission
+  const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -37,15 +40,15 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       setNewPassword('');
       setConfirmPassword('');
       setErrors([]);
-      setSubmissionError(null); // Clear submission error
-      setIsSubmittingResetPassword(false); // Reset submitting state on dialog close
+      setSubmissionError(null);
+      setIsSubmittingResetPassword(false);
     }
   }, [open]);
 
   const handleSubmit = async () => {
-    setIsSubmittingResetPassword(true); // Set submitting state to true
-    setErrors([]); // Clear previous validation errors
-    setSubmissionError(null); // Clear previous submission errors
+    setIsSubmittingResetPassword(true);
+    setErrors([]);
+    setSubmissionError(null);
     const currentErrors: string[] = [];
 
     if (!newPassword) {
@@ -76,13 +79,13 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
     setErrors(currentErrors);
 
     if (currentErrors.length > 0) {
-      setIsSubmittingResetPassword(false); // Reset on validation failure
+      setIsSubmittingResetPassword(false);
       return;
     }
 
     if (!user) {
-      setSubmissionError(t('errors.userNotSelected')); // Set error for undefined user
-      setIsSubmittingResetPassword(false); // Reset if user is not defined
+      setSubmissionError(t('errors.userNotSelected'));
+      setIsSubmittingResetPassword(false);
       return;
     }
 
@@ -92,7 +95,6 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
         newPassword,
       });
       
-      // Display success message in Arabic
       toast.success(t('users.resetPasswordSuccessMessage'));
       onOpenChange(false);
     } catch (error: any) {
@@ -100,41 +102,50 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
       setSubmissionError(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setIsSubmittingResetPassword(false); // Reset submitting state to false
+      setIsSubmittingResetPassword(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen && (errors.length > 0 || submissionError)) {
-        return; // Prevent closing if there are validation or submission errors
+        return;
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+      <DialogContent dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('dialogs.resetPassword')}</DialogTitle>
-          <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+          <DialogTitle className={isRTL ? 'text-right' : 'text-left'}>{t('dialogs.resetPassword')}</DialogTitle>
+          <DialogDescription className={isRTL ? 'text-right' : 'text-left'}>
             {user?.userName && `${t('dialogs.resetPasswordFor')}: ${user?.userName}`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="new-password">{t('users.newPassword')}</Label>
-            <div className="relative">
+            <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
               <Input
                 id="new-password"
                 type={showNewPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+                style={{
+                  paddingRight: !isRTL ? '2.5rem' : undefined,
+                  paddingLeft: isRTL ? '2.5rem' : undefined
+                }}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  [isRTL ? 'left' : 'right']: 0,
+                  height: '2.25rem',
+                  width: '2.25rem',
+                }}
                 onClick={() => setShowNewPassword((prev) => !prev)}
               >
                 {showNewPassword ? (
@@ -147,20 +158,29 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
-            <div className="relative">
+            <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
               <Input
                 id="confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+                style={{
+                  paddingRight: !isRTL ? '2.5rem' : undefined,
+                  paddingLeft: isRTL ? '2.5rem' : undefined
+                }}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  [isRTL ? 'left' : 'right']: 0,
+                  height: '2.25rem',
+                  width: '2.25rem',
+                }}
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
               >
                 {showConfirmPassword ? (
@@ -173,7 +193,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             {errors.length > 0 && (
               <div className="mt-1">
                 {errors.map((error, index) => (
-                  <p key={index} className="text-red-600 text-xs text-right">
+                  <p key={index} className={`text-red-600 text-xs ${isRTL ? 'text-right' : 'text-left'}`}>
                     {error}
                   </p>
                 ))}

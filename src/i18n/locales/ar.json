@@ -221,7 +221,7 @@
     "alarmName": "اسم التنبيه",
     "site": "الموقع",
     "field": "الحقل",
-    "operator": "المشغل",
+    "operator": "المقارن",
     "threshold": "قيمة الحد",
     "color": "اللون",
     "severity": "شدة التنبيه",
@@ -258,6 +258,14 @@
     "cardsView": "عرض البطاقات",
     "emailRecipients": "المستلمون (البريد الإلكتروني)",
     "phoneRecipients": "المستلمون (أرقام الهواتف)",
+    "operators": {
+      "greaterThan": "أكثر من",
+      "lessThan": "أقل من",
+      "greaterThanOrEqual": "أكثر من أو يساوي",
+      "lessThanOrEqual": "أقل من أو يساوي",
+      "equal": "يساوي",
+      "notEqual": "لا يساوي"
+    },
     "events": "أحداث التنبيهات",
     "eventDetails": "تفاصيل الحدث",
     "eventNumber": "الحدث رقم",
