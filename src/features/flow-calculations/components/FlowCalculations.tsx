@@ -168,7 +168,7 @@ export function FlowCalculations() {
       {/* Formula Configuration */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-right">{t('flowCalculations.equationConfiguration')}</CardTitle>
+          <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('flowCalculations.equationConfiguration')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
@@ -207,7 +207,7 @@ export function FlowCalculations() {
             )} */}
           </div>
 
-          <div className="flex justify-start ">
+          <div className="flex justify-end">
             <Button
               disabled={constantsLoading || savingConstants}
               onClick={handleSaveConstants}

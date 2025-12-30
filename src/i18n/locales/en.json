@@ -239,7 +239,7 @@
     "invalidColorFormat": "Invalid color format",
     "communicationAlarmDescription": "An alarm will be sent if data is not received for this number of hours",
     "addingAlarm": "Adding alarm...",
-    "formula": "Formula",
+    "formula": "Equation",
     "equationConfiguration": "Equation Configuration",
     "thresholdAlarmFormula": "Formula: {{equation}}",
     "addAlarmSuccess": "Threshold alarm added successfully",

@@ -8,6 +8,7 @@ import { Lock, Mail, Droplets, Eye, EyeOff } from 'lucide-react';
 import apiService, { AuthResponse, ApiResponse } from '../../../shared/utils/apiService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/contexts/AuthContext';
+import {LanguageSwitcher} from '../../../components/LanguageSwitcher';
 
 interface LoginPageProps {
   // onLogin: (authResponse: AuthResponse) => void; // No longer needed
@@ -65,12 +66,21 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       <Card className="w-full max-w-md mx-4">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
+        <CardHeader className="space-y-4 text-center relative">
+           <div 
+            className="absolute top-4"
+            style={{
+              insetInlineEnd: '1rem' /* Right in LTR, Left in RTL */
+            }}
+          >
+            <LanguageSwitcher />
+          </div>
+          <div className="flex justify-center pt-4">
             <div className="bg-blue-600 p-4 rounded-full">
               <Droplets className="w-12 h-12 text-white" />
             </div>
           </div>
+          
           <div>
             <CardTitle className="text-2xl">{t('auth.loginTitle')}</CardTitle>
             <CardDescription className="mt-2">
