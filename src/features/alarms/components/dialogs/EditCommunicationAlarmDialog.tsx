@@ -82,13 +82,15 @@ export function EditCommunicationAlarmDialog({
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                <DialogHeader>
-                    <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editCommunicationAlarm')}</DialogTitle>
-                    <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                        {t('alarms.editCommunicationAlarmDescription')}
-                    </DialogDescription>
-                </DialogHeader>
+                <DialogContent 
+                className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" 
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                    <DialogHeader>
+                        <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editCommunicationAlarm')}</DialogTitle>
+                        <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            {t('alarms.editCommunicationAlarmDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">

@@ -91,7 +91,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
         flexDirection: 'column',
         padding: 0,
         overflow: 'hidden',
-        direction: 'rtl'
+        
     };
 
     const headerContainerStyle: React.CSSProperties = {
@@ -103,13 +103,13 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
         borderBottom: '1px solid hsl(var(--border))'
     };
 
-    const titleStyle: React.CSSProperties = {
-        textAlign: 'right'
-    };
+    // const titleStyle: React.CSSProperties = {
+    //     textAlign: 'right'
+    // };
 
-    const descriptionStyle: React.CSSProperties = {
-        textAlign: 'right'
-    };
+    // const descriptionStyle: React.CSSProperties = {
+    //     textAlign: 'right'
+    // };
 
     const scrollContainerStyle: React.CSSProperties = {
         flex: 1,
@@ -200,11 +200,24 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent ref={ref} style={dialogContentStyle}>
+            <DialogContent 
+    ref={ref} 
+    className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
+    style={{
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 0,
+        overflow: 'hidden'
+    }}
+    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+>
                 <div style={headerContainerStyle}>
                     <DialogHeader>
-                        <DialogTitle style={titleStyle}>{t('alarms.addThresholdAlarm')}</DialogTitle>
-                        <DialogDescription style={descriptionStyle}>
+                        <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            {t('alarms.addThresholdAlarm')}
+                        </DialogTitle>
+                        <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             {t('alarms.thresholdAlarmFormula')}
                         </DialogDescription>
                     </DialogHeader>

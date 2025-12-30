@@ -1001,18 +1001,18 @@ export function WaterLevelTable({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table dir="rtl">
+        <div className="overflow-x-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+          <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">{t('readings.selectSite')}</TableHead>
-                <TableHead className="text-right">{t('readings.dateAndTime')}</TableHead>
-                {showUSWL && <TableHead className="text-right">USWL ({t('readings.meter')})</TableHead>}
-                {showDSWL1 && <TableHead className="text-right">DSWL1 ({t('readings.meter')})</TableHead>}
-                {showDSWL2 && <TableHead className="text-right">DSWL2 ({t('readings.meter')})</TableHead>}
-                <TableHead className="text-right">{t('readings.battery')} (V)</TableHead>
-                <TableHead className="text-right">{t('readings.calculatedFlow')}</TableHead>
-                <TableHead className="text-right">{t('common.actions')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.selectSite')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateAndTime')}</TableHead>
+                {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>USWL ({t('readings.meter')})</TableHead>}
+                {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL1 ({t('readings.meter')})</TableHead>}
+                {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL2 ({t('readings.meter')})</TableHead>}
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.battery')} (V)</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.calculatedFlow')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1043,26 +1043,26 @@ export function WaterLevelTable({
               {!isLoading && !error && readings.map((reading) => {
                 return (
                 <TableRow key={reading.id}>
-                  <TableCell className="text-right font-medium">{reading.site}</TableCell>
-                  <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
                   )}
                   {showDSWL1 && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
                   )}
                   {showDSWL2 && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
                   )}
-                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
                     {reading.battery?.toFixed(2) ?? ''}
                   </TableCell>
-                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Calculated_flow').colorCode, fontWeight: hasAlarmForField(reading, 'Calculated_flow') ? 'bold' : 'normal' }}>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Calculated_flow').colorCode, fontWeight: hasAlarmForField(reading, 'Calculated_flow') ? 'bold' : 'normal' }}>
                     <div className="flex items-center justify-start gap-2">
                       <span>{reading.calculatedFlow.toFixed(2)} {t('readings.flowUnit')}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"

@@ -96,6 +96,10 @@ export function AlarmEvents() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const handleTabChange = (value: string) => {
+    setActiveView(value as 'table' | 'cards');
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.innerWidth < 768) {
@@ -289,7 +293,7 @@ export function AlarmEvents() {
           </CardContent>
         </Card>
         ) : (
-        <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'table' | 'cards')} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+        <Tabs value={activeView} onValueChange={handleTabChange} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <TabsList className="w-full grid grid-cols-2 md:inline-flex md:w-auto">
             <TabsTrigger value="table">{t('alarms.tableView')}</TabsTrigger>
             <TabsTrigger value="cards">{t('alarms.cardsView')}</TabsTrigger>

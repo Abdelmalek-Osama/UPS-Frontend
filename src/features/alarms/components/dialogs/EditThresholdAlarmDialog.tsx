@@ -77,7 +77,39 @@ export function EditThresholdAlarmDialog({
 }: EditThresholdAlarmDialogProps) {
     const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+    const headerContainerStyle: React.CSSProperties = {
+        paddingLeft: '1.5rem',
+        paddingRight: '1.5rem',
+        paddingTop: '1.5rem',
+        paddingBottom: '1rem',
+        flexShrink: 0,
+        borderBottom: '1px solid hsl(var(--border))'
+    };
 
+    const scrollContainerStyle: React.CSSProperties = {
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        paddingLeft: '1.5rem',
+        paddingRight: '1.5rem',
+        paddingTop: '1rem',
+        paddingBottom: '1rem',
+        minHeight: 0,
+        WebkitOverflowScrolling: 'touch'
+    };
+
+    const footerContainerStyle: React.CSSProperties = {
+        paddingLeft: '1.5rem',
+        paddingRight: '1.5rem',
+        paddingTop: '1rem',
+        paddingBottom: '1.5rem',
+        flexShrink: 0,
+        borderTop: '1px solid hsl(var(--border))'
+    };
+
+    const footerStyle: React.CSSProperties = {
+        marginTop: 0
+    };
     useEffect(() => {
         if (currentAlarm && currentAlarm.threshold < 0) {
             setForm(prev => ({
@@ -92,23 +124,40 @@ export function EditThresholdAlarmDialog({
         }
     }, [currentAlarm, setForm]);
 
-    return (
-        <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
-            }
-            onOpenChange(newOpen);
-        }}>
-            <DialogContent className="w-[95vw] max-w-[600px] overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+   return (
+    <Dialog open={open} onOpenChange={(newOpen) => {
+        if (!newOpen && submissionError) {
+            // Prevent closing if there's a submission error
+            return;
+        }
+        onOpenChange(newOpen);
+    }}>
+        <DialogContent 
+    className="w-[95vw] max-w-[600px] sm:max-w-lg flex flex-col p-0"
+    style={{
+        height: '80vh',
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+    }}
+    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+>
+            {/* Fixed Header */}
+            <div style={headerContainerStyle}>
                 <DialogHeader>
-                    <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editThresholdAlarm')}</DialogTitle>
+                    <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                        {t('alarms.editThresholdAlarm')}
+                    </DialogTitle>
                     <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                         {t('alarms.editThresholdAlarmDescription')}
                     </DialogDescription>
                 </DialogHeader>
+            </div>
 
-                <div className="space-y-6 py-4">
+            {/* Scrollable Content - THIS MUST HAVE flex-1 */}
+            <div style={scrollContainerStyle}>
+                <div className="space-y-6">
                     <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
@@ -247,7 +296,7 @@ export function EditThresholdAlarmDialog({
                                     setHasChanges(true);
                                 }}
                             />
-                             {form.thresholdError && (
+                            {form.thresholdError && (
                                 <p className="text-red-600 text-sm">{form.thresholdError}</p>
                             )}
                         </div>
@@ -329,7 +378,10 @@ export function EditThresholdAlarmDialog({
                         setHasChanges={setHasChanges}
                     />
                 </div>
+            </div>
 
+            {/* Fixed Footer */}
+            <div className="px-6 py-4 flex-shrink-0 border-t border-border">
                 <DialogFooter>
                     {submissionError && (
                         <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
@@ -352,7 +404,8 @@ export function EditThresholdAlarmDialog({
                         </Button>
                     </div>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
+            </div>
+        </DialogContent>
+    </Dialog>
+);
 }

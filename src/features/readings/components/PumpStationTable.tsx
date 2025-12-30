@@ -1074,7 +1074,7 @@ export function PumpStationTable({
         </div>
       </CardHeader>
       <CardContent className="overflow-x-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <TableHeader>
               <TableRow>
