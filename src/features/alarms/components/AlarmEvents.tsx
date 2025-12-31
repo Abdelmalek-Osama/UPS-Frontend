@@ -83,6 +83,28 @@ interface AlarmEvent {
 
 export function AlarmEvents() {
   const { t, i18n } = useTranslation();
+
+  const translateFieldName = (fieldName: string) => {
+    const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
+    if (normalized === 'communicationloss') {
+      return t('alarms.communicationLoss');
+    }
+    if (normalized === 'battery') {
+      return t('alarms.battery');
+    }
+    if (normalized === 'total flow') {
+      return t('alarms.totalFlow');
+    }
+    if (normalized === 'total uptime') {
+      return t('alarms.totalUptime');
+    }
+    return fieldName;
+  };
+
+  const translateAlarmName = (alarmName: string) => {
+    return alarmName.replace(/ Alarm$/i, ' ' + t('alarms.alarm'));
+  };
+
   const [selectedEvent, setSelectedEvent] = useState<AlarmEvent | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,9 +207,9 @@ export function AlarmEvents() {
 
   const getSeverityBadge = (severity: 'warning' | 'critical' | 'info') => {
     const config = {
-      critical: { label: 'حرج', className: 'bg-red-100 text-red-700 border-red-300' },
-      warning: { label: 'تحذير', className: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
-      info: { label: 'معلومات', className: 'bg-blue-100 text-blue-700 border-blue-300' }
+      critical: { label: t('alarms.critical'), className: 'bg-red-100 text-red-700 border-red-300' },
+      warning: { label: t('alarms.warning'), className: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+      info: { label: t('alarms.info'), className: 'bg-blue-100 text-blue-700 border-blue-300' }
     };
     return (
       <Badge className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden ${config[severity].className}`}>
@@ -332,12 +354,12 @@ export function AlarmEvents() {
                           className="hover:bg-gray-50"
                         >
                           <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>#{event.id}</TableCell>
-                          <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{event.alarmName}</TableCell>
+                          <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{translateAlarmName(event.alarmName)}</TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden sm:table-cell`}>
                             {event.siteName}
                           </TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>
-                            <Badge variant="outline">{event.fieldName}</Badge>
+                            <Badge variant="outline">{translateFieldName(event.fieldName)}</Badge>
                           </TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>{event.value ?? '—'}</TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} text-center hidden xl:table-cell`}>{event.thresholdValue ?? '—'}</TableCell>
@@ -382,7 +404,7 @@ export function AlarmEvents() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <p className={`font-semibold ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>{event.alarmName}</p>
+                          <p className={`font-semibold ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>{translateAlarmName(event.alarmName)}</p>
                           <p className={`text-sm text-gray-500 ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
                             {event.siteName}
                           </p>
@@ -391,7 +413,7 @@ export function AlarmEvents() {
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <p className="text-gray-500">{t('alarms.field')}</p>
-                            <Badge variant="outline" className="mt-1">{event.fieldName}</Badge>
+                            <Badge variant="outline" className="mt-1">{translateFieldName(event.fieldName)}</Badge>
                           </div>
                           <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             <p className="text-gray-500">{t('readings.value')}</p>
@@ -456,7 +478,7 @@ export function AlarmEvents() {
                 {/* Alarm Name */}
                 <div>
                   <Label className="text-gray-500">{t('alarms.alarmName')}</Label>
-                  <p className="mt-1">{selectedEvent.alarmName}</p>
+                  <p className="mt-1">{translateAlarmName(selectedEvent.alarmName)}</p>
                 </div>
 
                 {/* Site Information */}
@@ -469,7 +491,7 @@ export function AlarmEvents() {
                 <div className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-gray-500">{t('alarms.field')}</Label>
-                    <Badge variant="outline">{selectedEvent.fieldName}</Badge>
+                    <Badge variant="outline">{translateFieldName(selectedEvent.fieldName)}</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>

@@ -25,6 +25,33 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
+    const translateFieldName = (fieldName: string) => {
+        const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
+        if (normalized === 'communicationloss') {
+            return t('alarms.communicationLoss');
+        }
+        if (normalized === 'battery') {
+            return t('alarms.battery');
+        }
+        if (normalized === 'total flow') {
+            return t('alarms.totalFlow');
+        }
+        if (normalized === 'total uptime') {
+            return t('alarms.totalUptime');
+        }
+        return fieldName;
+    };
+
+    const translateSeverity = (severity: string) => {
+        if (severity.toLowerCase() === 'warning') {
+            return t('alarms.warning');
+        }
+        if (severity.toLowerCase() === 'critical') {
+            return t('alarms.critical');
+        }
+        return severity;
+    };
+
     // Define columns in logical order (English/LTR)
     const columns = [
         {
@@ -52,7 +79,7 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             header: t('alarms.field'),
             render: (alarm: ValueThresholdAlarm) => (
                 <div className={textAlignClass}>
-                    <Badge variant="outline">{mapNumberToField[alarm.field]}</Badge>
+                    <Badge variant="outline">{translateFieldName(mapNumberToField[alarm.field])}</Badge>
                 </div>
             )
         },
@@ -91,7 +118,7 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             header: t('alarms.severity'),
             render: (alarm: ValueThresholdAlarm) => (
                 <div className={textAlignClass}>
-                    <Badge variant="outline">{alarm.severity}</Badge>
+                    <Badge variant="outline">{translateSeverity(alarm.severity)}</Badge>
                 </div>
             )
         },

@@ -273,7 +273,12 @@
     "message": "الرسالة",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",
-    "viewAlarmConfiguration": "عرض تكوين التنبيه"
+    "viewAlarmConfiguration": "عرض تكوين التنبيه",
+    "alarm": "تنبيه",
+    "communicationLoss": "فقدان الاتصال",
+    "battery": "البطارية",
+    "totalFlow": "التدفق المحسوب",
+    "totalUptime": "إجمالي وقت التشغيل"
   },
   "flowCalculations": {
     "title": "حسابات التدفق",

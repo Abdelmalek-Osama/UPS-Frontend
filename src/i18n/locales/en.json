@@ -273,7 +273,12 @@
     "message": "Message",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
-    "viewAlarmConfiguration": "View Alarm Configuration"
+    "viewAlarmConfiguration": "View Alarm Configuration",
+    "alarm": "Alarm",
+    "communicationLoss": "Communication Loss",
+    "battery": "Battery",
+    "totalFlow": "Total Flow",
+    "totalUptime": "Total Uptime"
   },
   "flowCalculations": {
     "title": "Flow Calculations",
