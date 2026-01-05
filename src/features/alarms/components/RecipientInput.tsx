@@ -8,7 +8,7 @@ import { Plus, Mail, Phone } from 'lucide-react';
 
 interface RecipientInputProps {
     type: 'email' | 'phone';
-    forAlarmType: 'threshold' | 'communication';
+    forAlarmType: 'threshold' | 'communication' | 'sensorStatus' | 'pumpStatusPS' | 'pumpStatusIdv';
     recipients: string[];
     setRecipients: (newRecipients: string[]) => void;
     setHasChanges: (hasChanges: boolean) => void;

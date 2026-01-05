@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
-import { Plus, AlertTriangle, WifiOff } from 'lucide-react';
+import { Plus, AlertTriangle, WifiOff, SmartphoneNfc, Wrench } from 'lucide-react';
 import { Dialog, DialogTrigger } from '../../../components/ui/dialog';
 import Loader from '../../../components/ui/Loader';
 // import { useOutletContext } from 'react-router-dom';
@@ -22,22 +22,34 @@ import {
   CreateThresholdAlarmRequest,
   CreateCommunicationAlarmRequest,
   AlarmMethod,
-  Severity,
+  // Severity,
   ThresholdAlarmForm,
   CommunicationAlarmForm,
+  SensorStatusForm,
+  PumpStatusPSAlarmForm,
+  PumpStatusIdvAlarmForm
 } from '../types/index';
 
 // Utils
-import { INITIAL_THRESHOLD_FORM, INITIAL_COMMUNICATION_FORM, OPERATORS } from '../utils/alarmConstants';
+import { INITIAL_THRESHOLD_FORM, INITIAL_COMMUNICATION_FORM, INITIAL_SENSOR_STATUS_FORM,INITIAL_PumpStatusPS_FORM, INITIAL_PumpStatusIdv_FORM,OPERATORS } from '../utils/alarmConstants';
 import { mapFieldToNumber, mapOperatorToNumber, mapSeverityToNumber, mapNumberToField, mapNumberToOperator } from '../utils/alarmMappers';
 
 // Components
 import { ThresholdAlarmTable } from './tables/ThresholdAlarmTable';
 import { CommunicationAlarmTable } from './tables/CommunicationAlarmTable';
+import SensorStatusTable from './tables/SensorStatusTable'
+import  PumpStatusPSTable from './tables/PumpStatusPSTable'
+import  PumpStatusIdvTable from './tables/PumpStatusIdvTable'
 import { AddThresholdAlarmDialog } from './dialogs/AddThresholdAlarmDialog';
 import { EditThresholdAlarmDialog } from './dialogs/EditThresholdAlarmDialog';
 import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDialog';
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
+import  AddSensorStatusAlarmDialog from './dialogs/AddSensorStatusAlarmDialog';
+import  EditSensorStatusAlarmDialog from './dialogs/EditSensorStatusAlarmDialog';
+import  AddPumpStatusPSAlarmDialog from './dialogs/AddSensorStatusAlarmDialog';
+import  EditPumpStatusPSAlarmDialog from './dialogs/EditSensorStatusAlarmDialog';
+import  AddPumpStatusIdvAlarmDialog from './dialogs/AddSensorStatusAlarmDialog';
+import  EditPumpStatusIdvAlarmDialog from './dialogs/EditSensorStatusAlarmDialog';
 
 export function AlarmConfiguration() {
   const { t } = useTranslation();
@@ -74,6 +86,18 @@ export function AlarmConfiguration() {
   const [newThresholdAlarmForm, setNewThresholdAlarmForm] = useState<ThresholdAlarmForm>(INITIAL_THRESHOLD_FORM);
   const [newCommunicationAlarmForm, setNewCommunicationAlarmForm] = useState<CommunicationAlarmForm>(INITIAL_COMMUNICATION_FORM);
   const [isEditCommOpen, setIsEditCommOpen] = useState(false);
+  const [isAddSensorStatusOpen, setIsAddSensorStatusOpen] = useState(false);
+  const [isEditSensorStatusOpen, setIsEditSensorStatusOpen] = useState(false);
+  const [currentSensorStatusAlarm, setCurrentSensorStatusAlarm] = useState<SensorStatusForm | null>(null);
+  const [newSensorStatusForm, setNewSensorStatusForm] = useState<SensorStatusForm>(INITIAL_SENSOR_STATUS_FORM);
+  const [isAddPumpStatusPSOpen, setIsAddPumpStatusPSOpen] = useState(false);
+  const [isEditPumpStatusPSOpen, setIsEditPumpStatusPSOpen]= useState(false);
+  const [currentPumpStatusPSAlarm, setCurrentPumpStatusPSAlarm] = useState<PumpStatusPSAlarmForm | null>(null);
+  const [newPumpStatusPSForm, setNewPumpStatusPSForm] = useState<PumpStatusPSAlarmForm>(INITIAL_PumpStatusPS_FORM);
+  const [isAddPumpStatusIdvOpen, setIsAddPumpStatusIdvOpen] = useState(false);
+  const [isEditPumpStatusIdvOpen, setIsEditPumpStatusIdvOpen]= useState(false);
+  const [currentPumpStatusIdvAlarm, setCurrentPumpStatusIdvAlarm] = useState<PumpStatusIdvAlarmForm | null>(null);
+  const [newPumpStatusIdvForm, setNewPumpStatusIdvForm] = useState<PumpStatusIdvAlarmForm>(INITIAL_PumpStatusIdv_FORM);
   const [currentCommunicationAlarm, setCurrentCommunicationAlarm] = useState<CommunicationAlarmForm | null>(null);
   const [isSubmittingThresholdAdd, setIsSubmittingThresholdAdd] = useState(false);
   const [isSubmittingThresholdEdit, setIsSubmittingThresholdEdit] = useState(false);
@@ -440,16 +464,34 @@ export function AlarmConfiguration() {
         <p className="text-gray-500 mt-1">{t('alarms.manageAlarmSettings')}</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="threshold">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList
+          dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+          className={`w-full justify-center ${
+            t('_rtl') === 'rtl' ? 'flex-row-reverse space-x-reverse' : 'space-x-4'
+          } overflow-x-auto`}
+        >
+          <TabsTrigger value="threshold" className="flex items-center space-x-2">
             <AlertTriangle className="ml-2 h-4 w-4" />
-            {t('alarms.thresholdAlarms')}
+            <span>{t('alarms.thresholdAlarms')}</span>
           </TabsTrigger>
-          <TabsTrigger value="communication">
+          <TabsTrigger value="communication" className="flex items-center space-x-2">
             <WifiOff className="ml-2 h-4 w-4" />
             {t('alarms.communicationAlarms')}
           </TabsTrigger>
+          <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
+            <SmartphoneNfc className="ml-2 h-4 w-4" />
+            {t('alarms.sensorStatus')}
+          </TabsTrigger>
+          <TabsTrigger value="pumpStatusPS" className="flex items-center space-x-2">
+            <Wrench className="ml-2 h-4 w-4" />
+            {t('alarms.pumpStatusPS')}
+          </TabsTrigger>
+          <TabsTrigger value="pumpStatusIdv" className="flex items-center space-x-2">
+            <Wrench className="ml-2 h-4 w-4" />
+            {t('alarms.pumpStatusIdv')}
+          </TabsTrigger>
+
         </TabsList>
 
         {/* Threshold Alarms Tab */}
@@ -550,7 +592,108 @@ export function AlarmConfiguration() {
             </Card>
           )}
         </TabsContent>
-      </Tabs>
+      
+
+        <TabsContent value="sensorStatus" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader className="flex justify-between items-center" dir="rtl">
+                <CardTitle className="text-right">
+                  {/* {t('alarms.sensorStatus')} ({sensorStatus.length}) */}
+                  <p> title placeholder</p>
+                </CardTitle>
+
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddSensorStatusOpen} onOpenChange={setIsAddSensorStatusOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewSensorStatusForm(INITIAL_SENSOR_STATUS_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        {t('alarms.addSensorStatusAlarm')}
+                      </Button>
+                    </DialogTrigger>
+                    <AddSensorStatusAlarmDialog/>
+                  </Dialog>
+                )}
+              </CardHeader>
+
+              <CardContent>
+                <SensorStatusTable/>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pumpStatusPS" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader className="flex justify-between items-center" dir="rtl">
+                <CardTitle className="text-right">
+                  {/* {t('alarms.sensorStatus')} ({sensorStatus.length}) */}
+                  <p> title placeholder</p>
+                </CardTitle>
+
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddPumpStatusPSOpen} onOpenChange={setIsAddPumpStatusPSOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewPumpStatusPSForm(INITIAL_PumpStatusPS_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        {t('alarms.addPumpStatusPSAlarm')}
+                      </Button>
+                    </DialogTrigger>
+                    <AddPumpStatusPSAlarmDialog/>
+                  </Dialog>
+                )}
+              </CardHeader>
+
+              <CardContent>
+                <SensorStatusTable/>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pumpStatusIdv" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader className="flex justify-between items-center" dir="rtl">
+                <CardTitle className="text-right">
+                  {/* {t('alarms.sensorStatus')} ({sensorStatus.length}) */}
+                  <p> title placeholder</p>
+                </CardTitle>
+
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddPumpStatusIdvOpen} onOpenChange={setIsAddPumpStatusIdvOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewPumpStatusIdvForm(INITIAL_PumpStatusIdv_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        {t('alarms.addPumpStatusIdvAlarm')}
+                      </Button>
+                    </DialogTrigger>
+                    <AddPumpStatusIdvAlarmDialog/>
+                  </Dialog>
+                )}
+              </CardHeader>
+
+              <CardContent>
+                <SensorStatusTable/>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        </Tabs>
 
       {/* Edit Dialogs */}
       <EditThresholdAlarmDialog
@@ -589,6 +732,12 @@ export function AlarmConfiguration() {
         setPhones={setCommunicationPhones}
         submissionError={communicationSubmissionError}
       />
+
+      <EditSensorStatusAlarmDialog/>
+
+      <EditPumpStatusPSAlarmDialog/>
+
+      <EditPumpStatusIdvAlarmDialog/>
     </div>
   );
 }

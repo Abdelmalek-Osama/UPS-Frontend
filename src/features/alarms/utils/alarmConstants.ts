@@ -1,4 +1,4 @@
-import { ThresholdAlarmForm, CommunicationAlarmForm } from '../types';
+import { ThresholdAlarmForm, CommunicationAlarmForm, SensorStatusForm, PumpStatusPSAlarmForm, PumpStatusIdvAlarmForm } from '../types';
 
 export const FIELD_MAP: { [key: string]: number } = {
     USWL: 0,
@@ -108,4 +108,26 @@ export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
     hours: 0,
     emails: [],
     phones: [],
+};
+
+export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
+    sentMessage: '',
+    emails: [],
+    phones: [],
+};
+
+
+export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
+    site: '',
+    // pumpStatusPS: 0,
+    emails: [],
+    phones: [],
+};
+
+export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
+    site: '',
+    // pumpStatusPS: 0,
+    emails: [],
+    phones: [],
+    IdvPump: '',
 };
