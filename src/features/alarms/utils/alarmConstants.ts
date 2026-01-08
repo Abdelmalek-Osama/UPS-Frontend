@@ -111,6 +111,9 @@ export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
 };
 
 export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
+    method: 0,
+    siteId: null,
+    site: '',
     sentMessage: '',
     emails: [],
     phones: [],
@@ -118,15 +121,15 @@ export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
 
 
 export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
+    siteId: null,
     site: '',
-    // pumpStatusPS: 0,
     emails: [],
     phones: [],
 };
 
 export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
+    siteId: null,
     site: '',
-    // pumpStatusPS: 0,
     emails: [],
     phones: [],
     IdvPump: '',

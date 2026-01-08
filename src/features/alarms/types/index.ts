@@ -20,18 +20,19 @@ export interface AddSensorStatusAlarmDialogProps {
   setForm: React.Dispatch<React.SetStateAction<SensorStatusForm>>;
   onSubmit: () => void;
   isSubmitting: boolean;
+  setSiteId: (siteId: number | null) => void;
+  setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
   setPhones: (phones: string[]) => void;
   setSentMessage : (sentMessage: string) => void;
   submissionError: string | null;
 }
 export interface AddPumpStatusPSAlarmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   form: PumpStatusPSAlarmForm;
   setForm: React.Dispatch<React.SetStateAction<PumpStatusPSAlarmForm>>;
   onSubmit: () => void;
   isSubmitting: boolean;
+  setSiteId: (siteId: number | null) => void;
   setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
   setPhones: (phones: string[]) => void;
@@ -49,7 +50,6 @@ export interface AddPumpStatusIdvAlarmDialogProps {
   setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
   setPhones: (phones: string[]) => void;
-  setSentMessage : (sentMessage: string) => void;
   setIdvPump: (IdvPump: string) => void;
   submissionError: string | null;
 }
@@ -57,6 +57,13 @@ export interface AddPumpStatusIdvAlarmDialogProps {
 export interface Site {
   id: number;
   name: string;
+}
+
+export interface SiteConfiguration {
+  hasUS: boolean;
+  hasDS1: boolean;
+  hasDS2: boolean;
+  numPumps: number;
 }
 
 export interface ThresholdAlarmForm {
@@ -88,21 +95,24 @@ export interface CommunicationAlarmForm {
 }
 
 export interface SensorStatusForm {
+  method: number;
+  siteId: number | null;
+  site: string;
   sentMessage: string,
   emails: string[];
   phones: string[];
 }
 
 export interface PumpStatusPSAlarmForm {
+  siteId: number|null;
   site: string;
-  // pumpStatusPS: number;
   emails: string[];
   phones: string[];
 }
 
 export interface PumpStatusIdvAlarmForm {
+  siteId: number | null;
   site: string;
-  // pumpStatusPS: number;
   emails: string[];
   phones: string[];
   IdvPump: string;
@@ -164,10 +174,31 @@ export interface CreateCommunicationAlarmRequest {
 }
 
 export interface CreateSensorStatusAlarmRequest {
+  siteId: number|null;
+  site: string;
+  method: AlarmMethod;
   sentMessage: string;
   emails: string;
   phones: string;
 
+}
+
+export interface CreatePumpStatusPSAlarmRequest {
+  method: AlarmMethod;
+  siteId: number|null;
+  site: string;
+  emails: string;
+  phones: string;
+
+}
+
+export interface CreatePumpStatusIdvAlarmRequest {
+  method: AlarmMethod;
+  siteId: number|null;
+  site: string;
+  emails: string;
+  phones: string;
+  IdvPump: string;
 }
 
 export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarmDialogProps {
@@ -200,13 +231,25 @@ export interface ValueThresholdAlarm {
   recipients: string[]; // Assuming recipients can be an array of strings
 }
 
-// export interface SensorStatusResponse {
+export interface SensorStatusResponse {
+  siteId: number;
+  sentMessage: string;
+  site: string;
+  recipients: string[]; // Assuming recipients can be an array of strings
 
-// }
-// export interface PumpStatusPSResponse {
+}
 
-// }
+export interface PumpStatusPSResponse {
+  alarmId: number;
+  siteId: number;
+  site:string;
+  recipients: string[];
+}
 
-// export interface PumpStatusIdvResponse {
-
-// }
+export interface PumpStatusIdvResponse {
+  alarmId: number;
+  siteId: number;
+  site: string;
+  idvPump: string;
+  recipients: string[];
+}

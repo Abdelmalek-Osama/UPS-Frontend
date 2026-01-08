@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
@@ -32,10 +33,10 @@ export function RecipientInput({
         const phoneRegex = /^\d{11}$/;
 
         if (isEmail && !emailRegex.test(newRecipient)) {
-            alert('Please enter a valid email address.');
+            toast.error(t('validation.invalidEmailFormat'));
             return;
         } else if (!isEmail && !phoneRegex.test(newRecipient)) {
-            alert('Please enter a valid 11-digit phone number.');
+            toast.error(t('validation.phone11Digits'));
             return;
         }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -19,13 +19,22 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps } from '../../types';
+import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_PumpStatusIdv_FORM } from '../../utils/alarmConstants';
 
-export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, AddPumpStatusIdvAlarmDialogProps>((
-    {open,
+// Extend props to include sites and configuration
+interface ExtendedAddPumpStatusIdvAlarmDialogProps extends AddPumpStatusIdvAlarmDialogProps {
+    sites: Site[];
+    sitesLoading?: boolean;
+    siteConfiguration?: SiteConfiguration;
+    configLoading?: boolean;
+    siteError?: string | null;
+}
+
+export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, ExtendedAddPumpStatusIdvAlarmDialogProps>(({
+    open,
     onOpenChange,
     form,
     setForm,
@@ -35,28 +44,33 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, AddP
     setPhones,
     setSite,
     setIdvPump,
-    submissionError
-}: AddPumpStatusIdvAlarmDialogProps, ref) => {
+    submissionError,
+    sites,
+    sitesLoading = false,
+    siteConfiguration,
+    configLoading = false,
+    siteError = null,
+}: ExtendedAddPumpStatusIdvAlarmDialogProps, ref) => {
     const { t } = useTranslation();
-    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+    const [alarmNameError, setAlarmNameError] = useState<string | undefined>(undefined);
 
-    const handleAlarmNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newName = e.target.value;
-        setForm(prev => ({
-            ...prev,
-            alarmName: newName
-        }));
-        const error = validateAlarmName(newName);
-        setAlarmNameError(error);
+    const handleSiteChange = (value: string) => {
+        const selected = sites.find(site => site.name === value);
+        if (selected) {
+            setSite(selected.name);
+            setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name, IdvPump: '' }));
+        }
+    };
+
+    const handleIdvPumpChange = (value: string) => {
+        setIdvPump(value);
+        setForm(prev => ({ ...prev, IdvPump: value }));
     };
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
-            }
             if (!newOpen) {
+                // Reset all form state and errors when dialog closes
                 setForm({ ...INITIAL_PumpStatusIdv_FORM });
                 setAlarmNameError(undefined);
             }
@@ -71,6 +85,44 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, AddP
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                    {/* Site Selection */}
+                    <div className="space-y-2">
+                        <Label htmlFor="site-select">{t('alarms.site')}</Label>
+                        <Select value={form.site || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
+                            <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                                <SelectValue placeholder={sitesLoading ? t('common.loading') : t('alarms.selectSite')} />
+                            </SelectTrigger>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                {sites.map(site => (
+                                    <SelectItem key={site.id} value={site.name}>
+                                        {site.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {siteError && (
+                            <p className="text-red-600 text-sm">{t(siteError)}</p>
+                        )}
+                    </div>
+
+                    {/* IDV Pump Input */}
+                    <div className="space-y-2">
+                        <Label htmlFor="idv-pump">{t('alarms.idvPump')}</Label>
+                        <Select value={form.IdvPump || ''} onValueChange={handleIdvPumpChange} disabled={!siteConfiguration?.numPumps || configLoading}>
+                            <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                                <SelectValue placeholder={configLoading ? t('common.loading') : t('alarms.selectPump')} />
+                            </SelectTrigger>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                {siteConfiguration?.numPumps ? (
+                                    Array.from({ length: siteConfiguration.numPumps }, (_, i) => (
+                                        <SelectItem key={i + 1} value={String(i + 1)}>
+                                            {t('alarms.pump')} {i + 1}
+                                        </SelectItem>
+                                    ))
+                                ) : null}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                     <RecipientInput
                         type="email"
@@ -90,26 +142,25 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, AddP
                 </div>
 
                 <DialogFooter>
-                    {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
-                    )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                // if (!form.hoursError && !alarmNameError) {
-                                //     onSubmit();
-                                // }
-                                onSubmit();
-                            }}
-                            disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0)}
-                            loadingText={t('alarms.addingAlarm')}
-                            isLoading={isSubmitting}
-                        >
-                            {t('alarms.addPumpStatusIdvAlarm')}
-                        </Button>
+                    <div className={`w-full flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div className={`flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    onSubmit();
+                                }}
+                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.IdvPump}
+                                loadingText={t('alarms.addingAlarm')}
+                                isLoading={isSubmitting}
+                            >
+                                {t('alarms.addPumpStatusIdvAlarm')}
+                            </Button>
+                        </div>
+                        {submissionError && (
+                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{submissionError}</p>
+                        )}
                     </div>
                 </DialogFooter>
             </DialogContent>

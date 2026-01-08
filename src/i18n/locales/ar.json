@@ -228,9 +228,20 @@
     "editPumpStatusPSAlarmDescription": "تعديل تكوين التنبيه حالة المضخات ",
     "addPumpStatusIdvAlarm": "إضافة تنبيه حالة المضخات الفردية",
     "editPumpStatusIdvAlarm": "تعديل تنبيه فقدان حالة المضخات الفردية",
+    "addPumpStatusIdvAlarm": "إضافة تنبيه حالة المضخات الفردية",
+    "editPumpStatusIdvAlarm": "تعديل تنبيه حالة المضخات الفردية",
+    "editPumpStatusPSAlarmDescription": "تعديل تكوين التنبيه حالة المضخات ",
     "editPumpStatusIdvAlarmDescription": "تعديل تكوين التنبيه حالة المضخات الفردية ",
     "alarmName": "اسم التنبيه",
+    "enterAlarmName": "أدخل اسم التنبيه",
+    "selectSite": "اختر موقعاً",
     "site": "الموقع",
+    "siteHasNoPumps": "هذه الموقع ليس به مضخات",
+    "idvPump": "رقم المضخة ",
+    "selectPump": "اختر مضخة",
+    "pump": "مضخة",
+    "enterIdvPump": "أدخل معرف المضخة",
+    "PumpStatusIdvAlarms": "تنبيهات حالة المضخة الفردية",
     "field": "الحقل",
     "operator": "المقارن",
     "threshold": "قيمة الحد",
@@ -257,6 +268,9 @@
     "thresholdAlarmFormula": "المعادلة: {{equation}}",
     "addAlarmSuccess": "تمت إضافة تنبيه القيمة الحدية بنجاح",
     "addCommunicationAlarmSuccess": "تمت إضافة تنبيه فقدان الاتصال بنجاح",
+    "addSensorStatusSuccess": "تمت إضافة تنبيه حالة الاستشعار بنجاح",
+    "addPumpStatusPSSuccess": "تمت إضافة تنبيه حالة المضخات بنجاح",
+    "addPumpStatusIdvSuccess": "تمت إضافة تنبيه حالة المضخات الفردية بنجاح",
     "updateAlarmSuccess": "تم تحديث التنبيه بنجاح",
     "deleteAlarmSuccess": "تم حذف التنبيه بنجاح",
     "deleteAlarmConfirm": "هل أنت متأكد من حذف هذا التنبيه؟",
@@ -290,8 +304,9 @@
     "alarm": "تنبيه",
     "communicationLoss": "فقدان الاتصال",
     "pumpStatusPS": "حالة المضخات",
-    "pumpStatusIdv": "حالة المضخة الفردية",
-    "battery": "البطارية",
+    "pumpStatusIdv": "حالة المضخة الفردية",    "PumpStatusIdvAlarms": "تكوين التنبيهات لحالة المضخات الفردية",
+    "PumpStatusPSAlarms": "تكوين التنبيهات لحالة المضخات",
+    "SensorStatusAlarms": "تكوين التنبيهات لحالة الاستشعار",    "battery": "البطارية",
     "totalFlow": "التدفق المحسوب",
     "totalUptime": "إجمالي وقت التشغيل"
   },
@@ -421,6 +436,14 @@
     "minLength": "الحد الأدنى للطول هو {{min}} أحرف",
     "maxLength": "الحد الأقصى للطول هو {{max}} أحرف",
     "invalidNumber": "يرجى إدخال رقم صحيح",
-    "passwordMatch": "كلمات المرور غير متطابقة"
+    "passwordMatch": "كلمات المرور غير متطابقة",
+    "invalidEmailFormat": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
+    "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا."
+  },
+  "errors": {
+    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "validationError": "حدث خطأ في التحقق من صحة البيانات.",
+    "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
+    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى."
   }
 }
