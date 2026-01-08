@@ -249,6 +249,7 @@
     "critical": "Critical",
     "warning": "Warning",
     "sensorStatus": "Sensor Status",
+    "sentMessage": "Sent Message",
     "info": "Information",
     "emails": "Email Addresses",
     "phones": "Phone Numbers",

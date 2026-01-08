@@ -20,6 +20,7 @@ export interface AddSensorStatusAlarmDialogProps {
   setForm: React.Dispatch<React.SetStateAction<SensorStatusForm>>;
   onSubmit: () => void;
   isSubmitting: boolean;
+  alarmId: number | null;
   setSiteId: (siteId: number | null) => void;
   setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
@@ -95,6 +96,7 @@ export interface CommunicationAlarmForm {
 }
 
 export interface SensorStatusForm {
+  alarmId: number | null;
   method: number;
   siteId: number | null;
   site: string;
@@ -174,6 +176,7 @@ export interface CreateCommunicationAlarmRequest {
 }
 
 export interface CreateSensorStatusAlarmRequest {
+  alarmId: number | null;
   siteId: number|null;
   site: string;
   method: AlarmMethod;
@@ -232,6 +235,7 @@ export interface ValueThresholdAlarm {
 }
 
 export interface SensorStatusResponse {
+  alarmId: number;
   siteId: number;
   sentMessage: string;
   site: string;

@@ -40,14 +40,14 @@ import { mapFieldToNumber, mapOperatorToNumber, mapSeverityToNumber, mapNumberTo
 // Components
 import { ThresholdAlarmTable } from './tables/ThresholdAlarmTable';
 import { CommunicationAlarmTable } from './tables/CommunicationAlarmTable';
-import SensorStatusTable from './tables/SensorStatusTable'
+import {SensorStatusTable} from './tables/SensorStatusTable'
 import { PumpStatusPSTable } from './tables/PumpStatusPSTable'
 import  {PumpStatusIdvTable} from './tables/PumpStatusIdvTable'
 import { AddThresholdAlarmDialog } from './dialogs/AddThresholdAlarmDialog';
 import { EditThresholdAlarmDialog } from './dialogs/EditThresholdAlarmDialog';
 import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDialog';
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
-import  AddSensorStatusAlarmDialog from './dialogs/AddSensorStatusAlarmDialog';
+import  {AddSensorStatusAlarmDialog} from './dialogs/AddSensorStatusAlarmDialog';
 import  EditSensorStatusAlarmDialog from './dialogs/EditSensorStatusAlarmDialog';
 import { AddPumpStatusPSAlarmDialog} from './dialogs/AddPumpStatusPSAlarmDialog';
 import { EditPumpStatusPSAlarmDialog } from './dialogs/EditPumpStatusPSAlarmDialog';
@@ -71,12 +71,15 @@ export function AlarmConfiguration() {
   const {
     thresholdAlarms,
     communicationAlarms,
+    sensorStatusAlarms,
     pumpStatusIdvAlarms,
     pumpStatusPSAlarms,
     isAddCommOpen,
     setIsAddCommOpen,
     createThresholdAlarm,
     createCommunicationAlarm,
+    createSensorStatusAlarm,
+    updateSensorStatusAlarm,
     createPumpStatusPSAlarm,
     createPumpStatusIdvAlarm,
     updateThresholdAlarm,
@@ -125,8 +128,10 @@ export function AlarmConfiguration() {
   const [hasPumpStatusIdvChanges, setHasPumpStatusIdvChanges] = useState(false);
   const [thresholdSubmissionError, setThresholdSubmissionError] = useState<string | null>(null);
   const [communicationSubmissionError, setCommunicationSubmissionError] = useState<string | null>(null);
+  const [sensorStatusSubmissionError, setSensorStatusSubmissionError] = useState<string | null>(null);
   const [pumpStatusPSSubmissionError, setPumpStatusPSSubmissionError] = useState<string | null>(null);
   const [pumpStatusIdvSubmissionError, setPumpStatusIdvSubmissionError] = useState<string | null>(null);
+  const [isSubmittingSensorStatusAdd, setIsSubmittingSensorStatusAdd] = useState(false);
   const [pumpStatusIdvIdvPump,setPumpStatusIdvIdvPump] = useState<string>('');
   const [pumpStatusPSSite, setPumpStatusPSSite] = useState<string>('');
   const [psSiteId, setPsSiteId] = useState<number | undefined>(undefined);
@@ -224,6 +229,47 @@ export function AlarmConfiguration() {
       setCommunicationSubmissionError(errorMessage);
     } finally {
       setIsSubmittingCommAdd(false);
+    }
+  };
+
+  const handleSubmitSensorStatusAlarm = async () => {
+    setIsSubmittingSensorStatusAdd(true);
+    setSensorStatusSubmissionError(null);
+    const { siteId, site, sentMessage } = newSensorStatusForm;
+
+    if (!siteId || !site) {
+      console.error('Missing required sensor status alarm fields');
+      setIsSubmittingSensorStatusAdd(false);
+      return;
+    }
+
+    const requestBody: CreateSensorStatusAlarmRequest = {
+      alarmId: null,
+      siteId,
+      site: sites.find(s => s.id === siteId)?.name || '',
+      sentMessage,
+      emails: newSensorStatusForm.emails.join(','),
+      phones: newSensorStatusForm.phones.join(','),
+      method: AlarmMethod.Email,
+    };
+
+    try {
+      const result = await createSensorStatusAlarm(requestBody);
+      if (result.success) {
+        toast.success(t('alarms.addSensorStatusAlarmSuccess'));
+        setIsAddSensorStatusOpen(false);
+        setNewSensorStatusForm(INITIAL_SENSOR_STATUS_FORM);
+      } else {
+        const errorMessage = result.message || 'Failed to create sensor status alarm.';
+        toast.error(errorMessage);
+        setSensorStatusSubmissionError(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setSensorStatusSubmissionError(errorMessage);
+    } finally {
+      setIsSubmittingSensorStatusAdd(false);
     }
   };
 
@@ -444,6 +490,31 @@ export function AlarmConfiguration() {
     setIsEditPumpStatusPSOpen(true);
   };
 
+  const handleSensorStatusAlarmEdit = (alarm: any) => {
+    const emails = alarm.recipients ? alarm.recipients.filter((r: string) => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(r)) : [];
+    const phones = alarm.recipients ? alarm.recipients.filter((r: string) => /^\d{11}$/.test(r)) : [];
+    
+    setCurrentSensorStatusAlarm({
+      alarmId: alarm.alarmId,
+      method: 0,
+      siteId: alarm.siteId,
+      site: alarm.site,
+      sentMessage: alarm.sentMessage,
+      emails: emails,
+      phones: phones,
+    });
+    setNewSensorStatusForm({
+      alarmId: alarm.alarmId,
+      method: 0,
+      siteId: alarm.siteId,
+      site: alarm.site,
+      sentMessage: alarm.sentMessage,
+      emails: emails,
+      phones: phones,
+    });
+    setIsEditSensorStatusOpen(true);
+  };
+
   useEffect(() => {
     if (pumpStatusIdvSiteConfiguration) {
       if ((pumpStatusIdvSiteConfiguration as any).numPumps < 1) {
@@ -487,6 +558,26 @@ export function AlarmConfiguration() {
 
   const setPumpStatusIdvPhones = (newPhones: string[]) => {
     setNewPumpStatusIdvForm(prev => ({ ...prev, phones: newPhones }));
+  };
+
+  const setSensorStatusEmails = (newEmails: string[]) => {
+    setNewSensorStatusForm(prev => ({ ...prev, emails: newEmails }));
+  };
+
+  const setSensorStatusPhones = (newPhones: string[]) => {
+    setNewSensorStatusForm(prev => ({ ...prev, phones: newPhones }));
+  };
+
+  const setSensorStatusSite = (site: string) => {
+    setNewSensorStatusForm(prev => ({ ...prev, site }));
+  };
+
+  const setSensorStatusSiteId = (siteId: number | null) => {
+    setNewSensorStatusForm(prev => ({ ...prev, siteId }));
+  };
+
+  const setSensorStatusSentMessage = (sentMessage: string) => {
+    setNewSensorStatusForm(prev => ({ ...prev, sentMessage }));
   };
 
   // Set default site when sites load
@@ -874,8 +965,8 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className="flex justify-between items-center" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                  {/* {t('alarms.sensorStatus')} ({sensorStatus.length}) */}
-                  <p> title placeholder</p>
+                  {t('alarms.sensorStatus')} ({sensorStatusAlarms.length})
+
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -886,13 +977,32 @@ export function AlarmConfiguration() {
                         {t('alarms.addSensorStatusAlarm')}
                       </Button>
                     </DialogTrigger>
-                    <AddSensorStatusAlarmDialog/>
+                    <AddSensorStatusAlarmDialog
+                      open={isAddSensorStatusOpen}
+                      onOpenChange={setIsAddSensorStatusOpen}
+                      form={newSensorStatusForm}
+                      setForm={setNewSensorStatusForm}
+                      onSubmit={handleSubmitSensorStatusAlarm}
+                      isSubmitting={isSubmittingSensorStatusAdd}
+                      alarmId={null}
+                      setSiteId={setSensorStatusSiteId}
+                      setSite={setSensorStatusSite}
+                      setEmails={setSensorStatusEmails}
+                      setPhones={setSensorStatusPhones}
+                      setSentMessage={setSensorStatusSentMessage}
+                      submissionError={sensorStatusSubmissionError}
+                      sites={sites}
+                      sitesLoading={sitesLoading}
+                    />
                   </Dialog>
                 )}
               </CardHeader>
 
               <CardContent>
-                <SensorStatusTable/>
+                <SensorStatusTable
+                  alarms={sensorStatusAlarms}
+                  onEdit={handleSensorStatusAlarmEdit}
+                />
               </CardContent>
             </Card>
           )}
@@ -907,8 +1017,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className={`flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right flex-1' : 'text-left flex-1'}>
-                  {/* {t('alarms.sensorStatus')} ({sensorStatus.length}) */}
-                  <p> title placeholder</p>
+                  {t('alarms.PumpStatusPSAlarms')} ({pumpStatusPSAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (

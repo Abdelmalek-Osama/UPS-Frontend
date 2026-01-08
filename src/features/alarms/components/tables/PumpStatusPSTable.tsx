@@ -25,25 +25,7 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
-    // const translateFieldName = (fieldName: string) => {
-    //     const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
-    //     if (normalized === 'communicationloss') {
-    //         return t('alarms.communicationLoss');
-    //     }
-    //     if (normalized === 'battery') {
-    //         return t('alarms.battery');
-    //     }
-    //     if (normalized === 'total flow') {
-    //         return t('alarms.totalFlow');
-    //     }
-    //     if (normalized === 'total uptime') {
-    //         return t('alarms.totalUptime');
-    //     }
-    //     return fieldName;
-    // };
-
-
-    // Define columns in logical order (English/LTR)
+   // Define columns in logical order (English/LTR)
     const columns = [
         {
             key: 'actions',
