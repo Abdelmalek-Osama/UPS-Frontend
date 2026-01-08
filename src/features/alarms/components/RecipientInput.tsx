@@ -58,6 +58,7 @@ export function RecipientInput({
                     type={isEmail ? 'email' : 'tel'}
                     placeholder={isEmail ? 'email@example.com' : '0123456789'}
                     value={inputValue}
+                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     onChange={(e) => {
                         setInputValue(e.target.value);
                     }}

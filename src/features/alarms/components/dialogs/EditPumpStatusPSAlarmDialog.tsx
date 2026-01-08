@@ -203,10 +203,7 @@ export function EditPumpStatusPSAlarmDialog({
                         {submissionError && (
                             <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
                         )}
-                        <div className="w-full flex justify-start gap-2">
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                {t('common.cancel')}
-                            </Button>
+                        <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                             <Button
                                 onClick={() => {
                                     onSubmit();
@@ -216,6 +213,9 @@ export function EditPumpStatusPSAlarmDialog({
                                 isLoading={isSubmitting}
                             >
                                 {t('readings.saveChanges')}
+                            </Button>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
+                                {t('common.cancel')}
                             </Button>
                         </div>
                     </DialogFooter>

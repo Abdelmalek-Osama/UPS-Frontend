@@ -144,9 +144,6 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                 <DialogFooter>
                     <div className={`w-full flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}>
                         <div className={`flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}>
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                {t('common.cancel')}
-                            </Button>
                             <Button
                                 onClick={() => {
                                     onSubmit();
@@ -156,6 +153,9 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                                 isLoading={isSubmitting}
                             >
                                 {t('alarms.addPumpStatusIdvAlarm')}
+                            </Button>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
+                                {t('common.cancel')}
                             </Button>
                         </div>
                         {submissionError && (
