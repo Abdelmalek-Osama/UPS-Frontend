@@ -169,9 +169,9 @@ export function AlarmConfiguration() {
   const handleSubmitThresholdAlarm = async () => {
     setIsSubmittingThresholdAdd(true);
     setThresholdSubmissionError(null); // Clear previous errors
-    const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
+    const { siteId, alarmName, field, criticalOperator, criticalThresholdValue, criticalColorCode, crisisOperator, crisisThresholdValue, crisisColorCode } = newThresholdAlarmForm;
 
-    if (!siteId || !alarmName || !field || !operator) {
+    if (!siteId || !alarmName || !field || !criticalOperator || !crisisOperator) {
       console.error('Missing required threshold alarm fields');
       setIsSubmittingThresholdAdd(false);
       return;
@@ -186,10 +186,12 @@ export function AlarmConfiguration() {
       method: AlarmMethod.Email,
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
-        operator: mapOperatorToNumber(operator),
-        thresholdValue: threshold,
-        colorCode: color,
-        severity: mapSeverityToNumber(newThresholdAlarmForm.severity),
+        criticalOperator: mapOperatorToNumber(criticalOperator),
+        criticalThresholdValue: criticalThresholdValue,
+        criticalColorCode: criticalColorCode,
+        crisisOperator: mapOperatorToNumber(crisisOperator),
+        crisisThresholdValue: crisisThresholdValue,
+        crisisColorCode: crisisColorCode,
       },
     };
 
@@ -722,15 +724,18 @@ export function AlarmConfiguration() {
       });
     }
 
-    const formData = {
+    const formData: ThresholdAlarmForm = {
       id: alarm.id,
       siteId: siteId || 0,
       alarmName: alarm.alarmName,
       site: alarm.site,
-      field: mapNumberToField[parseInt(alarm.field)],
-      operator: mapNumberToOperator[parseInt(alarm.operator)],
-      threshold: alarm.threshold,
-      color: alarm.color,
+      field: mapNumberToField[parseInt(alarm.field)] || '',
+      criticalOperator: mapNumberToOperator[parseInt(alarm.operator)] || '',
+      criticalThresholdValue: alarm.threshold || 0,
+      criticalColorCode: alarm.color || '#fbbf24',
+      crisisOperator: '<',
+      crisisThresholdValue: 0,
+      crisisColorCode: '#db0202ff',
       severity: alarm.severity,
       emails: emails,
       phones: phones,
@@ -766,9 +771,9 @@ export function AlarmConfiguration() {
     setIsSubmittingThresholdEdit(true);
     if (!currentThresholdAlarm) return;
 
-    const { siteId, alarmName, field, operator, threshold, color } = newThresholdAlarmForm;
+    const { siteId, alarmName, field, criticalOperator, criticalThresholdValue, criticalColorCode, crisisOperator, crisisThresholdValue, crisisColorCode } = newThresholdAlarmForm;
 
-    if (!siteId || !alarmName || !field || !operator) {
+    if (!siteId || !alarmName || !field || !criticalOperator || !crisisOperator) {
       console.error('Missing required threshold alarm fields');
       setIsSubmittingThresholdEdit(false);
       return;
@@ -783,10 +788,12 @@ export function AlarmConfiguration() {
       method: AlarmMethod.Email,
       valueThreshold: {
         fieldName: mapFieldToNumber(field),
-        operator: mapOperatorToNumber(operator),
-        thresholdValue: threshold,
-        colorCode: color,
-        severity: mapSeverityToNumber(newThresholdAlarmForm.severity),
+        criticalOperator: mapOperatorToNumber(criticalOperator),
+        criticalThresholdValue: criticalThresholdValue,
+        criticalColorCode: criticalColorCode,
+        crisisOperator: mapOperatorToNumber(crisisOperator),
+        crisisThresholdValue: crisisThresholdValue,
+        crisisColorCode: crisisColorCode,
       },
     };
 
@@ -861,15 +868,57 @@ export function AlarmConfiguration() {
 
   const handleThresholdAlarmEdit = (alarm: any) => {
     populateThresholdAlarmFormForEdit(alarm);
+    const mapNumberToField: { [key: number]: string } = {
+      0: 'USWL',
+      1: 'DSWL1',
+      26: 'DSWL2',
+      2: 'Battery',
+      3: 'P1_Time',
+      4: 'P1_Flow',
+      5: 'P2_Time',
+      6: 'P2_Flow',
+      7: 'P3_Time',
+      8: 'P3_Flow',
+      9: 'P4_Time',
+      10: 'P4_Flow',
+      11: 'P5_Time',
+      12: 'P5_Flow',
+      13: 'P6_Time',
+      14: 'P6_Flow',
+      15: 'P7_Time',
+      16: 'P7_Flow',
+      17: 'P8_Time',
+      18: 'P8_Flow',
+      19: 'P9_Time',
+      20: 'P9_Flow',
+      21: 'P10_Time',
+      22: 'P10_Flow',
+      23: 'Calculated_flow',
+      24: 'Total_uptime',
+      25: 'Total_flow',
+    };
+
+    const mapNumberToOperator: { [key: number]: string } = {
+      0: '<',
+      1: '<=',
+      2: '>',
+      3: '>=',
+      4: '==',
+      5: '!=',
+    };
+
     setCurrentThresholdAlarm({
       id: alarm.id,
       siteId: alarm.siteId,
       alarmName: alarm.alarmName,
       site: alarm.site,
-      field: alarm.field,
-      operator: alarm.operator,
-      threshold: alarm.threshold,
-      color: alarm.color,
+      field: typeof alarm.field === 'number' ? (mapNumberToField[alarm.field] || '') : alarm.field,
+      criticalOperator: typeof alarm.operator === 'number' ? (mapNumberToOperator[alarm.operator] || '') : alarm.operator,
+      criticalThresholdValue: alarm.threshold || 0,
+      criticalColorCode: alarm.color || '#fbbf24',
+      crisisOperator: '<',
+      crisisThresholdValue: 0,
+      crisisColorCode: '#db0202ff',
       severity: alarm.severity,
       emails: [],
       phones: [],
