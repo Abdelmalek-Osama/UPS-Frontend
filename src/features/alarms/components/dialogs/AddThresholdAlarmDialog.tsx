@@ -191,10 +191,6 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
-            }
             if (!newOpen) {
                 setForm({ ...INITIAL_THRESHOLD_FORM });
                 setAlarmNameError(undefined);
@@ -429,7 +425,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                 <div style={footerContainerStyle}>
                     <DialogFooter style={footerStyle}>
                         {submissionError && (
-                            <p style={submissionErrorStyle}>{submissionError}</p>
+                            <p style={submissionErrorStyle}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                         <div style={footerButtonsContainerStyle}>
                             <Button

@@ -104,18 +104,15 @@ export function EditPumpStatusPSAlarmDialog({
         }
     };
 
-    const handlePSPumpChange = (value: string) => {
-        setForm(prev => ({ ...prev, PSPump: value }));
-        setHasChanges(true);
-    };
+
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
+            if (!newOpen) {
+                onOpenChange(newOpen);
+            } else {
+                onOpenChange(newOpen);
             }
-            onOpenChange(newOpen);
         }}>
             <DialogContent 
                 className="w-[95vw] max-w-[600px] sm:max-w-lg flex flex-col p-0"
@@ -175,7 +172,23 @@ export function EditPumpStatusPSAlarmDialog({
                             )}
                         </div>
 
-                       
+                        {/* Duration Field */}
+                        <div className="space-y-2">
+                            <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                            <Input
+                                id="duration"
+                                type="number"
+                                min="0"
+                                value={form.duration || 0}
+                                onChange={(e) => {
+                                    setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }));
+                                    setHasChanges(true);
+                                }}
+                                placeholder={t('alarms.enterDuration')}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                            />
+                        </div>
 
                         {/* Email Recipients */}
                         <RecipientInput
@@ -201,14 +214,14 @@ export function EditPumpStatusPSAlarmDialog({
                 <div className="px-6 py-4 flex-shrink-0 border-t border-border">
                     <DialogFooter>
                         {submissionError && (
-                            <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                            <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                         <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                             <Button
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || !hasChanges || !form.siteId || (form.emails.length === 0 && form.phones.length === 0)}
+                                disabled={isSubmitting || !hasChanges || !form.siteId || (form.emails.length === 0 && form.phones.length === 0) || !form.duration}
                                 loadingText={t('alarms.updatingAlarm')}
                                 isLoading={isSubmitting}
                             >

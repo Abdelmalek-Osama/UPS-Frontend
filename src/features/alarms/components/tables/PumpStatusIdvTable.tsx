@@ -23,7 +23,7 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
-    const textAlignClass = isRTL ? 'text-right' : 'text-left';
+    const textAlignClass = isRTL ? '!text-right' : 'text-left';
 
     // const translateFieldName = (fieldName: string) => {
     //     const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
@@ -62,6 +62,15 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
             render: (alarm: PumpStatusIdvResponse) => (
                 <div className={textAlignClass}>
                     <Badge variant="outline">{t('alarms.pump')} {alarm.idvPump}</Badge>
+                </div>
+            )
+        },
+        {
+            key: 'duration',
+            header: t('alarms.duration'),
+            render: (alarm: PumpStatusIdvResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.duration}
                 </div>
             )
         },
@@ -105,7 +114,10 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
             <TableHeader>
                 <TableRow>
                     {displayColumns.map((column) => (
-                        <TableHead key={column.key} className={textAlignClass}>
+                        <TableHead 
+                            key={column.key} 
+                            className={textAlignClass}
+                        >
                             {column.header}
                         </TableHead>
                     ))}

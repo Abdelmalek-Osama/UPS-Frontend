@@ -384,7 +384,7 @@ export function EditThresholdAlarmDialog({
             <div className="px-6 py-4 flex-shrink-0 border-t border-border">
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     <div style={{
                         width: '100%',

@@ -23,7 +23,7 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
-    const textAlignClass = isRTL ? 'text-right' : 'text-left';
+    const textAlignClass = isRTL ? '!text-right' : 'text-left';
 
    // Define columns in logical order (English/LTR)
     const columns = [
@@ -35,6 +35,15 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
+                </div>
+            )
+        },
+        {
+            key: 'duration',
+            header: t('alarms.duration'),
+            render: (alarm: PumpStatusPSResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.duration}
                 </div>
             )
         },
@@ -77,7 +86,10 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
             <TableHeader>
                 <TableRow>
                     {displayColumns.map((column) => (
-                        <TableHead key={column.key} className={textAlignClass}>
+                        <TableHead 
+                            key={column.key} 
+                            className={textAlignClass}
+                        >
                             {column.header}
                         </TableHead>
                     ))}

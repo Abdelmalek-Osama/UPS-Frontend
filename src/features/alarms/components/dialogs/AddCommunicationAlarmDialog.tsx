@@ -190,7 +190,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                         <Button

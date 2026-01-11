@@ -126,6 +126,7 @@ export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
     site: '',
     emails: [],
     phones: [],
+    duration: 0,
 };
 
 export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
@@ -134,4 +135,5 @@ export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
     emails: [],
     phones: [],
     IdvPump: '',
+    duration: 0,
 };

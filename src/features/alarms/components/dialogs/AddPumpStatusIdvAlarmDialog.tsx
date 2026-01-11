@@ -124,6 +124,21 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                         </Select>
                     </div>
 
+                    {/* Duration Field */}
+                    <div className="space-y-2">
+                        <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                        <Input
+                            id="duration"
+                            type="number"
+                            min="0"
+                            value={form.duration || 0}
+                            onChange={(e) => setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
+                            placeholder={t('alarms.enterDuration')}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                        />
+                    </div>
+
                     <RecipientInput
                         type="email"
                         forAlarmType="pumpStatusIdv"
@@ -148,7 +163,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.IdvPump}
+                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.IdvPump || !form.duration}
                                 loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >
@@ -159,7 +174,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                             </Button>
                         </div>
                         {submissionError && (
-                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{submissionError}</p>
+                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                     </div>
                 </DialogFooter>

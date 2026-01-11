@@ -241,6 +241,8 @@
     "selectPump": "اختر مضخة",
     "pump": "مضخة",
     "enterIdvPump": "أدخل معرف المضخة",
+    "duration": "المّة",
+    "enterDuration": "أدخل المدّة",
     "PumpStatusIdvAlarms": "تنبيهات حالة المضخة الفردية",
     "field": "الحقل",
     "operator": "المقارن",
@@ -417,7 +419,13 @@
     "requiredField": "هذا الحقل مطلوب",
     "invalidFormat": "صيغة غير صحيحة",
     "duplicateEntry": "هذا الإدخال موجود بالفعل",
-    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صحيح"
+    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+    "Failed to create threshold alarm.": "فشل إنشاء تنبيه القيمة الحدية",
+    "Failed to create communication alarm.": "فشل إنشاء تنبيه فقدان الاتصال",
+    "Failed to create sensor status alarm.": "فشل إنشاء تنبيه حالة المستشعر",
+    "Failed to create pump status PS alarm.": "فشل إنشاء تنبيه حالة المضخة",
+    "Failed to create Individual pump status alarm.": "فشل إنشاء تنبيه حالة المضخة الفردية",
+    "An unexpected error occurred.": "حدث خطأ غير متوقع"
   },
   "notifications": {
     "success": "تمت العملية بنجاح",
