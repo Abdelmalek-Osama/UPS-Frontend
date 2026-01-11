@@ -76,11 +76,11 @@ export function EditCommunicationAlarmDialog({
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
+            if (!newOpen) {
+                onOpenChange(newOpen);
+            } else {
+                onOpenChange(newOpen);
             }
-            onOpenChange(newOpen);
         }}>
                 <DialogContent 
                 className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" 
@@ -228,7 +228,7 @@ export function EditCommunicationAlarmDialog({
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     <div style={{
                         width: '100%',

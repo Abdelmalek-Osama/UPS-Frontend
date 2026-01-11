@@ -110,6 +110,7 @@ export interface PumpStatusPSAlarmForm {
   site: string;
   emails: string[];
   phones: string[];
+  duration: number;
 }
 
 export interface PumpStatusIdvAlarmForm {
@@ -118,7 +119,7 @@ export interface PumpStatusIdvAlarmForm {
   emails: string[];
   phones: string[];
   IdvPump: string;
-  
+  duration: number;
 }
 
 export interface SiteDetails {
@@ -192,7 +193,7 @@ export interface CreatePumpStatusPSAlarmRequest {
   site: string;
   emails: string;
   phones: string;
-
+  duration: number;
 }
 
 export interface CreatePumpStatusIdvAlarmRequest {
@@ -202,6 +203,7 @@ export interface CreatePumpStatusIdvAlarmRequest {
   emails: string;
   phones: string;
   IdvPump: string;
+  duration: number;
 }
 
 export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarmDialogProps {
@@ -248,6 +250,7 @@ export interface PumpStatusPSResponse {
   siteId: number;
   site:string;
   recipients: string[];
+  duration: number;
 }
 
 export interface PumpStatusIdvResponse {
@@ -255,5 +258,6 @@ export interface PumpStatusIdvResponse {
   siteId: number;
   site: string;
   idvPump: string;
+  duration: number;
   recipients: string[];
 }

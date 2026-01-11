@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -42,13 +42,13 @@ import { ThresholdAlarmTable } from './tables/ThresholdAlarmTable';
 import { CommunicationAlarmTable } from './tables/CommunicationAlarmTable';
 import {SensorStatusTable} from './tables/SensorStatusTable'
 import { PumpStatusPSTable } from './tables/PumpStatusPSTable'
-import  {PumpStatusIdvTable} from './tables/PumpStatusIdvTable'
+import { PumpStatusIdvTable } from './tables/PumpStatusIdvTable'
 import { AddThresholdAlarmDialog } from './dialogs/AddThresholdAlarmDialog';
 import { EditThresholdAlarmDialog } from './dialogs/EditThresholdAlarmDialog';
 import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDialog';
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
-import  {AddSensorStatusAlarmDialog} from './dialogs/AddSensorStatusAlarmDialog';
-import  EditSensorStatusAlarmDialog from './dialogs/EditSensorStatusAlarmDialog';
+import { AddSensorStatusAlarmDialog } from './dialogs/AddSensorStatusAlarmDialog';
+import { EditSensorStatusAlarmDialog } from './dialogs/EditSensorStatusAlarmDialog';
 import { AddPumpStatusPSAlarmDialog} from './dialogs/AddPumpStatusPSAlarmDialog';
 import { EditPumpStatusPSAlarmDialog } from './dialogs/EditPumpStatusPSAlarmDialog';
 import { AddPumpStatusIdvAlarmDialog } from './dialogs/AddPumpStatusIdvAlarmDialog';
@@ -118,12 +118,15 @@ export function AlarmConfiguration() {
   const [isSubmittingThresholdEdit, setIsSubmittingThresholdEdit] = useState(false);
   const [isSubmittingCommAdd, setIsSubmittingCommAdd] = useState(false);
   const [isSubmittingCommEdit, setIsSubmittingCommEdit] = useState(false);
+  const [isSubmittingSensorStatusAdd, setIsSubmittingSensorStatusAdd] = useState(false);
+  const [isSubmittingSensorStatusEdit, setIsSubmittingSensorStatusEdit] = useState(false);
   const [isSubmittingPumpPSAdd, setIsSubmittingPumpPSAdd] = useState(false);
   const [isSubmittingPumpPSEdit, setIsSubmittingPumpPSEdit] = useState(false);
   const [isSubmittingPumpIdvAdd, setIsSubmittingPumpIdvAdd] = useState(false);
   const [isSubmittingPumpIdvEdit, setIsSubmittingPumpIdvEdit] = useState(false);
   const [hasThresholdChanges, setHasThresholdChanges] = useState(false);
   const [hasCommunicationChanges, setHasCommunicationChanges] = useState(false);
+  const [hasSensorStatusChanges, setHasSensorStatusChanges] = useState(false);
   const [hasPumpStatusPSChanges, setHasPumpStatusPSChanges] = useState(false);
   const [hasPumpStatusIdvChanges, setHasPumpStatusIdvChanges] = useState(false);
   const [thresholdSubmissionError, setThresholdSubmissionError] = useState<string | null>(null);
@@ -131,7 +134,6 @@ export function AlarmConfiguration() {
   const [sensorStatusSubmissionError, setSensorStatusSubmissionError] = useState<string | null>(null);
   const [pumpStatusPSSubmissionError, setPumpStatusPSSubmissionError] = useState<string | null>(null);
   const [pumpStatusIdvSubmissionError, setPumpStatusIdvSubmissionError] = useState<string | null>(null);
-  const [isSubmittingSensorStatusAdd, setIsSubmittingSensorStatusAdd] = useState(false);
   const [pumpStatusIdvIdvPump,setPumpStatusIdvIdvPump] = useState<string>('');
   const [pumpStatusPSSite, setPumpStatusPSSite] = useState<string>('');
   const [psSiteId, setPsSiteId] = useState<number | undefined>(undefined);
@@ -139,6 +141,29 @@ export function AlarmConfiguration() {
   const [pumpStatusIdvSite, setPumpStatusIdvSite] = useState<string>('');
   const [pumpStatusIdvSiteError, setPumpStatusIdvSiteError] = useState<string | null>(null);
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
+
+  
+
+  const handleSensorStatusDialogOpenChange = useCallback((open: boolean) => {
+    setIsAddSensorStatusOpen(open);
+    if (!open) {
+      setSensorStatusSubmissionError(null);
+    }
+  }, []);
+
+  const handlePumpStatusPSDialogOpenChange = useCallback((open: boolean) => {
+    setIsAddPumpStatusPSOpen(open);
+    if (!open) {
+      setPumpStatusPSSubmissionError(null);
+    }
+  }, []);
+
+  const handlePumpStatusIdvDialogOpenChange = useCallback((open: boolean) => {
+    setIsAddPumpStatusIdvOpen(open);
+    if (!open) {
+      setPumpStatusIdvSubmissionError(null);
+    }
+  }, []);
 
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
@@ -290,7 +315,7 @@ export function AlarmConfiguration() {
       emails: newPumpStatusPSForm.emails.join(','),
       phones: newPumpStatusPSForm.phones.join(','),
       method: AlarmMethod.Email,
-      
+      duration: newPumpStatusPSForm.duration,
     };
 
     try {
@@ -333,7 +358,7 @@ export function AlarmConfiguration() {
       emails: newPumpStatusIdvForm.emails.join(','),
       phones: newPumpStatusIdvForm.phones.join(','),
       method: AlarmMethod.Email,
-      
+      duration: newPumpStatusIdvForm.duration,
     };
 
     try {
@@ -356,6 +381,50 @@ export function AlarmConfiguration() {
     }
   };
 
+  const handleEditSensorStatusAlarm = async () => {
+    setIsSubmittingSensorStatusEdit(true);
+    if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
+
+    const { siteId, site, sentMessage } = newSensorStatusForm;
+
+    if (!siteId || !site) {
+      console.error('Missing required sensor status alarm fields');
+      setIsSubmittingSensorStatusEdit(false);
+      return;
+    }
+
+    const requestBody: CreateSensorStatusAlarmRequest = {
+      alarmId: currentSensorStatusAlarm.alarmId,
+      siteId,
+      site,
+      sentMessage,
+      emails: newSensorStatusForm.emails.join(','),
+      phones: newSensorStatusForm.phones.join(','),
+      method: AlarmMethod.Email,
+    };
+
+    try {
+      const result = await updateSensorStatusAlarm(currentSensorStatusAlarm.siteId, requestBody);
+      if (result.success) {
+        toast.success(t('alarms.updateAlarmSuccess'));
+        setIsEditSensorStatusOpen(false);
+        setCurrentSensorStatusAlarm(null);
+        setHasSensorStatusChanges(false);
+      } else {
+        console.error('Error updating sensor status alarm:', result.message);
+        const errorMessage = result.message || 'Failed to update sensor status alarm.';
+        toast.error(errorMessage);
+        setSensorStatusSubmissionError(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setSensorStatusSubmissionError(errorMessage);
+    } finally {
+      setIsSubmittingSensorStatusEdit(false);
+    }
+  };
+
   const handleEditPumpStatusPSAlarm = async () => {
     setIsSubmittingPumpPSEdit(true);
     if (!currentPumpStatusPSAlarm || !currentPumpStatusPSAlarm.siteId) return;
@@ -374,6 +443,7 @@ export function AlarmConfiguration() {
       emails: newPumpStatusPSForm.emails.join(','),
       phones: newPumpStatusPSForm.phones.join(','),
       method: AlarmMethod.Email,
+      duration: newPumpStatusPSForm.duration,
     };
 
     try {
@@ -417,6 +487,7 @@ export function AlarmConfiguration() {
       emails: newPumpStatusIdvForm.emails.join(','),
       phones: newPumpStatusIdvForm.phones.join(','),
       method: AlarmMethod.Email,
+      duration: newPumpStatusIdvForm.duration,
     };
 
     try {
@@ -460,6 +531,7 @@ export function AlarmConfiguration() {
       IdvPump: alarm.IdvPump,
       emails: emails,
       phones: phones,
+      duration: alarm.duration || 0,
     });
     setNewPumpStatusIdvForm({
       siteId: alarm.siteId,
@@ -467,6 +539,7 @@ export function AlarmConfiguration() {
       IdvPump: alarm.IdvPump,
       emails: emails,
       phones: phones,
+      duration: alarm.duration || 0,
     });
     setIsEditPumpStatusIdvOpen(true);
   };
@@ -480,12 +553,14 @@ export function AlarmConfiguration() {
       site: alarm.site,
       emails: emails,
       phones: phones,
+      duration: alarm.duration ,
     });
     setNewPumpStatusPSForm({
       siteId: alarm.siteId,
       site: alarm.site,
       emails: emails,
       phones: phones,
+      duration: alarm.duration,
     });
     setIsEditPumpStatusPSOpen(true);
   };
@@ -970,7 +1045,7 @@ export function AlarmConfiguration() {
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
-                  <Dialog open={isAddSensorStatusOpen} onOpenChange={setIsAddSensorStatusOpen}>
+                  <Dialog open={isAddSensorStatusOpen} onOpenChange={handleSensorStatusDialogOpenChange}>
                     <DialogTrigger asChild>
                       <Button onClick={() => setNewSensorStatusForm(INITIAL_SENSOR_STATUS_FORM)}>
                         <Plus className={t('_rtl') === 'rtl' ? 'mr-2 h-4 w-4' : 'ml-2 h-4 w-4'} />
@@ -979,7 +1054,7 @@ export function AlarmConfiguration() {
                     </DialogTrigger>
                     <AddSensorStatusAlarmDialog
                       open={isAddSensorStatusOpen}
-                      onOpenChange={setIsAddSensorStatusOpen}
+                      onOpenChange={handleSensorStatusDialogOpenChange}
                       form={newSensorStatusForm}
                       setForm={setNewSensorStatusForm}
                       onSubmit={handleSubmitSensorStatusAlarm}
@@ -1021,14 +1096,7 @@ export function AlarmConfiguration() {
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
-                  <Dialog open={isAddPumpStatusPSOpen} onOpenChange={(open) => {
-                    setIsAddPumpStatusPSOpen(open);
-                    if (!open) {
-                      // Clear submission error when dialog closes
-                      setPumpStatusPSSubmissionError(null);
-                      setNewPumpStatusPSForm(INITIAL_PumpStatusPS_FORM);
-                    }
-                  }}>
+                  <Dialog open={isAddPumpStatusPSOpen} onOpenChange={handlePumpStatusPSDialogOpenChange}>
                     <DialogTrigger asChild>
                       <Button onClick={() => setNewPumpStatusPSForm(INITIAL_PumpStatusPS_FORM)}>
                         <Plus className={t('_rtl') === 'rtl' ? 'mr-2 h-4 w-4' : 'ml-2 h-4 w-4'} />
@@ -1075,15 +1143,7 @@ export function AlarmConfiguration() {
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
-                  <Dialog open={isAddPumpStatusIdvOpen} onOpenChange={(open) => {
-                    setIsAddPumpStatusIdvOpen(open);
-                    if (!open) {
-                      // Clear submission error when dialog closes
-                      setPumpStatusIdvSubmissionError(null);
-                      setNewPumpStatusIdvForm(INITIAL_PumpStatusIdv_FORM);
-                      setPumpStatusIdvSiteError(null);
-                    }
-                  }}>
+                  <Dialog open={isAddPumpStatusIdvOpen} onOpenChange={handlePumpStatusIdvDialogOpenChange}>
                     <DialogTrigger asChild>
                       <Button onClick={() => setNewPumpStatusIdvForm(INITIAL_PumpStatusIdv_FORM)}>
                         <Plus className={t('_rtl') === 'rtl' ? 'mr-2 h-4 w-4' : 'ml-2 h-4 w-4'} />
@@ -1092,7 +1152,7 @@ export function AlarmConfiguration() {
                     </DialogTrigger>
                     <AddPumpStatusIdvAlarmDialog 
                     open={isAddPumpStatusIdvOpen}
-                    onOpenChange={setIsAddPumpStatusIdvOpen}
+                    onOpenChange={handlePumpStatusIdvDialogOpenChange}
                     form={newPumpStatusIdvForm}
                     setForm={setNewPumpStatusIdvForm}
                     onSubmit={handleSubmitPumpStatusIdvAlarm}
@@ -1162,7 +1222,25 @@ export function AlarmConfiguration() {
         submissionError={communicationSubmissionError}
       />
 
-      <EditSensorStatusAlarmDialog/>
+      <EditSensorStatusAlarmDialog
+        open={isEditSensorStatusOpen}
+        onOpenChange={setIsEditSensorStatusOpen}
+        form={newSensorStatusForm}
+        setForm={setNewSensorStatusForm}
+        currentAlarm={currentSensorStatusAlarm}
+        sites={sites}
+        sitesLoading={sitesLoading}
+        sitesError={sitesError}
+        onSubmit={handleEditSensorStatusAlarm}
+        isSubmitting={isSubmittingSensorStatusEdit}
+        hasChanges={hasSensorStatusChanges}
+        sentMessage={newSensorStatusForm.sentMessage}
+        setSentMessage={setSensorStatusSentMessage}
+        setHasChanges={setHasSensorStatusChanges}
+        setEmails={setSensorStatusEmails}
+        setPhones={setSensorStatusPhones}
+        submissionError={sensorStatusSubmissionError}
+      />
 
       <EditPumpStatusPSAlarmDialog
         open={isEditPumpStatusPSOpen}

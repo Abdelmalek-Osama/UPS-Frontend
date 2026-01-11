@@ -129,7 +129,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                             </Button>
                         </div>
                         {submissionError && (
-                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{submissionError}</p>
+                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                     </div>
                 </DialogFooter>
