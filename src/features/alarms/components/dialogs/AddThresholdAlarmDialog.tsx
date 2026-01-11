@@ -184,8 +184,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     const footerButtonsContainerStyle: React.CSSProperties = {
         width: '100%',
         display: 'flex',
-        justifyContent: 'flex-start',
-        gap: '0.5rem'
+        justifyContent: 'flex-end',
+        gap: '0.5rem',
+        flexDirection: 'row'
     };
 
     return (
@@ -431,9 +432,6 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             <p style={submissionErrorStyle}>{submissionError}</p>
                         )}
                         <div style={footerButtonsContainerStyle}>
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                {t('common.cancel')}
-                            </Button>
                             <Button
                                 onClick={() => {
                                     if (!form.thresholdError && !form.colorError && !alarmNameError) {
@@ -445,6 +443,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                 isLoading={isSubmitting}
                             >
                                 {t('alarms.addThresholdAlarm')}
+                            </Button>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
+                                {t('common.cancel')}
                             </Button>
                         </div>
                     </DialogFooter>

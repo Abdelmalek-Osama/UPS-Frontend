@@ -386,10 +386,13 @@ export function EditThresholdAlarmDialog({
                     {submissionError && (
                         <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: t('_rtl') === 'rtl' ? 'flex-end' : 'flex-end',
+                        gap: '0.5rem',
+                        flexDirection: 'row'
+                    }}>
                         <Button
                             onClick={() => {
                                 if (!form.thresholdError && !form.colorError && !alarmNameError) {
@@ -401,6 +404,9 @@ export function EditThresholdAlarmDialog({
                             isLoading={isSubmitting}
                         >
                             {t('readings.saveChanges')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

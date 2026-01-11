@@ -4,6 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import i18n from '../../i18n';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 import type { Site } from '../../features/sites/types';
 
@@ -103,7 +104,7 @@ const processQueue = (error: AxiosError | Error | null, token: string | null = n
 
 // Helper function to extract the most specific error message from Axios response data
 const getErrorMessageFromResponseData = (responseData: any): string => {
-  let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Default ultimate fallback
+  let errorMessage = i18n.t('errors.unexpectedError', { ns: 'translation' }); // Default ultimate fallback
 
   if (responseData.errors) {
     let validationErrors: string[] = [];
@@ -119,7 +120,7 @@ const getErrorMessageFromResponseData = (responseData: any): string => {
     } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
       return responseData.message; // Fallback to message if errors object and title are empty
     } else {
-      return 'حدث خطأ في التحقق من صحة البيانات.'; // Generic validation error fallback
+      return i18n.t('errors.validationError', { ns: 'translation' }); // Generic validation error fallback
     }
   } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
     return responseData.message; // Prioritize general message
@@ -173,7 +174,7 @@ axiosInstance.interceptors.response.use(
                 window.location.href = '/logout'; // Fallback if callback not set
               }
               
-              let errorMessage = 'فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.'; // Default custom error message
+              let errorMessage = i18n.t('errors.tokenRefreshFailed', { ns: 'translation' }); // Default custom error message
               if (refreshError.isAxiosError && refreshError.response && refreshError.response.data) {
                 errorMessage = getErrorMessageFromResponseData(refreshError.response.data); // Use helper for refresh error
               }
@@ -181,7 +182,7 @@ axiosInstance.interceptors.response.use(
             }
           } else {
             clearAllUserData(); // Clear all user data if no refresh token
-            processQueue(new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'), null); // Custom error message
+            processQueue(new Error(i18n.t('errors.noRefreshToken', { ns: 'translation' })), null); // Custom error message
             if (!logoutInitiated && onLogoutCallback) {
               logoutInitiated = true; // Set flag to true
               onLogoutCallback(); // Call callback before throwing error
@@ -189,7 +190,7 @@ axiosInstance.interceptors.response.use(
               logoutInitiated = true; // Set flag to true
               window.location.href = '/logout'; // Fallback if callback not set
             }
-            throw new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'); // Custom error message
+            throw new Error(i18n.t('errors.noRefreshToken', { ns: 'translation' })); // Custom error message
           }
         } else {
           return new Promise((resolve, reject) => {

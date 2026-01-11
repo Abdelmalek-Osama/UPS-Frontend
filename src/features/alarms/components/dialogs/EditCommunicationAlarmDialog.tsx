@@ -230,10 +230,13 @@ export function EditCommunicationAlarmDialog({
                     {submissionError && (
                         <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '0.5rem',
+                        flexDirection: 'row'
+                    }}>
                         <Button
                             onClick={() => {
                                 if (!form.hoursError && !alarmNameError) {
@@ -245,6 +248,9 @@ export function EditCommunicationAlarmDialog({
                             isLoading={isSubmitting}
                         >
                             {t('readings.saveChanges')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

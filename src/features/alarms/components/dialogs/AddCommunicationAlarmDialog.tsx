@@ -192,10 +192,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                     {submissionError && (
                         <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
+                    <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                         <Button
                             onClick={() => {
                                 if (!form.hoursError && !alarmNameError) {
@@ -207,6 +204,9 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             isLoading={isSubmitting}
                         >
                             {t('alarms.addCommunicationAlarm')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>
