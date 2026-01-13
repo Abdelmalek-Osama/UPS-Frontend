@@ -9,10 +9,12 @@ interface ThresholdAlarmApiResponse {
   siteName: string;
   alarmName: string;
   fieldName: number;
-  operator: number;
-  thresholdValue: number;
-  colorCode: string;
-  severity: number;
+  criticalOperator: number;
+  criticalThresholdValue: number;
+  criticalColorCode: string;
+  crisisOperator: number;
+  crisisThresholdValue: number;
+  crisisColorCode?: string;
   emails: string;
   phones: string;
 }
@@ -39,12 +41,15 @@ export function useAlarmsData() {
       siteId: apiAlarm.siteId,
       site: apiAlarm.siteName,
       alarmName: apiAlarm.alarmName,
-      field: apiAlarm.fieldName, // Assign as number
-      operator: apiAlarm.operator, // Assign as number
-      threshold: apiAlarm.thresholdValue,
-      color: apiAlarm.colorCode,
-      severity: apiAlarm.severity === 0 ? 'Warning' : 'Critical', // Assuming 0 is Warning, 1 is Critical
-      recipients: recipients || [], // Ensure recipients is always an array
+      field: apiAlarm.fieldName,
+      criticalOperator: apiAlarm.criticalOperator,
+      criticalThresholdValue: apiAlarm.criticalThresholdValue,
+      criticalColorCode: apiAlarm.criticalColorCode,
+      crisisOperator: apiAlarm.crisisOperator,
+      crisisThresholdValue: apiAlarm.crisisThresholdValue,
+      crisisColorCode: apiAlarm.crisisColorCode,
+      severity: 'Critical',
+      recipients: recipients || [],
     };
   };
  
@@ -65,12 +70,12 @@ export function useAlarmsData() {
         console.error("Failed to fetch communication alarms, isSuccess was false:", communicationResponse);
       }
 
-      const sensorStatusResponse = await apiService.get<{ isSuccess: boolean; data: SensorStatusResponse[] }>('/v1/alarm/sensor-status');
-      if (sensorStatusResponse.isSuccess) {
-        setSensorStatusAlarms(sensorStatusResponse.data);
-      } else {
-        console.error("Failed to fetch sensor status alarms, isSuccess was false:", sensorStatusResponse);
-      }
+      // const sensorStatusResponse = await apiService.get<{ isSuccess: boolean; data: SensorStatusResponse[] }>('/v1/alarm/sensor-status');
+      // if (sensorStatusResponse.isSuccess) {
+      //   setSensorStatusAlarms(sensorStatusResponse.data);
+      // } else {
+      //   console.error("Failed to fetch sensor status alarms, isSuccess was false:", sensorStatusResponse);
+      // }
 
       const pumpStatusPSResponse = await apiService.get<{ isSuccess: boolean; data: PumpStatusPSResponse[] }>('/v1/alarm/pump-status-ps');
       if (pumpStatusPSResponse.isSuccess) {
@@ -178,35 +183,35 @@ export function useAlarmsData() {
     }
   };
 
-  const createSensorStatusAlarm = async (alarmData: CreateSensorStatusAlarmRequest) => {
-    try {
-      const response = await apiService.post<any, CreateSensorStatusAlarmRequest>('/v1/alarm/sensor-status', alarmData);
-      if (response.isSuccess) {
-        fetchAlarms(); // Re-fetch alarms to update the list
-        return { success: true, message: response.message };
-      } else {
-        return { success: false, message: response.message };
-      }
-    } catch (error: any) {
-      console.error('Failed to create sensor status alarm:', error);
-      return { success: false, message: error.message };
-    }
-  };
+  // const createSensorStatusAlarm = async (alarmData: CreateSensorStatusAlarmRequest) => {
+  //   try {
+  //     const response = await apiService.post<any, CreateSensorStatusAlarmRequest>('/v1/alarm/sensor-status', alarmData);
+  //     if (response.isSuccess) {
+  //       fetchAlarms(); // Re-fetch alarms to update the list
+  //       return { success: true, message: response.message };
+  //     } else {
+  //       return { success: false, message: response.message };
+  //     }
+  //   } catch (error: any) {
+  //     console.error('Failed to create sensor status alarm:', error);
+  //     return { success: false, message: error.message };
+  //   }
+  // };
 
-  const updateSensorStatusAlarm = async (alarmId: number, alarmData: CreateSensorStatusAlarmRequest) => {
-    try {
-      const response = await apiService.put<any, CreateSensorStatusAlarmRequest>(`/v1/alarm/sensor-status/${alarmId}`, alarmData);
-      if (response.isSuccess) {
-        fetchAlarms(); // Re-fetch alarms to update the list
-        return { success: true, message: response.message };
-      } else {
-        return { success: false, message: response.message };
-      }
-    } catch (error: any) {
-      console.error(`Failed to update sensor status alarm ${alarmId}:`, error);
-      return { success: false, message: error.message };
-    }
-  };
+  // const updateSensorStatusAlarm = async (alarmId: number, alarmData: CreateSensorStatusAlarmRequest) => {
+  //   try {
+  //     const response = await apiService.put<any, CreateSensorStatusAlarmRequest>(`/v1/alarm/sensor-status/${alarmId}`, alarmData);
+  //     if (response.isSuccess) {
+  //       fetchAlarms(); // Re-fetch alarms to update the list
+  //       return { success: true, message: response.message };
+  //     } else {
+  //       return { success: false, message: response.message };
+  //     }
+  //   } catch (error: any) {
+  //     console.error(`Failed to update sensor status alarm ${alarmId}:`, error);
+  //     return { success: false, message: error.message };
+  //   }
+  // };
 
   const createPumpStatusPSAlarm = async (alarmData: CreatePumpStatusPSAlarmRequest) => {
     try {
@@ -289,8 +294,8 @@ export function useAlarmsData() {
     createCommunicationAlarm,
     updateThresholdAlarm,
     updateCommunicationAlarm,
-    createSensorStatusAlarm,
-    updateSensorStatusAlarm,
+    // createSensorStatusAlarm,
+    // updateSensorStatusAlarm,
     createPumpStatusPSAlarm,
     updatePumpStatusPSAlarm,
     createPumpStatusIdvAlarm,

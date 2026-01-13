@@ -78,6 +78,40 @@ export function EditThresholdAlarmDialog({
     const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
     
+    // Helper function to translate field names
+    const translateFieldName = (fieldName: string): string => {
+        const translations: { [key: string]: string } = {
+            'USWL': t('readings.uswl'),
+            'DSWL1': t('readings.dswL1'),
+            'DSWL2': t('readings.dswL2'),
+            'Battery': t('readings.battery'),
+            'P1_Time': t('readings.p1Time'),
+            'P1_Flow': t('readings.p1Flow'),
+            'P2_Time': t('readings.p2Time'),
+            'P2_Flow': t('readings.p2Flow'),
+            'P3_Time': t('readings.p3Time'),
+            'P3_Flow': t('readings.p3Flow'),
+            'P4_Time': t('readings.p4Time'),
+            'P4_Flow': t('readings.p4Flow'),
+            'P5_Time': t('readings.p5Time'),
+            'P5_Flow': t('readings.p5Flow'),
+            'P6_Time': t('readings.p6Time'),
+            'P6_Flow': t('readings.p6Flow'),
+            'P7_Time': t('readings.p7Time'),
+            'P7_Flow': t('readings.p7Flow'),
+            'P8_Time': t('readings.p8Time'),
+            'P8_Flow': t('readings.p8Flow'),
+            'P9_Time': t('readings.p9Time'),
+            'P9_Flow': t('readings.p9Flow'),
+            'P10_Time': t('readings.p10Time'),
+            'P10_Flow': t('readings.p10Flow'),
+            'Calculated_flow': t('readings.calculatedFlow'),
+            'Total_uptime': t('readings.totalUptime'),
+            'Total_flow': t('readings.totalFlow'),
+        };
+        return translations[fieldName] || fieldName;
+    };
+    
     // Style objects - matching AddThresholdAlarmDialog
     const headerContainerStyle: React.CSSProperties = {
         paddingLeft: '1.5rem',
@@ -266,7 +300,7 @@ export function EditThresholdAlarmDialog({
                             </SelectTrigger>
                             <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 {availableFields.map(field => (
-                                    <SelectItem key={field} value={field}>{field}</SelectItem>
+                                    <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
