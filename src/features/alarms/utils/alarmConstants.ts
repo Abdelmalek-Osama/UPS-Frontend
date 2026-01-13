@@ -1,4 +1,4 @@
-import { ThresholdAlarmForm, CommunicationAlarmForm } from '../types';
+import { ThresholdAlarmForm, CommunicationAlarmForm, SensorStatusForm, PumpStatusPSAlarmForm, PumpStatusIdvAlarmForm } from '../types';
 
 export const FIELD_MAP: { [key: string]: number } = {
     USWL: 0,
@@ -91,9 +91,12 @@ export const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
     alarmName: '',
     site: '',
     field: '',
-    operator: '',
-    threshold: 0,
-    color: '#fbbf24',
+    criticalOperator: '',
+    criticalThresholdValue: 0,
+    criticalColorCode: '#fbbf24',
+    crisisOperator: '',
+    crisisThresholdValue: 0,
+    crisisColorCode: '#db0202ff',
     severity: 'Warning',
     emails: [],
     phones: [],
@@ -108,4 +111,32 @@ export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
     hours: 0,
     emails: [],
     phones: [],
+};
+
+export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
+    alarmId: null,
+    method: 0,
+    siteId: null,
+    site: '',
+    sentMessage: '',
+    emails: [],
+    phones: [],
+};
+
+
+export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
+    siteId: null,
+    site: '',
+    emails: [],
+    phones: [],
+    duration: 0,
+};
+
+export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
+    siteId: null,
+    site: '',
+    emails: [],
+    phones: [],
+    IdvPump: '',
+    duration: 0,
 };
