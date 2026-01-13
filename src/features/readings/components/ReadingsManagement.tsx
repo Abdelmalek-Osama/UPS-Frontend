@@ -82,6 +82,20 @@ export function ReadingsManagement() {
     createPumpStationReading,
     updatePumpStationReading,
     selectedSite,
+    // Pagination state for water level readings
+    waterLevelPageNumber,
+    setWaterLevelPageNumber,
+    waterLevelPageSize,
+    setWaterLevelPageSize,
+    waterLevelTotalPages,
+    waterLevelTotalCount,
+    // Pagination state for pump station readings
+    pumpStationPageNumber,
+    setPumpStationPageNumber,
+    pumpStationPageSize,
+    setPumpStationPageSize,
+    pumpStationTotalPages,
+    pumpStationTotalCount,
   } = useReadingsData(selectedSiteId);
 
   useEffect(() => {
@@ -169,14 +183,24 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      waterLevelPageNumber,
+      waterLevelPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageNumber, waterLevelPageSize]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (waterLevelPageNumber !== 1) {
+      setWaterLevelPageNumber(1);
+    }
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageSize]);
 
   // Added useEffect for fetching pump station readings
   useEffect(() => {
-    if (!selectedSiteId) {
+    // Only fetch when pump station tab is active
+    if (activeTab !== 'pumpStation' || !selectedSiteId) {
       return;
     }
     const siteNumericId = Number(selectedSiteId);
@@ -205,10 +229,19 @@ export function ReadingsManagement() {
     fetchPumpStationReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      pumpStationPageNumber,
+      pumpStationPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageNumber, pumpStationPageSize]);
+
+  // Reset to page 1 when filters change for pump station readings
+  useEffect(() => {
+    if (activeTab === 'pumpStation' && pumpStationPageNumber !== 1) {
+      setPumpStationPageNumber(1);
+    }
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageSize]);
 
 
   // const handleViewPumpDetails = (reading: PumpStationReading) => {
@@ -399,9 +432,8 @@ export function ReadingsManagement() {
     </TabsTrigger>
     <TabsTrigger
       value="pumpStation"
-      disabled={selectedSite?.data?.numPumps === 0}
-      // className={selectedSite?.data?.numPumps === 0 ? "cursor-not-allowed" : "cursor-pointer"}
-      style={selectedSite?.data?.numPumps === 0 ? { cursor: 'not-allowed' } : { cursor: 'pointer' }}
+      disabled={selectedSite?.data ? !(selectedSite.data.siteType === 'Pumps' || (selectedSite.data.numPumps && selectedSite.data.numPumps > 0)) : false}
+      className="cursor-pointer"
     >
       {t('readings.pumpStation')}
     </TabsTrigger>
@@ -431,6 +463,12 @@ export function ReadingsManagement() {
         fetchWaterLevelReadings={fetchWaterLevelReadings}
         fromDate={fromDate}
         toDate={toDate}
+        pageNumber={waterLevelPageNumber}
+        setPageNumber={setWaterLevelPageNumber}
+        pageSize={waterLevelPageSize}
+        setPageSize={setWaterLevelPageSize}
+        totalPages={waterLevelTotalPages}
+        totalCount={waterLevelTotalCount}
       />
     )}
   </TabsContent>
@@ -463,6 +501,12 @@ export function ReadingsManagement() {
         updatePumpStationReading={updatePumpStationReading}
         selectedSite={selectedSite?.data ?? null}
         handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
+        pageNumber={pumpStationPageNumber}
+        setPageNumber={setPumpStationPageNumber}
+        pageSize={pumpStationPageSize}
+        setPageSize={setPumpStationPageSize}
+        totalPages={pumpStationTotalPages}
+        totalCount={pumpStationTotalCount}
       />
     )}
   </TabsContent>

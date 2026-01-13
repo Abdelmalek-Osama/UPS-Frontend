@@ -20,8 +20,20 @@ export function useReadingsData(selectedSiteId: string) {
 
   const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([]);
   const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
+  
+  // Pagination state for water level readings
+  const [waterLevelPageNumber, setWaterLevelPageNumber] = useState(1);
+  const [waterLevelPageSize, setWaterLevelPageSize] = useState(10);
+  const [waterLevelTotalPages, setWaterLevelTotalPages] = useState(0);
+  const [waterLevelTotalCount, setWaterLevelTotalCount] = useState(0);
 
   const [pumpStationError, setPumpStationError] = useState<string | null>(null);
+  
+  // Pagination state for pump station readings
+  const [pumpStationPageNumber, setPumpStationPageNumber] = useState(1);
+  const [pumpStationPageSize, setPumpStationPageSize] = useState(10);
+  const [pumpStationTotalPages, setPumpStationTotalPages] = useState(0);
+  const [pumpStationTotalCount, setPumpStationTotalCount] = useState(0);
 
   // Edit dialog states
   const [isEditPumpStationOpen, setIsEditPumpStationOpen] = useState(false);
@@ -213,7 +225,14 @@ export function useReadingsData(selectedSiteId: string) {
   });
 
   const fetchWaterLevelReadings = useCallback(
-    async (siteId?: number, startDate?: string, endDate?: string, signal?: AbortSignal) => {
+    async (
+      siteId?: number,
+      startDate?: string,
+      endDate?: string,
+      pageNumber?: number,
+      pageSize?: number,
+      signal?: AbortSignal
+    ) => {
       if (!isAuthenticated || !siteId) {
         setWaterLevelReadings([]);
         setIsLoadingWaterLevel(false);
@@ -227,6 +246,12 @@ export function useReadingsData(selectedSiteId: string) {
       if (endDate) {
         params.append('endDate', endDate);
       }
+      if (pageNumber !== undefined) {
+        params.append('pagination.PageNumber', pageNumber.toString());
+      }
+      if (pageSize !== undefined) {
+        params.append('pagination.PageSize', pageSize.toString());
+      }
       const query = params.toString();
       const endpoint = `/v1/readings/water-level/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
@@ -234,16 +259,95 @@ export function useReadingsData(selectedSiteId: string) {
       setWaterLevelError(null);
 
       try {
-        const response = await apiService.get<ApiResponse<WaterLevelReadingApiResponse[]> | WaterLevelReadingApiResponse[]>(endpoint, { signal });
+        const response = await apiService.get<
+          | ApiResponse<{
+              data: WaterLevelReadingApiResponse[];
+              pageNumber: number;
+              pageSize: number;
+              totalCount: number;
+              totalPages: number;
+            }>
+          | {
+              data: WaterLevelReadingApiResponse[];
+              pageNumber: number;
+              pageSize: number;
+              totalCount: number;
+              totalPages: number;
+            }
+          | ApiResponse<WaterLevelReadingApiResponse[]>
+          | WaterLevelReadingApiResponse[]
+        >(endpoint, { signal });
 
         if (!signal?.aborted) {
-          const payload = Array.isArray(response)
-            ? response
-            : Array.isArray(response.data)
-              ? response.data
-              : [];
+          // Handle paginated response
+          let payload: WaterLevelReadingApiResponse[] = [];
+          let paginationInfo: {
+            pageNumber?: number;
+            pageSize?: number;
+            totalCount?: number;
+            totalPages?: number;
+          } = {};
+
+          if (response && typeof response === 'object' && 'isSuccess' in response && 'data' in response) {
+            const wrappedData = (response as any).data;
+            if (wrappedData && typeof wrappedData === 'object' && 'data' in wrappedData) {
+              // Paginated response wrapped in ApiResponse
+              payload = Array.isArray(wrappedData.data) ? wrappedData.data : [];
+              paginationInfo = {
+                pageNumber: wrappedData.pageNumber,
+                pageSize: wrappedData.pageSize,
+                totalCount: wrappedData.totalCount,
+                totalPages: wrappedData.totalPages,
+              };
+            } else if (Array.isArray(wrappedData)) {
+              // Non-paginated array wrapped in ApiResponse
+              payload = wrappedData;
+            }
+          } else if (response && typeof response === 'object' && 'data' in response) {
+            const data = (response as any).data;
+            if (Array.isArray(data)) {
+              // Check if pagination info is at the same level
+              if ('pageNumber' in response) {
+                payload = data;
+                paginationInfo = {
+                  pageNumber: (response as any).pageNumber,
+                  pageSize: (response as any).pageSize,
+                  totalCount: (response as any).totalCount,
+                  totalPages: (response as any).totalPages,
+                };
+              } else {
+                payload = data;
+              }
+            } else if (data && typeof data === 'object' && 'data' in data) {
+              // Nested paginated structure
+              payload = Array.isArray(data.data) ? data.data : [];
+              paginationInfo = {
+                pageNumber: data.pageNumber,
+                pageSize: data.pageSize,
+                totalCount: data.totalCount,
+                totalPages: data.totalPages,
+              };
+            }
+          } else if (Array.isArray(response)) {
+            // Direct array response
+            payload = response;
+          }
 
           setWaterLevelReadings(payload.map(mapReading));
+          
+          // Update pagination state
+          if (paginationInfo.totalPages !== undefined) {
+            setWaterLevelTotalPages(paginationInfo.totalPages);
+          }
+          if (paginationInfo.totalCount !== undefined) {
+            setWaterLevelTotalCount(paginationInfo.totalCount);
+          }
+          if (paginationInfo.pageNumber !== undefined) {
+            setWaterLevelPageNumber(paginationInfo.pageNumber);
+          }
+          if (paginationInfo.pageSize !== undefined) {
+            setWaterLevelPageSize(paginationInfo.pageSize);
+          }
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -263,7 +367,14 @@ export function useReadingsData(selectedSiteId: string) {
   );
 
   const fetchPumpStationReadings = useCallback(
-    async (siteId?: number, startDate?: string, endDate?: string, signal?: AbortSignal) => {
+    async (
+      siteId?: number,
+      startDate?: string,
+      endDate?: string,
+      pageNumber?: number,
+      pageSize?: number,
+      signal?: AbortSignal
+    ) => {
       if (!isAuthenticated || !siteId) {
         setPumpStationReadings([]);
         setIsLoadingPumpStation(false);
@@ -277,6 +388,12 @@ export function useReadingsData(selectedSiteId: string) {
       if (endDate) {
         params.append('endDate', endDate);
       }
+      if (pageNumber !== undefined) {
+        params.append('pagination.PageNumber', pageNumber.toString());
+      }
+      if (pageSize !== undefined) {
+        params.append('pagination.PageSize', pageSize.toString());
+      }
       const query = params.toString();
       const endpoint = `/v1/readings/pump-station/site/${siteId}/date-range${query ? `?${query}` : ''}`;
 
@@ -284,14 +401,79 @@ export function useReadingsData(selectedSiteId: string) {
       setPumpStationError(null);
 
       try {
-        const response = await apiService.get<ApiResponse<PumpStationApiResponse[]> | PumpStationApiResponse[]>(endpoint, { signal });
+        const response = await apiService.get<
+          | ApiResponse<{
+              data: PumpStationApiResponse[];
+              pageNumber: number;
+              pageSize: number;
+              totalCount: number;
+              totalPages: number;
+            }>
+          | {
+              data: PumpStationApiResponse[];
+              pageNumber: number;
+              pageSize: number;
+              totalCount: number;
+              totalPages: number;
+            }
+          | ApiResponse<PumpStationApiResponse[]>
+          | PumpStationApiResponse[]
+        >(endpoint, { signal });
 
         if (!signal?.aborted) {
-          const payload = Array.isArray(response)
-            ? response
-            : Array.isArray(response.data)
-              ? response.data
-              : [];
+          // Handle paginated response
+          let payload: PumpStationApiResponse[] = [];
+          let paginationInfo: {
+            pageNumber?: number;
+            pageSize?: number;
+            totalCount?: number;
+            totalPages?: number;
+          } = {};
+
+          if (response && typeof response === 'object' && 'isSuccess' in response && 'data' in response) {
+            const wrappedData = (response as any).data;
+            if (wrappedData && typeof wrappedData === 'object' && 'data' in wrappedData) {
+              // Paginated response wrapped in ApiResponse
+              payload = Array.isArray(wrappedData.data) ? wrappedData.data : [];
+              paginationInfo = {
+                pageNumber: wrappedData.pageNumber,
+                pageSize: wrappedData.pageSize,
+                totalCount: wrappedData.totalCount,
+                totalPages: wrappedData.totalPages,
+              };
+            } else if (Array.isArray(wrappedData)) {
+              // Non-paginated array wrapped in ApiResponse
+              payload = wrappedData;
+            }
+          } else if (response && typeof response === 'object' && 'data' in response) {
+            const data = (response as any).data;
+            if (Array.isArray(data)) {
+              // Check if pagination info is at the same level
+              if ('pageNumber' in response) {
+                payload = data;
+                paginationInfo = {
+                  pageNumber: (response as any).pageNumber,
+                  pageSize: (response as any).pageSize,
+                  totalCount: (response as any).totalCount,
+                  totalPages: (response as any).totalPages,
+                };
+              } else {
+                payload = data;
+              }
+            } else if (data && typeof data === 'object' && 'data' in data) {
+              // Nested paginated structure
+              payload = Array.isArray(data.data) ? data.data : [];
+              paginationInfo = {
+                pageNumber: data.pageNumber,
+                pageSize: data.pageSize,
+                totalCount: data.totalCount,
+                totalPages: data.totalPages,
+              };
+            }
+          } else if (Array.isArray(response)) {
+            // Direct array response
+            payload = response;
+          }
 
           setPumpStationReadings(payload.map((reading: PumpStationApiResponse) => ({
             id: reading.id,
@@ -321,6 +503,20 @@ export function useReadingsData(selectedSiteId: string) {
             isManual: reading.isManual, // Include isManual in mapping
             alarms: reading.alarms, // Include alarms in mapping
           })));
+          
+          // Update pagination state
+          if (paginationInfo.totalPages !== undefined) {
+            setPumpStationTotalPages(paginationInfo.totalPages);
+          }
+          if (paginationInfo.totalCount !== undefined) {
+            setPumpStationTotalCount(paginationInfo.totalCount);
+          }
+          if (paginationInfo.pageNumber !== undefined) {
+            setPumpStationPageNumber(paginationInfo.pageNumber);
+          }
+          if (paginationInfo.pageSize !== undefined) {
+            setPumpStationPageSize(paginationInfo.pageSize);
+          }
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -379,12 +575,26 @@ export function useReadingsData(selectedSiteId: string) {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
+    // Pagination state for water level readings
+    waterLevelPageNumber,
+    setWaterLevelPageNumber,
+    waterLevelPageSize,
+    setWaterLevelPageSize,
+    waterLevelTotalPages,
+    waterLevelTotalCount,
     pumpStationReadings,
     setPumpStationReadings,
     pumpStationError,
     fetchPumpStationReadings,
     createPumpStationReading,
     updatePumpStationReading,
+    // Pagination state for pump station readings
+    pumpStationPageNumber,
+    setPumpStationPageNumber,
+    pumpStationPageSize,
+    setPumpStationPageSize,
+    pumpStationTotalPages,
+    pumpStationTotalCount,
     sites,
     setSites,
     sitesError,

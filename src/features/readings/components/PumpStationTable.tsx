@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
+import { Download, Edit, FileText, Plus, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiService from '../../../../src/shared/utils/apiService';
 import type { Site } from '../../sites/types';
 import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption, ApiResponse, CreatePumpStationReadingRequest} from "../types";
@@ -38,12 +38,18 @@ interface PumpStationTableProps {
   endDate: Date | undefined;
   isLoading: boolean;
   error: string | null;
-  fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   createPumpStationReading: (data: CreatePumpStationReadingRequest) => Promise<any>;
   updatePumpStationReading: (data: CreatePumpStationReadingRequest & { id: number }) => Promise<any>;
   selectedSite: Site | null;
   handleEditPumpStation: (reading: PumpStationReading) => void;
   handleEditPump: (pumpIndex: number, reading: PumpStationReading) => void; // Added handleEditPump prop
+  pageNumber: number;
+  setPageNumber: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalPages: number;
+  totalCount: number;
 }
 
 export function PumpStationTable({
@@ -69,6 +75,12 @@ export function PumpStationTable({
   updatePumpStationReading,
   selectedSite,
   handleEditPump, // Added handleEditPump to destructuring
+  pageNumber,
+  setPageNumber,
+  pageSize,
+  setPageSize,
+  totalPages,
+  totalCount,
 }: PumpStationTableProps) {
     const { t } = useTranslation();
     const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
@@ -349,7 +361,9 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startDate),
-            formatDateTimeForAPI(endDate, true)
+            formatDateTimeForAPI(endDate, true),
+            pageNumber,
+            pageSize
           );
         } else {
           const today = new Date();
@@ -358,7 +372,9 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startOfToday),
-            formatDateTimeForAPI(endOfToday, true)
+            formatDateTimeForAPI(endOfToday, true),
+            pageNumber,
+            pageSize
           );
         }
       } catch (error: any) {
@@ -461,7 +477,7 @@ export function PumpStationTable({
         setIsEditPumpStationOpen(false);
         // Conditionally refetch readings based on existing date range or current day
         if (startDate && endDate) {
-          fetchPumpStationReadings(Number(selectedSiteId), formatDateTimeForAPI(startDate), formatDateTimeForAPI(endDate, true));
+          fetchPumpStationReadings(Number(selectedSiteId), formatDateTimeForAPI(startDate), formatDateTimeForAPI(endDate, true), pageNumber, pageSize);
         } else {
           const today = new Date();
           const startOfToday = new Date(today.setHours(0, 0, 0, 0));
@@ -469,7 +485,9 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startOfToday),
-            formatDateTimeForAPI(endOfToday, true)
+            formatDateTimeForAPI(endOfToday, true),
+            pageNumber,
+            pageSize
           );
         }
       } catch (error: any) {
@@ -1156,6 +1174,112 @@ export function PumpStationTable({
           </Table>
         </div>
       </CardContent>
+
+      {/* Pagination Controls */}
+      {!isLoading && !error && readings.length > 0 && totalPages > 0 && (
+        <CardContent className="pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPageNumber(1); // Reset to first page when page size changes
+                }}
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600">
+              {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  disabled={pageNumber === 1}
+                  className="h-9 w-9"
+                  aria-label={t('common.previousPage')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (pageNumber >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pageNumber - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === pageNumber ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setPageNumber(pageNum)}
+                      className="h-9 w-9"
+                      aria-label={`${t('common.page')} ${pageNum}`}
+                      aria-current={pageNum === pageNumber ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <span className="px-2 text-gray-500">...</span>
+                )}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPageNumber(totalPages)}
+                    className="h-9 w-9"
+                    aria-label={`${t('common.page')} ${totalPages}`}
+                  >
+                    {totalPages}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  disabled={pageNumber === totalPages}
+                  className="h-9 w-9"
+                  aria-label={t('common.nextPage')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
       {/* Pump Details Dialog */}
       <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
         <DialogContent className="sm:max-w-[700px]" dir="rtl">

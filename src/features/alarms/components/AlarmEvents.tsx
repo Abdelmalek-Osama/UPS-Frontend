@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
 import { 
   Table, 
@@ -28,12 +27,13 @@ import {
 } from '../../../components/ui/sheet';
 import { Label } from '../../../components/ui/label';
 import { 
-  Search, 
   Download, 
   AlertTriangle,
   Bell,
   Calendar as CalendarIcon,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
 import { Calendar } from '../../../components/ui/calendar';
@@ -42,6 +42,7 @@ import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import apiService from '../../../shared/utils/apiService';
 import Loader from '../../../components/ui/Loader';
+import { useSitesLookup } from '../hooks/useSitesLookup';
 
 type SeverityOption = 'warning' | 'critical' | 'info';
 
@@ -66,7 +67,24 @@ interface AlarmEventResponseDto {
 type AlarmEventsApiResponse =
   | AlarmEventResponseDto[]
   | { data: AlarmEventResponseDto[] }
-  | { isSuccess: boolean; data: AlarmEventResponseDto[] };
+  | { isSuccess: boolean; data: AlarmEventResponseDto[] }
+  | { 
+      data: AlarmEventResponseDto[];
+      pageNumber: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+    }
+  | {
+      isSuccess: boolean;
+      data: {
+        data: AlarmEventResponseDto[];
+        pageNumber: number;
+        pageSize: number;
+        totalCount: number;
+        totalPages: number;
+      };
+    };
 
 interface AlarmEvent {
   id: number;
@@ -83,6 +101,7 @@ interface AlarmEvent {
 
 export function AlarmEvents() {
   const { t, i18n } = useTranslation();
+  const { sites, sitesLoading } = useSitesLookup();
 
   const translateFieldName = (fieldName: string) => {
     const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
@@ -107,16 +126,19 @@ export function AlarmEvents() {
 
   const [selectedEvent, setSelectedEvent] = useState<AlarmEvent | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSite, setSelectedSite] = useState('all');
-  const [selectedSeverity, setSelectedSeverity] = useState('all');
-  const [selectedField, setSelectedField] = useState('all');
+  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [activeView, setActiveView] = useState<'table' | 'cards'>('table');
   const [alarmEvents, setAlarmEvents] = useState<AlarmEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination state
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -142,8 +164,30 @@ export function AlarmEvents() {
     setIsLoading(true);
     setError(null);
     try {
+      // Build query parameters
+      const params: Record<string, string | number | boolean> = {
+        unresolvedOnly: true,
+        'pagination.PageNumber': pageNumber,
+        'pagination.PageSize': pageSize,
+      };
+
+      if (selectedSiteId) {
+        params.siteId = selectedSiteId;
+      }
+
+      if (dateFrom) {
+        params.startDate = dateFrom.toISOString();
+      }
+
+      if (dateTo) {
+        // Set end date to end of day
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        params.endDate = endDate.toISOString();
+      }
+
       const response = await apiService.get<AlarmEventsApiResponse>(`/v1/alarm-events`, {
-        params: { unresolvedOnly: true },
+        params,
       });
 
       const severityMap: Record<string | number, SeverityOption> = {
@@ -161,22 +205,68 @@ export function AlarmEvents() {
         informational: 'info',
       };
 
-      const getEventsPayload = (raw: AlarmEventsApiResponse): AlarmEventResponseDto[] => {
-        if (Array.isArray(raw)) return raw;
-        if (raw && typeof raw === 'object') {
-          const firstLayer = (raw as Record<string, unknown>).data;
-          if (Array.isArray(firstLayer)) return firstLayer;
-          if (firstLayer && typeof firstLayer === 'object') {
-            const secondLayer = (firstLayer as Record<string, unknown>).data;
-            if (Array.isArray(secondLayer)) return secondLayer;
+      const getEventsPayload = (raw: AlarmEventsApiResponse): {
+        events: AlarmEventResponseDto[];
+        pageNumber?: number;
+        pageSize?: number;
+        totalCount?: number;
+        totalPages?: number;
+      } => {
+        // Handle ApiResponse wrapper (isSuccess, data, message)
+        if (raw && typeof raw === 'object' && 'isSuccess' in raw && 'data' in raw) {
+          const wrappedData = (raw as any).data;
+          // Check if wrapped data has pagination info
+          if (wrappedData && typeof wrappedData === 'object' && 'data' in wrappedData) {
+            return {
+              events: Array.isArray(wrappedData.data) ? wrappedData.data : [],
+              pageNumber: wrappedData.pageNumber,
+              pageSize: wrappedData.pageSize,
+              totalCount: wrappedData.totalCount,
+              totalPages: wrappedData.totalPages,
+            };
+          }
+          // If wrapped data is array (non-paginated)
+          if (Array.isArray(wrappedData)) {
+            return { events: wrappedData };
           }
         }
-        return [];
+        
+        // Handle direct paginated response (data, pageNumber, pageSize, etc.)
+        if (raw && typeof raw === 'object' && 'data' in raw) {
+          const data = (raw as any).data;
+          // Check if data has pagination info (nested structure)
+          if (data && typeof data === 'object' && 'data' in data) {
+            return {
+              events: Array.isArray(data.data) ? data.data : [],
+              pageNumber: data.pageNumber,
+              pageSize: data.pageSize,
+              totalCount: data.totalCount,
+              totalPages: data.totalPages,
+            };
+          }
+          // Check if data is array and pagination info is at same level
+          if (Array.isArray(data)) {
+            return {
+              events: data,
+              pageNumber: (raw as any).pageNumber,
+              pageSize: (raw as any).pageSize,
+              totalCount: (raw as any).totalCount,
+              totalPages: (raw as any).totalPages,
+            };
+          }
+        }
+        
+        // Fallback for non-paginated array response
+        if (Array.isArray(raw)) {
+          return { events: raw };
+        }
+        
+        return { events: [] };
       };
 
-      const payload = getEventsPayload(response);
+      const result = getEventsPayload(response);
 
-      const mappedEvents: AlarmEvent[] = payload.map((event) => ({
+      const mappedEvents: AlarmEvent[] = result.events.map((event) => ({
         id: event.id,
         alarmName: event.alarmName,
         siteName: event.siteName,
@@ -190,20 +280,51 @@ export function AlarmEvents() {
       }));
 
       setAlarmEvents(mappedEvents);
+      
+      // Update pagination state
+      if (result.totalPages !== undefined) {
+        setTotalPages(result.totalPages);
+      }
+      if (result.totalCount !== undefined) {
+        setTotalCount(result.totalCount);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [pageNumber, pageSize, selectedSiteId, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchAlarmEvents();
   }, [fetchAlarmEvents]);
 
-  const sites = Array.from(new Set(alarmEvents.map((event) => event.siteName)));
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    }
+  }, [selectedSiteId, dateFrom, dateTo, pageSize]);
 
-  const fields = Array.from(new Set(alarmEvents.map((event) => event.fieldName))).filter(Boolean);
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPageNumber(newPage);
+    }
+  };
+
+  const handlePageSizeChange = (newSize: string) => {
+    setPageSize(Number(newSize));
+    setPageNumber(1); // Reset to first page when page size changes
+  };
+
+  const handleClearFilters = () => {
+    setSelectedSiteId(null);
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setPageNumber(1);
+  };
+
+  const hasActiveFilters = selectedSiteId !== null || dateFrom !== undefined || dateTo !== undefined;
 
   const getSeverityBadge = (severity: 'warning' | 'critical' | 'info') => {
     const config = {
@@ -231,42 +352,6 @@ export function AlarmEvents() {
     alert('سيتم تصدير أحداث التنبيهات إلى ملف CSV');
   };
 
-  // Filter logic
-  const filteredEvents = alarmEvents.filter(event => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    // Search filter
-    if (
-      normalizedQuery &&
-      !event.id.toString().includes(normalizedQuery)
-    ) {
-      return false;
-    }
-    
-    // Site filter
-    if (selectedSite !== 'all' && event.siteName !== selectedSite) {
-      return false;
-    }
-    
-    // Severity filter
-    if (selectedSeverity !== 'all' && event.severity !== selectedSeverity) {
-      return false;
-    }
-    
-    // Field filter
-    if (selectedField !== 'all' && event.fieldName !== selectedField) {
-      return false;
-    }
-    
-    // Date range filter
-    if (dateFrom || dateTo) {
-      const eventDate = new Date(event.triggeredAt);
-      if (dateFrom && eventDate < dateFrom) return false;
-      if (dateTo && eventDate > dateTo) return false;
-    }
-    
-    return true;
-  });
-
   return (
     <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Page Header */}
@@ -282,9 +367,107 @@ export function AlarmEvents() {
                 {t('alarms.eventsDescription')}
               </p>
             </div>
-            
           </div>
         </CardHeader>
+      </Card>
+
+      {/* Filters Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('common.filters')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Site Filter */}
+            <div className="space-y-2 md:w-64">
+              <Label>{t('readings.site')}</Label>
+              <Select
+                value={selectedSiteId?.toString() || 'all'}
+                onValueChange={(value) => setSelectedSiteId(value === 'all' ? null : Number(value))}
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+              >
+                <SelectTrigger className="rtl:flex-row-reverse">
+                  <SelectValue placeholder={t('readings.selectSite')} />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                  <SelectItem value="all">{t('common.all')}</SelectItem>
+                  {sitesLoading ? (
+                    <SelectItem value="loading" disabled>{t('common.loading')}</SelectItem>
+                  ) : (
+                    sites.map((site) => (
+                      <SelectItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Range - Side by Side */}
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              {/* Date From */}
+              <div className="space-y-2 flex-1">
+                <Label>{t('common.dateFrom')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start text-left font-normal ${!dateFrom ? 'text-gray-500' : ''}`}
+                      dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                    >
+                      <CalendarIcon className={`${t('_rtl') === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                      {dateFrom ? format(dateFrom, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('common.selectDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Date To */}
+              <div className="space-y-2 flex-1">
+                <Label>{t('common.dateTo')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start text-left font-normal ${!dateTo ? 'text-gray-500' : ''}`}
+                      dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                    >
+                      <CalendarIcon className={`${t('_rtl') === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                      {dateTo ? format(dateTo, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('common.selectDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={handleClearFilters} size="sm">
+                <X className={`h-4 w-4 ${t('_rtl') === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                {t('common.clearFilters')}
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
 
@@ -305,7 +488,7 @@ export function AlarmEvents() {
           </CardContent>
         </Card>
       ) : (
-        filteredEvents.length === 0 ? (
+        alarmEvents.length === 0 ? (
         <Card>
           <CardContent className="py-16">
             <div className="flex flex-col items-center justify-center text-center space-y-4">
@@ -313,11 +496,11 @@ export function AlarmEvents() {
                 <Bell className="h-12 w-12 text-gray-400" />
               </div>
               <div>
-                <h3 className="text-lg mb-2">لا توجد أحداث تنبيه</h3>
+                <h3 className="text-lg mb-2">{t('alarms.noEvents')}</h3>
                 <p className="text-gray-500 text-sm">
-                  {searchQuery || selectedSite !== 'all' || selectedSeverity !== 'all' || selectedField !== 'all' 
-                    ? 'لم يتم العثور على أحداث تطابق معايير البحث المحددة.'
-                    : 'لم يتم إطلاق أي أحداث تنبيه بعد.'}
+                  {hasActiveFilters
+                    ? t('alarms.noEventsMatchFilters')
+                    : t('alarms.noEventsYet')}
                 </p>
               </div>
             </div>
@@ -348,7 +531,7 @@ export function AlarmEvents() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredEvents.map((event) => (
+                      {alarmEvents.map((event) => (
                         <TableRow 
                           key={event.id} 
                           className="hover:bg-gray-50"
@@ -387,7 +570,7 @@ export function AlarmEvents() {
 
           <TabsContent value="cards" className="mt-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredEvents.map((event) => (
+                  {alarmEvents.map((event) => (
                     <Card 
                       key={event.id} 
                       className="border shadow-sm hover:border-blue-200 transition"
@@ -437,12 +620,114 @@ export function AlarmEvents() {
                     </Card>
                   ))}
                 </div>
-                
-                  <div className="text-center py-8">{t('alarms.noEventsToDisplay')}</div>
-                
             </TabsContent>
           </Tabs>
         )
+      )}
+
+      {/* Pagination Controls */}
+      {!isLoading && !error && alarmEvents.length > 0 && totalPages > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={handlePageSizeChange}
+                  dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pagination Info */}
+              <div className="text-sm text-gray-600">
+                {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(pageNumber - 1)}
+                    disabled={pageNumber === 1}
+                    className="h-9 w-9"
+                    aria-label={t('common.previousPage')}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pageNumber <= 3) {
+                      pageNum = i + 1;
+                    } else if (pageNumber >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = pageNumber - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === pageNumber ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="h-9 w-9"
+                        aria-label={`${t('common.page')} ${pageNum}`}
+                        aria-current={pageNum === pageNumber ? 'page' : undefined}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+
+                  {totalPages > 5 && pageNumber < totalPages - 2 && (
+                    <span className="px-2 text-gray-500">...</span>
+                  )}
+
+                  {totalPages > 5 && pageNumber < totalPages - 2 && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(totalPages)}
+                      className="h-9 w-9"
+                      aria-label={`${t('common.page')} ${totalPages}`}
+                    >
+                      {totalPages}
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(pageNumber + 1)}
+                    disabled={pageNumber === totalPages}
+                    className="h-9 w-9"
+                    aria-label={t('common.nextPage')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Detail Drawer */}
