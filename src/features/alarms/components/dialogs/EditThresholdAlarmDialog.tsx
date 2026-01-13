@@ -77,6 +77,42 @@ export function EditThresholdAlarmDialog({
 }: EditThresholdAlarmDialogProps) {
     const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+    
+    // Helper function to translate field names
+    const translateFieldName = (fieldName: string): string => {
+        const translations: { [key: string]: string } = {
+            'USWL': t('readings.uswl'),
+            'DSWL1': t('readings.dswL1'),
+            'DSWL2': t('readings.dswL2'),
+            'Battery': t('readings.battery'),
+            'P1_Time': t('readings.p1Time'),
+            'P1_Flow': t('readings.p1Flow'),
+            'P2_Time': t('readings.p2Time'),
+            'P2_Flow': t('readings.p2Flow'),
+            'P3_Time': t('readings.p3Time'),
+            'P3_Flow': t('readings.p3Flow'),
+            'P4_Time': t('readings.p4Time'),
+            'P4_Flow': t('readings.p4Flow'),
+            'P5_Time': t('readings.p5Time'),
+            'P5_Flow': t('readings.p5Flow'),
+            'P6_Time': t('readings.p6Time'),
+            'P6_Flow': t('readings.p6Flow'),
+            'P7_Time': t('readings.p7Time'),
+            'P7_Flow': t('readings.p7Flow'),
+            'P8_Time': t('readings.p8Time'),
+            'P8_Flow': t('readings.p8Flow'),
+            'P9_Time': t('readings.p9Time'),
+            'P9_Flow': t('readings.p9Flow'),
+            'P10_Time': t('readings.p10Time'),
+            'P10_Flow': t('readings.p10Flow'),
+            'Calculated_flow': t('readings.calculatedFlow'),
+            'Total_uptime': t('readings.totalUptime'),
+            'Total_flow': t('readings.totalFlow'),
+        };
+        return translations[fieldName] || fieldName;
+    };
+    
+    // Style objects - matching AddThresholdAlarmDialog
     const headerContainerStyle: React.CSSProperties = {
         paddingLeft: '1.5rem',
         paddingRight: '1.5rem',
@@ -95,7 +131,44 @@ export function EditThresholdAlarmDialog({
         paddingTop: '1rem',
         paddingBottom: '1rem',
         minHeight: 0,
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        height: 0
+    };
+
+    const contentWrapperStyle: React.CSSProperties = {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem'
+    };
+
+    const fieldContainerStyle: React.CSSProperties = {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem'
+    };
+
+    const gridContainerStyle: React.CSSProperties = {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        gap: '1rem'
+    };
+
+    const colorInputContainerStyle: React.CSSProperties = {
+        display: 'flex',
+        gap: '0.5rem'
+    };
+
+    const colorPickerStyle: React.CSSProperties = {
+        width: '5rem'
+    };
+
+    const colorInputStyle: React.CSSProperties = {
+        flex: 1
+    };
+
+    const errorTextStyle: React.CSSProperties = {
+        color: '#dc2626',
+        fontSize: '0.875rem'
     };
 
     const footerContainerStyle: React.CSSProperties = {
@@ -105,10 +178,6 @@ export function EditThresholdAlarmDialog({
         paddingBottom: '1.5rem',
         flexShrink: 0,
         borderTop: '1px solid hsl(var(--border))'
-    };
-
-    const footerStyle: React.CSSProperties = {
-        marginTop: 0
     };
     useEffect(() => {
         if (currentAlarm && currentAlarm.threshold < 0) {
@@ -157,8 +226,8 @@ export function EditThresholdAlarmDialog({
 
             {/* Scrollable Content - THIS MUST HAVE flex-1 */}
             <div style={scrollContainerStyle}>
-                <div className="space-y-6">
-                    <div className="space-y-2">
+                <div style={contentWrapperStyle}>
+                    <div style={fieldContainerStyle}>
                         <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
                             <Input type="text" value={currentAlarm.site} disabled />
@@ -192,7 +261,7 @@ export function EditThresholdAlarmDialog({
                         )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div style={fieldContainerStyle}>
                         <Label>{t('alarms.alarmName')}</Label>
                         <Input
                             type="text"
@@ -209,11 +278,11 @@ export function EditThresholdAlarmDialog({
                             }}
                         />
                         {alarmNameError && (
-                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                            <p style={errorTextStyle}>{alarmNameError}</p>
                         )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div style={fieldContainerStyle}>
                         <Label>{t('alarms.field')}</Label>
                         <Select
                             onValueChange={(value) => {
@@ -231,135 +300,228 @@ export function EditThresholdAlarmDialog({
                             </SelectTrigger>
                             <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 {availableFields.map(field => (
-                                    <SelectItem key={field} value={field}>{field}</SelectItem>
+                                    <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>{t('alarms.operator')}</Label>
-                            <Select
-                                onValueChange={(value) => {
-                                    setForm(prev => ({
-                                        ...prev,
-                                        operator: value
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                                value={form.operator}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('alarms.operator')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {OPERATORS.map(op => (
-                                        <SelectItem key={op} value={op}>{getOperatorLabels(t)[op] || op}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                    {/* Critical Threshold Section */}
+                    <div style={{...fieldContainerStyle, backgroundColor: 'hsl(var(--muted))', padding: '0.75rem', borderRadius: '0.375rem'}}>
+                        <h3 style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#dc2626' }}>
+                            {t('alarms.critical')}
+                        </h3>
+                        
+                        <div style={gridContainerStyle}>
+                            <div style={fieldContainerStyle}>
+                                <Label>{t('alarms.operator')}</Label>
+                                <Select
+                                    onValueChange={(value) => {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            criticalOperator: value
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    value={form.criticalOperator}
+                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                >
+                                    <SelectTrigger className="rtl:flex-row-reverse">
+                                        <SelectValue placeholder={t('alarms.operator')} />
+                                    </SelectTrigger>
+                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                        {OPERATORS.map(op => (
+                                            <SelectItem key={op} value={op}>{getOperatorLabels(t)[op] || op}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div style={fieldContainerStyle}>
+                                <Label>{t('alarms.threshold')}</Label>
+                                <Input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    placeholder="e.g. 5"
+                                    value={form.criticalThresholdValue}
+                                    onChange={(e) => {
+                                        const inputValue = e.target.value;
+                                        const parsedValue = parseFloat(inputValue);
+
+                                        if (inputValue === '') {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                criticalThresholdValue: 0,
+                                                criticalThresholdError: undefined
+                                            }));
+                                        } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                criticalThresholdValue: Math.max(0, parsedValue),
+                                                criticalThresholdError: t('validation.invalidNumber')
+                                            }));
+                                        } else {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                criticalThresholdValue: parsedValue,
+                                                criticalThresholdError: undefined
+                                            }));
+                                        }
+                                        setHasChanges(true);
+                                    }}
+                                />
+                                {form.criticalThresholdError && (
+                                    <p style={errorTextStyle}>{form.criticalThresholdError}</p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>{t('alarms.threshold')}</Label>
-                            <Input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                placeholder="12.5"
-                                value={form.threshold}
-                                onChange={(e) => {
-                                    const inputValue = e.target.value;
-                                    const parsedValue = parseFloat(inputValue);
-
-                                    if (inputValue === '') {
+                        <div style={fieldContainerStyle}>
+                            <Label>{t('alarms.color')}</Label>
+                            <div style={colorInputContainerStyle}>
+                                <Input
+                                    type="color"
+                                    style={colorPickerStyle}
+                                    value={form.criticalColorCode}
+                                    onChange={(e) => {
                                         setForm(prev => ({
                                             ...prev,
-                                            threshold: 0,
-                                            thresholdError: undefined
+                                            criticalColorCode: e.target.value,
+                                            criticalColorError: undefined
                                         }));
-                                    } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                        setHasChanges(true);
+                                    }}
+                                />
+                                <Input
+                                    type="text"
+                                    style={colorInputStyle}
+                                    placeholder="e.g. #FF0000 OR rgb(255,0,0)"
+                                    value={form.criticalColorCode}
+                                    onChange={(e) => {
+                                        const inputValue = e.target.value;
                                         setForm(prev => ({
                                             ...prev,
-                                            threshold: Math.max(0, parsedValue),
-                                            thresholdError: t('validation.invalidNumber')
+                                            criticalColorCode: inputValue,
+                                            criticalColorError: isValidColor(inputValue) ? undefined : t('alarms.invalidColorFormat')
                                         }));
-                                    } else {
-                                        setForm(prev => ({
-                                            ...prev,
-                                            threshold: parsedValue,
-                                            thresholdError: undefined
-                                        }));
-                                    }
-                                    setHasChanges(true);
-                                }}
-                            />
-                            {form.thresholdError && (
-                                <p className="text-red-600 text-sm">{form.thresholdError}</p>
+                                        setHasChanges(true);
+                                    }}
+                                />
+                            </div>
+                            {form.criticalColorError && (
+                                <p style={errorTextStyle}>{form.criticalColorError}</p>
                             )}
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>{t('alarms.severity')}</Label>
-                        <Select
-                            onValueChange={(value: 'Warning' | 'Critical') => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    severity: value
-                                }));
-                                setHasChanges(true);
-                            }}
-                            value={form.severity}
-                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                        >
-                            <SelectTrigger className="rtl:flex-row-reverse">
-                                <SelectValue placeholder={t('alarms.severity')} />
-                            </SelectTrigger>
-                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                <SelectItem value="Warning">{t('alarms.warning')}</SelectItem>
-                                <SelectItem value="Critical">{t('alarms.critical')}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {/* Crisis Threshold Section */}
+                    <div style={{...fieldContainerStyle, backgroundColor: 'hsl(var(--muted))', padding: '0.75rem', borderRadius: '0.375rem'}}>
+                        <h3 style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#991b1b' }}>
+                            {t('alarms.crisis')}
+                        </h3>
+                        
+                        <div style={gridContainerStyle}>
+                            <div style={fieldContainerStyle}>
+                                <Label>{t('alarms.operator')}</Label>
+                                <Select
+                                    onValueChange={(value) => {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            crisisOperator: value
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                    value={form.crisisOperator}
+                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                >
+                                    <SelectTrigger className="rtl:flex-row-reverse">
+                                        <SelectValue placeholder={t('alarms.operator')} />
+                                    </SelectTrigger>
+                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                        {OPERATORS.map(op => (
+                                            <SelectItem key={op} value={op}>{getOperatorLabels(t)[op] || op}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className="space-y-2">
-                        <Label>{t('alarms.color')}</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                type="color"
-                                className="w-20"
-                                value={form.color}
-                                onChange={(e) => {
-                                    setForm(prev => ({
-                                        ...prev,
-                                        color: e.target.value,
-                                        colorError: undefined // Clear error when using color picker
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                            />
-                            <Input
-                                type="text"
-                                className="flex-1"
-                                placeholder="e.g. #FF0000 OR rgb(255,0,0) OR red"
-                                value={form.color}
-                                onChange={(e) => {
-                                    const inputValue = e.target.value;
-                                    setForm(prev => ({
-                                        ...prev,
-                                        color: inputValue,
-                                        colorError: isValidColor(inputValue) ? undefined : t('alarms.invalidColorFormat')
-                                    }));
-                                    setHasChanges(true);
-                                }}
-                            />
+                            <div style={fieldContainerStyle}>
+                                <Label>{t('alarms.threshold')}</Label>
+                                <Input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    placeholder="e.g. 3"
+                                    value={form.crisisThresholdValue}
+                                    onChange={(e) => {
+                                        const inputValue = e.target.value;
+                                        const parsedValue = parseFloat(inputValue);
+
+                                        if (inputValue === '') {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                crisisThresholdValue: 0,
+                                                crisisThresholdError: undefined
+                                            }));
+                                        } else if (isNaN(parsedValue) || parsedValue < 0) {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                crisisThresholdValue: Math.max(0, parsedValue),
+                                                crisisThresholdError: t('validation.invalidNumber')
+                                            }));
+                                        } else {
+                                            setForm(prev => ({
+                                                ...prev,
+                                                crisisThresholdValue: parsedValue,
+                                                crisisThresholdError: undefined
+                                            }));
+                                        }
+                                        setHasChanges(true);
+                                    }}
+                                />
+                                {form.crisisThresholdError && (
+                                    <p style={errorTextStyle}>{form.crisisThresholdError}</p>
+                                )}
+                            </div>
                         </div>
-                        {form.colorError && (
-                            <p className="text-red-600 text-sm">{form.colorError}</p>
-                        )}
+
+                        <div style={fieldContainerStyle}>
+                            <Label>{t('alarms.color')}</Label>
+                            <div style={colorInputContainerStyle}>
+                                <Input
+                                    type="color"
+                                    style={colorPickerStyle}
+                                    value={form.crisisColorCode}
+                                    onChange={(e) => {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            crisisColorCode: e.target.value,
+                                            crisisColorError: undefined
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                />
+                                <Input
+                                    type="text"
+                                    style={colorInputStyle}
+                                    placeholder="e.g. #F2DCD8 OR rgb(242,220,216)"
+                                    value={form.crisisColorCode}
+                                    onChange={(e) => {
+                                        const inputValue = e.target.value;
+                                        setForm(prev => ({
+                                            ...prev,
+                                            crisisColorCode: inputValue,
+                                            crisisColorError: isValidColor(inputValue) ? undefined : t('alarms.invalidColorFormat')
+                                        }));
+                                        setHasChanges(true);
+                                    }}
+                                />
+                            </div>
+                            {form.crisisColorError && (
+                                <p style={errorTextStyle}>{form.crisisColorError}</p>
+                            )}
+                        </div>
                     </div>
 
                     <RecipientInput
@@ -381,25 +543,25 @@ export function EditThresholdAlarmDialog({
             </div>
 
             {/* Fixed Footer */}
-            <div className="px-6 py-4 flex-shrink-0 border-t border-border">
+            <div style={footerContainerStyle}>
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
+                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem'}}>{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     <div style={{
                         width: '100%',
                         display: 'flex',
-                        justifyContent: t('_rtl') === 'rtl' ? 'flex-end' : 'flex-end',
+                        justifyContent: 'flex-end',
                         gap: '0.5rem',
                         flexDirection: 'row'
                     }}>
                         <Button
                             onClick={() => {
-                                if (!form.thresholdError && !form.colorError && !alarmNameError) {
+                                if (!form.criticalThresholdError && !form.criticalColorError && !form.crisisThresholdError && !form.crisisColorError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !!alarmNameError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.criticalThresholdError || !!form.criticalColorError || !!form.crisisThresholdError || !!form.crisisColorError || !!alarmNameError || !form.criticalOperator || !form.crisisOperator || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText={t('alarms.updatingAlarm')}
                             isLoading={isSubmitting}
                         >

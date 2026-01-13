@@ -73,11 +73,16 @@ export interface ThresholdAlarmForm {
   alarmName: string;
   site: string;
   field: string;
-  operator: string;
-  threshold: number;
-  thresholdError?: string; // Add this line
-  color: string;
-  colorError?: string; // Re-add this line
+  criticalOperator: string;
+  criticalThresholdValue: number;
+  criticalColorCode: string;
+  criticalThresholdError?: string;
+  criticalColorError?: string;
+  crisisOperator: string;
+  crisisThresholdValue: number;
+  crisisColorCode: string;
+  crisisThresholdError?: string;
+  crisisColorError?: string;
   severity: 'Warning' | 'Critical';
   emails: string[];
   phones: string[];
@@ -156,10 +161,12 @@ export interface CreateThresholdAlarmRequest {
   method: AlarmMethod;
   valueThreshold: {
     fieldName: number;
-    operator: number;
-    thresholdValue: number;
-    colorCode: string;
-    severity: number;
+    criticalOperator: number;
+    criticalThresholdValue: number;
+    criticalColorCode: string;
+    crisisOperator: number;
+    crisisThresholdValue: number;
+    crisisColorCode: string;
   };
 }
 
@@ -229,11 +236,18 @@ export interface ValueThresholdAlarm {
   alarmName: string;
   site: string;
   field: number;
-  operator: number;
-  threshold: number;
-  color: string;
-  severity: string; // Assuming it's a string like 'Warning' or 'Critical'
-  recipients: string[]; // Assuming recipients can be an array of strings
+  criticalOperator?: number;
+  criticalThresholdValue?: number;
+  criticalColorCode?: string;
+  crisisOperator?: number;
+  crisisThresholdValue?: number;
+  crisisColorCode?: string;
+  // Legacy fields for backward compatibility
+  operator?: number;
+  threshold?: number;
+  color?: string;
+  severity: string;
+  recipients: string[];
 }
 
 export interface SensorStatusResponse {
