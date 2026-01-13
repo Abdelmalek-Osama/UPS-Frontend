@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -19,6 +20,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site } from '../../types';
+import { validateAlarmName } from '../../utils/validation';
 
 interface EditCommunicationAlarmDialogProps {
     open: boolean;
@@ -55,11 +57,14 @@ export function EditCommunicationAlarmDialog({
     setPhones,
     submissionError
 }: EditCommunicationAlarmDialogProps) {
+    const { t } = useTranslation();
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
     useEffect(() => {
         if (currentAlarm && currentAlarm.hours < 0) {
             setForm(prev => ({
                 ...prev,
-                hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                hoursError: t('validation.invalidNumber')
             }));
         } else if (currentAlarm && currentAlarm.hours >= 0) {
             setForm(prev => ({
@@ -71,23 +76,25 @@ export function EditCommunicationAlarmDialog({
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
+            if (!newOpen) {
+                onOpenChange(newOpen);
+            } else {
+                onOpenChange(newOpen);
             }
-            onOpenChange(newOpen);
         }}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
-                <DialogHeader>
-                    <DialogTitle className="text-right">تعديل تنبيه فقدان اتصال</DialogTitle>
-                    <DialogDescription className="text-right">
-                        تعديل تكوين التنبيه الحالي
-                    </DialogDescription>
-                </DialogHeader>
+                <DialogContent 
+                className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" 
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                    <DialogHeader>
+                        <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editCommunicationAlarm')}</DialogTitle>
+                        <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            {t('alarms.editCommunicationAlarmDescription')}
+                        </DialogDescription>
+                    </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>الموقع</Label>
+                        <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
                             <Input type="text" value={currentAlarm.site} disabled />
                         ) : (
@@ -97,13 +104,14 @@ export function EditCommunicationAlarmDialog({
                                     siteId: parseInt(value)
                                 }))}
                                 value={form.siteId?.toString() || ""}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="اختر الموقع" />
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('readings.selectSite')} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                     {sitesLoading ? (
-                                        <SelectItem value="0">جاري التحميل...</SelectItem>
+                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
                                     ) : sitesError ? (
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
@@ -117,23 +125,28 @@ export function EditCommunicationAlarmDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>اسم التنبيه</Label>
+                        <Label>{t('alarms.alarmName')}</Label>
                         <Input
                             type="text"
-                            placeholder="اسم التنبيه"
+                            placeholder={t('alarms.alarmName')}
                             value={form.alarmName}
                             onChange={(e) => {
                                 setForm(prev => ({
                                     ...prev,
                                     alarmName: e.target.value
                                 }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
                                 setHasChanges(true);
                             }}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
-                        <Label>عدد الساعات</Label>
+                        <Label>{t('alarms.noResponse')}</Label>
                         <Input
                             type="number"
                             placeholder="2"
@@ -153,7 +166,7 @@ export function EditCommunicationAlarmDialog({
                                     setForm(prev => ({
                                         ...prev,
                                         hours: Math.max(0, parsedValue),
-                                        hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                        hoursError: t('validation.invalidNumber')
                                     }));
                                 } else {
                                     setForm(prev => ({
@@ -169,11 +182,11 @@ export function EditCommunicationAlarmDialog({
                             <p className="text-red-600 text-sm">{form.hoursError}</p>
                         )}
                         <p className="text-xs text-gray-500">
-                            سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
+                            {t('alarms.communicationAlarmDescription')}
                         </p>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                         <Label>مستوى الخطورة</Label>
                         <Select
                             onValueChange={(value: 'Warning' | 'Critical') => {
@@ -184,16 +197,17 @@ export function EditCommunicationAlarmDialog({
                                 setHasChanges(true);
                             }}
                             value={form.severity}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="اختر المستوى" />
+                            <SelectTrigger className="rtl:flex-row-reverse">
+                                <SelectValue placeholder={t('alarms.severity')} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 <SelectItem value="Warning">تحذير</SelectItem>
                                 <SelectItem value="Critical">حرج</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     <RecipientInput
                         type="email"
@@ -214,23 +228,29 @@ export function EditCommunicationAlarmDialog({
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            إلغاء
-                        </Button>
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '0.5rem',
+                        flexDirection: 'row'
+                    }}>
                         <Button
                             onClick={() => {
-                                if (!form.hoursError) {
+                                if (!form.hoursError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
-                            loadingText="جاري الحفظ..."
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !!form.hoursError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
+                            loadingText={t('common.saving')}
                             isLoading={isSubmitting}
                         >
-                            حفظ التغييرات
+                            {t('readings.saveChanges')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

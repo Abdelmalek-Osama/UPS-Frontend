@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Edit, Download, Plus } from 'lucide-react';
+import { Edit, Download, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
@@ -70,9 +71,15 @@ interface WaterLevelTableProps {
     isManual: boolean;
   }) => Promise<any>;
   selectedSiteId: string;
-  fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   fromDate?: Date;
   toDate?: Date;
+  pageNumber: number;
+  setPageNumber: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalPages: number;
+  totalCount: number;
 }
 
 export function WaterLevelTable({
@@ -93,7 +100,14 @@ export function WaterLevelTable({
   fetchWaterLevelReadings,
   fromDate,
   toDate,
+  pageNumber,
+  setPageNumber,
+  pageSize,
+  setPageSize,
+  totalPages,
+  totalCount,
 }: WaterLevelTableProps) {
+  const { t } = useTranslation();
   const [readingDate, setReadingDate] = useState<Date | undefined>();
   const [readingTime, setReadingTime] = useState<string>('');
   const [uswl, setUswl] = useState<string>('');
@@ -209,10 +223,29 @@ export function WaterLevelTable({
 
   useEffect(() => {
     if (isEditWaterLevelOpen && editingWaterLevel) {
-      if (editingWaterLevel.uswl < 0) setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditUswlError(null);
-      if (editingWaterLevel.dswL1 < 0) setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswlError(null);
-      if (editingWaterLevel.dswL2 < 0) setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswl2Error(null);
-      if (editingWaterLevel.battery <= 0) setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.'); else setEditBatteryError(null);
+      if (editingWaterLevel.uswl != null && editingWaterLevel.uswl < 0) {
+        setEditUswlError(t('readings.valueCannotBeLessThanZero'));
+      } else {
+        setEditUswlError(null);
+      }
+
+      if (editingWaterLevel.dswL1 != null && editingWaterLevel.dswL1 < 0) {
+        setEditDswlError(t('readings.valueCannotBeLessThanZero'));
+      } else {
+        setEditDswlError(null);
+      }
+
+      if (editingWaterLevel.dswL2 != null && editingWaterLevel.dswL2 < 0) {
+        setEditDswl2Error(t('readings.valueCannotBeLessThanZero'));
+      } else {
+        setEditDswl2Error(null);
+      }
+
+      if (editingWaterLevel.battery != null && editingWaterLevel.battery <= 0) {
+        setEditBatteryError(t('readings.batteryMustBeGreaterThanZero'));
+      } else {
+        setEditBatteryError(null);
+      }
     }
   }, [isEditWaterLevelOpen, editingWaterLevel]);
 
@@ -292,19 +325,19 @@ export function WaterLevelTable({
   const handleAddReading = async () => {
     setAddError(null); // Clear previous errors
     if (!readingDate || !readingTime || !selectedSiteForAdd) {
-      setAddError('الرجاء تعبئة جميع الحقول المطلوبة.');
+      setAddError(t('readings.fillAllFields'));
       return;
     }
 
     const siteId = Number(selectedSiteForAdd);
     if (Number.isNaN(siteId)) {
-      setAddError('الموقع المحدد غير صالح.');
+      setAddError(t('readings.invalidSite'));
       return;
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery))) || batteryError) {
-      setAddError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (batteryError) {
+      setAddError(batteryError); // Use the specific batteryError message
       return;
     }
 
@@ -316,7 +349,7 @@ export function WaterLevelTable({
     // Validate that the combined datetime is not in the future
     const now = new Date();
     if (dateTime.getTime() > now.getTime()) {
-      setAddError('لا يمكن إضافة قراءة في المستقبل.');
+      setAddError(t('readings.cannotAddFutureReading'));
       return;
     }
 
@@ -362,7 +395,9 @@ export function WaterLevelTable({
         await fetchWaterLevelReadings(
           siteNumericId,
           apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+          pageNumber,
+          pageSize
         );
       }
     } catch (error: any) {
@@ -375,19 +410,19 @@ export function WaterLevelTable({
   const handleUpdateReading = async () => {
     setEditError(null); // Clear previous errors
     if (!editingWaterLevel || !editReadingDate || !editReadingTime) {
-      setEditError('الرجاء تعبئة جميع الحقول المطلوبة.');
+      setEditError(t('readings.fillAllFields'));
       return;
     }
 
     const siteId = Number(editSelectedSiteId || editingWaterLevel.siteId);
     if (!siteId || Number.isNaN(siteId)) {
-      setEditError('الموقع المحدد غير صالح.');
+      setEditError(t('readings.invalidSite'));
       return;
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery))) || editBatteryError) {
-      setEditError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (editBatteryError) {
+      setEditError(editBatteryError); // Use the specific editBatteryError message
       return;
     }
 
@@ -398,7 +433,7 @@ export function WaterLevelTable({
     // Validate that the combined datetime is not in the future
     const now = new Date();
     if (dateTime.getTime() > now.getTime()) {
-      setEditError('لا يمكن إضافة قراءة في المستقبل.');
+      setEditError(t('readings.cannotAddFutureReading'));
       return;
     }
 
@@ -437,7 +472,9 @@ export function WaterLevelTable({
         await fetchWaterLevelReadings(
           siteNumericId,
           apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+          pageNumber,
+          pageSize
         );
       }
     } catch (error: any) {
@@ -477,12 +514,12 @@ export function WaterLevelTable({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>قراءات القناطر ({readings.length})</CardTitle>
+          <CardTitle>{t('readings.waterLevelReadings')} ({readings.length})</CardTitle>
           <div className="flex gap-2 justify-end">
 
             <Button variant="outline" onClick={handleExport}>
               <Download className="ml-2 h-4 w-4" />
-              تصدير
+              {t('common.export')}
             </Button>
 
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
@@ -495,14 +532,14 @@ export function WaterLevelTable({
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="ml-2 h-4 w-4" />
-                  إضافة قراءة يدوية
+                  {t('readings.addManualReading')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]" dir="rtl">
+              <DialogContent className="sm:max-w-[600px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                  <DialogTitle className="text-right">إضافة قراءة يدوية</DialogTitle>
-                  <DialogDescription className="text-right">
-                    أدخل بيانات القراءة الجديدة
+                  <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.addManualReading')}</DialogTitle>
+                  <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                    {t('readings.enterReadingData')}
                   </DialogDescription>
                 </DialogHeader>
                 {(addError || addSiteDataError) && (
@@ -511,10 +548,10 @@ export function WaterLevelTable({
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>الموقع</Label>
+                      <Label>{t('readings.selectSite')}</Label>
                       <Select dir="rtl" value={selectedSiteForAdd} onValueChange={setSelectedSiteForAdd} disabled>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر الموقع" />
+                          <SelectValue placeholder={t('readings.selectSite')} />
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
@@ -524,9 +561,9 @@ export function WaterLevelTable({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>التاريخ</Label>
+                      <Label>{t('common.date')}</Label>
                       <DatePicker
-                        placeholder="اختر التاريخ"
+                        placeholder={t('readings.selectDate')}
                         value={readingDate}
                         onChange={setReadingDate}
                         maxDate={new Date()} // Disable dates after today
@@ -534,12 +571,12 @@ export function WaterLevelTable({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>الوقت</Label>
-                    <Select dir="rtl" value={readingTime} onValueChange={setReadingTime}>
-                      <SelectTrigger className="w-1/2">
-                        <SelectValue placeholder="اختر الساعة" />
+                    <Label>{t('common.time')}</Label>
+                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={readingTime} onValueChange={setReadingTime}>
+                      <SelectTrigger className="w-1/2 rtl:flex-row-reverse">
+                        <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                         {getAvailableHours(readingDate).map((hourNum) => {
                           const hour = hourNum.toString().padStart(2, '0');
                           return (
@@ -554,13 +591,20 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     {selectedSiteData?.hasUS && (
                       <div className="space-y-2">
-                        <Label>USWL (متر)</Label>
+                        <Label>USWL ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="125.4"
                           value={uswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            // Check if browser detected invalid input (e.g., "1-2", "abc")
+                            if (input.validity.badInput) {
+                              setUswlError(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -568,9 +612,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setUswl('');
                               setUswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
-                              setUswl(inputValue); // Keep invalid input for user to correct
-                              setUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                            } else if (isNaN(parsedValue)) {
+                              setUswl(inputValue);
+                              setUswlError(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setUswl(inputValue);
+                              setUswlError(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setUswl(inputValue);
                               setUswlError(null);
@@ -584,13 +631,19 @@ export function WaterLevelTable({
                     )}
                     {(selectedSiteData?.hasDS1) && (
                       <div className="space-y-2">
-                        <Label>DSWL1 (متر)</Label>
+                        <Label>DSWL1 ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="122.1"
                           value={dswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setDswlError(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -598,9 +651,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setDswl('');
                               setDswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
                               setDswl(inputValue);
-                              setDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                              setDswlError(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setDswl(inputValue);
+                              setDswlError(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setDswl(inputValue);
                               setDswlError(null);
@@ -614,13 +670,19 @@ export function WaterLevelTable({
                     )}
                     {(selectedSiteData?.hasDS2) && (
                       <div className="space-y-2">
-                        <Label>DSWL2 (متر)</Label>
+                        <Label>DSWL2 ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="122.1"
                           value={dswl2}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setDswl2Error(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -628,9 +690,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setDswl2('');
                               setDswl2Error(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
                               setDswl2(inputValue);
-                              setDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                              setDswl2Error(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setDswl2(inputValue);
+                              setDswl2Error(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setDswl2(inputValue);
                               setDswl2Error(null);
@@ -644,13 +709,18 @@ export function WaterLevelTable({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>البطارية (فولت)</Label>
+                    <Label>{t('readings.battery')} ({t('readings.voltUnit')})</Label>
                     <Input
                       type="number"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={battery}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setBatteryError(t('readings.enterValidNumber'));
+                        }
+                      }}
                       onChange={(e) => {
                         const inputValue = e.target.value;
                         const parsedValue = parseFloat(inputValue);
@@ -658,9 +728,12 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setBattery('');
                           setBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (isNaN(parsedValue)) {
                           setBattery(inputValue);
-                          setBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+                          setBatteryError(t('readings.enterValidNumber'));
+                        } else if (parsedValue <= 0) {
+                          setBattery(inputValue);
+                          setBatteryError(t('readings.batteryMustBeGreaterThanZero'));
                         } else {
                           setBattery(inputValue);
                           setBatteryError(null);
@@ -675,7 +748,7 @@ export function WaterLevelTable({
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>
-                    إلغاء
+                    {t('common.cancel')}
                   </Button>
                   <Button onClick={handleAddReading}
                     disabled={
@@ -689,9 +762,9 @@ export function WaterLevelTable({
                       battery === '' ||
                       !!uswlError || !!dswlError || !!dswl2Error || !!batteryError
                     }
-                    loadingText="جاري الحفظ..."
+                    loadingText={t('readings.saving')}
                     isLoading={isSubmitting}>
-                    حفظ القراءة
+                    {t('readings.saveReading')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -706,9 +779,9 @@ export function WaterLevelTable({
             }}>
               <DialogContent className="sm:max-w-[600px]" dir="rtl">
                 <DialogHeader>
-                  <DialogTitle className="text-right">تعديل القراءة</DialogTitle>
+                  <DialogTitle className="text-right">{t('readings.editWaterLevelReading')}</DialogTitle>
                   <DialogDescription className="text-right">
-                    قم بتعديل بيانات القراءة
+                    {t('readings.editReadingData')}
                   </DialogDescription>
                 </DialogHeader>
                 {(editError || editSiteDataError) && (
@@ -717,10 +790,10 @@ export function WaterLevelTable({
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>الموقع</Label>
+                      <Label>{t('readings.selectSite')}</Label>
                       <Select dir="rtl" value={editSelectedSiteId} onValueChange={setEditSelectedSiteId} disabled>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر الموقع" />
+                          <SelectValue placeholder={t('readings.selectSite')} />
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
@@ -730,9 +803,9 @@ export function WaterLevelTable({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>التاريخ</Label>
+                      <Label>{t('common.date')}</Label>
                       <DatePicker
-                        placeholder="اختر التاريخ"
+                        placeholder={t('readings.selectDate')}
                         value={editReadingDate}
                         onChange={setEditReadingDate}
                         maxDate={new Date()} // Disable dates after today
@@ -740,12 +813,12 @@ export function WaterLevelTable({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>الوقت</Label>
-                    <Select dir="rtl" value={editReadingTime} onValueChange={setEditReadingTime}>
-                      <SelectTrigger className="w-1/2">
-                        <SelectValue placeholder="اختر الساعة" />
+                    <Label>{t('common.time')}</Label>
+                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={editReadingTime} onValueChange={setEditReadingTime}>
+                      <SelectTrigger className="w-1/2 rtl:flex-row-reverse">
+                        <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                         {getAvailableHours(editReadingDate).map((hourNum) => {
                           const hour = hourNum.toString().padStart(2, '0');
                           return (
@@ -760,13 +833,19 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     {editSelectedSiteData?.hasUS && (
                       <div className="space-y-2">
-                        <Label>USWL (متر)</Label>
+                        <Label>USWL ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="125.4"
                           value={editUswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditUswlError(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -774,9 +853,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditUswl('');
                               setEditUswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
                               setEditUswl(inputValue);
-                              setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                              setEditUswlError(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setEditUswl(inputValue);
+                              setEditUswlError(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setEditUswl(inputValue);
                               setEditUswlError(null);
@@ -790,13 +872,19 @@ export function WaterLevelTable({
                     )}
                     {(editSelectedSiteData?.hasDS1) && (
                       <div className="space-y-2">
-                        <Label>DSWL1 (متر)</Label>
+                        <Label>DSWL1 ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="122.1"
                           value={editDswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditDswlError(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -804,9 +892,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditDswl('');
                               setEditDswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
                               setEditDswl(inputValue);
-                              setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                              setEditDswlError(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setEditDswl(inputValue);
+                              setEditDswlError(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setEditDswl(inputValue);
                               setEditDswlError(null);
@@ -820,13 +911,19 @@ export function WaterLevelTable({
                     )}
                     {(editSelectedSiteData?.hasDS2) && (
                       <div className="space-y-2">
-                        <Label>DSWL2 (متر)</Label>
+                        <Label>DSWL2 ({t('readings.flowUnit')})</Label>
                         <Input
                           type="number"
                           step="0.1"
                           min="0"
                           placeholder="122.1"
                           value={editDswl2}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditDswl2Error(t('readings.enterValidNumber'));
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -834,9 +931,12 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditDswl2('');
                               setEditDswl2Error(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
                               setEditDswl2(inputValue);
-                              setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+                              setEditDswl2Error(t('readings.enterValidNumber'));
+                            } else if (parsedValue < 0) {
+                              setEditDswl2(inputValue);
+                              setEditDswl2Error(t('readings.valueCannotBeLessThanZero'));
                             } else {
                               setEditDswl2(inputValue);
                               setEditDswl2Error(null);
@@ -850,13 +950,18 @@ export function WaterLevelTable({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>البطارية (فولت)</Label>
+                    <Label>{t('readings.battery')} ({t('readings.voltUnit')})</Label>
                     <Input
                       type="number"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={editBattery}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setEditBatteryError(t('readings.enterValidNumber'));
+                        }
+                      }}
                       onChange={(e) => {
                         const inputValue = e.target.value;
                         const parsedValue = parseFloat(inputValue);
@@ -864,9 +969,12 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setEditBattery('');
                           setEditBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (isNaN(parsedValue)) {
                           setEditBattery(inputValue);
-                          setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+                          setEditBatteryError(t('readings.enterValidNumber'));
+                        } else if (parsedValue <= 0) {
+                          setEditBattery(inputValue);
+                          setEditBatteryError(t('readings.batteryMustBeGreaterThanZero'));
                         } else {
                           setEditBattery(inputValue);
                           setEditBatteryError(null);
@@ -881,7 +989,7 @@ export function WaterLevelTable({
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsEditWaterLevelOpen(false)} disabled={isSubmittingEdit}>
-                    إلغاء
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     onClick={handleUpdateReading}
@@ -897,10 +1005,10 @@ export function WaterLevelTable({
                       editBattery === '' ||
                       !!editUswlError || !!editDswlError || !!editDswl2Error || !!editBatteryError
                     }
-                    loadingText="جاري الحفظ..."
+                    loadingText={t('readings.saving')}
                     isLoading={isSubmittingEdit}
                   >
-                    حفظ التعديلات
+                    {t('readings.saveChanges')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -909,25 +1017,25 @@ export function WaterLevelTable({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table dir="rtl">
+        <div className="overflow-x-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+          <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">الموقع</TableHead>
-                <TableHead className="text-right">التاريخ والوقت</TableHead>
-                {showUSWL && <TableHead className="text-right">USWL (م)</TableHead>}
-                {showDSWL1 && <TableHead className="text-right">DSWL1 (م)</TableHead>}
-                {showDSWL2 && <TableHead className="text-right">DSWL2 (م)</TableHead>}
-                <TableHead className="text-right">البطارية (V)</TableHead>
-                <TableHead className="text-right">التدفق المحسوب</TableHead>
-                <TableHead className="text-right">إجراءات</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.selectSite')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateAndTime')}</TableHead>
+                {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>USWL ({t('readings.meter')})</TableHead>}
+                {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL1 ({t('readings.meter')})</TableHead>}
+                {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL2 ({t('readings.meter')})</TableHead>}
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.battery')} (V)</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.calculatedFlow')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
                   <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
-                    جاري تحميل البيانات...
+                    {t('common.loadingData')}
                   </TableCell>
                 </TableRow>
               )}
@@ -943,7 +1051,7 @@ export function WaterLevelTable({
               {!isLoading && !error && readings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
-                    لا توجد قراءات لعرضها
+                    {t('readings.noDataToDisplay')}
                   </TableCell>
                 </TableRow>
               )}
@@ -951,26 +1059,26 @@ export function WaterLevelTable({
               {!isLoading && !error && readings.map((reading) => {
                 return (
                 <TableRow key={reading.id}>
-                  <TableCell className="text-right font-medium">{reading.site}</TableCell>
-                  <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
                   )}
                   {showDSWL1 && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
                   )}
                   {showDSWL2 && (
-                    <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
                   )}
-                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
                     {reading.battery?.toFixed(2) ?? ''}
                   </TableCell>
-                  <TableCell className="text-right" style={{ color: getAlarmStatus(reading, 'Calculated_flow').colorCode, fontWeight: hasAlarmForField(reading, 'Calculated_flow') ? 'bold' : 'normal' }}>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Calculated_flow').colorCode, fontWeight: hasAlarmForField(reading, 'Calculated_flow') ? 'bold' : 'normal' }}>
                     <div className="flex items-center justify-start gap-2">
-                      <span>{reading.calculatedFlow.toFixed(2)} م³/س</span>
+                      <span>{reading.calculatedFlow.toFixed(2)} {t('readings.flowUnit')}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"
@@ -987,6 +1095,112 @@ export function WaterLevelTable({
           </Table>
         </div>
       </CardContent>
+
+      {/* Pagination Controls */}
+      {!isLoading && !error && readings.length > 0 && totalPages > 0 && (
+        <CardContent className="pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPageNumber(1); // Reset to first page when page size changes
+                }}
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600">
+              {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  disabled={pageNumber === 1}
+                  className="h-9 w-9"
+                  aria-label={t('common.previousPage')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (pageNumber >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pageNumber - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === pageNumber ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setPageNumber(pageNum)}
+                      className="h-9 w-9"
+                      aria-label={`${t('common.page')} ${pageNum}`}
+                      aria-current={pageNum === pageNumber ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <span className="px-2 text-gray-500">...</span>
+                )}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPageNumber(totalPages)}
+                    className="h-9 w-9"
+                    aria-label={`${t('common.page')} ${totalPages}`}
+                  >
+                    {totalPages}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  disabled={pageNumber === totalPages}
+                  className="h-9 w-9"
+                  aria-label={t('common.nextPage')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -29,6 +30,7 @@ interface UserManagementProps {
 }
 
 export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
+  const { t } = useTranslation();
   const { users, availableSites, toggleUserActive, loading, error, fetchUsers } = useUsersData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
@@ -95,7 +97,7 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner size="lg" />
-        <p className="text-gray-500 mr-2">جارٍ تحميل المستخدمين...</p>
+        <p className="text-gray-500 mr-2">{t('common.loading')}</p>
       </div>
     );
   }
@@ -113,30 +115,30 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl">إدارة المستخدمين</h2>
-          <p className="text-gray-500 mt-1">إدارة حسابات المستخدمين والصلاحيات</p>
+          <h2 className="text-2xl">{t('users.userManagement')}</h2>
+          <p className="text-gray-500 mt-1">{t('users.manageUsersAndPermissions')}</p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="ml-2 h-4 w-4" />
-          إضافة مستخدم جديد
+          {t('users.addNewUser')}
         </Button>
       </div>
 
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>المستخدمون ({users.length})</CardTitle>
+          <CardTitle>{t('users.usersCount')} ({users.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">المستخدم</TableHead>
-                <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                <TableHead className="text-right">الدور</TableHead>
-                {/* <TableHead className="text-right">المواقع المخصصة</TableHead> */}
-                <TableHead className="text-right">الحالة</TableHead>
-                <TableHead className="text-right">إجراءات</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.fullName')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.email')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.role')}</TableHead>
+                {/* <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.assignedSites')}</TableHead> */}
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.status')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -155,11 +157,11 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
                     <TableCell>
                       <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
                         <Shield className="ml-1 h-3 w-3" />
-                        {user.role === 'Admin' ? 'مسؤول' : 'مشغل'}
+                        {user.role === 'Admin' ? t('users.admin') : t('users.operator')}
                       </Badge>
                     </TableCell>
                     {/* Removed assignedSites display as it's not in UserDto */}
-                    <TableCell className="text-right">
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                       <div className="flex items-center gap-2 justify-end" dir="ltr">
                         <Switch 
                           checked={user.isActive}
@@ -167,7 +169,7 @@ export function UserManagement({ refreshCurrentUser }: UserManagementProps) {
                           disabled={user.id === loggedInUserId}
                         />
                         <span className="text-sm">
-                          {user.isActive ? 'نشط' : 'معطل'}
+                          {user.isActive ? t('common.active') : t('common.inactive')}
                         </span>
                       </div>
                     </TableCell>

@@ -41,6 +41,7 @@ export const getColorCategory = (hexColor: string) => {
   const saturation = hsl.s;
   const lightness = hsl.l;
 
+
   // Define broad ranges for red and yellow hues
   // Red: 0-20 and 330-360
   // Yellow: 40-80

@@ -11,25 +11,26 @@ import {
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Edit, Mail, Phone } from 'lucide-react';
-import { CommunicationAlarmResponse } from '../../types';
+import { SensorStatusResponse } from '../../types';
+import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers';
 
-interface CommunicationAlarmTableProps {
-    alarms: CommunicationAlarmResponse[];
-    onEdit: (alarm: CommunicationAlarmResponse) => void;
+interface SensorStatusResponseTableProps {
+    alarms: SensorStatusResponse[];
+    onEdit: (alarm: any) => void;
 }
 
-export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTableProps) {
+export function SensorStatusTable({ alarms, onEdit }: SensorStatusResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
-    // Define columns in logical order (English/LTR)
+   // Define columns in logical order (English/LTR)
     const columns = [
         {
             key: 'actions',
             header: t('common.actions'),
-            render: (alarm: CommunicationAlarmResponse) => (
+            render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass}>
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
@@ -40,47 +41,37 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
         {
             key: 'emailRecipients',
             header: t('alarms.emailRecipients'),
-            render: (alarm: CommunicationAlarmResponse) => (
+            render: (alarm: SensorStatusResponse) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                    {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
-                        <Badge key={`email-${idx}`} variant="secondary" className="text-xs flex items-center">
-                            <Mail className="ml-1 h-3 w-3" /> {email.trim()}
-                        </Badge>
-                    ))}
-                    {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
-                        <Badge key={`phone-${idx}`} variant="secondary" className="text-xs flex items-center">
-                            <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
-                        </Badge>
-                    ))}
+                    {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
+                        const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                        const isPhone = /^\d{11}$/.test(recipient);
+                        return (
+                            <Badge key={idx} variant="secondary" className="text-xs flex items-center">
+                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                {recipient}
+                            </Badge>
+                        );
+                    })}
                 </div>
             )
         },
         {
-            key: 'hours',
-            header: t('alarms.hours'),
-            render: (alarm: CommunicationAlarmResponse) => (
-                <div className={textAlignClass}>
-                    <Badge variant="outline" dir="rtl">
-                        {alarm.numHours === 1 ? `${alarm.numHours} ${t('alarms.hour')}` : `${alarm.numHours} ${t('alarms.hours')}`}
-                    </Badge>
+            key: 'sentMessage',
+            header: t('alarms.sentMessage'),
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.sentMessage}
                 </div>
             )
         },
         {
             key: 'site',
             header: t('alarms.site'),
-            render: (alarm: CommunicationAlarmResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'medium' }}>
-                    {alarm.siteName}
-                </div>
-            )
-        },
-        {
-            key: 'alarmName',
-            header: t('alarms.alarmName'),
-            render: (alarm: CommunicationAlarmResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'medium' }}>
-                    {alarm.alarmName}
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.site}
                 </div>
             )
         }

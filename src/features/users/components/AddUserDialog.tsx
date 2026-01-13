@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ interface AddUserDialogProps {
 }
 
 export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDialogProps) {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,54 +69,54 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!username) {
-      newErrors.username = 'اسم المستخدم مطلوب';
+      newErrors.username = t('validation.usernameRequired');
     } else if (username.trim() !== username) {
-      newErrors.username = 'اسم المستخدم لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
+      newErrors.username = t('validation.usernameTrimmed');
     } else if (username.includes(' ')) {
-      newErrors.username = 'اسم المستخدم لا يمكن أن يحتوي على مسافات داخلية';
+      newErrors.username = t('validation.usernameNoSpaces');
     } else if (username.length < 2) {
-      newErrors.username = 'اسم المستخدم يجب أن يتكون من حرفين على الأقل';
+      newErrors.username = t('validation.usernameMinLength');
     } else if (!/^[\p{L}]+$/u.test(username)) {
-      newErrors.username = 'اسم المستخدم يجب أن يحتوي على حروف إنجليزية أو عربية فقط';
+      newErrors.username = t('validation.usernameLettersOnly');
     } else if (/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(username)) {
-      newErrors.username = 'اسم المستخدم لا يمكن أن يكون بريد إلكتروني';
+      newErrors.username = t('validation.usernameNotEmail');
     }
     if (!fullName.trim()) { // Trim here for initial check
-      newErrors.fullName = 'الاسم الكامل مطلوب';
+      newErrors.fullName = t('validation.fullNameRequired');
     } else if (fullName.length > 100) {
-      newErrors.fullName = 'الاسم الكامل لا يمكن أن يتجاوز 100 حرف';
+      newErrors.fullName = t('validation.fullNameMaxLength');
     } else if (!/^[\p{L}]{2,}(?:[\s-][\p{L}]{2,})+$/u.test(fullName.trim())) {
-      newErrors.fullName = 'يجب أن يتكون الاسم الكامل من اسمين على الأقل، يتكون كل منهما من 2 أحرف على الأقل';
+      newErrors.fullName = t('validation.fullNameFormat');
     }
     if (!email) {
-      newErrors.email = 'البريد الإلكتروني مطلوب';
+      newErrors.email = t('validation.emailRequired');
     } else {
 
       if (email.startsWith(' ') || email.endsWith(' ')) {
-        newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات بادئة أو لاحقة';
+        newErrors.email = t('validation.emailTrimmed');
       } else if (email.includes(' ')) {
-        newErrors.email = 'البريد الإلكتروني لا يمكن أن يحتوي على مسافات داخلية';
+        newErrors.email = t('validation.emailNoSpaces');
       } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-        newErrors.email = 'صيغة البريد الإلكتروني غير صحيحة';
+        newErrors.email = t('validation.emailInvalid');
       }
     }
     if (!password) {
-      newErrors.password = 'كلمة المرور مطلوبة';
+      newErrors.password = t('validation.passwordRequired');
     } else if (password.length < 8) {
-      newErrors.password = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+      newErrors.password = t('validation.passwordMinLength');
     } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل';
+      newErrors.password = t('validation.passwordNeedsUppercase');
     } else if (!/\d/.test(password)) {
-      newErrors.password = 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل';
+      newErrors.password = t('validation.passwordNeedsNumber');
     } else if (!/[a-z]/.test(password)) {
-      newErrors.password = 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل';
+      newErrors.password = t('validation.passwordNeedsLowercase');
     }
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'كلمة المرور وتأكيد كلمة المرور غير متطابقين';
+      newErrors.confirmPassword = t('validation.passwordMismatch');
     }
-    if (!role) newErrors.role = 'الدور مطلوب';
+    if (!role) newErrors.role = t('validation.roleRequired');
     if (role === 'Operator' && assignedSites.length === 0) {
-      newErrors.assignedSites = 'يجب تخصيص موقع واحد على الأقل للمشغلين';
+      newErrors.assignedSites = t('validation.siteAssignmentRequired');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -138,7 +140,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       };
       // We no longer expect tokens from the registerUser response
       await apiService.registerUser(userData);
-      toast.success('تم اضافة مستخدم جديد بنجاح');
+      toast.success(t('users.addUserSuccessMessage'));
       // Clear form and close dialog
       setUsername('');
       setEmail('');
@@ -152,9 +154,12 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setApiError(null); // Clear API error on success
       onOpenChange(false);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message;
+      // Rely on apiService.ts to provide the most specific error message
+      let errorMessage = t('errors.unexpectedError'); // Ultimate fallback
+      if (error instanceof Error && error.message.trim() !== '') {
+        errorMessage = error.message;
+      }
       setApiError(errorMessage);
-      // toast.error('Failed to register user. Please try again later.');
     } finally {
       setIsSubmittingAddUser(false); // Reset submitting state to false
     }
@@ -170,20 +175,20 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
-          <DialogDescription className="text-right">
-            أدخل بيانات المستخدم الجديد
+          <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('users.addNewUser')}</DialogTitle>
+          <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+            {t('users.userDataDescription')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="username">اسم المستخدم</Label>
+              <Label htmlFor="username">{t('auth.username')}</Label>
               <Input
                 id="username"
-                placeholder="أحمد محمود"
+                placeholder={t('placeholders.fullName')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="off"
@@ -191,11 +196,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               {errors.username && <p className="text-red-600 text-xs mt-1">{errors.username}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="text" // Changed from "email" to "text"
-                placeholder="user@irrigation.gov.eg"
+                placeholder={t('placeholders.email')}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -206,10 +211,10 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fullName">الاسم الكامل</Label>
+            <Label htmlFor="fullName">{t('users.fullName')}</Label>
             <Input
               id="fullName"
-              placeholder="أحمد محمود السيد"
+              placeholder={t('placeholders.fullName')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="off"
@@ -218,7 +223,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -246,7 +251,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -275,14 +280,14 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">الدور</Label>
-            <Select onValueChange={(value: 'Admin' | 'Operator') => setRole(value)} value={role}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="اختر الدور" />
+            <Label htmlFor="role">{t('users.role')}</Label>
+            <Select onValueChange={(value: 'Admin' | 'Operator') => setRole(value)} value={role} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <SelectTrigger id="role" className="rtl:flex-row-reverse">
+                <SelectValue placeholder={t('placeholders.selectRole')} />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Admin">مسؤول (Admin)</SelectItem>
-                <SelectItem value="Operator">مشغل (Operator)</SelectItem>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                <SelectItem value="Admin">{t('users.admin')} (Admin)</SelectItem>
+                <SelectItem value="Operator">{t('users.operator')} (Operator)</SelectItem>
               </SelectContent>
             </Select>
             {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
@@ -290,7 +295,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
         </div>
         {role === 'Operator' && (
           <div className="space-y-2">
-            <Label>تخصيص المواقع (للمشغلين فقط)</Label>
+            <Label>{t('users.sitesForOperators')}</Label>
             <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
               {availableSites.map(site => (
                 <div key={site.id} className="flex items-center gap-2">
@@ -310,7 +315,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             </div>
             {errors.assignedSites && <p className="text-red-600 text-xs mt-1">{errors.assignedSites}</p>}
             <p className="text-xs text-gray-500">
-              المسؤولون لديهم وصول لجميع المواقع تلقائياً
+              {t('users.adminsHaveAllAccess')}
             </p>
           </div>
         )}
@@ -321,10 +326,10 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
         <DialogFooter>
           {apiError && <p className="text-red-600 text-xs mt-1 text-right w-full">{apiError}</p>}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            إلغاء
+            {t('common.cancel')}
           </Button>
-          <Button onClick={handleAddUser} disabled={isSubmittingAddUser || !username || !email || !password || !confirmPassword || !fullName || !role || (role === 'Operator' && assignedSites.length === 0)} loadingText="جاري الإضافة..." isLoading={isSubmittingAddUser}>
-            إضافة المستخدم
+          <Button onClick={handleAddUser} disabled={isSubmittingAddUser || !username || !email || !password || !confirmPassword || !fullName || !role || (role === 'Operator' && assignedSites.length === 0)} loadingText={t('users.addingUser')} isLoading={isSubmittingAddUser}>
+            {t('users.addNewUser')}
           </Button>
         </DialogFooter>
       </DialogContent>
