@@ -41,7 +41,14 @@
     "language_en": "English",
     "zero": "0",
     "loadingData": "جاري تحميل البيانات...",
-    "saving": "جاري الحفظ..."
+    "saving": "جاري الحفظ...",
+    "recordsPerPage": "عدد السجلات في الصفحة",
+    "showing": "عرض",
+    "of": "من",
+    "results": "نتيجة",
+    "page": "صفحة",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية"
   },
   "buttons": {
     "save": "حفظ",
@@ -420,11 +427,25 @@
     "dashboard": "لوحة التحكم",
     "sites": "إدارة المواقع",
     "readings": "القراءات",
+    "readingLogs": "سجلات القراءات",
     "alarms": "تكوين التنبيهات",
     "alarmEvents": "أحداث التنبيهات",
     "calculations": "حسابات التدفق",
     "users": "إدارة المستخدمين",
     "logout": "تسجيل الخروج"
+  },
+  "readingLogs": {
+    "title": "سجلات القراءات",
+    "subtitle": "عرض جميع سجلات القراءات والإجراءات",
+    "id": "الرقم",
+    "readingType": "نوع القراءة",
+    "actionType": "نوع الإجراء",
+    "siteName": "اسم الموقع",
+    "actionDate": "تاريخ الإجراء",
+    "timeStamp": "الوقت والتاريخ",
+    "createdBy": "تم الإنشاء بواسطة",
+    "searchPlaceholder": "البحث باسم الموقع، الإجراء، نوع القراءة، أو التاريخ...",
+    "noLogsFound": "لم يتم العثور على سجلات قراءات"
   },
   "errors": {
     "pageNotFound": "الصفحة غير موجودة",

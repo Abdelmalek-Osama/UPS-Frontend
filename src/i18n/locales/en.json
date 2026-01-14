@@ -41,7 +41,14 @@
     "language_en": "English",
     "zero": "0",
     "loadingData": "Loading data...",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "recordsPerPage": "Records per page",
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "page": "Page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
   },
   "buttons": {
     "save": "Save",
@@ -420,11 +427,25 @@
     "dashboard": "Dashboard",
     "sites": "Sites Management",
     "readings": "Readings",
+    "readingLogs": "Reading logs",
     "alarms": "Alarm Configuration",
     "alarmEvents": "Alarm Events",
     "calculations": "Flow Calculations",
     "users": "User Management",
     "logout": "Logout"
+  },
+  "readingLogs": {
+    "title": "Reading Logs",
+    "subtitle": "View all reading logs and actions",
+    "id": "ID",
+    "readingType": "Reading Type",
+    "actionType": "Action Type",
+    "siteName": "Site Name",
+    "actionDate": "Action Date",
+    "timeStamp": "Timestamp",
+    "createdBy": "Created By",
+    "searchPlaceholder": "Search by site name, action, reading type, or date...",
+    "noLogsFound": "No reading logs found"
   },
   "errors": {
     "pageNotFound": "Page Not Found",
