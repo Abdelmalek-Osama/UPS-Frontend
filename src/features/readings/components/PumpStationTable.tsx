@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Download, Edit, FileText, Plus, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Edit, FileText, Plus, CalendarIcon, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import apiService from '../../../../src/shared/utils/apiService';
 import type { Site } from '../../sites/types';
 import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption, ApiResponse, CreatePumpStationReadingRequest} from "../types";
@@ -41,6 +41,7 @@ interface PumpStationTableProps {
   fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   createPumpStationReading: (data: CreatePumpStationReadingRequest) => Promise<any>;
   updatePumpStationReading: (data: CreatePumpStationReadingRequest & { id: number }) => Promise<any>;
+  deletePumpStationReading: (id: number) => Promise<any>;
   selectedSite: Site | null;
   handleEditPumpStation: (reading: PumpStationReading) => void;
   handleEditPump: (pumpIndex: number, reading: PumpStationReading) => void; // Added handleEditPump prop
@@ -81,6 +82,7 @@ export function PumpStationTable({
   setPageSize,
   totalPages,
   totalCount,
+  deletePumpStationReading,
 }: PumpStationTableProps) {
     const { t } = useTranslation();
     const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
@@ -103,6 +105,8 @@ export function PumpStationTable({
     const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null); // Added local state for selected reading
     const [addError, setAddError] = useState<string | null>(null); // New state for add dialog error
     const [editError, setEditError] = useState<string | null>(null); // New state for edit dialog error
+    const [isDeletePumpStationDialogOpen, setIsDeletePumpStationDialogOpen] = useState(false);
+    const [pumpStationReadingToDelete, setPumpStationReadingToDelete] = useState<PumpStationReading | null>(null);
 
     // Refs for auto-scrolling in dialogs
     const addDialogScrollRef = useRef<HTMLDivElement>(null);
@@ -193,6 +197,46 @@ export function PumpStationTable({
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }, [editPumpReadings.length]);
+
+    const handleDeletePumpStation = (reading: PumpStationReading) => {
+      setPumpStationReadingToDelete(reading);
+      setIsDeletePumpStationDialogOpen(true);
+    };
+
+    const confirmDeletePumpStation = async () => {
+      if (pumpStationReadingToDelete) {
+        try {
+          await deletePumpStationReading(pumpStationReadingToDelete.id);
+          setIsDeletePumpStationDialogOpen(false);
+          setPumpStationReadingToDelete(null);
+
+          // Refresh readings after deletion
+          const siteNumericId = Number(selectedSiteId);
+          if (!Number.isNaN(siteNumericId)) {
+            let apiFromDate = startDate;
+            let apiToDate = endDate;
+
+            const bothUnset = startDate === undefined && endDate === undefined;
+            if (bothUnset) {
+              apiFromDate = new Date();
+              apiFromDate.setHours(0, 0, 0, 0);
+              apiToDate = new Date();
+              apiToDate.setHours(23, 59, 59, 999);
+            }
+
+            await fetchPumpStationReadings(
+              siteNumericId,
+              apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+              apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+              pageNumber,
+              pageSize
+            );
+          }
+        } catch (error) {
+          console.error("Failed to delete pump station reading:", error);
+        }
+      }
+    };
 
     const formatTimestamp = (value: string) => {
       if (!value) return '--';
@@ -1088,6 +1132,26 @@ export function PumpStationTable({
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={isDeletePumpStationDialogOpen} onOpenChange={setIsDeletePumpStationDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('readings.confirmDelete')}</DialogTitle>
+                <DialogDescription>
+                  {t('readings.deleteConfirmationMessage', { site: pumpStationReadingToDelete?.site, timestamp: formatTimestamp(pumpStationReadingToDelete?.timestamp || '') })}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDeletePumpStationDialogOpen(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button variant="destructive" onClick={confirmDeletePumpStation}>
+                  {t('common.delete')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
             </div>
         </div>
       </CardHeader>
@@ -1164,6 +1228,13 @@ export function PumpStationTable({
                         onClick={() => handleViewDetailsClick(reading)}
                       >
                         <FileText className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeletePumpStation(reading)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Edit, Download, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Download, Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
@@ -70,6 +70,7 @@ interface WaterLevelTableProps {
     battery: number;
     isManual: boolean;
   }) => Promise<any>;
+  deleteWaterLevelReading: (id: number) => Promise<any>;
   selectedSiteId: string;
   fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   fromDate?: Date;
@@ -106,6 +107,7 @@ export function WaterLevelTable({
   setPageSize,
   totalPages,
   totalCount,
+  deleteWaterLevelReading,
 }: WaterLevelTableProps) {
   const { t } = useTranslation();
   const [readingDate, setReadingDate] = useState<Date | undefined>();
@@ -139,6 +141,8 @@ export function WaterLevelTable({
   const [editSiteDataError, setEditSiteDataError] = useState<string | null>(null);
   const prevDialogOpenRef = useRef(false);
   const [editSelectedSiteData, setEditSelectedSiteData] = useState<SiteConfiguration | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [readingToDelete, setReadingToDelete] = useState<WaterLevelReading | null>(null);
 
   // Initialize selectedSiteForAdd only when dialog first opens (not on every render)
   useEffect(() => {
@@ -273,6 +277,46 @@ export function WaterLevelTable({
       setIsSubmittingEdit(false);
     }
   }, [isEditWaterLevelOpen]);
+
+  const handleDeleteWaterLevel = (reading: WaterLevelReading) => {
+    setReadingToDelete(reading);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteWaterLevel = async () => {
+    if (readingToDelete) {
+      try {
+        await deleteWaterLevelReading(readingToDelete.id);
+        setIsDeleteDialogOpen(false);
+        setReadingToDelete(null);
+
+        // Refresh readings after deletion
+        const siteNumericId = Number(selectedSiteId);
+        if (!Number.isNaN(siteNumericId)) {
+          let apiFromDate = fromDate;
+          let apiToDate = toDate;
+
+          const bothUnset = fromDate === undefined && toDate === undefined;
+          if (bothUnset) {
+            apiFromDate = new Date();
+            apiFromDate.setHours(0, 0, 0, 0);
+            apiToDate = new Date();
+            apiToDate.setHours(23, 59, 59, 999);
+          }
+
+          await fetchWaterLevelReadings(
+            siteNumericId,
+            apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+            apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+            pageNumber,
+            pageSize
+          );
+        }
+      } catch (error) {
+        console.error("Failed to delete water level reading:", error);
+      }
+    }
+  };
 
   const formatTimestamp = (value: string) => {
     if (!value) return '--';
@@ -1013,6 +1057,26 @@ export function WaterLevelTable({
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('readings.confirmDelete')}</DialogTitle>
+                  <DialogDescription>
+                    {t('readings.deleteConfirmationMessage', { site: readingToDelete?.site, timestamp: formatTimestamp(readingToDelete?.timestamp || '') })}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                    {t('common.cancel')}
+                  </Button>
+                  <Button variant="destructive" onClick={confirmDeleteWaterLevel}>
+                    {t('common.delete')}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </CardHeader>
@@ -1086,6 +1150,13 @@ export function WaterLevelTable({
                         onClick={() => handleEditWaterLevel(reading)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteWaterLevel(reading)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

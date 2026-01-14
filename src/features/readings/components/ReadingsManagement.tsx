@@ -72,6 +72,7 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
+    deleteWaterLevelReading,
     isLoading, // For create/update operations
     isLoadingWaterLevel, // For water level readings fetch
     isLoadingPumpStation, // For pump station readings fetch
@@ -81,6 +82,7 @@ export function ReadingsManagement() {
     fetchPumpStationReadings,
     createPumpStationReading,
     updatePumpStationReading,
+    deletePumpStationReading,
     selectedSite,
     // Pagination state for water level readings
     waterLevelPageNumber,
@@ -469,6 +471,7 @@ export function ReadingsManagement() {
         setPageSize={setWaterLevelPageSize}
         totalPages={waterLevelTotalPages}
         totalCount={waterLevelTotalCount}
+        deleteWaterLevelReading={deleteWaterLevelReading}
       />
     )}
   </TabsContent>
@@ -507,6 +510,7 @@ export function ReadingsManagement() {
         setPageSize={setPumpStationPageSize}
         totalPages={pumpStationTotalPages}
         totalCount={pumpStationTotalCount}
+        deletePumpStationReading={deletePumpStationReading}
       />
     )}
   </TabsContent>

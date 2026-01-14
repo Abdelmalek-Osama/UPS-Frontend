@@ -134,6 +134,25 @@ export function useReadingsData(selectedSiteId: string) {
     [isAuthenticated]
   );
 
+  const deleteWaterLevelReading = useCallback(
+    async (id: number) => {
+      if (!isAuthenticated) return;
+      setIsLoading(true); // Start loading
+      try {
+        await apiService.delete<ApiResponse<any>>(`/v1/readings/water-level/${id}`);
+        toast.success('تم حذف قراءة مستوى المياه بنجاح');
+      } catch (error: any) {
+        console.error('Error deleting water level reading', error);
+        const errorMessage = (error as Error).message;
+        toast.error(errorMessage);
+        throw error;
+      } finally {
+        setIsLoading(false); // End loading
+      }
+    },
+    [isAuthenticated]
+  );
+
   const createPumpStationReading = useCallback(
     async (data: CreatePumpStationReadingRequest) => {
       if (!isAuthenticated) return;
@@ -180,6 +199,24 @@ export function useReadingsData(selectedSiteId: string) {
     [isAuthenticated]
   );
 
+  const deletePumpStationReading = useCallback(
+    async (id: number) => {
+      if (!isAuthenticated) return;
+      setIsLoading(true); // Start loading
+      try {
+        await apiService.delete<ApiResponse<any>>(`/v1/readings/pump-station/${id}`);
+        toast.success('تم حذف قراءة محطة الرفع بنجاح');
+      } catch (error: any) {
+        console.error('Error deleting pump station reading', error);
+        const errorMessage = (error as Error).message;
+        toast.error(errorMessage);
+        throw error;
+      } finally {
+        setIsLoading(false); // End loading
+      }
+    },
+    [isAuthenticated]
+  );
   const fetchSitesLookup = useCallback(async (signal?: AbortSignal) => {
     if (!isAuthenticated) {
       setSites([]);
@@ -575,6 +612,7 @@ export function useReadingsData(selectedSiteId: string) {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
+    deleteWaterLevelReading,
     // Pagination state for water level readings
     waterLevelPageNumber,
     setWaterLevelPageNumber,
@@ -588,6 +626,7 @@ export function useReadingsData(selectedSiteId: string) {
     fetchPumpStationReadings,
     createPumpStationReading,
     updatePumpStationReading,
+    deletePumpStationReading,
     // Pagination state for pump station readings
     pumpStationPageNumber,
     setPumpStationPageNumber,
