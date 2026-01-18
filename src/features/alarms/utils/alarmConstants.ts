@@ -125,11 +125,13 @@ export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
 
 
 export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
+    id: 0,
     siteId: null,
+    alarmName: '',
     site: '',
     emails: [],
     phones: [],
-    duration: 0,
+    monitoringHours: 0,
 };
 
 export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {

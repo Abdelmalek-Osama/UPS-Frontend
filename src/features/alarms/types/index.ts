@@ -29,6 +29,7 @@ export interface AddSensorStatusAlarmDialogProps {
   submissionError: string | null;
 }
 export interface AddPumpStatusPSAlarmDialogProps {
+  onOpenChange: (open: boolean) => void;
   form: PumpStatusPSAlarmForm;
   setForm: React.Dispatch<React.SetStateAction<PumpStatusPSAlarmForm>>;
   onSubmit: () => void;
@@ -111,11 +112,13 @@ export interface SensorStatusForm {
 }
 
 export interface PumpStatusPSAlarmForm {
-  siteId: number|null;
+  id: number;
+  siteId: number | null;
+  alarmName: string;
   site: string;
   emails: string[];
   phones: string[];
-  duration: number;
+  monitoringHours: number;
 }
 
 export interface PumpStatusIdvAlarmForm {
@@ -195,12 +198,15 @@ export interface CreateSensorStatusAlarmRequest {
 }
 
 export interface CreatePumpStatusPSAlarmRequest {
-  method: AlarmMethod;
-  siteId: number|null;
-  site: string;
+  id: number;
+  siteId: number;
+  alarmName: string;
   emails: string;
   phones: string;
-  duration: number;
+  method: number;
+  pumpStatusOperation: {
+    monitoringHours: number;
+  };
 }
 
 export interface CreatePumpStatusIdvAlarmRequest {
@@ -262,9 +268,14 @@ export interface SensorStatusResponse {
 export interface PumpStatusPSResponse {
   alarmId: number;
   siteId: number;
-  site:string;
-  recipients: string[];
-  duration: number;
+  siteName: string;
+  alarmName: string;
+  alarmType: number;
+  emails: string;
+  phones: string;
+  method: number;
+  pumpStatusOperationId: number;
+  monitoringHours: number;
 }
 
 export interface PumpStatusIdvResponse {

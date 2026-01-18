@@ -23,7 +23,7 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
-    const textAlignClass = isRTL ? '!text-right' : 'text-left';
+    const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
    // Define columns in logical order (English/LTR)
     const columns = [
@@ -39,42 +39,60 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
             )
         },
         {
-            key: 'duration',
+            key: 'recipients',
+            header: t('alarms.emailRecipients'),
+            render: (alarm: PumpStatusPSResponse) => {
+                const recipients: string[] = [];
+                if (alarm.emails) {
+                    recipients.push(...alarm.emails.split(',').map(e => e.trim()).filter(Boolean));
+                }
+                if (alarm.phones) {
+                    recipients.push(...alarm.phones.split(',').map(p => p.trim()).filter(Boolean));
+                }
+                return (
+                    <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+                        {recipients.map((recipient, idx) => {
+                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                            const isPhone = /^\d{11}$/.test(recipient);
+                            return (
+                                <Badge key={idx} variant="secondary" className="text-xs flex items-center">
+                                    {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                    {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                    {recipient}
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'monitoringHours',
             header: t('alarms.duration'),
             render: (alarm: PumpStatusPSResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.duration}
+                    {alarm.monitoringHours}
                 </div>
             )
         },
         {
-            key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
-            render: (alarm: PumpStatusPSResponse) => (
-                <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                    {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
-                        const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                        const isPhone = /^\d{11}$/.test(recipient);
-                        return (
-                            <Badge key={idx} variant="secondary" className="text-xs flex items-center">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                            </Badge>
-                        );
-                    })}
-                </div>
-            )
-        },
-        {
-            key: 'site',
+            key: 'siteName',
             header: t('alarms.site'),
             render: (alarm: PumpStatusPSResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.site}
+                    {alarm.siteName}
                 </div>
             )
-        }
+        },
+        {
+            key: 'alarmName',
+            header: t('alarms.alarmName'),
+            render: (alarm: PumpStatusPSResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.alarmName}
+                </div>
+            )
+        },
     ];
 
     // For RTL (Arabic): keep original order

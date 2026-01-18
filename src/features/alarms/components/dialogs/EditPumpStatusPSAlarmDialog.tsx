@@ -117,8 +117,8 @@ export function EditPumpStatusPSAlarmDialog({
             <DialogContent 
                 className="w-[95vw] max-w-[600px] sm:max-w-lg flex flex-col p-0"
                 style={{
-                    height: '80vh',
-                    maxHeight: '80vh',
+                    height: '95vh',
+                    maxHeight: '95vh',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden'
@@ -172,19 +172,36 @@ export function EditPumpStatusPSAlarmDialog({
                             )}
                         </div>
 
-                        {/* Duration Field */}
+                        {/* Alarm Name Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                            <Label htmlFor="alarm-name">{t('alarms.alarmName')}</Label>
                             <Input
-                                id="duration"
-                                type="number"
-                                min="0"
-                                value={form.duration || 0}
+                                id="alarm-name"
+                                type="text"
+                                value={form.alarmName || ''}
                                 onChange={(e) => {
-                                    setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }));
+                                    setForm(prev => ({ ...prev, alarmName: e.target.value }));
                                     setHasChanges(true);
                                 }}
-                                placeholder={t('alarms.enterDuration')}
+                                placeholder={t('alarms.enterAlarmName')}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                            />
+                        </div>
+
+                        {/* Monitoring Hours Field */}
+                        <div className="space-y-2">
+                            <Label htmlFor="monitoring-hours">{t('alarms.monitoringHours')}</Label>
+                            <Input
+                                id="monitoring-hours"
+                                type="number"
+                                min="0"
+                                value={form.monitoringHours || 0}
+                                onChange={(e) => {
+                                    setForm(prev => ({ ...prev, monitoringHours: parseInt(e.target.value) || 0 }));
+                                    setHasChanges(true);
+                                }}
+                                placeholder={t('alarms.enterMonitoringHours')}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
                             />
@@ -221,7 +238,7 @@ export function EditPumpStatusPSAlarmDialog({
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || !hasChanges || !form.siteId || (form.emails.length === 0 && form.phones.length === 0) || !form.duration}
+                                disabled={isSubmitting || !hasChanges || !form.siteId || (form.emails.length === 0 && form.phones.length === 0) || !form.alarmName || !form.monitoringHours}
                                 loadingText={t('alarms.updatingAlarm')}
                                 isLoading={isSubmitting}
                             >

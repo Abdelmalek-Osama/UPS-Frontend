@@ -271,8 +271,10 @@
     "selectPump": "اختر مضخة",
     "pump": "مضخة",
     "enterIdvPump": "أدخل معرف المضخة",
-    "duration": "المّة",
+    "duration": "المّدة",
     "enterDuration": "أدخل المدّة",
+    "monitoringHours": "ساعات المراقبة",
+    "enterMonitoringHours": "أدخل ساعات المراقبة",
     "PumpStatusIdvAlarms": "تنبيهات حالة المضخة الفردية",
     "field": "الحقل",
     "operator": "المقارن",
@@ -341,7 +343,13 @@
     "PumpStatusPSAlarms": "تكوين التنبيهات لحالة المضخات",
     "SensorStatusAlarms": "تكوين التنبيهات لحالة الاستشعار",    "battery": "البطارية",
     "totalFlow": "التدفق المحسوب",
-    "totalUptime": "إجمالي وقت التشغيل"
+    "totalUptime": "إجمالي وقت التشغيل",
+    "validation": {
+      "alarmNameEmpty": "اسم التنبيه لا يمكن أن يكون فارغًا",
+      "alarmNameMinLength": "اسم التنبيه يجب أن يتكون من 3 أحرف على الأقل",
+      "alarmNameInvalidCharacters": "يجب أن يحتوي اسم التنبيه على أحرف إنجليزية أو عربية وأرقام ومسافات فقط",
+      "alarmNameWhitespace": "لا يمكن أن يحتوي اسم التنبيه على مسافات بادئة أو لاحقة"
+    }
   },
   "flowCalculations": {
     "title": "حسابات التدفق",
@@ -497,6 +505,16 @@
     "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
     "validationError": "حدث خطأ في التحقق من صحة البيانات.",
     "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
-    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى."
+    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.",
+    "alarmNameRequired": "حقل اسم التنبيه مطلوب.",
+    "siteIdRequired": "حقل الموقع مطلوب.",
+    "methodRequired": "حقل الطريقة مطلوب.",
+    "emailsRequired": "حقل البريد الإلكتروني مطلوب.",
+    "phonesRequired": "حقل الهاتف مطلوب.",
+    "monitoringHoursRequired": "حقل ساعات المراقبة مطلوب.",
+    "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
+    "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
+    "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
+    "unknownError": "حدث خطأ غير معروف."
   }
 }

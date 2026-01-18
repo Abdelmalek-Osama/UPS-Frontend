@@ -40,6 +40,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
     setPhones,
     setSite,
     submissionError,
+    onOpenChange,
     sites,
     sitesLoading = false,
     siteError = null,
@@ -120,11 +121,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                             >
                                 {t('alarms.addSensorStatusAlarm')}
                             </Button>
-                            <Button variant="outline" onClick={() => {
-                                // Reset form when canceling
-                                setForm({ ...INITIAL_SENSOR_STATUS_FORM });
-                                setAlarmNameError(undefined);
-                            }}>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
                                 {t('common.cancel')}
                             </Button>
                         </div>
