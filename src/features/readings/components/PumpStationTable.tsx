@@ -1135,10 +1135,10 @@ export function PumpStationTable({
 
           {/* Delete Confirmation Dialog */}
           <Dialog open={isDeletePumpStationDialogOpen} onOpenChange={setIsDeletePumpStationDialogOpen}>
-            <DialogContent>
+            <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
               <DialogHeader>
-                <DialogTitle>{t('readings.confirmDelete')}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.confirmDelete')}</DialogTitle>
+                <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                   {t('readings.deleteConfirmationMessage', { site: pumpStationReadingToDelete?.site, timestamp: formatTimestamp(pumpStationReadingToDelete?.timestamp || '') })}
                 </DialogDescription>
               </DialogHeader>
@@ -1353,15 +1353,15 @@ export function PumpStationTable({
       )}
       {/* Pump Details Dialog */}
       <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
-        <DialogContent className="sm:max-w-[700px]" dir="rtl">
+        <DialogContent className="sm:max-w-[700px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle className="text-right">{t('readings.pumpReadingDetails')}</DialogTitle>
-            <DialogDescription className="text-right">
+            <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpReadingDetails')}</DialogTitle>
+            <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
               {selectedReading?.site} - {selectedReading?.timestamp}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Table>
+            <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
               <TableHeader>
                 <TableRow>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')}</TableHead>
@@ -1377,10 +1377,10 @@ export function PumpStationTable({
                   
                   return (
                     <TableRow key={index}>
-                      <TableCell>{t('readings.pumpNumber')} {index + 1}</TableCell>
-                      <TableCell style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
-                      <TableCell style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
-                      <TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {index + 1}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -1396,11 +1396,11 @@ export function PumpStationTable({
             </Table>
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                   <p className="text-sm text-gray-600">{t('readings.totalUptime')}</p>
                   <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} {t('readings.hour')}</p>
                 </div>
-                <div>
+                <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                   <p className="text-sm text-gray-600">{t('readings.totalFlow')}</p>
                   <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} {t('readings.flowUnit')}</p>
                 </div>

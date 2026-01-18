@@ -1060,10 +1060,10 @@ export function WaterLevelTable({
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <DialogContent>
+              <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                  <DialogTitle>{t('readings.confirmDelete')}</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.confirmDelete')}</DialogTitle>
+                  <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                     {t('readings.deleteConfirmationMessage', { site: readingToDelete?.site, timestamp: formatTimestamp(readingToDelete?.timestamp || '') })}
                   </DialogDescription>
                 </DialogHeader>
