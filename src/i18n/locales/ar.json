@@ -235,7 +235,9 @@
     "fromDate": "من تاريخ",
     "toDate": "الى تاريخ",
     "resetDates": "إعادة تعيين التواريخ",
-    "voltUnit": "فولت"
+    "voltUnit": "فولت",
+    "deleteWaterLevelSuccess": "تم حذف قراءة مستوى المياه بنجاح",
+    "deletePumpStationSuccess": "تم حذف قراءة محطة الرفع بنجاح"
   },
   "alarms": {
     "title": "تكوين التنبيهات",

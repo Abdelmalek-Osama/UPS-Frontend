@@ -235,7 +235,9 @@
     "fromDate": "From Date",
     "toDate": "To Date",
     "resetDates": "Reset Dates",
-    "voltUnit": "Volt"
+    "voltUnit": "Volt",
+    "deleteWaterLevelSuccess": "Water level reading deleted successfully",
+    "deletePumpStationSuccess": "Pump station reading deleted successfully"
   },
   "alarms": {
     "title": "Alarm Configuration",

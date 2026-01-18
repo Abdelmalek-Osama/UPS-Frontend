@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { WaterLevelReading, PumpStationReading, SiteLookupOption, WaterLevelReadingApiResponse, PumpStationApiResponse, CreatePumpStationReadingRequest } from '../types';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
 import { useAuth } from '../../../shared/contexts/AuthContext'; // Import useAuth
 
 export function useReadingsData(selectedSiteId: string) {
+  const { t } = useTranslation();
   const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null);
   const [selectedPumpIndex, setSelectedPumpIndex] = useState<number | null>(null);
   const [isPumpDetailsOpen, setIsPumpDetailsOpen] = useState(false);
@@ -140,7 +142,7 @@ export function useReadingsData(selectedSiteId: string) {
       setIsLoading(true); // Start loading
       try {
         await apiService.delete<ApiResponse<any>>(`/v1/readings/water-level/${id}`);
-        toast.success('تم حذف قراءة مستوى المياه بنجاح');
+        toast.success(t('readings.deleteWaterLevelSuccess'));
       } catch (error: any) {
         console.error('Error deleting water level reading', error);
         const errorMessage = (error as Error).message;
@@ -205,7 +207,7 @@ export function useReadingsData(selectedSiteId: string) {
       setIsLoading(true); // Start loading
       try {
         await apiService.delete<ApiResponse<any>>(`/v1/readings/pump-station/${id}`);
-        toast.success('تم حذف قراءة محطة الرفع بنجاح');
+        toast.success(t('readings.deletePumpStationSuccess'));
       } catch (error: any) {
         console.error('Error deleting pump station reading', error);
         const errorMessage = (error as Error).message;
