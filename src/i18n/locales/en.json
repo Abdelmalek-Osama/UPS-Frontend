@@ -271,6 +271,8 @@
     "enterIdvPump": "Enter pump identifier",
     "duration": "Duration",
     "enterDuration": "Enter duration",
+    "monitoringHours": "Monitoring Hours",
+    "enterMonitoringHours": "Enter monitoring hours",
     "PumpStatusIdvAlarms": "Individual Pump Status Alarms",
     "field": "Field",
     "operator": "Operator",
@@ -341,7 +343,13 @@
     "SensorStatusAlarms": "Configure alarms for sensor status",
     "battery": "Battery",
     "totalFlow": "Total Flow",
-    "totalUptime": "Total Uptime"
+    "totalUptime": "Total Uptime",
+    "validation": {
+      "alarmNameEmpty": "Alarm name cannot be empty",
+      "alarmNameMinLength": "Alarm name must be at least 3 characters",
+      "alarmNameInvalidCharacters": "Alarm name can only contain English and Arabic letters, numbers, and spaces",
+      "alarmNameWhitespace": "Alarm name cannot have leading or trailing spaces"
+    }
   },
   "flowCalculations": {
     "title": "Flow Calculations",
@@ -497,6 +505,16 @@
     "unexpectedError": "An unexpected error occurred. Please try again.",
     "validationError": "A data validation error occurred.",
     "tokenRefreshFailed": "Failed to refresh token. Please log in again.",
-    "noRefreshToken": "No refresh token available. Please log in again."
+    "noRefreshToken": "No refresh token available. Please log in again.",
+    "alarmNameRequired": "The alarm name field is required.",
+    "siteIdRequired": "The site field is required.",
+    "methodRequired": "The method field is required.",
+    "emailsRequired": "The emails field is required.",
+    "phonesRequired": "The phones field is required.",
+    "monitoringHoursRequired": "The monitoring hours field is required.",
+    "pumpStatusOperationRequired": "The pump status operation field is required.",
+    "failedToCreateAlarm": "Failed to create alarm.",
+    "failedToUpdateAlarm": "Failed to update alarm.",
+    "unknownError": "An unknown error occurred."
   }
 }

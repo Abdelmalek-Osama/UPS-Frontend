@@ -16,7 +16,7 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
-const API_BASE_URL = 'https://localhost:44360/api/';
+const API_BASE_URL = 'https://localhost:5001/api/';
 
 //const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 //const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
@@ -103,6 +103,30 @@ const processQueue = (error: AxiosError | Error | null, token: string | null = n
   failedRequestsQueue = [];
 };
 
+// Helper function to translate known API error messages
+const translateApiError = (errorMessage: string): string => {
+  // Map of known API error messages to i18n keys
+  const errorMap: Record<string, string> = {
+    'The AlarmName field is required.': 'errors.alarmNameRequired',
+    'The SiteId field is required.': 'errors.siteIdRequired',
+    'The method field is required.': 'errors.methodRequired',
+    'The Emails field is required.': 'errors.emailsRequired',
+    'The Phones field is required.': 'errors.phonesRequired',
+    'The monitoringHours field is required.': 'errors.monitoringHoursRequired',
+    'The pumpStatusOperation field is required.': 'errors.pumpStatusOperationRequired',
+    'The MonitoringHours field is required.': 'errors.monitoringHoursRequired',
+    'Failed to create pump status PS alarm.': 'errors.failedToCreateAlarm',
+    'Failed to update pump status PS alarm.': 'errors.failedToUpdateAlarm',
+    'An unexpected error occurred.': 'errors.unexpectedError',
+  };
+
+  const translationKey = errorMap[errorMessage];
+  if (translationKey) {
+    return i18n.t(translationKey, { ns: 'translation' });
+  }
+  return errorMessage;
+};
+
 // Helper function to extract the most specific error message from Axios response data
 const getErrorMessageFromResponseData = (responseData: any): string => {
   let errorMessage = i18n.t('errors.unexpectedError', { ns: 'translation' }); // Default ultimate fallback
@@ -111,22 +135,24 @@ const getErrorMessageFromResponseData = (responseData: any): string => {
     let validationErrors: string[] = [];
     for (const key in responseData.errors) {
       if (Array.isArray(responseData.errors[key])) {
-        validationErrors = validationErrors.concat(responseData.errors[key]);
+        // Translate each validation error
+        const translatedErrors = responseData.errors[key].map((err: string) => translateApiError(err));
+        validationErrors = validationErrors.concat(translatedErrors);
       }
     }
     if (validationErrors.length > 0) {
       return validationErrors.join(', '); // Prioritize validation errors
     } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
-      return responseData.title; // Fallback to title if errors object is empty
+      return translateApiError(responseData.title); // Fallback to title if errors object is empty
     } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
-      return responseData.message; // Fallback to message if errors object and title are empty
+      return translateApiError(responseData.message); // Fallback to message if errors object and title are empty
     } else {
       return i18n.t('errors.validationError', { ns: 'translation' }); // Generic validation error fallback
     }
   } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
-    return responseData.message; // Prioritize general message
+    return translateApiError(responseData.message); // Prioritize general message
   } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
-    return responseData.title; // Fallback to title
+    return translateApiError(responseData.title); // Fallback to title
   }
   return errorMessage;
 };

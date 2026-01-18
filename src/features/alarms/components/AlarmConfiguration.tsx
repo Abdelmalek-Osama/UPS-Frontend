@@ -90,6 +90,9 @@ export function AlarmConfiguration() {
     fetchPumpStatusIdvSiteConfiguration,
     pumpStatusIdvSiteConfiguration,
     pumpStatusIdvConfigLoading,
+    fetchPumpStatusPSSiteConfiguration,
+    pumpStatusPSSiteConfiguration,
+    pumpStatusPSConfigLoading,
   } = useAlarmsData();
 
   const { sites, sitesLoading, sitesError } = useSitesLookup();
@@ -140,6 +143,7 @@ export function AlarmConfiguration() {
   const [sentMessage, setSentMessage] = useState<string>('');
   const [pumpStatusIdvSite, setPumpStatusIdvSite] = useState<string>('');
   const [pumpStatusIdvSiteError, setPumpStatusIdvSiteError] = useState<string | null>(null);
+  const [pumpStatusPSSiteError, setPumpStatusPSSiteError] = useState<string | null>(null);
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
 
   
@@ -312,27 +316,30 @@ export function AlarmConfiguration() {
     }
 
     const requestBody: CreatePumpStatusPSAlarmRequest = {
+      id: newPumpStatusPSForm.id,
       siteId,
-      site: sites.find(site => site.id === siteId)?.name || '',
+      alarmName: newPumpStatusPSForm.alarmName,
       emails: newPumpStatusPSForm.emails.join(','),
       phones: newPumpStatusPSForm.phones.join(','),
-      method: AlarmMethod.Email,
-      duration: newPumpStatusPSForm.duration,
+      method: 0,
+      pumpStatusOperation: {
+        monitoringHours: newPumpStatusPSForm.monitoringHours,
+      },
     };
 
     try {
       const result = await createPumpStatusPSAlarm(requestBody);
       if (result.success) {
         toast.success(t('alarms.addPumpStatusPSSuccess'));
-        setIsAddCommOpen(false);
+        setIsAddPumpStatusPSOpen(false);
         setNewPumpStatusPSForm(INITIAL_PumpStatusPS_FORM);
       } else {
-        const errorMessage = result.message || 'Failed to create pump status PS alarm.';
+        const errorMessage = result.message || t('errors.failedToCreateAlarm');
         toast.error(errorMessage);
         setPumpStatusPSSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.message || 'An unexpected error occurred.';
+      const errorMessage = error.message || t('errors.unexpectedError');
       toast.error(errorMessage);
       setPumpStatusPSSubmissionError(errorMessage);
     } finally {
@@ -440,12 +447,15 @@ export function AlarmConfiguration() {
     }
 
     const requestBody: CreatePumpStatusPSAlarmRequest = {
-      siteId,
-      site,
+      id: newPumpStatusPSForm.id,
+      siteId: siteId || 0,
+      alarmName: newPumpStatusPSForm.alarmName,
       emails: newPumpStatusPSForm.emails.join(','),
       phones: newPumpStatusPSForm.phones.join(','),
-      method: AlarmMethod.Email,
-      duration: newPumpStatusPSForm.duration,
+      method: 0,
+      pumpStatusOperation: {
+        monitoringHours: newPumpStatusPSForm.monitoringHours,
+      },
     };
 
     try {
@@ -456,13 +466,12 @@ export function AlarmConfiguration() {
         setCurrentPumpStatusPSAlarm(null);
         setHasPumpStatusPSChanges(false);
       } else {
-        console.error('Error updating Pump Status PS alarm:', result.message);
-        const errorMessage = result.message || 'Failed to update Pump Status PS alarm.';
+        const errorMessage = result.message || t('errors.failedToUpdateAlarm');
         toast.error(errorMessage);
         setPumpStatusPSSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.message || 'An unexpected error occurred.';
+      const errorMessage = error.message || t('errors.unexpectedError');
       toast.error(errorMessage);
       setPumpStatusPSSubmissionError(errorMessage);
     } finally {
@@ -547,22 +556,26 @@ export function AlarmConfiguration() {
   };
 
   const handlePumpStatusPSAlarmEdit = (alarm: any) => {
-    const emails = alarm.recipients ? alarm.recipients.filter((r: string) => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(r)) : [];
-    const phones = alarm.recipients ? alarm.recipients.filter((r: string) => /^\d{11}$/.test(r)) : [];
+    const emails = alarm.emails ? alarm.emails.split(',').map((e: string) => e.trim()).filter(Boolean) : [];
+    const phones = alarm.phones ? alarm.phones.split(',').map((p: string) => p.trim()).filter(Boolean) : [];
     
     setCurrentPumpStatusPSAlarm({
+      id: alarm.alarmId || 0,
       siteId: alarm.siteId,
-      site: alarm.site,
+      alarmName: alarm.alarmName || '',
+      site: alarm.siteName,
       emails: emails,
       phones: phones,
-      duration: alarm.duration ,
+      monitoringHours: alarm.monitoringHours || 0,
     });
     setNewPumpStatusPSForm({
+      id: alarm.alarmId || 0,
       siteId: alarm.siteId,
-      site: alarm.site,
+      alarmName: alarm.alarmName || '',
+      site: alarm.siteName,
       emails: emails,
       phones: phones,
-      duration: alarm.duration,
+      monitoringHours: alarm.monitoringHours || 0,
     });
     setIsEditPumpStatusPSOpen(true);
   };
@@ -602,6 +615,16 @@ export function AlarmConfiguration() {
     }
   }, [pumpStatusIdvSiteConfiguration]);
 
+  useEffect(() => {
+    if (pumpStatusPSSiteConfiguration) {
+      if ((pumpStatusPSSiteConfiguration as any).numPumps < 1) {
+        setPumpStatusPSSiteError('alarms.siteHasNoPumps');
+      } else {
+        setPumpStatusPSSiteError(null);
+      }
+    }
+  }, [pumpStatusPSSiteConfiguration]);
+
   const setThresholdEmails = (newEmails: string[]) => {
     setNewThresholdAlarmForm(prev => ({ ...prev, emails: newEmails }));
   };
@@ -627,6 +650,15 @@ export function AlarmConfiguration() {
 
   const handleSetPumpStatusPSSiteId = (siteId: number | null) => {
     setPsSiteId(siteId ?? undefined);
+  };
+
+  const handleSetPumpStatusPSSite = (siteName: string) => {
+    setPumpStatusPSSite(siteName);
+    setPumpStatusPSSiteError(null);
+    const selectedSite = sites.find(site => site.name === siteName);
+    if (selectedSite) {
+      fetchPumpStatusPSSiteConfiguration(selectedSite.id);
+    }
   };
 
    const setPumpStatusIdvEmails = (newEmails: string[]) => {
@@ -1159,12 +1191,16 @@ export function AlarmConfiguration() {
                       isSubmitting={isSubmittingPumpPSAdd}
                       setEmails={setPumpStatusPSEmails}
                       setPhones={setPumpStatusPSPhones}
-                      setSite={setPumpStatusPSSite}
+                      setSite={handleSetPumpStatusPSSite}
                       setSiteId={handleSetPumpStatusPSSiteId}
                       setSentMessage={setSentMessage}
                       submissionError={pumpStatusPSSubmissionError}
+                      onOpenChange={handlePumpStatusPSDialogOpenChange}
                       sites={sites}
-                      sitesLoading={sitesLoading}/>
+                      sitesLoading={sitesLoading}
+                      siteConfiguration={pumpStatusPSSiteConfiguration}
+                      configLoading={pumpStatusPSConfigLoading}
+                      siteError={pumpStatusPSSiteError}/>
                   </Dialog>
                 )}
               </CardHeader>

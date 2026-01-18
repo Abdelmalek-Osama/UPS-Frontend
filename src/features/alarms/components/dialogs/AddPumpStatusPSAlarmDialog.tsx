@@ -28,6 +28,8 @@ import { INITIAL_PumpStatusPS_FORM } from '../../utils/alarmConstants';
 interface ExtendedAddPumpStatusPSAlarmDialogProps extends AddPumpStatusPSAlarmDialogProps {
     sites: Site[];
     sitesLoading?: boolean;
+    siteConfiguration?: SiteConfiguration;
+    configLoading?: boolean;
     siteError?: string | null;
 }
 
@@ -40,8 +42,11 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
     setPhones,
     setSite,
     submissionError,
+    onOpenChange,
     sites,
     sitesLoading = false,
+    siteConfiguration,
+    configLoading = false,
     siteError = null,
 }: ExtendedAddPumpStatusPSAlarmDialogProps, ref) => {
     const { t } = useTranslation();
@@ -51,7 +56,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
         const selected = sites.find(site => site.name === value);
         if (selected) {
             setSite(selected.name);
-            setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name, IdvPump: '' }));
+            setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name }));
         }
     };
 
@@ -88,16 +93,36 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         )}
                     </div>
 
-                    {/* Duration Field */}
+                    {/* Alarm Name Field */}
                     <div className="space-y-2">
-                        <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                        <Label htmlFor="alarm-name">{t('alarms.alarmName')}</Label>
                         <Input
-                            id="duration"
+                            id="alarm-name"
+                            type="text"
+                            value={form.alarmName || ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                const error = validateAlarmName(value);
+                                setAlarmNameError(error);
+                                setForm(prev => ({ ...prev, alarmName: value }));
+                            }}
+                            placeholder={t('alarms.enterAlarmName')}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                        />
+                        {alarmNameError && <p className="text-red-600 text-sm">{alarmNameError}</p>}
+                    </div>
+
+                    {/* Monitoring Hours Field */}
+                    <div className="space-y-2">
+                        <Label htmlFor="monitoring-hours">{t('alarms.monitoringHours')}</Label>
+                        <Input
+                            id="monitoring-hours"
                             type="number"
                             min="0"
-                            value={form.duration || 0}
-                            onChange={(e) => setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
-                            placeholder={t('alarms.enterDuration')}
+                            value={form.monitoringHours || 0}
+                            onChange={(e) => setForm(prev => ({ ...prev, monitoringHours: parseInt(e.target.value) || 0 }))}
+                            placeholder={t('alarms.enterMonitoringHours')}
                             dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
                         />
@@ -127,17 +152,13 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.duration }
+                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.alarmName || !form.monitoringHours }
                                 loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >
                                 {t('alarms.addPumpStatusPSAlarm')}
                             </Button>
-                            <Button variant="outline" onClick={() => {
-                                // Reset form when canceling
-                                setForm({ ...INITIAL_PumpStatusPS_FORM });
-                                setAlarmNameError(undefined);
-                            }}>
+                            <Button variant="outline" onClick={() => onOpenChange(false)}>
                                 {t('common.cancel')}
                             </Button>
                         </div>
