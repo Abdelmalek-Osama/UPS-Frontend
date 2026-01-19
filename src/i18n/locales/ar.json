@@ -130,13 +130,48 @@
     "search": "البحث عن موقع...",
     "searchPlaceholder": "البحث عن موقع...",
     "addSite": "إضافة موقع",
+    "addNewSite": "إضافة موقع جديد",
     "editSite": "تعديل موقع",
     "deleteSite": "حذف موقع",
     "sitesCount": "المواقع",
     "latitude": "خط العرض",
     "longitude": "خط الطول",
     "coordinates": "الإحداثيات",
-    "code": "الكود"
+    "code": "الكود",
+    "stage1": {
+      "title": "معلومات الموقع",
+      "siteNameLabel": "اسم الموقع",
+      "siteNamePlaceholder": "أدخل اسم الموقع",
+      "codeLabel": "كود الموقع",
+      "codePlaceholder": "أدخل كود الموقع",
+      "locationLabel": "الموقع",
+      "locationPlaceholder": "أدخل الموقع",
+      "canalLabel": "الترعة",
+      "canalPlaceholder": "اختر الترعة",
+      "directorateNameLabel": "المديرية",
+      "directorateNamePlaceholder": "اختر المديرية",
+      "dataLoggerTypeLabel": "نوع جهاز السجل",
+      "dataLoggerTypePlaceholder": "اختر نوع جهاز السجل",
+      "simIdLabel": "معرف SIM",
+      "simIdPlaceholder": "أدخل معرف SIM",
+      "canalOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      },
+      "directorateOptions": {
+        "directorate1": "المديرية 1",
+        "directorate2": "المديرية 2",
+        "directorate3": "المديرية 3"
+      },
+      "dataLoggerTypeOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      }
+    }
   },
   "readings": {
     "title": "إدارة القراءات",
@@ -477,7 +512,21 @@
     "Failed to create sensor status alarm.": "فشل إنشاء تنبيه حالة المستشعر",
     "Failed to create pump status PS alarm.": "فشل إنشاء تنبيه حالة المضخة",
     "Failed to create Individual pump status alarm.": "فشل إنشاء تنبيه حالة المضخة الفردية",
-    "An unexpected error occurred.": "حدث خطأ غير متوقع"
+    "An unexpected error occurred.": "حدث خطأ غير متوقع",
+    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "validationError": "حدث خطأ في التحقق من صحة البيانات.",
+    "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
+    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.",
+    "alarmNameRequired": "حقل اسم التنبيه مطلوب.",
+    "siteIdRequired": "حقل الموقع مطلوب.",
+    "methodRequired": "حقل الطريقة مطلوب.",
+    "emailsRequired": "حقل البريد الإلكتروني مطلوب.",
+    "phonesRequired": "حقل الهاتف مطلوب.",
+    "monitoringHoursRequired": "حقل ساعات المراقبة مطلوب.",
+    "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
+    "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
+    "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
+    "unknownError": "حدث خطأ غير معروف."
   },
   "notifications": {
     "success": "تمت العملية بنجاح",
@@ -500,21 +549,5 @@
     "passwordMatch": "كلمات المرور غير متطابقة",
     "invalidEmailFormat": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
     "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا."
-  },
-  "errors": {
-    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
-    "validationError": "حدث خطأ في التحقق من صحة البيانات.",
-    "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
-    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.",
-    "alarmNameRequired": "حقل اسم التنبيه مطلوب.",
-    "siteIdRequired": "حقل الموقع مطلوب.",
-    "methodRequired": "حقل الطريقة مطلوب.",
-    "emailsRequired": "حقل البريد الإلكتروني مطلوب.",
-    "phonesRequired": "حقل الهاتف مطلوب.",
-    "monitoringHoursRequired": "حقل ساعات المراقبة مطلوب.",
-    "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
-    "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
-    "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
-    "unknownError": "حدث خطأ غير معروف."
   }
 }

@@ -130,13 +130,48 @@
     "search": "Search for a site...",
     "searchPlaceholder": "Search for a site...",
     "addSite": "Add Site",
+    "addNewSite": "Add New Site",
     "editSite": "Edit Site",
     "deleteSite": "Delete Site",
     "sitesCount": "Sites",
     "latitude": "Latitude",
     "longitude": "Longitude",
     "coordinates": "Coordinates",
-    "code": "Code"
+    "code": "Code",
+    "stage1": {
+      "title": "Site Information",
+      "siteNameLabel": "Site Name",
+      "siteNamePlaceholder": "Enter site name",
+      "codeLabel": "Site Code",
+      "codePlaceholder": "Enter site code",
+      "locationLabel": "Location",
+      "locationPlaceholder": "Enter location",
+      "canalLabel": "Canal",
+      "canalPlaceholder": "Select canal",
+      "directorateNameLabel": "Directorate",
+      "directorateNamePlaceholder": "Select directorate",
+      "dataLoggerTypeLabel": "Data Logger Type",
+      "dataLoggerTypePlaceholder": "Select data logger type",
+      "simIdLabel": "SIM ID",
+      "simIdPlaceholder": "Enter SIM ID",
+      "canalOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      },
+      "directorateOptions": {
+        "directorate1": "Directorate 1",
+        "directorate2": "Directorate 2",
+        "directorate3": "Directorate 3"
+      },
+      "dataLoggerTypeOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      }
+    }
   },
   "readings": {
     "title": "Readings Management",
@@ -477,7 +512,21 @@
     "Failed to create sensor status alarm.": "Failed to create sensor status alarm",
     "Failed to create pump status PS alarm.": "Failed to create pump status alarm",
     "Failed to create Individual pump status alarm.": "Failed to create individual pump status alarm",
-    "An unexpected error occurred.": "An unexpected error occurred"
+    "An unexpected error occurred.": "An unexpected error occurred",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "validationError": "A data validation error occurred.",
+    "tokenRefreshFailed": "Failed to refresh token. Please log in again.",
+    "noRefreshToken": "No refresh token available. Please log in again.",
+    "alarmNameRequired": "The alarm name field is required.",
+    "siteIdRequired": "The site field is required.",
+    "methodRequired": "The method field is required.",
+    "emailsRequired": "The emails field is required.",
+    "phonesRequired": "The phones field is required.",
+    "monitoringHoursRequired": "The monitoring hours field is required.",
+    "pumpStatusOperationRequired": "The pump status operation field is required.",
+    "failedToCreateAlarm": "Failed to create alarm.",
+    "failedToUpdateAlarm": "Failed to update alarm.",
+    "unknownError": "An unknown error occurred."
   },
   "notifications": {
     "success": "Operation completed successfully",
@@ -500,21 +549,5 @@
     "passwordMatch": "Passwords do not match",
     "invalidEmailFormat": "Please enter a valid email address.",
     "phone11Digits": "Please enter a valid 11-digit phone number."
-  },
-  "errors": {
-    "unexpectedError": "An unexpected error occurred. Please try again.",
-    "validationError": "A data validation error occurred.",
-    "tokenRefreshFailed": "Failed to refresh token. Please log in again.",
-    "noRefreshToken": "No refresh token available. Please log in again.",
-    "alarmNameRequired": "The alarm name field is required.",
-    "siteIdRequired": "The site field is required.",
-    "methodRequired": "The method field is required.",
-    "emailsRequired": "The emails field is required.",
-    "phonesRequired": "The phones field is required.",
-    "monitoringHoursRequired": "The monitoring hours field is required.",
-    "pumpStatusOperationRequired": "The pump status operation field is required.",
-    "failedToCreateAlarm": "Failed to create alarm.",
-    "failedToUpdateAlarm": "Failed to update alarm.",
-    "unknownError": "An unknown error occurred."
   }
 }
