@@ -5,10 +5,8 @@ import { DataLoggerType } from '../types';
  * These are the available canal types
  */
 export const CANAL_OPTIONS: Record<string, string> = {
-  LORA: 'lora',
-  GSM: 'gsm',
-  GPRS: 'gprs',
-  WIFI: 'wifi',
+  BAHRYUSUF: 'BahrYusuf',
+  IBRAHIMIA: 'Ibrahimia',
 };
 
 /**
@@ -16,9 +14,11 @@ export const CANAL_OPTIONS: Record<string, string> = {
  * These should ideally come from the API, but here are default options
  */
 export const DIRECTORATE_OPTIONS: Record<string, string> = {
-  DIRECTORATE_1: 'directorate1',
-  DIRECTORATE_2: 'directorate2',
-  DIRECTORATE_3: 'directorate3',
+  ASSIUT: 'Assiut',
+  MINIA: 'Minia',
+  BANI_SUEF: 'Bani-suef',
+  GIZA: 'Giza',
+  FAYOUM: 'Fayoum',
 };
 
 /**

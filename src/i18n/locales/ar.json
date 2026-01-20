@@ -48,7 +48,8 @@
     "results": "نتيجة",
     "page": "صفحة",
     "previousPage": "الصفحة السابقة",
-    "nextPage": "الصفحة التالية"
+    "nextPage": "الصفحة التالية",
+    "step": "خطوة"
   },
   "buttons": {
     "save": "حفظ",
@@ -155,15 +156,15 @@
       "simIdLabel": "معرف SIM",
       "simIdPlaceholder": "أدخل معرف SIM",
       "canalOptions": {
-        "lora": "LoRa",
-        "gsm": "GSM",
-        "gprs": "GPRS",
-        "wifi": "WiFi"
+        "BahrYusuf": "بحر يوسف",
+        "Ibrahimia": "إبراهيمية"
       },
       "directorateOptions": {
-        "directorate1": "المديرية 1",
-        "directorate2": "المديرية 2",
-        "directorate3": "المديرية 3"
+        "Assiut": "اسيوط",
+        "Minia": "المنيا",
+        "Bani-suef": "بني سويف",
+        "Giza": "الجيزة",
+        "Fayoum": "الفيوم"
       },
       "dataLoggerTypeOptions": {
         "lora": "LoRa",
@@ -171,6 +172,51 @@
         "gprs": "GPRS",
         "wifi": "WiFi"
       }
+    },
+    "stage2": {
+      "title": "تكوين الموقع",
+      "siteTypeLabel": "نوع الموقع",
+      "siteTypePlaceholder": "اختر نوع الموقع",
+      "waterLevelOption": "مستوى المياه",
+      "pumpStationOption": "محطة رفع",
+      "usWaterLevelLabel": "مستوى المياه الأمامي (USWL)",
+      "downstreamWaterLevelLabel": "مستوى المياه الخلفي (DSWL)",
+      "numPumpsLabel": "عدد المضخات",
+      "numPumpsPlaceholder": "أدخل عدد المضخات"
+    },
+    "stage3": {
+      "title": "تعيين البيانات",
+      "addDataMappingTitle": "إضافة تعيين البيانات",
+      "tableNameLabel": "اسم الجدول",
+      "tableNamePlaceholder": "اختر الجدول",
+      "folderLabel": "المجلد",
+      "folderPlaceholder": "مثال: /data/water_level",
+      "filenameLabel": "اسم الملف",
+      "filenamePlaceholder": "مثال: water_level_data.csv",
+      "columnMappingLabel": "تعيين الأعمدة",
+      "databaseFieldLabel": "حقل قاعدة البيانات",
+      "userFieldLabel": "الاسم من الملف",
+      "userFieldPlaceholder": "أدخل اسم الحقل",
+      "addMappingButton": "إضافة تعيين",
+      "addedMappingsTitle": "تعيينات البيانات",
+      "viewColumnsButton": "عرض تعيينات الأعمدة",
+      "noMappingsMessage": "لم تتم إضافة أي تعيينات بيانات حتى الآن",
+      "allMappingsAddedMessage": "تم إضافة جميع تعيينات البيانات المتاحة",
+      "tableWaterLevel": "مستوى المياه",
+      "tablePumpStation": "محطة الرفع",
+      "tablePumpStatus": "حالة المضخات"
+    },
+    "stage4": {
+      "title": "حساب التدفق",
+      "selectEquation": "اختر معادلة",
+      "selectEquationPlaceholder": "اختر معادلة",
+      "equationFormula": "معادلة رياضية",
+      "fillConstants": "ملء الثوابت",
+      "equationPreview": "معاينة المعادلة",
+      "linearFlow": "التدفق الخطي",
+      "quadraticFlow": "التدفق الرباعي",
+      "powerFlow": "التدفق الأسي",
+      "enterValueFor": "أدخل قيمة ل_"
     }
   },
   "readings": {
@@ -497,6 +543,7 @@
     "pageNotFound": "الصفحة غير موجودة",
     "unauthorizedAccess": "وصول غير مصرح",
     "networkError": "خطأ في الشبكة",
+    "noServerResponse": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.",
     "tryAgain": "حاول مرة أخرى",
     "goHome": "العودة للرئيسية",
     "contactSupport": "الاتصال بالدعم",

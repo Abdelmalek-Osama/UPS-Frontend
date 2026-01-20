@@ -5,6 +5,21 @@ export enum DataLoggerType {
   WIFI = 'WIFI',
 }
 
+export interface DataMapping {
+  tableName: string;
+  folder: string;
+  filename: string;
+  columnMapping: string;
+  headerRowsToSkip?: number;
+  priority?: number;
+  isActive?: boolean;
+}
+
+export interface FlowCalculation {
+  formulaConstants: string;
+  equationId: number;
+}
+
 export interface Site {
   id: number;
   name: string;
@@ -24,6 +39,8 @@ export interface Site {
   hasDS1?: boolean;
   hasDS2?: boolean;
   numPumps?: number;
+  dataMappings?: DataMapping[];
+  flowCalculation?: FlowCalculation;
 }
 
 export interface SiteFilters {

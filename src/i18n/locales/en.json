@@ -48,7 +48,8 @@
     "results": "results",
     "page": "Page",
     "previousPage": "Previous page",
-    "nextPage": "Next page"
+    "nextPage": "Next page",
+    "step": "Step"
   },
   "buttons": {
     "save": "Save",
@@ -155,15 +156,15 @@
       "simIdLabel": "SIM ID",
       "simIdPlaceholder": "Enter SIM ID",
       "canalOptions": {
-        "lora": "LoRa",
-        "gsm": "GSM",
-        "gprs": "GPRS",
-        "wifi": "WiFi"
+        "BahrYusuf": "BahrYusuf",
+        "Ibrahimia": "Ibrahimia"
       },
       "directorateOptions": {
-        "directorate1": "Directorate 1",
-        "directorate2": "Directorate 2",
-        "directorate3": "Directorate 3"
+        "Assiut": "Assiut",
+        "Minia": "Minia",
+        "Bani-suef": "Bani-suef",
+        "Giza": "Giza",
+        "Fayoum": "Fayoum"
       },
       "dataLoggerTypeOptions": {
         "lora": "LoRa",
@@ -171,6 +172,51 @@
         "gprs": "GPRS",
         "wifi": "WiFi"
       }
+    },
+    "stage2": {
+      "title": "Site Configuration",
+      "siteTypeLabel": "Site Type",
+      "siteTypePlaceholder": "Select site type",
+      "waterLevelOption": "Water Level",
+      "pumpStationOption": "Pump Station",
+      "usWaterLevelLabel": "USWL",
+      "downstreamWaterLevelLabel": "DSWL",
+      "numPumpsLabel": "Number of Pumps",
+      "numPumpsPlaceholder": "Enter number of pumps"
+    },
+    "stage3": {
+      "title": "Data Mapping",
+      "addDataMappingTitle": "Add Data Mapping",
+      "tableNameLabel": "Table Name",
+      "tableNamePlaceholder": "Select table",
+      "folderLabel": "Folder",
+      "folderPlaceholder": "e.g., /data/water_level",
+      "filenameLabel": "Filename",
+      "filenamePlaceholder": "e.g., water_level_data.csv",
+      "columnMappingLabel": "Column Mappings",
+      "databaseFieldLabel": "Database Field",
+      "userFieldLabel": "Name from File",
+      "userFieldPlaceholder": "Enter field name",
+      "addMappingButton": "Add Mapping",
+      "addedMappingsTitle": "Data Mappings",
+      "viewColumnsButton": "View column mappings",
+      "noMappingsMessage": "No data mappings added yet",
+      "allMappingsAddedMessage": "All available data mappings have been added",
+      "tableWaterLevel": "Water Level",
+      "tablePumpStation": "Pump Station",
+      "tablePumpStatus": "Pump Status"
+    },
+    "stage4": {
+      "title": "Flow Calculation",
+      "selectEquation": "Select Equation",
+      "selectEquationPlaceholder": "Choose an equation",
+      "equationFormula": "Equation Formula",
+      "fillConstants": "Fill in Constants",
+      "equationPreview": "Equation Preview",
+      "linearFlow": "Linear Flow",
+      "quadraticFlow": "Quadratic Flow",
+      "powerFlow": "Power Flow",
+      "enterValueFor": "Enter value for"
     }
   },
   "readings": {
@@ -497,6 +543,7 @@
     "pageNotFound": "Page Not Found",
     "unauthorizedAccess": "Unauthorized Access",
     "networkError": "Network Error",
+    "noServerResponse": "No response from the server. Please check your internet connection.",
     "tryAgain": "Try Again",
     "goHome": "Go Home",
     "contactSupport": "Contact Support",
