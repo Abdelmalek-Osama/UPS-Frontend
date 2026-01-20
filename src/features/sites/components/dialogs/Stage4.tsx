@@ -3,49 +3,31 @@ import { useTranslation } from 'react-i18next';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../components/ui/select';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import apiService from '../../../../shared/utils/apiService';
 import type { Site } from '../../types';
 
 interface Equation {
   id: number;
   name: string;
-  formula: string;
-  constants: string[]; // Array of constant names needed
+  displayFormula: string;
+  createdAt?: string;
+  isDeleted?: boolean;
 }
 
-// Mock equations data - replace with actual API call
-const EQUATIONS: Equation[] = [
-  {
-    id: 1,
-    name: 'Linear Flow',
-    formula: 'Q = a × H + b',
-    constants: ['a', 'b']
-  },
-  {
-    id: 2,
-    name: 'Quadratic Flow',
-    formula: 'Q = a × H² + b × H + c',
-    constants: ['a', 'b', 'c']
-  },
-  {
-    id: 3,
-    name: 'Power Flow',
-    formula: 'Q = a × H^n',
-    constants: ['a', 'n']
-  }
-];
-
-// Helper function to map equation names to translation keys
-const getEquationKey = (equationName: string): string => {
-  switch (equationName) {
-    case 'Linear Flow':
-      return 'linearFlow';
-    case 'Quadratic Flow':
-      return 'quadraticFlow';
-    case 'Power Flow':
-      return 'powerFlow';
-    default:
-      return 'linearFlow';
-  }
+// Helper function to extract constants from formula (e.g., c1, c2, c3) and map to a, b, c
+const extractConstants = (formula: string): string[] => {
+  const matches = formula.match(/c\d+/g);
+  if (!matches) return [];
+  
+  const sorted = [...new Set(matches)].sort((a, b) => {
+    const numA = parseInt(a.substring(1));
+    const numB = parseInt(b.substring(1));
+    return numA - numB;
+  });
+  
+  // Map c1->a, c2->b, c3->c, etc.
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  return sorted.map((_, index) => alphabet[index] || `var${index}`);
 };
 
 interface Stage4Props {
@@ -58,46 +40,74 @@ interface Stage4Props {
 export default function Stage4({ data, onChange, isOpen, onClose }: Stage4Props) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
+  const [equations, setEquations] = useState<Equation[]>([]);
+  const [loadingEquations, setLoadingEquations] = useState(true);
   const [selectedEquationId, setSelectedEquationId] = useState<number | null>(
     data.flowCalculation?.equationId || null
   );
   const [constants, setConstants] = useState<{ [key: string]: string }>({});
   const [selectedEquation, setSelectedEquation] = useState<Equation | null>(null);
 
+  // Fetch equations from API
+  useEffect(() => {
+    const fetchEquations = async () => {
+      try {
+        setLoadingEquations(true);
+        const response = await apiService.get<any>('/v1/Equations');
+        // Extract equations from the API response
+        const equationsData = response?.data || [];
+        setEquations(equationsData);
+      } catch (error) {
+        console.error('Failed to fetch equations:', error);
+        // Fallback to empty array if API fails
+        setEquations([]);
+      } finally {
+        setLoadingEquations(false);
+      }
+    };
+
+    fetchEquations();
+  }, []);
+
+  // Handle equation selection and extract constants
   useEffect(() => {
     if (selectedEquationId) {
-      const equation = EQUATIONS.find(eq => eq.id === selectedEquationId);
+      const equation = equations.find(eq => eq.id === selectedEquationId);
       setSelectedEquation(equation || null);
       
+      // Extract constants from the formula
+      const constants = equation ? extractConstants(equation.displayFormula) : [];
+      
       // Parse stored constants if they exist
-      if (data.flowCalculation?.formulaConstants && equation) {
+      if (data.flowCalculation?.formulaConstants) {
         try {
           const parsed = JSON.parse(data.flowCalculation.formulaConstants);
           setConstants(parsed);
         } catch {
           // Initialize empty constants
-          setConstants(equation.constants.reduce((acc, c) => ({ ...acc, [c]: '' }), {}));
+          setConstants(constants.reduce((acc, c) => ({ ...acc, [c]: '' }), {}));
         }
-      } else if (equation) {
+      } else {
         // Initialize empty constants
-        setConstants(equation.constants.reduce((acc, c) => ({ ...acc, [c]: '' }), {}));
+        setConstants(constants.reduce((acc, c) => ({ ...acc, [c]: '' }), {}));
       }
     } else {
       setSelectedEquation(null);
       setConstants({});
     }
-  }, [selectedEquationId, data.flowCalculation?.formulaConstants]);
+  }, [selectedEquationId, data.flowCalculation?.formulaConstants, equations]);
 
   const handleEquationChange = (equationId: string) => {
     const id = parseInt(equationId);
-    const equation = EQUATIONS.find(eq => eq.id === id);
+    const equation = equations.find(eq => eq.id === id);
     setSelectedEquationId(id);
     
     // Update parent form with equation ID and empty formula constants
     if (equation) {
+      const constants = extractConstants(equation.displayFormula);
       onChange('flowCalculation', {
         equationId: id,
-        formulaConstants: JSON.stringify(equation.constants.reduce((acc: { [key: string]: string }, c: string) => ({ ...acc, [c]: '' }), {}))
+        formulaConstants: JSON.stringify(constants.reduce((acc: { [key: string]: string }, c: string) => ({ ...acc, [c]: '' }), {}))
       });
     }
   };
@@ -118,10 +128,23 @@ export default function Stage4({ data, onChange, isOpen, onClose }: Stage4Props)
   const buildEquationDisplay = (): string => {
     if (!selectedEquation) return '';
     
-    let displayFormula = selectedEquation.formula;
-    selectedEquation.constants.forEach(constant => {
-      const value = constants[constant] || '';
-      displayFormula = displayFormula.replaceAll(constant, value);
+    let displayFormula = selectedEquation.displayFormula;
+    const constantsList = extractConstants(displayFormula);
+    
+    // Map c1->a, c2->b, c3->c for substitution
+    const cMatches = displayFormula.match(/c\d+/g) || [];
+    const sortedMatches = [...new Set(cMatches)].sort((a, b) => {
+      const numA = parseInt(a.substring(1));
+      const numB = parseInt(b.substring(1));
+      return numA - numB;
+    });
+    
+    constantsList.forEach((constant, index) => {
+      const originalConstant = sortedMatches[index];
+      if (originalConstant) {
+        const value = constants[constant] || '';
+        displayFormula = displayFormula.replaceAll(originalConstant, value);
+      }
     });
     
     return displayFormula;
@@ -153,21 +176,24 @@ export default function Stage4({ data, onChange, isOpen, onClose }: Stage4Props)
     fontSize: '1rem',
     fontFamily: 'monospace',
     color: '#166534',
-    wordBreak: 'break-word'
+    wordBreak: 'break-word',
+    direction: 'ltr',
+    textAlign: 'center',
+    unicodeBidi: 'embed'
   };
 
   return (
     <div style={containerStyle}>
       <div style={fieldContainerStyle}>
         <Label>{t('sites.stage4.selectEquation')}</Label>
-        <Select value={selectedEquationId?.toString() || ''} onValueChange={handleEquationChange} dir={dir}>
+        <Select value={selectedEquationId?.toString() || ''} onValueChange={handleEquationChange} dir={dir} disabled={loadingEquations}>
           <SelectTrigger>
-            <SelectValue placeholder={t('sites.stage4.selectEquationPlaceholder')} />
+            <SelectValue placeholder={loadingEquations ? t('common.loading') : t('sites.stage4.selectEquationPlaceholder')} />
           </SelectTrigger>
           <SelectContent dir={dir}>
-            {EQUATIONS.map(equation => (
+            {equations.map(equation => (
               <SelectItem key={equation.id} value={equation.id.toString()}>
-                {t(`sites.stage4.${getEquationKey(equation.name)}`)}
+                {equation.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -187,14 +213,14 @@ export default function Stage4({ data, onChange, isOpen, onClose }: Stage4Props)
               fontFamily: 'monospace',
               color: '#1f2937'
             }}>
-              {selectedEquation.formula}
+              {selectedEquation.displayFormula}
             </div>
           </div>
 
           <div style={fieldContainerStyle}>
             <Label>{t('sites.stage4.fillConstants')}</Label>
             <div style={gridContainerStyle}>
-              {selectedEquation.constants.map(constant => (
+              {extractConstants(selectedEquation.displayFormula).map(constant => (
                 <div key={constant} style={fieldContainerStyle}>
                   <Label>{constant}</Label>
                   <Input
@@ -212,7 +238,7 @@ export default function Stage4({ data, onChange, isOpen, onClose }: Stage4Props)
           <div style={fieldContainerStyle}>
             <Label>{t('sites.stage4.equationPreview')}</Label>
             <div style={equationDisplayStyle}>
-              {buildEquationDisplay() || selectedEquation.formula}
+              {buildEquationDisplay() || selectedEquation.displayFormula}
             </div>
           </div>
         </>

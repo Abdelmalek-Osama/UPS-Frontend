@@ -167,10 +167,9 @@
         "Fayoum": "الفيوم"
       },
       "dataLoggerTypeOptions": {
-        "lora": "LoRa",
-        "gsm": "GSM",
-        "gprs": "GPRS",
-        "wifi": "WiFi"
+        "CR350": "CR350",
+        "CR310": "CR310",
+        "CR1000x": "CR1000x"
       }
     },
     "stage2": {

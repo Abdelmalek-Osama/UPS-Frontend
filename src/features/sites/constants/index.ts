@@ -26,10 +26,9 @@ export const DIRECTORATE_OPTIONS: Record<string, string> = {
  * Maps to the DataLoggerType enum
  */
 export const DATA_LOGGER_TYPE_OPTIONS: Record<DataLoggerType, string> = {
-  [DataLoggerType.LORA]: 'lora',
-  [DataLoggerType.GSM]: 'gsm',
-  [DataLoggerType.GPRS]: 'gprs',
-  [DataLoggerType.WIFI]: 'wifi',
+  [DataLoggerType.CR350]: 'CR350',
+  [DataLoggerType.CR310]: 'CR310',
+  [DataLoggerType.CR1000x]: 'CR1000x',
 };
 
 /**
