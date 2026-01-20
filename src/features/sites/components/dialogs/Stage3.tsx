@@ -21,12 +21,26 @@ interface TabProps {
 }
 
 // Static database column names for Water Level
-const WATER_LEVEL_COLUMNS = ['USWL', 'DSWL', 'Battery'];
+const WATER_LEVEL_COLUMNS = ['Timestamp', 'USWL', 'DSWL', 'Battery'];
 
 const TABLE_OPTIONS = {
   'waterLevel': 'sites.stage3.tableWaterLevel',
   'pumpStation': 'sites.stage3.tablePumpStation',
   'pumpStatus': 'sites.stage3.tablePumpStatus',
+};
+
+// Map UI table keys to API table names
+const TABLE_NAME_MAP: Record<string, string> = {
+  'waterLevel': 'WaterLevelReadings',
+  'pumpStation': 'PumpStationReadings',
+  'pumpStatus': 'PumpStatusReading',
+};
+
+// Reverse map: API table names to translation keys for display
+const TABLE_NAME_DISPLAY_MAP: Record<string, string> = {
+  'WaterLevelReadings': 'sites.stage3.tableWaterLevel',
+  'PumpStationReadings': 'sites.stage3.tablePumpStation',
+  'PumpStatusReading': 'sites.stage3.tablePumpStatus',
 };
 
 const TABLE_OPTION_KEYS = Object.keys(TABLE_OPTIONS) as Array<keyof typeof TABLE_OPTIONS>;
@@ -41,15 +55,34 @@ const generatePumpColumns = (numPumps: number, prefix: string): string[] => {
   return columns;
 };
 
+// Generate pump station columns (Time and Flow for each pump)
+const generatePumpStationColumns = (numPumps: number): string[] => {
+  const columns: string[] = ['Timestamp'];
+  for (let i = 1; i <= numPumps; i++) {
+    columns.push(`P${i}_Time`);
+    columns.push(`P${i}_Flow`);
+  }
+  return columns;
+};
+
+// Generate pump status columns (Status for each pump)
+const generatePumpStatusColumns = (numPumps: number): string[] => {
+  const columns: string[] = ['Timestamp'];
+  for (let i = 1; i <= numPumps; i++) {
+    columns.push(`P${i}_Status`);
+  }
+  return columns;
+};
+
 // Get columns for a specific table based on site configuration
 const getTableColumns = (tableKey: string, numPumps: number = 0): string[] => {
   switch (tableKey) {
     case 'waterLevel':
       return WATER_LEVEL_COLUMNS;
     case 'pumpStation':
-      return numPumps > 0 ? generatePumpColumns(numPumps, 'P') : [];
+      return numPumps > 0 ? generatePumpStationColumns(numPumps) : [];
     case 'pumpStatus':
-      return numPumps > 0 ? generatePumpColumns(numPumps, 'PS') : [];
+      return numPumps > 0 ? generatePumpStatusColumns(numPumps) : [];
     default:
       return [];
   }
@@ -64,6 +97,12 @@ export default function Stage3({ data, onChange }: TabProps) {
     'waterLevel': t('sites.stage3.tableWaterLevel'),
     'pumpStation': t('sites.stage3.tablePumpStation'),
     'pumpStatus': t('sites.stage3.tablePumpStatus'),
+  };
+
+  // Get translated table names from API names
+  const getTableDisplayName = (apiTableName: string): string => {
+    const translationKey = TABLE_NAME_DISPLAY_MAP[apiTableName];
+    return translationKey ? t(translationKey) : apiTableName;
   };
 
   const dataMappings = data.dataMappings || [];
@@ -81,10 +120,9 @@ export default function Stage3({ data, onChange }: TabProps) {
     }
     // If 'Pumps', all 3 options are available
 
-    // Filter out already mapped tables
-    const mappedTableNames = dataMappings.map(m => m.tableName);
-    return options.filter(opt => !mappedTableNames.includes(opt));
-  }, [data.siteType, dataMappings]);
+    // Allow all options to be used multiple times - no filtering needed
+    return options;
+  }, [data.siteType]);
 
   // Get columns for the currently selected table based on numPumps
   const currentTableColumns = useMemo(() => {
@@ -127,7 +165,7 @@ export default function Stage3({ data, onChange }: TabProps) {
     }
 
     const newMapping: DataMapping = {
-      tableName: selectedTableForForm,
+      tableName: TABLE_NAME_MAP[selectedTableForForm],
       folder: mappingForm.folder,
       filename: mappingForm.filename,
       columnMapping: JSON.stringify(columnMappings),
@@ -224,7 +262,9 @@ export default function Stage3({ data, onChange }: TabProps) {
                         className="bg-gray-100 text-gray-700"
                       />
                     </div>
-                    <span className="text-gray-400">→</span>
+                    <span className="text-gray-400 flex-shrink-0">
+                      {dir === 'rtl' ? '←' : '→'}
+                    </span>
                     <div className="flex-1 space-y-1">
                       <Label className="text-xs text-gray-600">
                         {t('sites.stage3.userFieldLabel', 'Name from File')}
@@ -273,7 +313,7 @@ export default function Stage3({ data, onChange }: TabProps) {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-900">
-                        {tableOptionsMap[mapping.tableName as keyof typeof tableOptionsMap]}
+                        {getTableDisplayName(mapping.tableName)}
                       </span>
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                         {mapping.filename}

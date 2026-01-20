@@ -1,8 +1,7 @@
 export enum DataLoggerType {
-  LORA = 'LORA',
-  GSM = 'GSM',
-  GPRS = 'GPRS',
-  WIFI = 'WIFI',
+  CR350 = 'CR350',
+  CR310 = 'CR310',
+  CR1000x = 'CR1000x',
 }
 
 export interface DataMapping {

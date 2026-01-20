@@ -997,10 +997,10 @@ export function AlarmConfiguration() {
             <WifiOff className="ml-2 h-4 w-4" />
             {t('alarms.communicationAlarms')}
           </TabsTrigger>
-          <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
+          {/* <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
             <SmartphoneNfc className="ml-2 h-4 w-4" />
             {t('alarms.sensorStatus')}
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="pumpStatusPS" className="flex items-center space-x-2">
             <Wrench className="ml-2 h-4 w-4" />
             {t('alarms.pumpStatusPS')}
@@ -1111,8 +1111,8 @@ export function AlarmConfiguration() {
           )}
         </TabsContent>
       
-
-        <TabsContent value="sensorStatus" className="mt-6 space-y-6">
+        {/* Sensor Status Tab - Temporarily Hidden */}
+        {/* <TabsContent value="sensorStatus" className="mt-6 space-y-6">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader />
@@ -1162,7 +1162,7 @@ export function AlarmConfiguration() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="pumpStatusPS" className="mt-6 space-y-6">
           {isLoading ? (
