@@ -48,7 +48,8 @@
     "results": "نتيجة",
     "page": "صفحة",
     "previousPage": "الصفحة السابقة",
-    "nextPage": "الصفحة التالية"
+    "nextPage": "الصفحة التالية",
+    "step": "خطوة"
   },
   "buttons": {
     "save": "حفظ",
@@ -130,13 +131,93 @@
     "search": "البحث عن موقع...",
     "searchPlaceholder": "البحث عن موقع...",
     "addSite": "إضافة موقع",
+    "addNewSite": "إضافة موقع جديد",
     "editSite": "تعديل موقع",
     "deleteSite": "حذف موقع",
     "sitesCount": "المواقع",
     "latitude": "خط العرض",
     "longitude": "خط الطول",
     "coordinates": "الإحداثيات",
-    "code": "الكود"
+    "code": "الكود",
+    "stage1": {
+      "title": "معلومات الموقع",
+      "siteNameLabel": "اسم الموقع",
+      "siteNamePlaceholder": "أدخل اسم الموقع",
+      "codeLabel": "كود الموقع",
+      "codePlaceholder": "أدخل كود الموقع",
+      "locationLabel": "الموقع",
+      "locationPlaceholder": "أدخل الموقع",
+      "canalLabel": "الترعة",
+      "canalPlaceholder": "اختر الترعة",
+      "directorateNameLabel": "المديرية",
+      "directorateNamePlaceholder": "اختر المديرية",
+      "dataLoggerTypeLabel": "نوع جهاز السجل",
+      "dataLoggerTypePlaceholder": "اختر نوع جهاز السجل",
+      "simIdLabel": "معرف SIM",
+      "simIdPlaceholder": "أدخل معرف SIM",
+      "canalOptions": {
+        "BahrYusuf": "بحر يوسف",
+        "Ibrahimia": "إبراهيمية"
+      },
+      "directorateOptions": {
+        "Assiut": "اسيوط",
+        "Minia": "المنيا",
+        "Bani-suef": "بني سويف",
+        "Giza": "الجيزة",
+        "Fayoum": "الفيوم"
+      },
+      "dataLoggerTypeOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      }
+    },
+    "stage2": {
+      "title": "تكوين الموقع",
+      "siteTypeLabel": "نوع الموقع",
+      "siteTypePlaceholder": "اختر نوع الموقع",
+      "waterLevelOption": "مستوى المياه",
+      "pumpStationOption": "محطة رفع",
+      "usWaterLevelLabel": "مستوى المياه الأمامي (USWL)",
+      "downstreamWaterLevelLabel": "مستوى المياه الخلفي (DSWL)",
+      "numPumpsLabel": "عدد المضخات",
+      "numPumpsPlaceholder": "أدخل عدد المضخات"
+    },
+    "stage3": {
+      "title": "تعيين البيانات",
+      "addDataMappingTitle": "إضافة تعيين البيانات",
+      "tableNameLabel": "اسم الجدول",
+      "tableNamePlaceholder": "اختر الجدول",
+      "folderLabel": "المجلد",
+      "folderPlaceholder": "مثال: /data/water_level",
+      "filenameLabel": "اسم الملف",
+      "filenamePlaceholder": "مثال: water_level_data.csv",
+      "columnMappingLabel": "تعيين الأعمدة",
+      "databaseFieldLabel": "حقل قاعدة البيانات",
+      "userFieldLabel": "الاسم من الملف",
+      "userFieldPlaceholder": "أدخل اسم الحقل",
+      "addMappingButton": "إضافة تعيين",
+      "addedMappingsTitle": "تعيينات البيانات",
+      "viewColumnsButton": "عرض تعيينات الأعمدة",
+      "noMappingsMessage": "لم تتم إضافة أي تعيينات بيانات حتى الآن",
+      "allMappingsAddedMessage": "تم إضافة جميع تعيينات البيانات المتاحة",
+      "tableWaterLevel": "مستوى المياه",
+      "tablePumpStation": "محطة الرفع",
+      "tablePumpStatus": "حالة المضخات"
+    },
+    "stage4": {
+      "title": "حساب التدفق",
+      "selectEquation": "اختر معادلة",
+      "selectEquationPlaceholder": "اختر معادلة",
+      "equationFormula": "معادلة رياضية",
+      "fillConstants": "ملء الثوابت",
+      "equationPreview": "معاينة المعادلة",
+      "linearFlow": "التدفق الخطي",
+      "quadraticFlow": "التدفق الرباعي",
+      "powerFlow": "التدفق الأسي",
+      "enterValueFor": "أدخل قيمة ل_"
+    }
   },
   "readings": {
     "title": "إدارة القراءات",
@@ -462,6 +543,7 @@
     "pageNotFound": "الصفحة غير موجودة",
     "unauthorizedAccess": "وصول غير مصرح",
     "networkError": "خطأ في الشبكة",
+    "noServerResponse": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.",
     "tryAgain": "حاول مرة أخرى",
     "goHome": "العودة للرئيسية",
     "contactSupport": "الاتصال بالدعم",
@@ -477,7 +559,21 @@
     "Failed to create sensor status alarm.": "فشل إنشاء تنبيه حالة المستشعر",
     "Failed to create pump status PS alarm.": "فشل إنشاء تنبيه حالة المضخة",
     "Failed to create Individual pump status alarm.": "فشل إنشاء تنبيه حالة المضخة الفردية",
-    "An unexpected error occurred.": "حدث خطأ غير متوقع"
+    "An unexpected error occurred.": "حدث خطأ غير متوقع",
+    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "validationError": "حدث خطأ في التحقق من صحة البيانات.",
+    "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
+    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.",
+    "alarmNameRequired": "حقل اسم التنبيه مطلوب.",
+    "siteIdRequired": "حقل الموقع مطلوب.",
+    "methodRequired": "حقل الطريقة مطلوب.",
+    "emailsRequired": "حقل البريد الإلكتروني مطلوب.",
+    "phonesRequired": "حقل الهاتف مطلوب.",
+    "monitoringHoursRequired": "حقل ساعات المراقبة مطلوب.",
+    "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
+    "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
+    "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
+    "unknownError": "حدث خطأ غير معروف."
   },
   "notifications": {
     "success": "تمت العملية بنجاح",
@@ -500,21 +596,5 @@
     "passwordMatch": "كلمات المرور غير متطابقة",
     "invalidEmailFormat": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
     "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا."
-  },
-  "errors": {
-    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
-    "validationError": "حدث خطأ في التحقق من صحة البيانات.",
-    "tokenRefreshFailed": "فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.",
-    "noRefreshToken": "لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.",
-    "alarmNameRequired": "حقل اسم التنبيه مطلوب.",
-    "siteIdRequired": "حقل الموقع مطلوب.",
-    "methodRequired": "حقل الطريقة مطلوب.",
-    "emailsRequired": "حقل البريد الإلكتروني مطلوب.",
-    "phonesRequired": "حقل الهاتف مطلوب.",
-    "monitoringHoursRequired": "حقل ساعات المراقبة مطلوب.",
-    "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
-    "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
-    "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
-    "unknownError": "حدث خطأ غير معروف."
   }
 }

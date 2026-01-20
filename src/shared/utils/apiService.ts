@@ -247,10 +247,10 @@ axiosInstance.interceptors.response.use(
       throw new Error(customErrorMessage);
     } else if (error.request) {
       // Request made but no response
-      throw new Error('لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.'); // Custom network error message
+      throw new Error(i18n.t('errors.noServerResponse')); // Custom network error message
     } else {
       // Something else happened
-      throw new Error('حدث خطأ غير متوقع.'); // Custom generic error message
+      throw new Error(i18n.t('errors.unexpectedError')); // Custom generic error message
     }
   }
 );

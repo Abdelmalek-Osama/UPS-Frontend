@@ -48,7 +48,8 @@
     "results": "results",
     "page": "Page",
     "previousPage": "Previous page",
-    "nextPage": "Next page"
+    "nextPage": "Next page",
+    "step": "Step"
   },
   "buttons": {
     "save": "Save",
@@ -130,13 +131,93 @@
     "search": "Search for a site...",
     "searchPlaceholder": "Search for a site...",
     "addSite": "Add Site",
+    "addNewSite": "Add New Site",
     "editSite": "Edit Site",
     "deleteSite": "Delete Site",
     "sitesCount": "Sites",
     "latitude": "Latitude",
     "longitude": "Longitude",
     "coordinates": "Coordinates",
-    "code": "Code"
+    "code": "Code",
+    "stage1": {
+      "title": "Site Information",
+      "siteNameLabel": "Site Name",
+      "siteNamePlaceholder": "Enter site name",
+      "codeLabel": "Site Code",
+      "codePlaceholder": "Enter site code",
+      "locationLabel": "Location",
+      "locationPlaceholder": "Enter location",
+      "canalLabel": "Canal",
+      "canalPlaceholder": "Select canal",
+      "directorateNameLabel": "Directorate",
+      "directorateNamePlaceholder": "Select directorate",
+      "dataLoggerTypeLabel": "Data Logger Type",
+      "dataLoggerTypePlaceholder": "Select data logger type",
+      "simIdLabel": "SIM ID",
+      "simIdPlaceholder": "Enter SIM ID",
+      "canalOptions": {
+        "BahrYusuf": "BahrYusuf",
+        "Ibrahimia": "Ibrahimia"
+      },
+      "directorateOptions": {
+        "Assiut": "Assiut",
+        "Minia": "Minia",
+        "Bani-suef": "Bani-suef",
+        "Giza": "Giza",
+        "Fayoum": "Fayoum"
+      },
+      "dataLoggerTypeOptions": {
+        "lora": "LoRa",
+        "gsm": "GSM",
+        "gprs": "GPRS",
+        "wifi": "WiFi"
+      }
+    },
+    "stage2": {
+      "title": "Site Configuration",
+      "siteTypeLabel": "Site Type",
+      "siteTypePlaceholder": "Select site type",
+      "waterLevelOption": "Water Level",
+      "pumpStationOption": "Pump Station",
+      "usWaterLevelLabel": "USWL",
+      "downstreamWaterLevelLabel": "DSWL",
+      "numPumpsLabel": "Number of Pumps",
+      "numPumpsPlaceholder": "Enter number of pumps"
+    },
+    "stage3": {
+      "title": "Data Mapping",
+      "addDataMappingTitle": "Add Data Mapping",
+      "tableNameLabel": "Table Name",
+      "tableNamePlaceholder": "Select table",
+      "folderLabel": "Folder",
+      "folderPlaceholder": "e.g., /data/water_level",
+      "filenameLabel": "Filename",
+      "filenamePlaceholder": "e.g., water_level_data.csv",
+      "columnMappingLabel": "Column Mappings",
+      "databaseFieldLabel": "Database Field",
+      "userFieldLabel": "Name from File",
+      "userFieldPlaceholder": "Enter field name",
+      "addMappingButton": "Add Mapping",
+      "addedMappingsTitle": "Data Mappings",
+      "viewColumnsButton": "View column mappings",
+      "noMappingsMessage": "No data mappings added yet",
+      "allMappingsAddedMessage": "All available data mappings have been added",
+      "tableWaterLevel": "Water Level",
+      "tablePumpStation": "Pump Station",
+      "tablePumpStatus": "Pump Status"
+    },
+    "stage4": {
+      "title": "Flow Calculation",
+      "selectEquation": "Select Equation",
+      "selectEquationPlaceholder": "Choose an equation",
+      "equationFormula": "Equation Formula",
+      "fillConstants": "Fill in Constants",
+      "equationPreview": "Equation Preview",
+      "linearFlow": "Linear Flow",
+      "quadraticFlow": "Quadratic Flow",
+      "powerFlow": "Power Flow",
+      "enterValueFor": "Enter value for"
+    }
   },
   "readings": {
     "title": "Readings Management",
@@ -462,6 +543,7 @@
     "pageNotFound": "Page Not Found",
     "unauthorizedAccess": "Unauthorized Access",
     "networkError": "Network Error",
+    "noServerResponse": "No response from the server. Please check your internet connection.",
     "tryAgain": "Try Again",
     "goHome": "Go Home",
     "contactSupport": "Contact Support",
@@ -477,7 +559,21 @@
     "Failed to create sensor status alarm.": "Failed to create sensor status alarm",
     "Failed to create pump status PS alarm.": "Failed to create pump status alarm",
     "Failed to create Individual pump status alarm.": "Failed to create individual pump status alarm",
-    "An unexpected error occurred.": "An unexpected error occurred"
+    "An unexpected error occurred.": "An unexpected error occurred",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "validationError": "A data validation error occurred.",
+    "tokenRefreshFailed": "Failed to refresh token. Please log in again.",
+    "noRefreshToken": "No refresh token available. Please log in again.",
+    "alarmNameRequired": "The alarm name field is required.",
+    "siteIdRequired": "The site field is required.",
+    "methodRequired": "The method field is required.",
+    "emailsRequired": "The emails field is required.",
+    "phonesRequired": "The phones field is required.",
+    "monitoringHoursRequired": "The monitoring hours field is required.",
+    "pumpStatusOperationRequired": "The pump status operation field is required.",
+    "failedToCreateAlarm": "Failed to create alarm.",
+    "failedToUpdateAlarm": "Failed to update alarm.",
+    "unknownError": "An unknown error occurred."
   },
   "notifications": {
     "success": "Operation completed successfully",
@@ -500,21 +596,5 @@
     "passwordMatch": "Passwords do not match",
     "invalidEmailFormat": "Please enter a valid email address.",
     "phone11Digits": "Please enter a valid 11-digit phone number."
-  },
-  "errors": {
-    "unexpectedError": "An unexpected error occurred. Please try again.",
-    "validationError": "A data validation error occurred.",
-    "tokenRefreshFailed": "Failed to refresh token. Please log in again.",
-    "noRefreshToken": "No refresh token available. Please log in again.",
-    "alarmNameRequired": "The alarm name field is required.",
-    "siteIdRequired": "The site field is required.",
-    "methodRequired": "The method field is required.",
-    "emailsRequired": "The emails field is required.",
-    "phonesRequired": "The phones field is required.",
-    "monitoringHoursRequired": "The monitoring hours field is required.",
-    "pumpStatusOperationRequired": "The pump status operation field is required.",
-    "failedToCreateAlarm": "Failed to create alarm.",
-    "failedToUpdateAlarm": "Failed to update alarm.",
-    "unknownError": "An unknown error occurred."
   }
 }

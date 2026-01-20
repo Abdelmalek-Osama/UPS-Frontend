@@ -18,10 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { Search, MapPin, Droplets, Power } from 'lucide-react';
+import { Search, MapPin, Droplets, Power, Plus } from 'lucide-react';
 import { useSitesData, useFilteredSites } from '../hooks/useSitesData';
+import { Site } from '../types';
 import { Skeleton } from '../../../components/ui/skeleton';
 import Loader from '../../../components/ui/Loader';
+import SitesDialog from './dialogs/SitesDialog';
 
 export function SitesManagement() {
   const { t } = useTranslation();
@@ -30,6 +32,8 @@ export function SitesManagement() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
   const [filterCanal, setFilterCanal] = useState<string>('all');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<Site>>({});
 
   const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate, canal: filterCanal });
 
@@ -103,11 +107,35 @@ export function SitesManagement() {
           </CardContent>
         </Card>
       ) : error ? (
-        <div className="text-red-500 text-center py-8">{t('errors.error')}: {error}</div>
+        <div className="text-red-500 text-center py-8">{t('errors.loadingFailed')}</div>
       ) : (
         <Card>
-          <CardHeader>
-            <CardTitle>{t('sites.sitesCount')} ({filteredSites.length})</CardTitle>
+          <CardHeader className={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+            <div className="flex items-center justify-between">
+              <CardTitle>{t('sites.sitesCount')} ({filteredSites.length})</CardTitle>
+              <button
+                onClick={() => {
+                  setFormData({});
+                  setIsAddDialogOpen(true);
+                }}
+                className="flex items-center gap-2 px-6 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                {t('sites.addNewSite')}
+              </button>
+              <SitesDialog
+                mode="create"
+                siteData={formData}
+                isOpen={isAddDialogOpen}
+                onCancel={() => setIsAddDialogOpen(false)}
+                onSave={(data) => {
+                  console.log('Saving site:', data);
+                  setIsAddDialogOpen(false);
+                  setFormData({});
+                }}
+              />
+
+            </div>
           </CardHeader>
           <CardContent>
             <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
