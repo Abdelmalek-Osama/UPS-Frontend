@@ -22,7 +22,7 @@ export function useReadingsData(selectedSiteId: string) {
 
   const [waterLevelReadings, setWaterLevelReadings] = useState<WaterLevelReading[]>([]);
   const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
-  
+
   // Pagination state for water level readings
   const [waterLevelPageNumber, setWaterLevelPageNumber] = useState(1);
   const [waterLevelPageSize, setWaterLevelPageSize] = useState(10);

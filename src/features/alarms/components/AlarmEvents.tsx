@@ -408,7 +408,9 @@ export function AlarmEvents() {
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               {/* Date From */}
               <div className="space-y-2 flex-1">
-                <Label>{t('common.dateFrom')}</Label>
+              <Label>{t('readings.fromDate')}</Label>
+
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -417,23 +419,27 @@ export function AlarmEvents() {
                       dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     >
                       <CalendarIcon className={`${t('_rtl') === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
-                      {dateFrom ? format(dateFrom, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('common.selectDate')}
+                      {dateFrom ? format(dateFrom, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('readings.fromDate')}
+
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={setDateFrom}
-                      initialFocus
-                    />
-                  </PopoverContent>
+  <Calendar
+    mode="single"
+    selected={dateFrom}
+    onSelect={setDateFrom}
+    initialFocus
+    locale={i18n.language === 'ar' ? ar : undefined}
+  />
+</PopoverContent>
+
                 </Popover>
               </div>
 
               {/* Date To */}
               <div className="space-y-2 flex-1">
-                <Label>{t('common.dateTo')}</Label>
+              <Label>{t('readings.toDate')}</Label>
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -442,17 +448,19 @@ export function AlarmEvents() {
                       dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     >
                       <CalendarIcon className={`${t('_rtl') === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
-                      {dateTo ? format(dateTo, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('common.selectDate')}
+                      {dateTo ? format(dateTo, i18n.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', i18n.language === 'ar' ? { locale: ar } : {}) : t('readings.toDate')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateTo}
-                      onSelect={setDateTo}
-                      initialFocus
-                    />
-                  </PopoverContent>
+  <Calendar
+    mode="single"
+    selected={dateTo}
+    onSelect={setDateTo}
+    initialFocus
+    locale={i18n.language === 'ar' ? ar : undefined}
+  />
+</PopoverContent>
+
                 </Popover>
               </div>
             </div>
