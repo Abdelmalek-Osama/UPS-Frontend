@@ -10,16 +10,17 @@ import {
 } from '../../../../components/ui/table';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
-import { Edit, Mail, Phone } from 'lucide-react';
+import { Edit, Mail, Phone, Trash2 } from 'lucide-react';
 import { PumpStatusIdvResponse } from '../../types';
 import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers';
 
 interface PumpStatusIdvResponseTableProps {
     alarms: PumpStatusIdvResponse[];
     onEdit: (alarm: any) => void;
+    onDelete?: (alarmId: number) => void;
 }
 
-export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTableProps) {
+export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -49,48 +50,66 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
             key: 'actions',
             header: t('common.actions'),
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass}>
+                <div className={`flex gap-2 ${textAlignClass}`}>
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
+                    {/* {onDelete && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onDelete(alarm.id)}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )} */}
                 </div>
             )
         },
         {
-            key: 'idvPump',
+            key: 'monitoringHours',
+            header: t('alarms.monitoringHours'),
+            render: (alarm: PumpStatusIdvResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.monitoringHours} {t('alarms.hours')}
+                </div>
+            )
+        },
+        {
+            key: 'recipients',
+            header: t('alarms.recipients'),
+            render: (alarm: PumpStatusIdvResponse) => {
+                const recipients = [];
+                if (alarm.emails && alarm.emails.trim()) {
+                    recipients.push(...alarm.emails.split(',').map(e => e.trim()));
+                }
+                if (alarm.phones && alarm.phones.trim()) {
+                    recipients.push(...alarm.phones.split(',').map(p => p.trim()));
+                }
+                return (
+                    <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+                        {recipients.length > 0 && recipients.map((recipient, idx) => {
+                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                            const isPhone = /^\d{11}$/.test(recipient);
+                            return (
+                                <Badge key={idx} variant="secondary" className="text-xs flex items-center">
+                                    {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                    {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                    {recipient}
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'pumpNumber',
             header: t('alarms.idvPump'),
             render: (alarm: PumpStatusIdvResponse) => (
                 <div className={textAlignClass}>
-                    <Badge variant="outline">{t('alarms.pump')} {alarm.idvPump}</Badge>
-                </div>
-            )
-        },
-        {
-            key: 'duration',
-            header: t('alarms.duration'),
-            render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.duration}
-                </div>
-            )
-        },
-        
-        {
-            key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
-            render: (alarm: PumpStatusIdvResponse) => (
-                <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                    {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
-                        const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                        const isPhone = /^\d{11}$/.test(recipient);
-                        return (
-                            <Badge key={idx} variant="secondary" className="text-xs flex items-center">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                            </Badge>
-                        );
-                    })}
+                    <Badge variant="outline">{t('alarms.pump')} {alarm.pumpNumber}</Badge>
                 </div>
             )
         },
@@ -99,7 +118,16 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
             header: t('alarms.site'),
             render: (alarm: PumpStatusIdvResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.site}
+                    {alarm.siteName}
+                </div>
+            )
+        },
+        {
+            key: 'alarmName',
+            header: t('alarms.alarmName'),
+            render: (alarm: PumpStatusIdvResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.alarmName}
                 </div>
             )
         }
@@ -125,9 +153,9 @@ export function PumpStatusIdvTable({ alarms, onEdit }: PumpStatusIdvResponseTabl
             </TableHeader>
             <TableBody>
                 {alarms.map((alarm) => (
-                    <TableRow key={alarm.alarmId}>
+                    <TableRow key={alarm.id}>
                         {displayColumns.map((column) => (
-                            <TableCell key={`${alarm.alarmId}-${column.key}`}>
+                            <TableCell key={`${alarm.id}-${column.key}`}>
                                 {column.render(alarm)}
                             </TableCell>
                         ))}

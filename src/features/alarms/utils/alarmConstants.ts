@@ -135,10 +135,11 @@ export const INITIAL_PumpStatusPS_FORM: PumpStatusPSAlarmForm = {
 };
 
 export const INITIAL_PumpStatusIdv_FORM: PumpStatusIdvAlarmForm = {
+    alarmName: '',
     siteId: null,
     site: '',
     emails: [],
     phones: [],
-    IdvPump: '',
-    duration: 0,
+    pumpNumber: 1,
+    monitoringHours: 24,
 };

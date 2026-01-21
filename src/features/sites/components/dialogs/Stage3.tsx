@@ -21,7 +21,7 @@ interface TabProps {
 }
 
 // Static database column names for Water Level
-const WATER_LEVEL_COLUMNS = ['Timestamp', 'USWL', 'DSWL', 'Battery'];
+const WATER_LEVEL_COLUMNS = ['Timestamp', 'USWL', 'DSWL1', 'Battery'];
 
 const TABLE_OPTIONS = {
   'waterLevel': 'sites.stage3.tableWaterLevel',
@@ -74,11 +74,24 @@ const generatePumpStatusColumns = (numPumps: number): string[] => {
   return columns;
 };
 
+// Filter water level columns based on hasUS and hasDS1 selections
+const filterWaterLevelColumns = (hasUS: boolean = false, hasDS1: boolean = false): string[] => {
+  const columns = ['Timestamp'];
+  if (hasUS) {
+    columns.push('USWL');
+  }
+  if (hasDS1) {
+    columns.push('DSWL1');
+  }
+  columns.push('Battery');
+  return columns;
+};
+
 // Get columns for a specific table based on site configuration
-const getTableColumns = (tableKey: string, numPumps: number = 0): string[] => {
+const getTableColumns = (tableKey: string, numPumps: number = 0, hasUS: boolean = false, hasDS1: boolean = false): string[] => {
   switch (tableKey) {
     case 'waterLevel':
-      return WATER_LEVEL_COLUMNS;
+      return filterWaterLevelColumns(hasUS, hasDS1);
     case 'pumpStation':
       return numPumps > 0 ? generatePumpStationColumns(numPumps) : [];
     case 'pumpStatus':
@@ -124,11 +137,16 @@ export default function Stage3({ data, onChange }: TabProps) {
     return options;
   }, [data.siteType]);
 
-  // Get columns for the currently selected table based on numPumps
+  // Get columns for the currently selected table based on numPumps and water level selections
   const currentTableColumns = useMemo(() => {
     if (!selectedTableForForm) return [];
-    return getTableColumns(selectedTableForForm, data.numPumps || 0);
-  }, [selectedTableForForm, data.numPumps]);
+    return getTableColumns(
+      selectedTableForForm, 
+      data.numPumps || 0,
+      data.hasUS || false,
+      data.hasDS1 || false
+    );
+  }, [selectedTableForForm, data.numPumps, data.hasUS, data.hasDS1]);
 
   // Initialize column mappings when table is selected
   const handleTableSelect = (table: string) => {
