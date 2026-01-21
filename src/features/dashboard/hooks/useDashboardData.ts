@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { FlowDataPoint, DirectorateData, ActiveAlarm, RecentReading, DashboardStats } from '../types';
-import { useAuth } from '../../../shared/contexts/AuthContext'; // Import useAuth
+import type { FlowDataPoint, DirectorateData, RecentAlarmEvent, ReadingLog, DashboardStats } from '../types';
+import { useAuth } from '../../../shared/contexts/AuthContext';
+import apiService from '../../../shared/utils/apiService';
 
 export function useDashboardData() {
   const [flowData, setFlowData] = useState<FlowDataPoint[]>([
@@ -19,17 +20,8 @@ export function useDashboardData() {
     { name: 'الدقهلية', sites: 10, active: 9 },
   ]);
 
-  const [activeAlarms, setActiveAlarms] = useState<ActiveAlarm[]>([
-    { id: 1, site: 'محطة رفع - الجيزة 01', type: 'battery', message: 'البطارية منخفضة', severity: 'Warning', time: '10:30' },
-    { id: 2, site: 'القناطر - القاهرة 03', type: 'communication', message: 'فقدان الاتصال', severity: 'Critical', time: '09:15' },
-    { id: 3, site: 'محطة رفع - الإسكندرية 02', type: 'flow', message: 'تدفق عالي غير طبيعي', severity: 'Warning', time: '08:45' },
-  ]);
-
-  const [recentReadings, setRecentReadings] = useState<RecentReading[]>([
-    { site: 'القناطر - القاهرة 01', type: 'WaterLevel', time: '11:30', uswl: 125.4, dswl: 122.1, flow: 34.5 },
-    { site: 'محطة رفع - الجيزة 02', type: 'PumpStation', time: '11:25', totalFlow: 145.2, uptime: 8.5 },
-    { site: 'القناطر - الدقهلية 05', type: 'WaterLevel', time: '11:20', uswl: 98.7, dswl: 95.2, flow: 28.9 },
-  ]);
+  const [recentAlarmEvents, setRecentAlarmEvents] = useState<RecentAlarmEvent[]>([]);
+  const [readingLogs, setReadingLogs] = useState<ReadingLog[]>([]);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalSites: 45,
@@ -44,30 +36,129 @@ export function useDashboardData() {
     uptimePercentage: 92.7,
   });
 
-  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
+  const { isAuthenticated } = useAuth();
 
-  // In a real app, you would fetch data from an API here
+  // Fetch recent alarm events
+  const fetchRecentAlarmEvents = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/alarm-events', {
+        params: {
+          unresolvedOnly: true,
+          'pagination.PageNumber': 1,
+          'pagination.PageSize': 3,
+        },
+      });
+
+      if (response && response.data) {
+        let events: RecentAlarmEvent[] = [];
+
+        // Extract events from various possible response formats
+        if (Array.isArray(response.data)) {
+          events = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          events = response.data.data;
+        }
+
+        // Map API response to RecentAlarmEvent
+        const mappedEvents = events.map((event: any) => ({
+          id: event.id,
+          alarmName: event.alarmName,
+          siteName: event.siteName,
+          fieldName: event.fieldName,
+          actualValue: event.actualValue,
+          thresholdValue: event.thresholdValue,
+          severity: event.severity?.toLowerCase() || 'info',
+          colorCode: event.colorCode,
+          triggeredAt: event.triggeredAt,
+          message: event.message,
+        }));
+
+        setRecentAlarmEvents(mappedEvents);
+      }
+    } catch (error) {
+      console.error('Error fetching recent alarm events:', error);
+      setRecentAlarmEvents([]);
+    }
+  };
+
+  // Fetch recent reading logs
+  const fetchRecentReadingLogs = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/ReadingLogs/recent', {
+        params: {
+          'pagination.PageNumber': 1,
+          'pagination.PageSize': 3,
+        },
+      });
+
+      if (response && response.data) {
+        let logs: ReadingLog[] = [];
+
+        // Extract logs from various possible response formats
+        if (Array.isArray(response.data)) {
+          logs = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          logs = response.data.data;
+        }
+
+        // Map API response to ReadingLog
+        const mappedLogs = logs.map((log: any) => ({
+          id: log.id,
+          site: log.site || log.siteName,
+          type: log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation',
+          timestamp: log.timestamp || log.dateTime,
+          uswl: log.uswl,
+          dswl: log.dswL1 || log.dswl,
+          calculatedFlow: log.calculatedFlow || log.flow,
+          totalFlow: log.totalFlow,
+          uptime: log.totalUptime || log.uptime,
+          isManual: log.isManual,
+        }));
+
+        setReadingLogs(mappedLogs);
+      }
+    } catch (error) {
+      console.error('Error fetching recent reading logs:', error);
+      setReadingLogs([]);
+    }
+  };
+
+  // Fetch data when authenticated
   useEffect(() => {
-    // Clear simulated data if not authenticated
     if (!isAuthenticated) {
       setFlowData([]);
       setDirectorateData([]);
-      setActiveAlarms([]);
-      setRecentReadings([]);
+      setRecentAlarmEvents([]);
+      setReadingLogs([]);
       setStats({
-        totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
-        warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
-        totalStations: 0, uptimePercentage: 0
+        totalSites: 0,
+        connectedSites: 0,
+        activeAlarms: 0,
+        criticalAlarms: 0,
+        warningAlarms: 0,
+        totalFlow: 0,
+        flowChange: 0,
+        activeStations: 0,
+        totalStations: 0,
+        uptimePercentage: 0,
       });
+    } else {
+      fetchRecentAlarmEvents();
+      fetchRecentReadingLogs();
     }
-    // Simulated data fetching
   }, [isAuthenticated]);
 
   return {
     flowData,
     directorateData,
-    activeAlarms,
-    recentReadings,
+    recentAlarmEvents,
+    readingLogs,
     stats,
+    fetchRecentAlarmEvents,
+    fetchRecentReadingLogs,
   };
 }

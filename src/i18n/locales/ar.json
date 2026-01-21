@@ -102,6 +102,8 @@
     "flowInLast24Hours": "التدفق خلال 24 ساعة",
     "sitesByDirectorate": "المواقع حسب المديرية",
     "recentReadings": "القراءات الأخيرة",
+    "recentAlarmEvents": "أحداث التنبيهات الأخيرة",
+    "recentReadingLogs": "سجلات القراءات الأخيرة",
     "allConnected": "جميع المواقع متصلة",
     "crisis": "كارثية",
     "critical": "حرجة",
@@ -112,7 +114,9 @@
     "uptimePercentage": "معدل التشغيل",
     "viewAll": "عرض الكل",
     "noOfSites": "إجمالي المواقع",
-    "numSites": "عدد المواقع"
+    "numSites": "عدد المواقع",
+    "noRecentEvents": "لا توجد أحداث تنبيهات حديثة",
+    "noRecentReadings": "لا توجد سجلات قراءات حديثة"
   },
   "sites": {
     "title": "إدارة المواقع",

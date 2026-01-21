@@ -16,7 +16,7 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
-const API_BASE_URL = 'https://localhost:5001/api/';
+const API_BASE_URL = 'https://localhost:7123/api/';
 
 //const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 //const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
@@ -342,6 +342,16 @@ export const loginUser = async (credentials: any): Promise<ApiResponse<AuthRespo
 
 export const registerUser = async (userData: any): Promise<UserDto> => {
   const response = await axiosInstance.post<UserDto>('/v1/Users', userData);
+  return response.data;
+};
+
+export const getRecentAlarmEvents = async (): Promise<ApiResponse<AlarmEvent[]>> => {
+  const response = await axiosInstance.get<ApiResponse<AlarmEvent[]>>('/v1/AlarmEvents/recent');
+  return response.data;
+};
+
+export const getRecentReadingLogs = async (): Promise<ApiResponse<ReadingLog[]>> => {
+  const response = await axiosInstance.get<ApiResponse<ReadingLog[]>>('/v1/ReadingLogs/recent');
   return response.data;
 };
 
