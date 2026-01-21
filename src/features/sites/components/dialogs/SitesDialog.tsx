@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { X, Check } from "lucide-react";
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
+import { useSiteCreation } from '../../hooks/useSiteCreation';
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
 import Stage3 from "./Stage3";
 import Stage4 from "./Stage4";
+import { toast } from 'react-toastify';
 
 interface SitesDialogProps {
   mode: "create" | "edit";
@@ -19,6 +21,7 @@ interface SitesDialogProps {
 export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
+  const { createSite, isLoading: isCreating } = useSiteCreation();
   
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
@@ -214,11 +217,33 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
 
   const handleSubmit = () => {
     if (isStepValid(currentTab)) {
-      onSave(formData);
-      onCancel();
-      // Reset
-      setCurrentTab(0);
-      setCompletedTabs([false, false, false, false]);
+      // Handle create mode - call API
+      if (mode === 'create') {
+        handleCreateSite();
+      } else {
+        // Handle edit mode - use existing callback
+        onSave(formData);
+        onCancel();
+        // Reset
+        setCurrentTab(0);
+        setCompletedTabs([false, false, false, false]);
+      }
+    }
+  };
+
+  const handleCreateSite = async () => {
+    try {
+      const result = await createSite(formData);
+      if (result.success) {
+        onSave(formData);
+        onCancel();
+        // Reset
+        setCurrentTab(0);
+        setCompletedTabs([false, false, false, false]);
+      }
+    } catch (error) {
+      console.error('Error creating site:', error);
+      toast.error(t('sites.createError'));
     }
   };
 
@@ -461,35 +486,36 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   ) : (
                     <button
                       onClick={handleSubmit}
-                      disabled={!isStepValid(currentTab)}
+                      disabled={!isStepValid(currentTab) || isCreating}
                       style={{
                         paddingLeft: '1.5rem',
                         paddingRight: '1.5rem',
                         paddingTop: '0.5rem',
                         paddingBottom: '0.5rem',
-                        backgroundColor: isStepValid(currentTab)
+                        backgroundColor: (isStepValid(currentTab) && !isCreating)
                           ? 'hsl(142, 72%, 45%)'
                           : 'hsl(var(--muted))',
-                        color: isStepValid(currentTab) ? 'white' : 'hsl(var(--muted-foreground))',
+                        color: (isStepValid(currentTab) && !isCreating) ? 'white' : 'hsl(var(--muted-foreground))',
                         border: 'none',
                         borderRadius: '0.375rem',
-                        cursor: isStepValid(currentTab) ? 'pointer' : 'not-allowed',
+                        cursor: (isStepValid(currentTab) && !isCreating) ? 'pointer' : 'not-allowed',
                         transition: 'background-color 150ms',
                         fontSize: '0.875rem',
-                        fontWeight: 500
+                        fontWeight: 500,
+                        opacity: isCreating ? 0.6 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        if (isStepValid(currentTab)) {
+                        if (isStepValid(currentTab) && !isCreating) {
                           (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 40%)';
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (isStepValid(currentTab)) {
+                        if (isStepValid(currentTab) && !isCreating) {
                           (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 45%)';
                         }
                       }}
                     >
-                      {t('common.save')}
+                      {isCreating ? t('common.saving') || 'Saving...' : t('common.save')}
                     </button>
                   )}
                 </div>

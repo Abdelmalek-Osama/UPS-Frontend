@@ -58,20 +58,29 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
         const selected = sites.find(site => site.name === value);
         if (selected) {
             setSite(selected.name);
-            setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name, IdvPump: '' }));
+            setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name, pumpNumber: 1 }));
         }
     };
 
-    const handleIdvPumpChange = (value: string) => {
+    const handlePumpNumberChange = (value: string) => {
+        const pumpNum = parseInt(value) || 1;
         setIdvPump(value);
-        setForm(prev => ({ ...prev, IdvPump: value }));
+        setForm(prev => ({ 
+            ...prev, 
+            pumpNumber: pumpNum,
+            monitoringHours: prev.monitoringHours || 24
+        }));
     };
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
             if (!newOpen) {
                 // Reset all form state and errors when dialog closes
-                setForm({ ...INITIAL_PumpStatusIdv_FORM });
+                setForm({ 
+                    ...INITIAL_PumpStatusIdv_FORM,
+                    pumpNumber: 1,
+                    monitoringHours: 24,
+                });
                 setAlarmNameError(undefined);
             }
             onOpenChange(newOpen);
@@ -85,6 +94,23 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                    {/* Alarm Name Field */}
+                    <div className="space-y-2">
+                        <Label htmlFor="alarm-name">{t('alarms.alarmName')}</Label>
+                        <Input
+                            id="alarm-name"
+                            type="text"
+                            value={form.alarmName || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, alarmName: e.target.value }))}
+                            placeholder={t('alarms.enterAlarmName')}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                        />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
+                    </div>
+
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
@@ -105,10 +131,10 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                         )}
                     </div>
 
-                    {/* IDV Pump Input */}
+                    {/* Pump Number Input */}
                     <div className="space-y-2">
-                        <Label htmlFor="idv-pump">{t('alarms.idvPump')}</Label>
-                        <Select value={form.IdvPump || ''} onValueChange={handleIdvPumpChange} disabled={!siteConfiguration?.numPumps || configLoading}>
+                        <Label htmlFor="pump-number">{t('alarms.idvPump')}</Label>
+                        <Select value={String(form.pumpNumber || 1)} onValueChange={handlePumpNumberChange} disabled={!siteConfiguration?.numPumps || configLoading}>
                             <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                                 <SelectValue placeholder={configLoading ? t('common.loading') : t('alarms.selectPump')} />
                             </SelectTrigger>
@@ -124,16 +150,21 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                         </Select>
                     </div>
 
-                    {/* Duration Field */}
+                    {/* Monitoring Hours Field */}
                     <div className="space-y-2">
-                        <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                        <Label htmlFor="monitoring-hours">{t('alarms.monitoringHours')}</Label>
                         <Input
-                            id="duration"
+                            id="monitoring-hours"
                             type="number"
-                            min="0"
-                            value={form.duration || 0}
-                            onChange={(e) => setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
-                            placeholder={t('alarms.enterDuration')}
+                            min="1"
+                            max="168"
+                            value={form.monitoringHours ?? 24}
+                            onChange={(e) => setForm(prev => ({ 
+                                ...prev, 
+                                monitoringHours: parseInt(e.target.value) || 24,
+                                pumpNumber: prev.pumpNumber || 1
+                            }))}
+                            placeholder={t('alarms.enterMonitoringHours')}
                             dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
                         />
@@ -163,7 +194,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.IdvPump || !form.duration}
+                                disabled={isSubmitting || (form.emails.length === 0 && form.phones.length === 0) || !form.site || !form.alarmName || form.pumpNumber < 1 || form.pumpNumber > 10 || form.monitoringHours < 1 || form.monitoringHours > 168}
                                 loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >

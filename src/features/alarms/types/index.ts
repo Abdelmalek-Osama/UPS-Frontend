@@ -122,12 +122,14 @@ export interface PumpStatusPSAlarmForm {
 }
 
 export interface PumpStatusIdvAlarmForm {
+  alarmId?: number;
+  alarmName: string;
   siteId: number | null;
   site: string;
   emails: string[];
   phones: string[];
-  IdvPump: string;
-  duration: number;
+  pumpNumber: number;
+  monitoringHours: number;
 }
 
 export interface SiteDetails {
@@ -210,13 +212,14 @@ export interface CreatePumpStatusPSAlarmRequest {
 }
 
 export interface CreatePumpStatusIdvAlarmRequest {
-  method: AlarmMethod;
-  siteId: number|null;
-  site: string;
+  id?: number;
+  alarmName: string;
+  siteId: number;
+  pumpNumber: number;
+  monitoringHours: number;
   emails: string;
   phones: string;
-  IdvPump: string;
-  duration: number;
+  method: string;
 }
 
 export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarmDialogProps {
@@ -279,10 +282,16 @@ export interface PumpStatusPSResponse {
 }
 
 export interface PumpStatusIdvResponse {
-  alarmId: number;
+  id: number;
+  alarmName: string;
   siteId: number;
-  site: string;
-  idvPump: string;
-  duration: number;
-  recipients: string[];
+  siteName: string;
+  directorateId: number;
+  pumpNumber: number;
+  monitoringHours: number;
+  emails: string;
+  phones: string;
+  method: string;
+  alarmType: string;
+  createdAt: string;
 }

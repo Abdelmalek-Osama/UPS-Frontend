@@ -25,6 +25,7 @@ export interface Site {
   siteName?: string;
   siteType: 'WaterLevel' | 'Pumps';
   directorateName: string;
+  directorateId?: number;
   latitude: number;
   longitude: number;
   status: 'online' | 'offline';

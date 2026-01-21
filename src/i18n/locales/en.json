@@ -203,7 +203,11 @@
       "allMappingsAddedMessage": "All available data mappings have been added",
       "tableWaterLevel": "Water Level",
       "tablePumpStation": "Pump Station",
-      "tablePumpStatus": "Pump Status"
+      "tablePumpStatus": "Pump Status",
+      "createSuccess": "Site created successfully",
+      "updateSuccess": "Site updated successfully",
+      "createError": "Failed to create site",
+      "updateError": "Failed to update site"
     },
     "stage4": {
       "title": "Flow Calculation",
@@ -398,6 +402,7 @@
     "cardsView": "Cards View",
     "emailRecipients": "Email Recipients",
     "phoneRecipients": "Phone Recipients",
+    "recipients": "Recipients",
     "operators": {
       "greaterThan": "Greater than",
       "lessThan": "Less than",

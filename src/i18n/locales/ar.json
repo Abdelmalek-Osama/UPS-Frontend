@@ -88,7 +88,7 @@
     "refreshTokenFailed": "فشل تحديث التوكن. يرجى تسجيل الدخول مرة أخرى",
     "tokenRefreshError": "حدث خطأ أثناء تحديث التوكن. يرجى تسجيل الدخول مرة أخرى",
     "logging": "جاري تسجيل الدخول...",
-    "enterEmail": "أدخل البريالتدفقد الإلكتروني",
+    "enterEmail": "أدخل البريد الإلكتروني",
     "enterPassword": "أدخل كلمة المرور",
     "secureConnection": "اتصال آمن ومشفر"
   },
@@ -203,7 +203,11 @@
       "allMappingsAddedMessage": "تم إضافة جميع تعيينات البيانات المتاحة",
       "tableWaterLevel": "مستوى المياه",
       "tablePumpStation": "محطة الرفع",
-      "tablePumpStatus": "حالة المضخات"
+      "tablePumpStatus": "حالة المضخات",
+      "createSuccess": "تم إنشاء الموقع بنجاح",
+      "updateSuccess": "تم تحديث الموقع بنجاح",
+      "createError": "فشل إنشاء الموقع",
+      "updateError": "فشل تحديث الموقع"
     },
     "stage4": {
       "title": "حساب التدفق",
@@ -338,9 +342,6 @@
     "editPumpStatusPSAlarmDescription": "تعديل تكوين التنبيه حالة المضخات ",
     "addPumpStatusIdvAlarm": "إضافة تنبيه حالة المضخات الفردية",
     "editPumpStatusIdvAlarm": "تعديل تنبيه فقدان حالة المضخات الفردية",
-    "addPumpStatusIdvAlarm": "إضافة تنبيه حالة المضخات الفردية",
-    "editPumpStatusIdvAlarm": "تعديل تنبيه حالة المضخات الفردية",
-    "editPumpStatusPSAlarmDescription": "تعديل تكوين التنبيه حالة المضخات ",
     "editPumpStatusIdvAlarmDescription": "تعديل تكوين التنبيه حالة المضخات الفردية ",
     "alarmName": "اسم التنبيه",
     "enterAlarmName": "أدخل اسم التنبيه",
@@ -400,6 +401,7 @@
     "cardsView": "عرض البطاقات",
     "emailRecipients": "المستلمون (البريد الإلكتروني)",
     "phoneRecipients": "المستلمون (أرقام الهواتف)",
+    "recipients": "المستلمون",
     "operators": {
       "greaterThan": "أكثر من",
       "lessThan": "أقل من",
@@ -419,7 +421,8 @@
     "alarm": "تنبيه",
     "communicationLoss": "فقدان الاتصال",
     "pumpStatusPS": "حالة المضخات",
-    "pumpStatusIdv": "حالة المضخة الفردية",    "PumpStatusIdvAlarms": "تكوين التنبيهات لحالة المضخات الفردية",
+    "pumpStatusIdv": "حالة المضخة الفردية",
+    "PumpStatusIdvAlarms": "تكوين التنبيهات لحالة المضخات الفردية",
     "PumpStatusPSAlarms": "تكوين التنبيهات لحالة المضخات",
     "SensorStatusAlarms": "تكوين التنبيهات لحالة الاستشعار",    "battery": "البطارية",
     "totalFlow": "التدفق المحسوب",

@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import type { ValueThresholdAlarm, CreateThresholdAlarmRequest, CreateCommunicationAlarmRequest, CommunicationAlarmResponse, SensorStatusResponse, PumpStatusPSResponse, PumpStatusIdvResponse, CreateSensorStatusAlarmRequest, CreatePumpStatusPSAlarmRequest, CreatePumpStatusIdvAlarmRequest, SiteConfiguration } from '../types';
 import { Severity } from '../types'; // Import Severity enum
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
+import {
+  fetchAllPumpStatusSpecificPumpAlarms,
+  fetchPumpStatusSpecificPumpAlarmById,
+  fetchPumpStatusSpecificPumpAlarmsBySiteId,
+  createPumpStatusSpecificPumpAlarm,
+  updatePumpStatusSpecificPumpAlarm,
+  deletePumpStatusSpecificPumpAlarm,
+} from '../utils/pumpStatusSpecificPumpService';
 
 interface ThresholdAlarmApiResponse {
   alarmId: number;
@@ -86,11 +94,11 @@ export function useAlarmsData() {
         console.error("Failed to fetch pump status PS alarms, isSuccess was false:", pumpStatusPSResponse);
       }
 
-      const pumpStatusIdvResponse = await apiService.get<{ isSuccess: boolean; data: PumpStatusIdvResponse[] }>('/v1/alarm/pump-status-idv');
-      if (pumpStatusIdvResponse.isSuccess) {
+      const pumpStatusIdvResponse = await fetchAllPumpStatusSpecificPumpAlarms();
+      if (pumpStatusIdvResponse.success) {
         setPumpStatusIdvAlarms(pumpStatusIdvResponse.data);
       } else {
-        console.error("Failed to fetch pump status IDV alarms, isSuccess was false:", pumpStatusIdvResponse);
+        console.error("Failed to fetch pump status IDV alarms:", pumpStatusIdvResponse.message);
       }
     } catch (error) {
       console.error('An error occurred while fetching alarms:', error); // Log the actual error object
@@ -260,8 +268,8 @@ export function useAlarmsData() {
 
   const createPumpStatusIdvAlarm = async (alarmData: CreatePumpStatusIdvAlarmRequest) => {
     try {
-      const response = await apiService.post<any, CreatePumpStatusIdvAlarmRequest>('/v1/alarm/pump-status-idv', alarmData);
-      if (response.isSuccess) {
+      const response = await createPumpStatusSpecificPumpAlarm(alarmData);
+      if (response.success) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
       } else {
@@ -275,8 +283,8 @@ export function useAlarmsData() {
 
   const updatePumpStatusIdvAlarm = async (alarmId: number, alarmData: CreatePumpStatusIdvAlarmRequest) => {
     try {
-      const response = await apiService.put<any, CreatePumpStatusIdvAlarmRequest>(`/v1/alarm/pump-status-idv/${alarmId}`, alarmData);
-      if (response.isSuccess) {
+      const response = await updatePumpStatusSpecificPumpAlarm(alarmId, alarmData);
+      if (response.success) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
       } else {
@@ -285,6 +293,31 @@ export function useAlarmsData() {
     } catch (error: any) {
       console.error(`Failed to update pump status IDV alarm ${alarmId}:`, error);
       return { success: false, message: error.message };
+    }
+  };
+
+  const deletePumpStatusIdvAlarm = async (alarmId: number) => {
+    try {
+      const response = await deletePumpStatusSpecificPumpAlarm(alarmId);
+      if (response.success) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete pump status IDV alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const fetchPumpStatusIdvAlarmsByAltSiteId = async (siteId: number) => {
+    try {
+      const response = await fetchPumpStatusSpecificPumpAlarmsBySiteId(siteId);
+      return response;
+    } catch (error: any) {
+      console.error(`Failed to fetch pump status IDV alarms for site ${siteId}:`, error);
+      return { success: false, data: [], message: error.message };
     }
   };
  
@@ -315,6 +348,8 @@ export function useAlarmsData() {
     updatePumpStatusPSAlarm,
     createPumpStatusIdvAlarm,
     updatePumpStatusIdvAlarm,
+    deletePumpStatusIdvAlarm,
+    fetchPumpStatusIdvAlarmsByAltSiteId,
     isLoading, // Return isLoading state
     fetchPumpStatusIdvSiteConfiguration,
     pumpStatusIdvSiteConfiguration,
