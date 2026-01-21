@@ -38,8 +38,8 @@ export default function Stage1({ data, onChange }: TabProps) {
         <Input
           id="siteName"
           placeholder={t('sites.stage1.siteNamePlaceholder')}
-          value={data.siteName || ''}
-          onChange={(e) => onChange('siteName', e.target.value)}
+          value={data.name || data.siteName || ''}
+          onChange={(e) => onChange('name', e.target.value)}
           className={dir === 'rtl' ? 'text-right' : 'text-left'}
         />
       </div>

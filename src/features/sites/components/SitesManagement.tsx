@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { 
   Table, 
   TableBody, 
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { Search, MapPin, Droplets, Power, Plus } from 'lucide-react';
+import { Search, MapPin, Droplets, Power, Plus, Edit, Trash2 } from 'lucide-react';
 import { useSitesData, useFilteredSites } from '../hooks/useSitesData';
 import { Site } from '../types';
 import { Skeleton } from '../../../components/ui/skeleton';
@@ -33,9 +34,17 @@ export function SitesManagement() {
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
   const [filterCanal, setFilterCanal] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Site>>({});
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
 
   const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate, canal: filterCanal });
+
+  const handleEditSite = (site: Site) => {
+    setEditingSite(site);
+    setFormData(site);
+    setIsEditDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -135,6 +144,24 @@ export function SitesManagement() {
                 }}
               />
 
+              {/* Edit Dialog */}
+              <SitesDialog
+                mode="edit"
+                siteData={editingSite || {}}
+                isOpen={isEditDialogOpen}
+                onCancel={() => {
+                  setIsEditDialogOpen(false);
+                  setEditingSite(null);
+                  setFormData({});
+                }}
+                onSave={(data) => {
+                  console.log('Updating site:', data);
+                  setIsEditDialogOpen(false);
+                  setEditingSite(null);
+                  setFormData({});
+                }}
+              />
+
             </div>
           </CardHeader>
           <CardContent>
@@ -147,6 +174,7 @@ export function SitesManagement() {
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.canal')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.directorate')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.location')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,6 +208,27 @@ export function SitesManagement() {
                         >
                           <MapPin className="h-4 w-4" />
                         </a>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSite(site)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            // Delete functionality will be added here
+                            console.log('Delete site:', site.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

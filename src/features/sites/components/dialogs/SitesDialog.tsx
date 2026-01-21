@@ -1,5 +1,5 @@
 // SitesDialog.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Check } from "lucide-react";
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,20 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
+
+  // Sync form data with siteData prop when dialog opens or siteData changes
+  useEffect(() => {
+    if (isOpen && siteData) {
+      setFormData(siteData);
+      // For edit mode, mark all tabs as completed since we have existing data
+      if (mode === 'edit') {
+        setCompletedTabs([true, true, true, true]);
+      } else {
+        setCompletedTabs([false, false, false, false]);
+      }
+      setCurrentTab(0);
+    }
+  }, [isOpen, siteData, mode]);
 
   const tabs = [
     { id: "stage1", name: t('sites.stage1.title'), icon: "1" },
@@ -372,6 +386,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  mode={mode}
                 />
               )}
             </div>
