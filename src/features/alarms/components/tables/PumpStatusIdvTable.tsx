@@ -18,9 +18,10 @@ interface PumpStatusIdvResponseTableProps {
     alarms: PumpStatusIdvResponse[];
     onEdit: (alarm: any) => void;
     onDelete?: (alarmId: number) => void;
+    error?: boolean;
 }
 
-export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvResponseTableProps) {
+export function PumpStatusIdvTable({ alarms, onEdit, onDelete, error }: PumpStatusIdvResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -49,8 +50,9 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
         {
             key: 'actions',
             header: t('common.actions'),
+            headerClassName: 'text-center',
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={`flex gap-2 ${textAlignClass}`}>
+                <div className="flex gap-2 justify-center">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
@@ -70,9 +72,12 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
         {
             key: 'monitoringHours',
             header: t('alarms.monitoringHours'),
+            headerClassName: 'text-center',
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.monitoringHours} {t('alarms.hours')}
+                <div className="text-center">
+                    <Badge variant="outline" dir={isRTL ? 'rtl' : 'ltr'}>
+                        {alarm.monitoringHours === 1 ? `${alarm.monitoringHours} ${t('alarms.hour')}` : `${alarm.monitoringHours} ${t('alarms.hours')}`}
+                    </Badge>
                 </div>
             )
         },
@@ -107,9 +112,12 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
         {
             key: 'pumpNumber',
             header: t('alarms.idvPump'),
+            headerClassName: 'text-center',
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass}>
-                    <Badge variant="outline">{t('alarms.pump')} {alarm.pumpNumber}</Badge>
+                <div className="text-center">
+                    <Badge variant="outline">
+                        {isRTL ? `${alarm.pumpNumber} ${t('alarms.pump')}` : `${t('alarms.pump')} ${alarm.pumpNumber}`}
+                    </Badge>
                 </div>
             )
         },
@@ -117,7 +125,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
             key: 'site',
             header: t('alarms.site'),
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                <div className={textAlignClass} dir={isRTL ? 'rtl' : 'ltr'} style={{ fontWeight: 'normal' }}>
                     {alarm.siteName}
                 </div>
             )
@@ -126,7 +134,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
             key: 'alarmName',
             header: t('alarms.alarmName'),
             render: (alarm: PumpStatusIdvResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                <div className={textAlignClass} dir={isRTL ? 'rtl' : 'ltr'} style={{ fontWeight: 'normal' }}>
                     {alarm.alarmName}
                 </div>
             )
@@ -137,6 +145,14 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
 
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
+
     return (
         <Table>
             <TableHeader>
@@ -144,7 +160,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete }: PumpStatusIdvRe
                     {displayColumns.map((column) => (
                         <TableHead 
                             key={column.key} 
-                            className={textAlignClass}
+                            className={column.headerClassName || textAlignClass}
                         >
                             {column.header}
                         </TableHead>

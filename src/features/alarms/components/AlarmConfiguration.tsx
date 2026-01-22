@@ -88,6 +88,7 @@ export function AlarmConfiguration() {
     updatePumpStatusIdvAlarm,
     deletePumpStatusIdvAlarm,
     isLoading,
+    fetchError,
     fetchPumpStatusIdvSiteConfiguration,
     pumpStatusIdvSiteConfiguration,
     pumpStatusIdvConfigLoading,
@@ -1110,6 +1111,7 @@ export function AlarmConfiguration() {
                 <ThresholdAlarmTable
                   alarms={thresholdAlarms}
                   onEdit={handleThresholdAlarmEdit}
+                  error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1159,6 +1161,7 @@ export function AlarmConfiguration() {
                 <CommunicationAlarmTable
                   alarms={communicationAlarms}
                   onEdit={handleCommunicationAlarmEdit}
+                  error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1263,6 +1266,7 @@ export function AlarmConfiguration() {
                 <PumpStatusPSTable
                   alarms={pumpStatusPSAlarms} 
                 onEdit={handlePumpStatusPSAlarmEdit}
+                error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1317,6 +1321,7 @@ export function AlarmConfiguration() {
                 alarms={pumpStatusIdvAlarms} 
                 onEdit={handlePumpStatusIdvAlarmEdit}
                 onDelete={handlePumpStatusIdvAlarmDelete}
+                error={fetchError}
                 />
               </CardContent>
             </Card>

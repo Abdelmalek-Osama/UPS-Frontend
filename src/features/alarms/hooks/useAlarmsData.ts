@@ -35,6 +35,7 @@ export function useAlarmsData() {
   const [pumpStatusPSAlarms, setPumpStatusPSAlarms] = useState<PumpStatusPSResponse[]>([]);
   const [pumpStatusIdvAlarms, setPumpStatusIdvAlarms] = useState<PumpStatusIdvResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Added loading state
+  const [fetchError, setFetchError] = useState<boolean>(false); // Added error state
   const [pumpStatusIdvSiteConfiguration, setPumpStatusIdvSiteConfiguration] = useState<SiteConfiguration | undefined>(undefined);
   const [pumpStatusIdvConfigLoading, setPumpStatusIdvConfigLoading] = useState(false);
   const [pumpStatusPSSiteConfiguration, setPumpStatusPSSiteConfiguration] = useState<SiteConfiguration | undefined>(undefined);
@@ -65,12 +66,15 @@ export function useAlarmsData() {
  
   const fetchAlarms = async () => {
     setIsLoading(true); // Set loading to true before fetching
+    setFetchError(false); // Reset error state
+    let hasError = false;
     try {
       const thresholdResponse = await apiService.get<{ isSuccess: boolean; data: ThresholdAlarmApiResponse[] }>('/v1/alarm/threshold');
       if (thresholdResponse.isSuccess) {
         setThresholdAlarms(thresholdResponse.data.map(mapToValueThresholdAlarm));
       } else {
         console.error('Failed to fetch threshold alarms, isSuccess was false:', thresholdResponse);
+        hasError = true;
       }
  
       const communicationResponse = await apiService.get<{ isSuccess: boolean; data: CommunicationAlarmResponse[] }>('/v1/alarm/communication');
@@ -78,6 +82,7 @@ export function useAlarmsData() {
         setCommunicationAlarms(communicationResponse.data);
       } else {
         console.error("Failed to fetch communication alarms, isSuccess was false:", communicationResponse);
+        hasError = true;
       }
 
       // const sensorStatusResponse = await apiService.get<{ isSuccess: boolean; data: SensorStatusResponse[] }>('/v1/alarm/sensor-status');
@@ -92,6 +97,7 @@ export function useAlarmsData() {
         setPumpStatusPSAlarms(pumpStatusPSResponse.data);
       } else {
         console.error("Failed to fetch pump status PS alarms, isSuccess was false:", pumpStatusPSResponse);
+        hasError = true;
       }
 
       const pumpStatusIdvResponse = await fetchAllPumpStatusSpecificPumpAlarms();
@@ -99,9 +105,15 @@ export function useAlarmsData() {
         setPumpStatusIdvAlarms(pumpStatusIdvResponse.data);
       } else {
         console.error("Failed to fetch pump status IDV alarms:", pumpStatusIdvResponse.message);
+        hasError = true;
+      }
+      
+      if (hasError) {
+        setFetchError(true);
       }
     } catch (error) {
       console.error('An error occurred while fetching alarms:', error); // Log the actual error object
+      setFetchError(true); // Set error state on network failure
     } finally {
       setIsLoading(false); // Set loading to false after fetching (success or failure)
     }
@@ -351,6 +363,7 @@ export function useAlarmsData() {
     deletePumpStatusIdvAlarm,
     fetchPumpStatusIdvAlarmsByAltSiteId,
     isLoading, // Return isLoading state
+    fetchError, // Return error state
     fetchPumpStatusIdvSiteConfiguration,
     pumpStatusIdvSiteConfiguration,
     pumpStatusIdvConfigLoading,

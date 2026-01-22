@@ -49,7 +49,11 @@
     "page": "Page",
     "previousPage": "Previous page",
     "nextPage": "Next page",
-    "step": "Step"
+    "step": "Step",
+    "filters": "Filters",
+    "clearFilters": "Clear Filters",
+    "message": "Message",
+    "serverError": "No response from server. Please check your internet connection."
   },
   "buttons": {
     "save": "Save",
@@ -357,7 +361,6 @@
     "enterDuration": "Enter duration",
     "monitoringHours": "Monitoring Hours",
     "enterMonitoringHours": "Enter monitoring hours",
-    "PumpStatusIdvAlarms": "Individual Pump Status Alarms",
     "field": "Field",
     "operator": "Operator",
     "threshold": "Threshold Value",
@@ -415,6 +418,9 @@
     "eventDetails": "Event Details",
     "eventNumber": "Event #",
     "noEventsToDisplay": "No alarm events to display",
+    "noEvents": "No Events",
+    "noEventsYet": "No alarm events yet",
+    "noEventsMatchFilters": "No events match your filter criteria",
     "message": "Message",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
@@ -577,6 +583,7 @@
     "pumpStatusOperationRequired": "The pump status operation field is required.",
     "failedToCreateAlarm": "Failed to create alarm.",
     "failedToUpdateAlarm": "Failed to update alarm.",
+    "siteTypeRequired": "Site type is required",
     "unknownError": "An unknown error occurred."
   },
   "notifications": {

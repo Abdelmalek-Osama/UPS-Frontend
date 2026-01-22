@@ -49,7 +49,11 @@
     "page": "صفحة",
     "previousPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
-    "step": "خطوة"
+    "step": "خطوة",
+    "filters": "التصفيات",
+    "clearFilters": "مسح التصفيات",
+    "message": "الرسالة",
+    "serverError": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت."
   },
   "buttons": {
     "save": "حفظ",
@@ -373,7 +377,7 @@
     "notificationMethod": "طريقة التنبيه",
     "email": "البريد الإلكتروني",
     "sms": "رسالة نصية",
-    "hours": "الساعات",
+    "hours": "ساعات",
     "hour": "ساعة",
     "noResponse": "وقت عدم الاستجابة (بالساعات)",
     "invalidColorFormat": "صيغة اللون غير صالحة",
@@ -414,6 +418,9 @@
     "eventDetails": "تفاصيل الحدث",
     "eventNumber": "الحدث رقم",
     "noEventsToDisplay": "لا توجد أحداث تنبيهات لعرضها",
+    "noEvents": "لا توجد أحداث",
+    "noEventsYet": "لا توجد أحداث تنبيهات بعد",
+    "noEventsMatchFilters": "لا توجد أحداث تطابق معايير التصفية الخاصة بك",
     "message": "الرسالة",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",
@@ -575,6 +582,7 @@
     "pumpStatusOperationRequired": "حقل عملية حالة المضخة مطلوب.",
     "failedToCreateAlarm": "فشل في إنشاء التنبيه.",
     "failedToUpdateAlarm": "فشل في تحديث التنبيه.",
+    "siteTypeRequired": "نوع الموقع مطلوب",
     "unknownError": "حدث خطأ غير معروف."
   },
   "notifications": {

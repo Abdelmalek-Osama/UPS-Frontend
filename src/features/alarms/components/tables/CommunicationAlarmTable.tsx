@@ -16,9 +16,10 @@ import { CommunicationAlarmResponse } from '../../types';
 interface CommunicationAlarmTableProps {
     alarms: CommunicationAlarmResponse[];
     onEdit: (alarm: CommunicationAlarmResponse) => void;
+    error?: boolean;
 }
 
-export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTableProps) {
+export function CommunicationAlarmTable({ alarms, onEdit, error }: CommunicationAlarmTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -60,7 +61,7 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
             header: t('alarms.hours'),
             render: (alarm: CommunicationAlarmResponse) => (
                 <div className={textAlignClass}>
-                    <Badge variant="outline" dir="rtl">
+                    <Badge variant="outline" dir={isRTL ? 'rtl' : 'ltr'}>
                         {alarm.numHours === 1 ? `${alarm.numHours} ${t('alarms.hour')}` : `${alarm.numHours} ${t('alarms.hours')}`}
                     </Badge>
                 </div>
@@ -89,6 +90,14 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
     // For RTL (Arabic): keep original order
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
 
     return (
         <Table>
