@@ -596,8 +596,14 @@
     "updated": "Item updated successfully",
     "loading": "Loading data...",
     "noNetwork": "No internet connection"
-  },
-  "validation": {
+  },  "placeholders": {
+    "fullName": "Enter full name",
+    "email": "user@example.com",
+    "selectRole": "Select a role",
+    "username": "Enter username",
+    "password": "••••••••",
+    "confirmPassword": "••••••••"
+  },  "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",
     "phone": "Please enter a valid phone number",

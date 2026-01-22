@@ -595,8 +595,14 @@
     "updated": "تم تحديث العنصر بنجاح",
     "loading": "جارٍ تحميل البيانات...",
     "noNetwork": "لا توجد اتصالات إنترنت"
-  },
-  "validation": {
+  },  "placeholders": {
+    "fullName": "أدخل الاسم الكامل",
+    "email": "user@example.com",
+    "selectRole": "اختر دوراً",
+    "username": "أدخل اسم المستخدم",
+    "password": "••••••••",
+    "confirmPassword": "••••••••"
+  },  "validation": {
     "required": "هذا الحقل مطلوب",
     "email": "يرجى إدخال عنوان بريد إلكتروني صحيح",
     "phone": "يرجى إدخال رقم هاتف صحيح",
