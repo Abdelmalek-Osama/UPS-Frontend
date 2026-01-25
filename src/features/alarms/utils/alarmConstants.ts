@@ -71,12 +71,21 @@ export const FIELDS = [
 
 export const OPERATORS = ['>', '<', '>=', '<=', '==', '!='];
 
+export const OPERATOR_LABELS: Record<string, string> = {
+    '>': 'اكثر من',
+    '<': 'اقل من',
+    '>=': 'اكثر من او يساوي',
+    '<=': 'اقل من او يساوي',
+    '==': 'يساوي',
+    '!=': 'لا يساوي'
+};
+
 // Assuming ThresholdAlarmForm and CommunicationAlarmForm are defined elsewhere (e.g., in types/index.ts)
 // These initial forms will be typed using those interfaces.
 
 export const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
     id: 0,
-    siteId: null,
+    siteId: 0,
     alarmName: '',
     site: '',
     field: '',
@@ -90,7 +99,7 @@ export const INITIAL_THRESHOLD_FORM: ThresholdAlarmForm = {
 
 export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
     id: 0,
-    siteId: null,
+    siteId: 0,
     alarmName: '',
     site: '',
     severity: 'Warning',

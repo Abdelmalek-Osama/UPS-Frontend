@@ -19,7 +19,8 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
-import { OPERATORS } from '../../utils/alarmConstants';
+import { OPERATORS, OPERATOR_LABELS } from '../../utils/alarmConstants';
+import { validateAlarmName } from '../../utils/validation';
 
 // Utility function to validate color input
 const isValidColor = (color: string): boolean => {
@@ -73,6 +74,8 @@ export function EditThresholdAlarmDialog({
     setPhones,
     submissionError
 }: EditThresholdAlarmDialogProps) {
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
     useEffect(() => {
         if (currentAlarm && currentAlarm.threshold < 0) {
             setForm(prev => ({
@@ -95,7 +98,7 @@ export function EditThresholdAlarmDialog({
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="w-[95vw] max-w-[600px] overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }} dir="rtl">
                 <DialogHeader>
                     <DialogTitle className="text-right">تعديل تنبيه قيمة حدية</DialogTitle>
                     <DialogDescription className="text-right">
@@ -103,7 +106,7 @@ export function EditThresholdAlarmDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
+                <div className="space-y-6 py-4">
                     <div className="space-y-2">
                         <Label>الموقع</Label>
                         {currentAlarm ? (
@@ -148,9 +151,14 @@ export function EditThresholdAlarmDialog({
                                     ...prev,
                                     alarmName: e.target.value
                                 }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
                                 setHasChanges(true);
                             }}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -194,7 +202,7 @@ export function EditThresholdAlarmDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {OPERATORS.map(op => (
-                                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                                        <SelectItem key={op} value={op}>{OPERATOR_LABELS[op] || op}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -326,11 +334,11 @@ export function EditThresholdAlarmDialog({
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.thresholdError && !form.colorError) {
+                                if (!form.thresholdError && !form.colorError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || !form.field || !!form.thresholdError || !!form.colorError || !!alarmNameError || !form.operator || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الحفظ..."
                             isLoading={isSubmitting}
                         >

@@ -46,21 +46,68 @@ export function useDashboardData() {
 
   const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
-  // In a real app, you would fetch data from an API here
+  // Fetch waterflow data from API
   useEffect(() => {
-    // Clear simulated data if not authenticated
-    if (!isAuthenticated) {
-      setFlowData([]);
-      setDirectorateData([]);
-      setActiveAlarms([]);
-      setRecentReadings([]);
-      setStats({
-        totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
-        warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
-        totalStations: 0, uptimePercentage: 0
-      });
-    }
-    // Simulated data fetching
+    const fetchWaterflowData = async () => {
+      if (!isAuthenticated) {
+        // Clear data if not authenticated
+        setFlowData([]);
+        setDirectorateData([]);
+        setActiveAlarms([]);
+        setRecentReadings([]);
+        setStats({
+          totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
+          warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
+          totalStations: 0, uptimePercentage: 0
+        });
+        return;
+      }
+
+      try {
+        // Import the generic get method and ApiResponse type
+        const { get } = await import('../../../shared/utils/apiService');
+
+        // Define the response type
+        interface WaterflowDataPoint {
+          timestamp: string;
+          value: number;
+        }
+
+        interface ApiResponse<T> {
+          isSuccess: boolean;
+          message: string;
+          data: T;
+        }
+
+        // Fetch waterflow data for site ID 2 using generic get method
+        const response = await get<ApiResponse<WaterflowDataPoint[]>>('/v1/LandingPage/waterflow/2');
+
+        if (response.isSuccess && response.data) {
+          // Transform API data to chart format
+          const transformedData = response.data.map((item: WaterflowDataPoint) => {
+            // Parse timestamp and format to HH:mm
+            const date = new Date(item.timestamp);
+            const time = date.toLocaleTimeString('ar-EG', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            });
+
+            return {
+              time,
+              flow: item.value
+            };
+          });
+
+          setFlowData(transformedData);
+        }
+      } catch (error) {
+        console.error('Error fetching waterflow data:', error);
+        // Keep the existing mock data on error
+      }
+    };
+
+    fetchWaterflowData();
   }, [isAuthenticated]);
 
   return {

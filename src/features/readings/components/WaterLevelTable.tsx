@@ -209,10 +209,29 @@ export function WaterLevelTable({
 
   useEffect(() => {
     if (isEditWaterLevelOpen && editingWaterLevel) {
-      if (editingWaterLevel.uswl < 0) setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditUswlError(null);
-      if (editingWaterLevel.dswL1 < 0) setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswlError(null);
-      if (editingWaterLevel.dswL2 < 0) setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0'); else setEditDswl2Error(null);
-      if (editingWaterLevel.battery <= 0) setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.'); else setEditBatteryError(null);
+      if (editingWaterLevel.uswl != null && editingWaterLevel.uswl < 0) {
+        setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditUswlError(null);
+      }
+
+      if (editingWaterLevel.dswL1 != null && editingWaterLevel.dswL1 < 0) {
+        setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditDswlError(null);
+      }
+
+      if (editingWaterLevel.dswL2 != null && editingWaterLevel.dswL2 < 0) {
+        setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
+      } else {
+        setEditDswl2Error(null);
+      }
+
+      if (editingWaterLevel.battery != null && editingWaterLevel.battery <= 0) {
+        setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
+      } else {
+        setEditBatteryError(null);
+      }
     }
   }, [isEditWaterLevelOpen, editingWaterLevel]);
 
@@ -303,8 +322,8 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (battery !== '' && (Number(battery) <= 0 || Number.isNaN(Number(battery))) || batteryError) {
-      setAddError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (batteryError) {
+      setAddError(batteryError); // Use the specific batteryError message
       return;
     }
 
@@ -386,8 +405,8 @@ export function WaterLevelTable({
     }
 
     // Validate battery voltage - must be positive and greater than zero
-    if (editBattery !== '' && (Number(editBattery) <= 0 || Number.isNaN(Number(editBattery))) || editBatteryError) {
-      setEditError('قيمة البطارية يجب أن تكون أكبر من صفر.');
+    if (editBatteryError) {
+      setEditError(editBatteryError); // Use the specific editBatteryError message
       return;
     }
 
@@ -561,6 +580,13 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="125.4"
                           value={uswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            // Check if browser detected invalid input (e.g., "1-2", "abc")
+                            if (input.validity.badInput) {
+                              setUswlError('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -568,8 +594,11 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setUswl('');
                               setUswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
-                              setUswl(inputValue); // Keep invalid input for user to correct
+                            } else if (isNaN(parsedValue)) {
+                              setUswl(inputValue);
+                              setUswlError('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
+                              setUswl(inputValue);
                               setUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
                               setUswl(inputValue);
@@ -591,6 +620,12 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={dswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setDswlError('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -598,7 +633,10 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setDswl('');
                               setDswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
+                              setDswl(inputValue);
+                              setDswlError('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
                               setDswl(inputValue);
                               setDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
@@ -621,6 +659,12 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={dswl2}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setDswl2Error('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -628,7 +672,10 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setDswl2('');
                               setDswl2Error(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
+                              setDswl2(inputValue);
+                              setDswl2Error('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
                               setDswl2(inputValue);
                               setDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
@@ -648,9 +695,14 @@ export function WaterLevelTable({
                     <Input
                       type="number"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={battery}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setBatteryError('يرجى إدخال رقم صحيح');
+                        }
+                      }}
                       onChange={(e) => {
                         const inputValue = e.target.value;
                         const parsedValue = parseFloat(inputValue);
@@ -658,7 +710,10 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setBattery('');
                           setBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (isNaN(parsedValue)) {
+                          setBattery(inputValue);
+                          setBatteryError('يرجى إدخال رقم صحيح');
+                        } else if (parsedValue <= 0) {
                           setBattery(inputValue);
                           setBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
                         } else {
@@ -767,6 +822,12 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="125.4"
                           value={editUswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditUswlError('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -774,7 +835,10 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditUswl('');
                               setEditUswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
+                              setEditUswl(inputValue);
+                              setEditUswlError('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
                               setEditUswl(inputValue);
                               setEditUswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
@@ -797,6 +861,12 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditDswlError('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -804,7 +874,10 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditDswl('');
                               setEditDswlError(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
+                              setEditDswl(inputValue);
+                              setEditDswlError('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
                               setEditDswl(inputValue);
                               setEditDswlError('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
@@ -827,6 +900,12 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl2}
+                          onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                            const input = e.currentTarget;
+                            if (input.validity.badInput) {
+                              setEditDswl2Error('يرجى إدخال رقم صحيح');
+                            }
+                          }}
                           onChange={(e) => {
                             const inputValue = e.target.value;
                             const parsedValue = parseFloat(inputValue);
@@ -834,7 +913,10 @@ export function WaterLevelTable({
                             if (inputValue === '') {
                               setEditDswl2('');
                               setEditDswl2Error(null);
-                            } else if (isNaN(parsedValue) || parsedValue < 0) {
+                            } else if (isNaN(parsedValue)) {
+                              setEditDswl2(inputValue);
+                              setEditDswl2Error('يرجى إدخال رقم صحيح');
+                            } else if (parsedValue < 0) {
                               setEditDswl2(inputValue);
                               setEditDswl2Error('لا يمكن أن تكون قيمة الحقل أقل من 0');
                             } else {
@@ -854,9 +936,14 @@ export function WaterLevelTable({
                     <Input
                       type="number"
                       step="0.1"
-                      min="0.1"
                       placeholder="12.8"
                       value={editBattery}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        if (input.validity.badInput) {
+                          setEditBatteryError('يرجى إدخال رقم صحيح');
+                        }
+                      }}
                       onChange={(e) => {
                         const inputValue = e.target.value;
                         const parsedValue = parseFloat(inputValue);
@@ -864,7 +951,10 @@ export function WaterLevelTable({
                         if (inputValue === '') {
                           setEditBattery('');
                           setEditBatteryError(null);
-                        } else if (isNaN(parsedValue) || parsedValue <= 0) {
+                        } else if (isNaN(parsedValue)) {
+                          setEditBattery(inputValue);
+                          setEditBatteryError('يرجى إدخال رقم صحيح');
+                        } else if (parsedValue <= 0) {
                           setEditBattery(inputValue);
                           setEditBatteryError('قيمة البطارية يجب أن تكون أكبر من 0.');
                         } else {

@@ -152,9 +152,12 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
       setApiError(null); // Clear API error on success
       onOpenChange(false);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message;
+      // Rely on apiService.ts to provide the most specific error message
+      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Ultimate fallback
+      if (error instanceof Error && error.message.trim() !== '') {
+        errorMessage = error.message;
+      }
       setApiError(errorMessage);
-      // toast.error('Failed to register user. Please try again later.');
     } finally {
       setIsSubmittingAddUser(false); // Reset submitting state to false
     }

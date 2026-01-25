@@ -18,22 +18,9 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { CommunicationAlarmForm, Site } from '../../types';
-
-export interface AddCommunicationAlarmDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    form: CommunicationAlarmForm;
-    setForm: React.Dispatch<React.SetStateAction<CommunicationAlarmForm>>;
-    sites: Site[];
-    sitesLoading: boolean;
-    sitesError: string | null;
-    onSubmit: () => void;
-    isSubmitting: boolean;
-    setEmails: (emails: string[]) => void;
-    setPhones: (phones: string[]) => void;
-    submissionError: string | null; // New prop for submission errors
-}
+import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
+import { validateAlarmName } from '../../utils/validation';
+import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
 
 export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddCommunicationAlarmDialogProps>((
     {open,
@@ -49,11 +36,27 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
     setPhones,
     submissionError
 }: AddCommunicationAlarmDialogProps, ref) => {
+    const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+
+    const handleAlarmNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newName = e.target.value;
+        setForm(prev => ({
+            ...prev,
+            alarmName: newName
+        }));
+        const error = validateAlarmName(newName);
+        setAlarmNameError(error);
+    };
+
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
             if (!newOpen && submissionError) {
                 // Prevent closing if there's a submission error
                 return;
+            }
+            if (!newOpen) {
+                setForm({ ...INITIAL_COMMUNICATION_FORM });
+                setAlarmNameError(undefined);
             }
             onOpenChange(newOpen);
         }}>
@@ -98,11 +101,11 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             type="text"
                             placeholder="اسم التنبيه"
                             value={form.alarmName}
-                            onChange={(e) => setForm(prev => ({
-                                ...prev,
-                                alarmName: e.target.value
-                            }))}
+                            onChange={handleAlarmNameChange}
                         />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -145,7 +148,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         </p>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                         <Label>مستوى الخطورة</Label>
                         <Select
                             onValueChange={(value: 'Warning' | 'Critical') => setForm(prev => ({
@@ -162,7 +165,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                 <SelectItem value="Critical">حرج</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     <RecipientInput
                         type="email"
@@ -191,11 +194,11 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         </Button>
                         <Button
                             onClick={() => {
-                                if (!form.hoursError) {
+                                if (!form.hoursError && !alarmNameError) {
                                     onSubmit();
                                 }
                             }}
-                            disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || (form.emails.length === 0 && form.phones.length === 0)}
+                            disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
                             loadingText="جاري الإضافة..."
                             isLoading={isSubmitting}
                         >

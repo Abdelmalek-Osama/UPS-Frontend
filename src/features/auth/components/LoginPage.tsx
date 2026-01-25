@@ -42,30 +42,17 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
         setLoginSuccessful(true); // Set login successful instead of navigating immediately
       } else {
         // Prioritize displaying the backend's error message if available, otherwise use a generic one.
-        const errorMessage = response.message || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+        const errorMessage = response.message ? response.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
         setLoginError(errorMessage);
         setLoading(false); // Re-enable button on unsuccessful login response
       }
     } catch (error: any) {
       setLoading(false); // Re-enable button on any error
-      // Handle network errors or errors thrown before the response interceptor
-      let errorMessage = 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.'; // Default generic error for catch block
+      // Rely on apiService.ts to provide the most specific error message
+      let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Ultimate fallback
 
-      if (error.isAxiosError) {
-        if (error.response && error.response.data && typeof error.response.data.message === 'string') {
-          // Use the backend's error message directly
-          errorMessage = error.response.data.message;
-        } else if (error.message && error.message.toLowerCase().includes('network error')) {
-          errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.'; // Network error.
-        } else {
-          // Fallback for non-Axios or unknown errors or if specific message is not available
-          errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
-        }
-      } else if (typeof error === 'string' && error.toLowerCase().includes('network error')) {
-        errorMessage = 'خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت.';
-      } else {
-        // Fallback for non-Axios or unknown errors.
-        errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+      if (error instanceof Error && error.message.trim() !== '') {
+        errorMessage = error.message; 
       }
       setLoginError(errorMessage);
     } finally {

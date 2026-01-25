@@ -5,6 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Plus, AlertTriangle, WifiOff } from 'lucide-react';
 import { Dialog, DialogTrigger } from '../../../components/ui/dialog';
 import Loader from '../../../components/ui/Loader';
+// import { useOutletContext } from 'react-router-dom';
+// Import useAuth from AuthContext
+import { useAuth } from '../../../shared/contexts/AuthContext';
+import { User } from '../../auth';
+import { toast } from 'react-toastify';
 
 // Hooks
 import { useAlarmsData } from '../hooks/useAlarmsData';
@@ -34,6 +39,18 @@ import { AddCommunicationAlarmDialog } from './dialogs/AddCommunicationAlarmDial
 import { EditCommunicationAlarmDialog } from './dialogs/EditCommunicationAlarmDialog';
 
 export function AlarmConfiguration() {
+  // const { currentUser: outletCurrentUser } = useOutletContext<{ currentUser: User }>();
+  const { loadingAuth, userLoaded, currentUser } = useAuth();
+
+  // If authentication is still loading or user data hasn't been loaded yet, show a loader
+  if (loadingAuth || !userLoaded || !currentUser) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
+
   const {
     thresholdAlarms,
     communicationAlarms,
@@ -98,13 +115,18 @@ export function AlarmConfiguration() {
     try {
       const result = await createThresholdAlarm(requestBody);
       if (result.success) {
+        toast.success('تمت إضافة تنبيه القيمة الحدية بنجاح');
         setIsAddThresholdOpen(false);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
-        setThresholdSubmissionError(result.message || 'Failed to create threshold alarm.');
+        const errorMessage = result.message || 'Failed to create threshold alarm.';
+        toast.error(errorMessage);
+        setThresholdSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      setThresholdSubmissionError(error.message || 'An unexpected error occurred.');
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setThresholdSubmissionError(errorMessage);
     } finally {
       setIsSubmittingThresholdAdd(false);
     }
@@ -129,7 +151,7 @@ export function AlarmConfiguration() {
       phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email,
       communicationLoss: {
-        severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
+        //severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
       },
     };
@@ -137,13 +159,18 @@ export function AlarmConfiguration() {
     try {
       const result = await createCommunicationAlarm(requestBody);
       if (result.success) {
+        toast.success('تمت إضافة تنبيه فقدان الاتصال بنجاح');
         setIsAddCommOpen(false);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
-        setCommunicationSubmissionError(result.message || 'Failed to create communication alarm.');
+        const errorMessage = result.message || 'Failed to create communication alarm.';
+        toast.error(errorMessage);
+        setCommunicationSubmissionError(errorMessage);
       }
     } catch (error: any) {
-      setCommunicationSubmissionError(error.message || 'An unexpected error occurred.');
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setCommunicationSubmissionError(errorMessage);
     } finally {
       setIsSubmittingCommAdd(false);
     }
@@ -167,16 +194,16 @@ export function AlarmConfiguration() {
 
   // Set default site when sites load
   useEffect(() => {
-    if (sites.length > 0 && newThresholdAlarmForm.siteId === null) {
+    if (sites.length > 0 && newThresholdAlarmForm.siteId === 0) {
       setNewThresholdAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
-  }, [sites, newThresholdAlarmForm.siteId]);
+  }, [sites, newThresholdAlarmForm.siteId, sitesLoading]); // Add sitesLoading to dependencies
 
   useEffect(() => {
-    if (sites.length > 0 && newCommunicationAlarmForm.siteId === null) {
+    if (sites.length > 0 && newCommunicationAlarmForm.siteId === 0) {
       setNewCommunicationAlarmForm(prev => ({ ...prev, siteId: sites[0].id, site: sites[0].name }));
     }
-  }, [sites, newCommunicationAlarmForm.siteId]);
+  }, [sites, newCommunicationAlarmForm.siteId, sitesLoading]); // Add sitesLoading to dependencies
 
   useEffect(() => {
     if (!isAddThresholdOpen) {
@@ -234,7 +261,7 @@ export function AlarmConfiguration() {
 
     const formData = {
       id: alarm.id,
-      siteId: siteId || null,
+      siteId: siteId || 0,
       alarmName: alarm.alarmName,
       site: alarm.site,
       field: mapNumberToField[parseInt(alarm.field)],
@@ -261,10 +288,10 @@ export function AlarmConfiguration() {
 
     setNewCommunicationAlarmForm({
       id: alarm.alarmId,
-      siteId: siteId,
+      siteId: siteId || 0,
       alarmName: alarm.alarmName,
       site: alarm.siteName || '',
-      severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+      //severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
       hours: alarm.numHours || 0,
       emails: emails,
       phones: phones,
@@ -303,12 +330,20 @@ export function AlarmConfiguration() {
     try {
       const result = await updateThresholdAlarm(currentThresholdAlarm.id, requestBody);
       if (result.success) {
+        toast.success('تم تحديث تنبيه القيمة الحدية بنجاح');
         setIsEditThresholdOpen(false);
         setCurrentThresholdAlarm(null);
         setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM);
       } else {
         console.error('Error updating threshold alarm:', result.message);
+        const errorMessage = result.message || 'Failed to update threshold alarm.';
+        toast.error(errorMessage);
+        setThresholdSubmissionError(errorMessage);
       }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setThresholdSubmissionError(errorMessage);
     } finally {
       setIsSubmittingThresholdEdit(false);
     }
@@ -334,7 +369,7 @@ export function AlarmConfiguration() {
       phones: newCommunicationAlarmForm.phones.join(','),
       method: AlarmMethod.Email,
       communicationLoss: {
-        severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
+        //severity: mapSeverityToNumber(newCommunicationAlarmForm.severity),
         numHours: hours,
       },
     };
@@ -342,12 +377,20 @@ export function AlarmConfiguration() {
     try {
       const result = await updateCommunicationAlarm(currentCommunicationAlarm.id, requestBody);
       if (result.success) {
+        toast.success('تم تحديث تنبيه فقدان الاتصال بنجاح');
         setIsEditCommOpen(false);
         setCurrentCommunicationAlarm(null);
         setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM);
       } else {
         console.error('Error updating communication alarm:', result.message);
+        const errorMessage = result.message || 'Failed to update communication alarm.';
+        toast.error(errorMessage);
+        setCommunicationSubmissionError(errorMessage);
       }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      toast.error(errorMessage);
+      setCommunicationSubmissionError(errorMessage);
     } finally {
       setIsSubmittingCommEdit(false);
     }
@@ -379,7 +422,7 @@ export function AlarmConfiguration() {
       siteId: alarm.siteId,
       alarmName: alarm.alarmName,
       site: alarm.siteName || '',
-      severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
+      //severity: alarm.severity === Severity.Warning ? 'Warning' : 'Critical',
       hours: alarm.numHours || 0,
       emails: emails,
       phones: phones,
@@ -420,29 +463,31 @@ export function AlarmConfiguration() {
                   تنبيهات القيم الحدية ({thresholdAlarms.length})
                 </CardTitle>
 
-                <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="ml-2 h-4 w-4" />
-                      إضافة تنبيه جديد
-                    </Button>
-                  </DialogTrigger>
-                  <AddThresholdAlarmDialog
-                    open={isAddThresholdOpen}
-                    onOpenChange={setIsAddThresholdOpen}
-                    form={newThresholdAlarmForm}
-                    setForm={setNewThresholdAlarmForm}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
-                    sitesError={sitesError}
-                    availableFields={availableFields}
-                    onSubmit={handleSubmitThresholdAlarm}
-                    isSubmitting={isSubmittingThresholdAdd}
-                    submissionError={thresholdSubmissionError}
-                    setEmails={setThresholdEmails}
-                    setPhones={setThresholdPhones}
-                  />
-                </Dialog>
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddThresholdOpen} onOpenChange={setIsAddThresholdOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewThresholdAlarmForm(INITIAL_THRESHOLD_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        إضافة تنبيه جديد
+                      </Button>
+                    </DialogTrigger>
+                    <AddThresholdAlarmDialog
+                      open={isAddThresholdOpen}
+                      onOpenChange={setIsAddThresholdOpen}
+                      form={newThresholdAlarmForm}
+                      setForm={setNewThresholdAlarmForm}
+                      sites={sites}
+                      sitesLoading={sitesLoading}
+                      sitesError={sitesError}
+                      availableFields={availableFields}
+                      onSubmit={handleSubmitThresholdAlarm}
+                      isSubmitting={isSubmittingThresholdAdd}
+                      submissionError={thresholdSubmissionError}
+                      setEmails={setThresholdEmails}
+                      setPhones={setThresholdPhones}
+                    />
+                  </Dialog>
+                )}
               </CardHeader>
 
               <CardContent>
@@ -468,28 +513,30 @@ export function AlarmConfiguration() {
                   تنبيهات فقدان الاتصال ({communicationAlarms.length})
                 </CardTitle>
 
-                <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}>
-                      <Plus className="ml-2 h-4 w-4" />
-                      إضافة تنبيه جديد
-                    </Button>
-                  </DialogTrigger>
-                  <AddCommunicationAlarmDialog
-                    open={isAddCommOpen}
-                    onOpenChange={setIsAddCommOpen}
-                    form={newCommunicationAlarmForm}
-                    setForm={setNewCommunicationAlarmForm}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
-                    sitesError={sitesError}
-                    onSubmit={handleSubmitCommunicationAlarm}
-                    isSubmitting={isSubmittingCommAdd}
-                    submissionError={communicationSubmissionError}
-                    setEmails={setCommunicationEmails}
-                    setPhones={setCommunicationPhones}
-                  />
-                </Dialog>
+                {currentUser.role === 'Admin' && (
+                  <Dialog open={isAddCommOpen} onOpenChange={setIsAddCommOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setNewCommunicationAlarmForm(INITIAL_COMMUNICATION_FORM)}>
+                        <Plus className="ml-2 h-4 w-4" />
+                        إضافة تنبيه جديد
+                      </Button>
+                    </DialogTrigger>
+                    <AddCommunicationAlarmDialog
+                      open={isAddCommOpen}
+                      onOpenChange={setIsAddCommOpen}
+                      form={newCommunicationAlarmForm}
+                      setForm={setNewCommunicationAlarmForm}
+                      sites={sites}
+                      sitesLoading={sitesLoading}
+                      sitesError={sitesError}
+                      onSubmit={handleSubmitCommunicationAlarm}
+                      isSubmitting={isSubmittingCommAdd}
+                      submissionError={communicationSubmissionError}
+                      setEmails={setCommunicationEmails}
+                      setPhones={setCommunicationPhones}
+                    />
+                  </Dialog>
+                )}
               </CardHeader>
 
               <CardContent>
@@ -520,6 +567,7 @@ export function AlarmConfiguration() {
         setHasChanges={setHasThresholdChanges}
         setEmails={setThresholdEmails}
         setPhones={setThresholdPhones}
+        submissionError={thresholdSubmissionError}
       />
 
       <EditCommunicationAlarmDialog
@@ -537,6 +585,7 @@ export function AlarmConfiguration() {
         setHasChanges={setHasCommunicationChanges}
         setEmails={setCommunicationEmails}
         setPhones={setCommunicationPhones}
+        submissionError={communicationSubmissionError}
       />
     </div>
   );

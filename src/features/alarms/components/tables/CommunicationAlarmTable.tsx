@@ -23,7 +23,7 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
             <TableHeader>
                 <TableRow>
                     <TableHead className="text-right">إجراءات</TableHead>
-                    <TableHead className="text-right">الخطورة</TableHead>
+                    {/* <TableHead className="text-right">الخطورة</TableHead> */}
                     <TableHead className="text-right">المستلمون</TableHead>
                     <TableHead className="text-right">عدد الساعات</TableHead>
                     <TableHead className="text-right">الموقع</TableHead>
@@ -42,14 +42,14 @@ export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTa
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TableCell>
-                        <TableCell className="text-right">
+                        {/* <TableCell className="text-right">
                             {alarm.severity === 0 && (
                                 <Badge style={{ backgroundColor: '#DAA520' }} dir="rtl">Warning</Badge>
                             )}
                             {alarm.severity === 1 && (
                                 <Badge variant="destructive" dir="rtl">Critical</Badge>
                             )}
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="text-right">
                             <div className="flex flex-wrap gap-1 justify-end">
                                 {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (

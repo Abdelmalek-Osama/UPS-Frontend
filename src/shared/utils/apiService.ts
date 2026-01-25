@@ -15,8 +15,9 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
-//const API_BASE_URL = 'https://localhost:7123/api/';
+//const API_BASE_URL = 'https://localhost:5001/api/';
 const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+//const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
 
 
 /**
@@ -24,7 +25,7 @@ const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
  */
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +36,7 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 const axiosRefreshInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
@@ -100,6 +101,34 @@ const processQueue = (error: AxiosError | Error | null, token: string | null = n
   failedRequestsQueue = [];
 };
 
+// Helper function to extract the most specific error message from Axios response data
+const getErrorMessageFromResponseData = (responseData: any): string => {
+  let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Default ultimate fallback
+
+  if (responseData.errors) {
+    let validationErrors: string[] = [];
+    for (const key in responseData.errors) {
+      if (Array.isArray(responseData.errors[key])) {
+        validationErrors = validationErrors.concat(responseData.errors[key]);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return validationErrors.join(', '); // Prioritize validation errors
+    } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
+      return responseData.title; // Fallback to title if errors object is empty
+    } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
+      return responseData.message; // Fallback to message if errors object and title are empty
+    } else {
+      return 'حدث خطأ في التحقق من صحة البيانات.'; // Generic validation error fallback
+    }
+  } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
+    return responseData.message; // Prioritize general message
+  } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
+    return responseData.title; // Fallback to title
+  }
+  return errorMessage;
+};
+
 /**
  * Response interceptor to handle errors globally and refresh token
  */
@@ -110,7 +139,8 @@ axiosInstance.interceptors.response.use(
 
     // If the error is 401 and it's the login endpoint, do not attempt to refresh the token.
     if (error.response?.status === 401 && originalRequest?.url?.includes('/v1/Auth/login')) {
-      return Promise.reject(error); // Directly reject so LoginPage can handle it
+      const customErrorMessage = getErrorMessageFromResponseData(error.response.data); // Use helper to get the specific message
+      return Promise.reject(new Error(customErrorMessage)); // Reject with a custom error message
     }
 
     if (error.response?.status === 401 && originalRequest && !(originalRequest as any)._retry) {
@@ -123,7 +153,6 @@ axiosInstance.interceptors.response.use(
 
           if (refreshToken) {
             try {
-              console.log('apiService: Attempting to refresh token...');
               const response = await axiosRefreshInstance.post<ApiResponse<AuthResponse>>(`/v1/Auth/refresh`, { refreshToken });
               const { accessToken, accessTokenExpiryDate, refreshToken: newRefreshToken } = response.data.data;
               setAuthCookies(accessToken, newRefreshToken, new Date(accessTokenExpiryDate));
@@ -134,35 +163,33 @@ axiosInstance.interceptors.response.use(
               processQueue(null, accessToken);
               return axiosInstance(originalRequest);
             } catch (refreshError: any) {
-              console.error('apiService: Refresh token failed.', refreshError);
               clearAllUserData(); // Clear all user data on refresh token failure
               processQueue(refreshError, null);
-              console.error('Unable to refresh token', refreshError);
               if (!logoutInitiated && onLogoutCallback) {
-                console.log('apiService: Calling onLogoutCallback...');
                 logoutInitiated = true; // Set flag to true
                 onLogoutCallback(); // Call callback before throwing error
               } else if (!logoutInitiated) {
-                console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback.');
                 logoutInitiated = true; // Set flag to true
                 window.location.href = '/logout'; // Fallback if callback not set
               }
-              throw refreshError;
+
+              let errorMessage = 'فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.'; // Default custom error message
+              if (refreshError.isAxiosError && refreshError.response && refreshError.response.data) {
+                errorMessage = getErrorMessageFromResponseData(refreshError.response.data); // Use helper for refresh error
+              }
+              throw new Error(errorMessage);
             }
           } else {
-            console.log('apiService: No refresh token available.');
             clearAllUserData(); // Clear all user data if no refresh token
-            processQueue(new Error('No refresh token available'), null);
+            processQueue(new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'), null); // Custom error message
             if (!logoutInitiated && onLogoutCallback) {
-              console.log('apiService: Calling onLogoutCallback (no refresh token)...');
               logoutInitiated = true; // Set flag to true
               onLogoutCallback(); // Call callback before throwing error
             } else if (!logoutInitiated) {
-              console.log('apiService: onLogoutCallback not set, redirecting to /logout fallback (no refresh token).');
               logoutInitiated = true; // Set flag to true
               window.location.href = '/logout'; // Fallback if callback not set
             }
-            throw new Error('No refresh token available');
+            throw new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'); // Custom error message
           }
         } else {
           return new Promise((resolve, reject) => {
@@ -187,14 +214,15 @@ axiosInstance.interceptors.response.use(
       }
     } else if (error.response) {
       // Server responded with error
-      const errorMessage = (error.response.data as any)?.message || error.message;
-      throw new Error(errorMessage);
+      const responseData: any = error.response.data; // Cast to any to access properties
+      const customErrorMessage = getErrorMessageFromResponseData(responseData); // Use helper to get the message
+      throw new Error(customErrorMessage);
     } else if (error.request) {
       // Request made but no response
-      throw new Error('No response from server. Please check your connection.');
+      throw new Error('لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.'); // Custom network error message
     } else {
       // Something else happened
-      throw new Error(error.message);
+      throw new Error('حدث خطأ غير متوقع.'); // Custom generic error message
     }
   }
 );
