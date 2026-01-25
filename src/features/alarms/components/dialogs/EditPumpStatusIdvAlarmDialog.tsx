@@ -40,6 +40,7 @@ interface EditPumpStatusIdvAlarmDialogProps {
     setEmails: (emails: string[]) => void;
     setPhones: (phones: string[]) => void;
     submissionError: string | null;
+    onFetchSiteConfig?: (siteId: number) => void;
 }
 
 export function EditPumpStatusIdvAlarmDialog({
@@ -60,9 +61,17 @@ export function EditPumpStatusIdvAlarmDialog({
     setHasChanges,
     setEmails,
     setPhones,
-    submissionError
+    submissionError,
+    onFetchSiteConfig
 }: EditPumpStatusIdvAlarmDialogProps) {
     const { t } = useTranslation();
+
+    // Fetch site configuration when currentAlarm changes
+    useEffect(() => {
+        if (currentAlarm?.siteId && onFetchSiteConfig) {
+            onFetchSiteConfig(currentAlarm.siteId);
+        }
+    }, [currentAlarm?.siteId, onFetchSiteConfig]);
 
     const headerContainerStyle: React.CSSProperties = {
         paddingLeft: '1.5rem',
@@ -107,7 +116,12 @@ export function EditPumpStatusIdvAlarmDialog({
     };
 
     const handleIdvPumpChange = (value: string) => {
-        setForm(prev => ({ ...prev, IdvPump: value }));
+        const pumpNum = parseInt(value) || 1;
+        setForm(prev => ({ 
+            ...prev, 
+            pumpNumber: pumpNum,
+            monitoringHours: prev.monitoringHours || 24
+        }));
         setHasChanges(true);
     };
 
@@ -145,6 +159,23 @@ export function EditPumpStatusIdvAlarmDialog({
                 {/* Scrollable Content */}
                 <div style={scrollContainerStyle}>
                     <div className="space-y-6">
+                        {/* Alarm Name Field */}
+                        <div className="space-y-2">
+                            <Label htmlFor="alarm-name">{t('alarms.alarmName')}</Label>
+                            <Input
+                                id="alarm-name"
+                                type="text"
+                                value={form.alarmName || ''}
+                                onChange={(e) => {
+                                    setForm(prev => ({ ...prev, alarmName: e.target.value }));
+                                    setHasChanges(true);
+                                }}
+                                placeholder={t('alarms.enterAlarmName')}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
+                            />
+                        </div>
+
                         {/* Site Selection */}
                         <div className="space-y-2">
                             <Label>{t('alarms.site')}</Label>
@@ -177,20 +208,20 @@ export function EditPumpStatusIdvAlarmDialog({
                             )}
                         </div>
 
-                        {/* IDV Pump Selection */}
+                        {/* Pump Number Selection */}
                         <div className="space-y-2">
                             <Label>{t('alarms.idvPump')}</Label>
                             <Select
-                                value={form.IdvPump || ''}
+                                value={String(form.pumpNumber || 1)}
                                 onValueChange={handleIdvPumpChange}
-                                disabled={!siteConfiguration?.numPumps || configLoading}
+                                disabled={configLoading || !siteConfiguration?.numPumps}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
                                 <SelectTrigger className="rtl:flex-row-reverse">
                                     <SelectValue placeholder={configLoading ? t('common.loading') : t('alarms.selectPump')} />
                                 </SelectTrigger>
                                 <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {siteConfiguration?.numPumps ? (
+                                    {siteConfiguration?.numPumps && !configLoading ? (
                                         Array.from({ length: siteConfiguration.numPumps }, (_, i) => (
                                             <SelectItem key={i + 1} value={String(i + 1)}>
                                                 {t('alarms.pump')} {i + 1}
@@ -201,19 +232,24 @@ export function EditPumpStatusIdvAlarmDialog({
                             </Select>
                         </div>
 
-                        {/* Duration Field */}
+                        {/* Monitoring Hours Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="duration">{t('alarms.duration')}</Label>
+                            <Label htmlFor="monitoring-hours">{t('alarms.monitoringHours')}</Label>
                             <Input
-                                id="duration"
+                                id="monitoring-hours"
                                 type="number"
-                                min="0"
-                                value={form.duration || 0}
+                                min="1"
+                                max="168"
+                                value={form.monitoringHours ?? 24}
                                 onChange={(e) => {
-                                    setForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }));
+                                    setForm(prev => ({ 
+                                        ...prev, 
+                                        monitoringHours: parseInt(e.target.value) || 24,
+                                        pumpNumber: prev.pumpNumber || 1
+                                    }));
                                     setHasChanges(true);
                                 }}
-                                placeholder={t('alarms.enterDuration')}
+                                placeholder={t('alarms.enterMonitoringHours')}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}
                             />
@@ -250,7 +286,7 @@ export function EditPumpStatusIdvAlarmDialog({
                                 onClick={() => {
                                     onSubmit();
                                 }}
-                                disabled={isSubmitting || !hasChanges || !form.siteId || !form.IdvPump || (form.emails.length === 0 && form.phones.length === 0) || !form.duration}
+                                disabled={isSubmitting || !hasChanges || !form.siteId || !form.alarmName || form.pumpNumber < 1 || form.pumpNumber > 10 || (form.emails.length === 0 && form.phones.length === 0) || form.monitoringHours < 1 || form.monitoringHours > 168}
                                 loadingText={t('alarms.updatingAlarm')}
                                 isLoading={isSubmitting}
                             >

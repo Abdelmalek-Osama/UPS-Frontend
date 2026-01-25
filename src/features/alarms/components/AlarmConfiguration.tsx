@@ -86,7 +86,9 @@ export function AlarmConfiguration() {
     updateCommunicationAlarm,
     updatePumpStatusPSAlarm,
     updatePumpStatusIdvAlarm,
+    deletePumpStatusIdvAlarm,
     isLoading,
+    fetchError,
     fetchPumpStatusIdvSiteConfiguration,
     pumpStatusIdvSiteConfiguration,
     pumpStatusIdvConfigLoading,
@@ -115,7 +117,11 @@ export function AlarmConfiguration() {
   const [isAddPumpStatusIdvOpen, setIsAddPumpStatusIdvOpen] = useState(false);
   const [isEditPumpStatusIdvOpen, setIsEditPumpStatusIdvOpen]= useState(false);
   const [currentPumpStatusIdvAlarm, setCurrentPumpStatusIdvAlarm] = useState<PumpStatusIdvAlarmForm | null>(null);
-  const [newPumpStatusIdvForm, setNewPumpStatusIdvForm] = useState<PumpStatusIdvAlarmForm>(INITIAL_PumpStatusIdv_FORM);
+  const [newPumpStatusIdvForm, setNewPumpStatusIdvForm] = useState<PumpStatusIdvAlarmForm>({
+    ...INITIAL_PumpStatusIdv_FORM,
+    pumpNumber: 1,
+    monitoringHours: 24,
+  });
   const [currentCommunicationAlarm, setCurrentCommunicationAlarm] = useState<CommunicationAlarmForm | null>(null);
   const [isSubmittingThresholdAdd, setIsSubmittingThresholdAdd] = useState(false);
   const [isSubmittingThresholdEdit, setIsSubmittingThresholdEdit] = useState(false);
@@ -350,25 +356,39 @@ export function AlarmConfiguration() {
   const handleSubmitPumpStatusIdvAlarm = async () => {
     setIsSubmittingPumpIdvAdd(true);
     setPumpStatusIdvSubmissionError(null); // Clear previous errors
-    const { siteId, site } = newPumpStatusIdvForm;
+    const { siteId, alarmName, pumpNumber, monitoringHours } = newPumpStatusIdvForm;
 
-    if (!siteId || !site) {
-      console.error('Missing required Individual pump status alarm fields');
+    // Ensure numeric values
+    const pumpNum = pumpNumber ? Number(pumpNumber) : 0;
+    const monHours = monitoringHours ? Number(monitoringHours) : 0;
+
+    console.log('Form values:', { siteId, alarmName, pumpNumber, monitoringHours });
+    console.log('Converted values:', { pumpNum, monHours });
+
+    if (!siteId || !alarmName || pumpNum < 1 || pumpNum > 10 || monHours < 1 || monHours > 168) {
+      const errors = [];
+      if (!siteId) errors.push('Site is required');
+      if (!alarmName) errors.push('Alarm name is required');
+      if (isNaN(pumpNum) || pumpNum < 1 || pumpNum > 10) errors.push('Pump number must be between 1 and 10');
+      if (isNaN(monHours) || monHours < 1 || monHours > 168) errors.push('Monitoring hours must be between 1 and 168');
+      const errorMessage = errors.join(', ');
+      toast.error(errorMessage);
+      setPumpStatusIdvSubmissionError(errorMessage);
       setIsSubmittingPumpIdvAdd(false);
       return;
     }
 
     const requestBody: CreatePumpStatusIdvAlarmRequest = {
-      // id: 0,
+      alarmName,
       siteId,
-      site: sites.find(site => site.id === siteId)?.name || '',
-      // alarmName,
-      IdvPump: newPumpStatusIdvForm.IdvPump,
+      pumpNumber: pumpNum,
+      monitoringHours: monHours,
       emails: newPumpStatusIdvForm.emails.join(','),
       phones: newPumpStatusIdvForm.phones.join(','),
-      method: AlarmMethod.Email,
-      duration: newPumpStatusIdvForm.duration,
+      method: 'Email',
     };
+
+    console.log('Request body:', requestBody);
 
     try {
       const result = await createPumpStatusIdvAlarm(requestBody);
@@ -483,26 +503,38 @@ export function AlarmConfiguration() {
     setIsSubmittingPumpIdvEdit(true);
     if (!currentPumpStatusIdvAlarm || !currentPumpStatusIdvAlarm.siteId) return;
 
-    const { siteId, site, IdvPump } = newPumpStatusIdvForm;
+    const { siteId, alarmName, pumpNumber, monitoringHours } = newPumpStatusIdvForm;
 
-    if (!siteId || !site || !IdvPump) {
-      console.error('Missing required Individual pump status alarm fields');
+    // Ensure numeric values
+    const pumpNum = Number(pumpNumber);
+    const monHours = Number(monitoringHours);
+
+    if (!siteId || !alarmName || pumpNum < 1 || pumpNum > 10 || monHours < 1 || monHours > 168) {
+      const errors = [];
+      if (!siteId) errors.push('Site is required');
+      if (!alarmName) errors.push('Alarm name is required');
+      if (isNaN(pumpNum) || pumpNum < 1 || pumpNum > 10) errors.push('Pump number must be between 1 and 10');
+      if (isNaN(monHours) || monHours < 1 || monHours > 168) errors.push('Monitoring hours must be between 1 and 168');
+      const errorMessage = errors.join(', ');
+      toast.error(errorMessage);
+      setPumpStatusIdvSubmissionError(errorMessage);
       setIsSubmittingPumpIdvEdit(false);
       return;
     }
 
     const requestBody: CreatePumpStatusIdvAlarmRequest = {
+      id: currentPumpStatusIdvAlarm.alarmId,
+      alarmName,
       siteId,
-      site,
-      IdvPump,
+      pumpNumber: pumpNum,
+      monitoringHours: monHours,
       emails: newPumpStatusIdvForm.emails.join(','),
       phones: newPumpStatusIdvForm.phones.join(','),
-      method: AlarmMethod.Email,
-      duration: newPumpStatusIdvForm.duration,
+      method: 'Email',
     };
 
     try {
-      const result = await updatePumpStatusIdvAlarm(currentPumpStatusIdvAlarm.siteId, requestBody);
+      const result = await updatePumpStatusIdvAlarm(currentPumpStatusIdvAlarm.alarmId || 0, requestBody);
       if (result.success) {
         toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditPumpStatusIdvOpen(false);
@@ -533,26 +565,49 @@ export function AlarmConfiguration() {
   };
 
   const handlePumpStatusIdvAlarmEdit = (alarm: any) => {
-    const emails = alarm.recipients ? alarm.recipients.filter((r: string) => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(r)) : [];
-    const phones = alarm.recipients ? alarm.recipients.filter((r: string) => /^\d{11}$/.test(r)) : [];
+    const emails = alarm.emails ? alarm.emails.split(',').map((e: string) => e.trim()).filter((e: string) => e) : [];
+    const phones = alarm.phones ? alarm.phones.split(',').map((p: string) => p.trim()).filter((p: string) => p) : [];
     
     setCurrentPumpStatusIdvAlarm({
+      alarmId: alarm.id,
+      alarmName: alarm.alarmName || '',
       siteId: alarm.siteId,
-      site: alarm.site,
-      IdvPump: alarm.IdvPump,
+      site: alarm.siteName,
+      pumpNumber: alarm.pumpNumber || 1,
+      monitoringHours: alarm.monitoringHours || 24,
       emails: emails,
       phones: phones,
-      duration: alarm.duration || 0,
     });
     setNewPumpStatusIdvForm({
+      alarmId: alarm.id,
+      alarmName: alarm.alarmName || '',
       siteId: alarm.siteId,
-      site: alarm.site,
-      IdvPump: alarm.IdvPump,
+      site: alarm.siteName,
+      pumpNumber: alarm.pumpNumber || 1,
+      monitoringHours: alarm.monitoringHours || 24,
       emails: emails,
       phones: phones,
-      duration: alarm.duration || 0,
     });
     setIsEditPumpStatusIdvOpen(true);
+  };
+
+  const handlePumpStatusIdvAlarmDelete = async (alarmId: number) => {
+    if (window.confirm(t('alarms.confirmDelete'))) {
+      setIsSubmittingPumpIdvEdit(true);
+      try {
+        const result = await deletePumpStatusIdvAlarm(alarmId);
+        if (result.success) {
+          toast.success(t('alarms.alarmDeletedSuccess'));
+        } else {
+          toast.error(result.message || t('alarms.alarmDeleteFailed'));
+        }
+      } catch (error: any) {
+        console.error('Error deleting alarm:', error);
+        toast.error(error.message || t('alarms.alarmDeleteFailed'));
+      } finally {
+        setIsSubmittingPumpIdvEdit(false);
+      }
+    }
   };
 
   const handlePumpStatusPSAlarmEdit = (alarm: any) => {
@@ -1056,6 +1111,7 @@ export function AlarmConfiguration() {
                 <ThresholdAlarmTable
                   alarms={thresholdAlarms}
                   onEdit={handleThresholdAlarmEdit}
+                  error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1105,6 +1161,7 @@ export function AlarmConfiguration() {
                 <CommunicationAlarmTable
                   alarms={communicationAlarms}
                   onEdit={handleCommunicationAlarmEdit}
+                  error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1209,6 +1266,7 @@ export function AlarmConfiguration() {
                 <PumpStatusPSTable
                   alarms={pumpStatusPSAlarms} 
                 onEdit={handlePumpStatusPSAlarmEdit}
+                error={fetchError}
                 />
               </CardContent>
             </Card>
@@ -1261,7 +1319,10 @@ export function AlarmConfiguration() {
               <CardContent>
                 <PumpStatusIdvTable 
                 alarms={pumpStatusIdvAlarms} 
-                onEdit={handlePumpStatusIdvAlarmEdit}/>
+                onEdit={handlePumpStatusIdvAlarmEdit}
+                onDelete={handlePumpStatusIdvAlarmDelete}
+                error={fetchError}
+                />
               </CardContent>
             </Card>
           )}
@@ -1364,6 +1425,7 @@ export function AlarmConfiguration() {
         setEmails={setPumpStatusIdvEmails}
         setPhones={setPumpStatusIdvPhones}
         submissionError={pumpStatusIdvSubmissionError}
+        onFetchSiteConfig={fetchPumpStatusIdvSiteConfiguration}
       />
     </div>
   );

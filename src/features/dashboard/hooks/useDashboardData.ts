@@ -38,6 +38,24 @@ export function useDashboardData() {
 
   const { isAuthenticated } = useAuth();
 
+  // Map severity number to string
+  const mapSeverityNumber = (severity: any): 'critical' | 'warning' | 'info' => {
+    if (typeof severity === 'string') {
+      return severity.toLowerCase() as 'critical' | 'warning' | 'info';
+    }
+    // Assuming: 0 = info, 1 = warning, 2 = critical
+    switch (severity) {
+      case 0:
+        return 'info';
+      case 1:
+        return 'warning';
+      case 2:
+        return 'critical';
+      default:
+        return 'info';
+    }
+  };
+
   // Fetch recent alarm events
   const fetchRecentAlarmEvents = async () => {
     try {
@@ -47,35 +65,37 @@ export function useDashboardData() {
         params: {
           unresolvedOnly: true,
           'pagination.PageNumber': 1,
-          'pagination.PageSize': 3,
+          'pagination.PageSize': 5,
         },
       });
 
-      if (response && response.data) {
+      if (response) {
         let events: RecentAlarmEvent[] = [];
 
-        // Extract events from various possible response formats
-        if (Array.isArray(response.data)) {
-          events = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
+        // Extract events from nested response structure: response.data.data.data
+        if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
+          events = response.data.data.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
           events = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          events = response.data;
         }
 
         // Map API response to RecentAlarmEvent
         const mappedEvents = events.map((event: any) => ({
           id: event.id,
-          alarmName: event.alarmName,
-          siteName: event.siteName,
-          fieldName: event.fieldName,
+          alarmName: event.alarmName || 'Alarm',
+          siteName: event.siteName || '',
+          fieldName: event.fieldName || '',
           actualValue: event.actualValue,
           thresholdValue: event.thresholdValue,
-          severity: event.severity?.toLowerCase() || 'info',
+          severity: mapSeverityNumber(event.severity),
           colorCode: event.colorCode,
           triggeredAt: event.triggeredAt,
           message: event.message,
         }));
 
-        setRecentAlarmEvents(mappedEvents);
+        setRecentAlarmEvents(mappedEvents.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching recent alarm events:', error);
@@ -88,38 +108,45 @@ export function useDashboardData() {
     try {
       if (!isAuthenticated) return;
 
-      const response = await apiService.get<any>('/v1/ReadingLogs/recent', {
+      const response = await apiService.get<any>('/v1/reading-logs', {
         params: {
-          'pagination.PageNumber': 1,
-          'pagination.PageSize': 3,
+          'PageNumber': 1,
+          'PageSize': 5,
         },
       });
 
-      if (response && response.data) {
-        let logs: ReadingLog[] = [];
+      if (response) {
+        let logs: any[] = [];
 
-        // Extract logs from various possible response formats
-        if (Array.isArray(response.data)) {
-          logs = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
+        // Extract logs from nested response structure
+        if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
+          logs = response.data.data.data;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
           logs = response.data.data;
+        } else if (response.data && Array.isArray(response.data)) {
+          logs = response.data;
+        } else if (Array.isArray(response)) {
+          logs = response;
         }
 
         // Map API response to ReadingLog
+        // The API returns audit logs with: readingType, id, siteName, actionType, timeStamp, createdBy, actionDate
         const mappedLogs = logs.map((log: any) => ({
           id: log.id,
-          site: log.site || log.siteName,
+          site: log.siteName || '',
           type: log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation',
-          timestamp: log.timestamp || log.dateTime,
-          uswl: log.uswl,
-          dswl: log.dswL1 || log.dswl,
-          calculatedFlow: log.calculatedFlow || log.flow,
-          totalFlow: log.totalFlow,
-          uptime: log.totalUptime || log.uptime,
-          isManual: log.isManual,
+          timestamp: log.actionDate || log.timeStamp || new Date().toISOString(),
+          actionType: log.actionType || '',
+          uswl: undefined,
+          dswl: undefined,
+          calculatedFlow: undefined,
+          totalFlow: undefined,
+          uptime: undefined,
+          isManual: false,
         }));
 
-        setReadingLogs(mappedLogs);
+        console.log('Mapped Reading Logs:', mappedLogs);
+        setReadingLogs(mappedLogs.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching recent reading logs:', error);

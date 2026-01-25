@@ -17,9 +17,10 @@ import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers'
 interface SensorStatusResponseTableProps {
     alarms: SensorStatusResponse[];
     onEdit: (alarm: any) => void;
+    error?: boolean;
 }
 
-export function SensorStatusTable({ alarms, onEdit }: SensorStatusResponseTableProps) {
+export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -80,6 +81,14 @@ export function SensorStatusTable({ alarms, onEdit }: SensorStatusResponseTableP
     // For RTL (Arabic): keep original order
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
 
     return (
         <Table>

@@ -17,9 +17,10 @@ import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers'
 interface ThresholdAlarmTableProps {
     alarms: ValueThresholdAlarm[];
     onEdit: (alarm: any) => void;
+    error?: boolean;
 }
 
-export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps) {
+export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -97,9 +98,9 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             key: 'criticalThreshold',
             header: t('alarms.critical'),
             render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
+                <div className="text-center">
                     <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-center gap-1">
                             <code className="text-sm bg-gray-100 px-2 py-1 rounded">
                                 {alarm.criticalOperator !== undefined ? mapNumberToOperator[alarm.criticalOperator] : (alarm.operator !== undefined ? mapNumberToOperator[alarm.operator] : '>')}
                             </code>
@@ -107,7 +108,9 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
                                 {alarm.criticalThresholdValue !== undefined ? alarm.criticalThresholdValue : alarm.threshold}
                             </span>
                         </div>
-                        <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.criticalColorCode || alarm.color || '#fbbf24' }} title={alarm.criticalColorCode || alarm.color} />
+                        <div className="flex justify-center">
+                            <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.criticalColorCode || alarm.color || '#fbbf24' }} title={alarm.criticalColorCode || alarm.color} />
+                        </div>
                     </div>
                 </div>
             )
@@ -116,9 +119,9 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             key: 'crisisThreshold',
             header: t('alarms.crisis'),
             render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
+                <div className="text-center">
                     <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-center gap-1">
                             <code className="text-sm bg-gray-100 px-2 py-1 rounded">
                                 {alarm.crisisOperator !== undefined ? mapNumberToOperator[alarm.crisisOperator] : '-'}
                             </code>
@@ -126,7 +129,9 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
                                 {alarm.crisisThresholdValue !== undefined ? alarm.crisisThresholdValue : '-'}
                             </span>
                         </div>
-                        <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.crisisColorCode || '#db0202ff' }} title={alarm.crisisColorCode} />
+                        <div className="flex justify-center">
+                            <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.crisisColorCode || '#db0202ff' }} title={alarm.crisisColorCode} />
+                        </div>
                     </div>
                 </div>
             )
@@ -154,6 +159,14 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
     // For RTL (Arabic): keep original order
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
 
     return (
         <Table>

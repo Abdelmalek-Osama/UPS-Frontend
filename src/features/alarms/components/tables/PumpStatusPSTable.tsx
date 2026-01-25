@@ -17,9 +17,10 @@ import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers'
 interface PumpStatusPSResponseTableProps {
     alarms: PumpStatusPSResponse[];
     onEdit: (alarm: any) => void;
+    error?: boolean;
 }
 
-export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableProps) {
+export function PumpStatusPSTable({ alarms, onEdit, error }: PumpStatusPSResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -98,6 +99,14 @@ export function PumpStatusPSTable({ alarms, onEdit }: PumpStatusPSResponseTableP
     // For RTL (Arabic): keep original order
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
 
     return (
         <Table>

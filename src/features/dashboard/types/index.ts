@@ -47,6 +47,7 @@ export interface ReadingLog {
   site: string;
   type: 'WaterLevel' | 'PumpStation';
   timestamp: string;
+  actionType: string;
   uswl?: number;
   dswl?: number;
   calculatedFlow?: number;

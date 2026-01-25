@@ -49,7 +49,11 @@
     "page": "Page",
     "previousPage": "Previous page",
     "nextPage": "Next page",
-    "step": "Step"
+    "step": "Step",
+    "filters": "Filters",
+    "clearFilters": "Clear Filters",
+    "message": "Message",
+    "serverError": "No response from server. Please check your internet connection."
   },
   "buttons": {
     "save": "Save",
@@ -207,7 +211,11 @@
       "allMappingsAddedMessage": "All available data mappings have been added",
       "tableWaterLevel": "Water Level",
       "tablePumpStation": "Pump Station",
-      "tablePumpStatus": "Pump Status"
+      "tablePumpStatus": "Pump Status",
+      "createSuccess": "Site created successfully",
+      "updateSuccess": "Site updated successfully",
+      "createError": "Failed to create site",
+      "updateError": "Failed to update site"
     },
     "stage4": {
       "title": "Flow Calculation",
@@ -357,7 +365,6 @@
     "enterDuration": "Enter duration",
     "monitoringHours": "Monitoring Hours",
     "enterMonitoringHours": "Enter monitoring hours",
-    "PumpStatusIdvAlarms": "Individual Pump Status Alarms",
     "field": "Field",
     "operator": "Operator",
     "threshold": "Threshold Value",
@@ -402,6 +409,7 @@
     "cardsView": "Cards View",
     "emailRecipients": "Email Recipients",
     "phoneRecipients": "Phone Recipients",
+    "recipients": "Recipients",
     "operators": {
       "greaterThan": "Greater than",
       "lessThan": "Less than",
@@ -414,6 +422,9 @@
     "eventDetails": "Event Details",
     "eventNumber": "Event #",
     "noEventsToDisplay": "No alarm events to display",
+    "noEvents": "No Events",
+    "noEventsYet": "No alarm events yet",
+    "noEventsMatchFilters": "No events match your filter criteria",
     "message": "Message",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
@@ -493,6 +504,7 @@
     "deleteUserSuccess": "User deleted successfully",
     "resetPasswordSuccess": "Password reset successfully",
     "resettingPassword": "Resetting password...",
+    "resetPasswordSuccessMessage":"Password reset successfully",
     "userRoleUpdatedSuccess": "User role updated successfully",
     "deleteUserConfirm": "Are you sure you want to delete this user?",
     "usersCount": "Users",
@@ -576,6 +588,7 @@
     "pumpStatusOperationRequired": "The pump status operation field is required.",
     "failedToCreateAlarm": "Failed to create alarm.",
     "failedToUpdateAlarm": "Failed to update alarm.",
+    "siteTypeRequired": "Site type is required",
     "unknownError": "An unknown error occurred."
   },
   "notifications": {
@@ -588,8 +601,14 @@
     "updated": "Item updated successfully",
     "loading": "Loading data...",
     "noNetwork": "No internet connection"
-  },
-  "validation": {
+  },  "placeholders": {
+    "fullName": "Enter full name",
+    "email": "user@example.com",
+    "selectRole": "Select a role",
+    "username": "Enter username",
+    "password": "••••••••",
+    "confirmPassword": "••••••••"
+  },  "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",
     "phone": "Please enter a valid phone number",
