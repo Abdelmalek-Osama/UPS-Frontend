@@ -21,7 +21,7 @@ interface TabProps {
 }
 
 // Static database column names for Water Level
-const WATER_LEVEL_COLUMNS = ['Timestamp', 'USWL', 'DSWL1', 'Battery'];
+const WATER_LEVEL_COLUMNS = ['USWL', 'DSWL1', 'Battery'];
 
 const TABLE_OPTIONS = {
   'waterLevel': 'sites.stage3.tableWaterLevel',
@@ -57,7 +57,7 @@ const generatePumpColumns = (numPumps: number, prefix: string): string[] => {
 
 // Generate pump station columns (Time and Flow for each pump)
 const generatePumpStationColumns = (numPumps: number): string[] => {
-  const columns: string[] = ['Timestamp'];
+  const columns: string[] = [];
   for (let i = 1; i <= numPumps; i++) {
     columns.push(`P${i}_Time`);
     columns.push(`P${i}_Flow`);
@@ -67,7 +67,7 @@ const generatePumpStationColumns = (numPumps: number): string[] => {
 
 // Generate pump status columns (Status for each pump)
 const generatePumpStatusColumns = (numPumps: number): string[] => {
-  const columns: string[] = ['Timestamp'];
+  const columns: string[] = [];
   for (let i = 1; i <= numPumps; i++) {
     columns.push(`P${i}_Status`);
   }
@@ -76,7 +76,7 @@ const generatePumpStatusColumns = (numPumps: number): string[] => {
 
 // Filter water level columns based on hasUS and hasDS1 selections
 const filterWaterLevelColumns = (hasUS: boolean = false, hasDS1: boolean = false): string[] => {
-  const columns = ['Timestamp'];
+  const columns: string[] = [];
   if (hasUS) {
     columns.push('USWL');
   }
@@ -175,18 +175,27 @@ export default function Stage3({ data, onChange }: TabProps) {
       return;
     }
 
-    // Check if all column mappings are filled
-    const allFilled = Object.values(columnMappings).every(val => val.trim() !== '');
+    // Filter out any timestamp mappings and check if all remaining column mappings are filled
+    const filteredMappings = Object.entries(columnMappings)
+      .filter(([key]) => !key.toLowerCase().includes('timestamp'))
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {} as Record<string, string>);
+    
+    const allFilled = Object.values(filteredMappings).every((val: string) => val.trim() !== '');
     if (!allFilled) {
       alert('Please fill in all column mappings');
       return;
     }
 
+    // Convert columnMappings to "key1:value1,key2:value2" format
+    const columnMappingString = Object.entries(filteredMappings)
+      .map(([key, value]) => `${key}:${value}`)
+      .join(',');
+
     const newMapping: DataMapping = {
       tableName: TABLE_NAME_MAP[selectedTableForForm],
       folder: mappingForm.folder,
       filename: mappingForm.filename,
-      columnMapping: JSON.stringify(columnMappings),
+      columnMapping: columnMappingString,
     };
 
     const updatedMappings = [...dataMappings, newMapping];
@@ -347,14 +356,18 @@ export default function Stage3({ data, onChange }: TabProps) {
                       <div className="mt-2 pl-4 space-y-1 bg-gray-50 p-2 rounded text-gray-700">
                         {(() => {
                           try {
-                            const cols = JSON.parse(mapping.columnMapping) as Record<string, string>;
-                            return Object.entries(cols).map(([db, user]) => (
-                              <div key={db} className="text-xs">
-                                <span className="font-mono">{db}</span>
-                                <span className="text-gray-400"> → </span>
-                                <span className="font-mono">{String(user)}</span>
-                              </div>
-                            ));
+                            // Parse columnMapping from "key:value,key:value" format
+                            const pairs = mapping.columnMapping.split(',').map(pair => pair.trim());
+                            return pairs.map(pair => {
+                              const [db, user] = pair.split(':').map(p => p.trim());
+                              return (
+                                <div key={db} className="text-xs">
+                                  <span className="font-mono">{db}</span>
+                                  <span className="text-gray-400"> → </span>
+                                  <span className="font-mono">{user}</span>
+                                </div>
+                              );
+                            });
                           } catch {
                             return <div className="text-xs text-red-600">Invalid mapping data</div>;
                           }

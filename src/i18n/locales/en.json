@@ -616,6 +616,9 @@
     "maxLength": "Maximum length is {{max}} characters",
     "invalidNumber": "Please enter a valid number",
     "passwordMatch": "Passwords do not match",
+    "passwordNeedsLowercase":"Password must contain at least one lowercase letter.",
+    "passwordNeedsUppercase":"Password must contain at least one uppercase letter.",
+    "passwordNeedsNumber":"Password must contain at least one number.",
     "invalidEmailFormat": "Please enter a valid email address.",
     "phone11Digits": "Please enter a valid 11-digit phone number."
   }
