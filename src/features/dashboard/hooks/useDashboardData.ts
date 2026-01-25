@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { FlowDataPoint, DirectorateData, RecentAlarmEvent, ReadingLog, DashboardStats } from '../types';
+import type { FlowDataPoint, DirectorateData, RecentAlarmEvent, ReadingLog, DashboardStats, SiteLookup } from '../types';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import apiService from '../../../shared/utils/apiService';
 
@@ -22,6 +22,8 @@ export function useDashboardData() {
 
   const [recentAlarmEvents, setRecentAlarmEvents] = useState<RecentAlarmEvent[]>([]);
   const [readingLogs, setReadingLogs] = useState<ReadingLog[]>([]);
+  const [sites, setSites] = useState<SiteLookup[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalSites: 45,
@@ -154,6 +156,37 @@ export function useDashboardData() {
     }
   };
 
+  // Fetch sites
+  const fetchSites = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/Lookups/Lookup/Sites');
+
+      if (response) {
+        let sitesData: SiteLookup[] = [];
+
+        // Extract sites from response
+        if (Array.isArray(response.data)) {
+          sitesData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          sitesData = response.data.data;
+        } else if (Array.isArray(response)) {
+          sitesData = response;
+        }
+
+        setSites(sitesData);
+        // Set first site as default if available
+        if (sitesData.length > 0) {
+          setSelectedSiteId(sitesData[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      setSites([]);
+    }
+  };
+
   // Fetch data when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
@@ -161,6 +194,7 @@ export function useDashboardData() {
       setDirectorateData([]);
       setRecentAlarmEvents([]);
       setReadingLogs([]);
+      setSites([]);
       setStats({
         totalSites: 0,
         connectedSites: 0,
@@ -176,6 +210,7 @@ export function useDashboardData() {
     } else {
       fetchRecentAlarmEvents();
       fetchRecentReadingLogs();
+      fetchSites();
     }
   }, [isAuthenticated]);
 
@@ -185,6 +220,9 @@ export function useDashboardData() {
     recentAlarmEvents,
     readingLogs,
     stats,
+    sites,
+    selectedSiteId,
+    setSelectedSiteId,
     fetchRecentAlarmEvents,
     fetchRecentReadingLogs,
   };

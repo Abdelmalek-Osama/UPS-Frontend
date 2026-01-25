@@ -5,7 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import {
-  MapPin,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
+import {
+MapPin,
   AlertTriangle,
   TrendingUp,
   Activity,
@@ -30,7 +37,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 export function DashboardHome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { flowData, directorateData, recentAlarmEvents, readingLogs, stats } = useDashboardData();
+  const { flowData, directorateData, recentAlarmEvents, readingLogs, stats, sites, selectedSiteId, setSelectedSiteId } = useDashboardData();
 
   const formatDate = (dateString: string) => {
 const date = new Date(dateString);
@@ -67,25 +74,25 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
   };
 
   return (
-    <div className="space-y-6">
+  <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h2 className="text-2xl">{t('dashboard.title')}</h2>
    <p className="text-gray-500 mt-1">{t('dashboard.subtitle')}</p>
-      </div>
+   </div>
 
       {/* Stats Cards */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">{t('dashboard.totalSites')}</CardTitle>
-            <MapPin className="h-4 w-4 text-blue-600" />
-          </CardHeader>
+     <Card>
+<CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-sm">{t('dashboard.totalSites')}</CardTitle>
+     <MapPin className="h-4 w-4 text-blue-600" />
+     </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.totalSites}</div>
+      <div className="text-2xl">{stats.totalSites}</div>
        <p className="text-xs text-gray-500 mt-1">
-              <span className="text-green-600">{t('dashboard.allConnected')}</span>
-         </p>
+   <span className="text-green-600">{t('dashboard.allConnected')}</span>
+   </p>
           </CardContent>
         </Card>
 
@@ -94,58 +101,72 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
         <CardTitle className="text-sm">{t('dashboard.activeAlarms')}</CardTitle>
   <AlertTriangle className="h-4 w-4 text-yellow-600" />
     </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{stats.activeAlarms}</div>
+   <CardContent>
+ <div className="text-2xl">{stats.activeAlarms}</div>
             <p className="text-xs text-gray-500 mt-1">
    <span className="text-red-600">{stats.criticalAlarms} {t('dashboard.critical')}</span> • <span className="text-yellow-600">{stats.warningAlarms} {t('dashboard.warnings')}</span>
-            </p>
-          </CardContent>
+    </p>
+      </CardContent>
  </Card>
 
      <Card>
   <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm">{t('dashboard.totalFlow')}</CardTitle>
-          <TrendingUp className="h-4 w-4 text-green-600" />
+     <TrendingUp className="h-4 w-4 text-green-600" />
   </CardHeader>
    <CardContent>
             <div className="text-2xl">{stats.totalFlow.toLocaleString()} {t('dashboard.flowPerHour')}</div>
-        <p className="text-xs text-green-600 mt-1">
+    <p className="text-xs text-green-600 mt-1">
    ↑ {stats.flowChange}% {t('dashboard.flowChange')}
-            </p>
+   </p>
           </CardContent>
    </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
          <CardTitle className="text-sm">{t('dashboard.activeStations')}</CardTitle>
-            <Activity className="h-4 w-4 text-purple-600" />
+      <Activity className="h-4 w-4 text-purple-600" />
           </CardHeader>
         <CardContent>
    <div className="text-2xl">{stats.activeStations}/{stats.totalStations}</div>
  <p className="text-xs text-gray-500 mt-1">
-   {t('dashboard.uptimePercentage')}: {stats.uptimePercentage}%
-            </p>
+ {t('dashboard.uptimePercentage')}: {stats.uptimePercentage}%
+      </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
-        <Card>
-    <CardHeader>
-            <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
+   {/* Charts Row */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
+<Card>
+    <CardHeader className="flex flex-col gap-4">
+    <div className="flex items-center justify-between">
+           <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
+            </div>
+       <Select value={selectedSiteId?.toString()} onValueChange={(value) => setSelectedSiteId(parseInt(value))}>
+         <SelectTrigger className="w-full">
+    <SelectValue placeholder={t('dashboard.selectSite')} />
+       </SelectTrigger>
+              <SelectContent>
+        {sites.map((site) => (
+        <SelectItem key={site.id} value={site.id.toString()}>
+       {site.name}
+       </SelectItem>
+                ))}
+ </SelectContent>
+         </Select>
  </CardHeader>
-          <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+    <CardContent>
+  <ResponsiveContainer width="100%" height={250}>
               <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
     <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-         <YAxis
+     <XAxis dataKey="time" />
+     <YAxis
        label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy: -20 }}
    tick={{ dx: -25 }}
-                />
+             />
        <Tooltip />
-         <Legend />
+       <Legend />
    <Line type="monotone" dataKey="flow" stroke="#2563eb" name={t('readings.totalFlow')} strokeWidth={2} />
       </LineChart>
      </ResponsiveContainer>
@@ -154,20 +175,20 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('dashboard.sitesByDirectorate')}</CardTitle>
-          </CardHeader>
+         <CardTitle>{t('dashboard.sitesByDirectorate')}</CardTitle>
+     </CardHeader>
           <CardContent>
  <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={directorateData} margin={{ top: 5, bottom: 5 }}>
+     <BarChart data={directorateData} margin={{ top: 5, bottom: 5 }}>
        <CartesianGrid strokeDasharray="3 3" />
-     <XAxis dataKey="name" />
-            <YAxis
+  <XAxis dataKey="name" />
+        <YAxis
       label={{ value: t('sites.sitesCount'), angle: -90, position: 'insideLeft', dy: -20 }}
    tick={{ dx: -15 }}
-           />
+    />
        <Tooltip />
    <Legend />
-            <Bar dataKey="sites" fill="#3b82f6" name={t('dashboard.totalSites')} />
+  <Bar dataKey="sites" fill="#3b82f6" name={t('dashboard.totalSites')} />
           <Bar dataKey="active" fill="#10b981" name={t('common.active')} />
               </BarChart>
          </ResponsiveContainer>
@@ -176,38 +197,38 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
       </div>
 
       {/* Recent Alarm Events and Recent Reading Logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Alarm Events */}
         <Card>
         <CardHeader className="flex flex-row items-center justify-between">
  <CardTitle>{t('dashboard.recentAlarmEvents')}</CardTitle>
        <Button variant="outline" size="sm" onClick={() => navigate('/alarms/events')}>
               {t('dashboard.viewAll')}
-            </Button>
+         </Button>
    </CardHeader>
-      <CardContent>
+   <CardContent>
       {recentAlarmEvents.length === 0 ? (
      <div className="text-center py-8 text-gray-500">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
            <p>{t('dashboard.noRecentEvents')}</p>
           </div>
-            ) : (
+       ) : (
          <div className="space-y-3">
  {recentAlarmEvents.map((alarm) => (
-                  <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+       <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
        <div className={`p-2 rounded-lg flex-shrink-0 ${
-       alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
+    alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
         }`}>
     <AlertTriangle className={`h-4 w-4 ${
        alarm.severity === 'critical' ? 'text-red-700' : alarm.severity === 'warning' ? 'text-yellow-700' : 'text-blue-700'
       }`} />
-       </div>
+   </div>
         <div className="flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2">
    <p className="text-sm font-medium truncate">{alarm.siteName}</p>
    {getSeverityBadge(alarm.severity)}
-         </div>
-           <p className="text-xs text-gray-600 mt-1">{alarm.fieldName}</p>
+      </div>
+        <p className="text-xs text-gray-600 mt-1">{alarm.fieldName}</p>
   <p className="text-xs text-gray-500 mt-1">{formatDate(alarm.triggeredAt)}</p>
         </div>
     </div>
@@ -220,24 +241,24 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
         {/* Recent Reading Logs */}
       <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('dashboard.recentReadingLogs')}</CardTitle>
+       <CardTitle>{t('dashboard.recentReadingLogs')}</CardTitle>
       <Button variant="outline" size="sm" onClick={() => navigate('/reading-logs')}>
    {t('dashboard.viewAll')}
        </Button>
-      </CardHeader>
+  </CardHeader>
        <CardContent>
      {readingLogs.length === 0 ? (
    <div className="text-center py-8 text-gray-500">
-          <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-    <p>{t('dashboard.noRecentReadings')}</p>
+    <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+  <p>{t('dashboard.noRecentReadings')}</p>
       </div>
   ) : (
         <div className="space-y-3">
-                {readingLogs.map((reading, index) => (
+     {readingLogs.map((reading, index) => (
   <div key={index} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
-                 <div className={`p-2 rounded-lg flex-shrink-0 ${
-           reading.type === 'WaterLevel' ? 'bg-blue-100' : 'bg-green-100'
-         }`}>
+     <div className={`p-2 rounded-lg flex-shrink-0 ${
+      reading.type === 'WaterLevel' ? 'bg-blue-100' : 'bg-green-100'
+   }`}>
       {reading.type === 'WaterLevel' ? (
      <Droplets className="h-4 w-4 text-blue-700" />
       ) : (
@@ -248,15 +269,15 @@ created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green
         <div className="flex items-start justify-between gap-2">
       <p className="text-sm font-medium truncate">{reading.site}</p>
              {reading.actionType && getActionBadge(reading.actionType)}
-                   </div>
-      <p className="text-xs text-gray-600 mt-1">{reading.type}</p>
-               <p className="text-xs text-gray-500 mt-1">{formatDate(reading.timestamp)}</p>
-       </div>
-                  </div>
-                ))}
+    </div>
+   <p className="text-xs text-gray-600 mt-1">{reading.type}</p>
+        <p className="text-xs text-gray-500 mt-1">{formatDate(reading.timestamp)}</p>
+   </div>
+      </div>
+       ))}
               </div>
-        )}
-          </CardContent>
+   )}
+    </CardContent>
    </Card>
       </div>
     </div>

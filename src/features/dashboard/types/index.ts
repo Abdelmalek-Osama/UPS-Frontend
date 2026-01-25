@@ -68,3 +68,8 @@ export interface DashboardStats {
   totalStations: number;
   uptimePercentage: number;
 }
+
+export interface SiteLookup {
+  id: number;
+  name: string;
+}
