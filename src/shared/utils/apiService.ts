@@ -7,6 +7,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } f
 import i18n from '../../i18n';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 import type { Site } from '../../features/sites/types';
+import type { RecentAlarmEvent, ReadingLog } from '../../features/dashboard/types';
 
 let onLogoutCallback: (() => void) | null = null;
 
@@ -16,8 +17,8 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
-const API_BASE_URL = 'https://localhost:5001/api/';
-//const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+//const API_BASE_URL = 'https://localhost:5001/api/';
+const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 //const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
 
 
@@ -51,6 +52,15 @@ axiosInstance.interceptors.request.use(
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Log full request config for debugging
+    if (config.url?.includes('/v1/Sites')) {
+      console.log('Axios Request Config:', JSON.stringify({
+        url: config.url,
+        method: config.method,
+        headers: config.headers,
+        data: config.data
+      }, null, 2));
     }
     return config;
   },
@@ -344,8 +354,8 @@ export const registerUser = async (userData: any): Promise<UserDto> => {
   return response.data;
 };
 
-export const getRecentAlarmEvents = async (): Promise<ApiResponse<AlarmEvent[]>> => {
-  const response = await axiosInstance.get<ApiResponse<AlarmEvent[]>>('/v1/AlarmEvents/recent');
+export const getRecentAlarmEvents = async (): Promise<ApiResponse<RecentAlarmEvent[]>> => {
+  const response = await axiosInstance.get<ApiResponse<RecentAlarmEvent[]>>('/v1/AlarmEvents/recent');
   return response.data;
 };
 

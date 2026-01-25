@@ -5,23 +5,20 @@ import apiService from '../../../shared/utils/apiService';
 import type { Site, DataMapping, FlowCalculation } from '../types';
 import { getDirectorateIdByName } from '../utils/directorateMapping';
 
-// Map siteType string to numeric string value for API
-const mapSiteTypeToNumericString = (siteType: string): string => {
+// Validate siteType string value
+const validateSiteType = (siteType: string): string => {
   if (!siteType || typeof siteType !== 'string' || siteType.trim() === '') {
     throw new Error('Site type is required');
   }
   
-  // Trim whitespace and convert to string
+  // Trim whitespace
   const cleanSiteType = String(siteType).trim();
   
-  switch (cleanSiteType) {
-    case 'WaterLevel':
-      return '0';
-    case 'Pumps':
-      return '1';
-    default:
-      throw new Error(`Invalid site type: ${cleanSiteType}`);
+  if (cleanSiteType !== 'WaterLevel' && cleanSiteType !== 'Pumps') {
+    throw new Error(`Invalid site type: ${cleanSiteType}`);
   }
+  
+  return cleanSiteType;
 };
 
 interface SiteInfoPayload {
@@ -80,16 +77,21 @@ export function useSiteCreation(): UseCreateSiteResult {
           };
         }
 
-        // Build dataMappings with required optional fields
-        const dataMappingsWithDefaults = (siteData.dataMappings || []).map(mapping => ({
-          ...mapping,
-          headerRowsToSkip: mapping.headerRowsToSkip ?? 0,
-          priority: mapping.priority ?? 0,
-          isActive: mapping.isActive ?? true,
-        }));
+        // Build dataMappings with required modifications
+        const dataMappingsWithDefaults = (siteData.dataMappings || []).map(mapping => {
+          return {
+            ...mapping,
+            headerRowsToSkip: 4, // Always set to 4
+            priority: mapping.priority ?? 0,
+            isActive: mapping.isActive ?? true,
+          };
+        });
 
-        const mappedSiteType = mapSiteTypeToNumericString(siteTypeValue);
-        console.log('Mapped siteType:', mappedSiteType);
+        const mappedSiteType = validateSiteType(siteTypeValue);
+        console.log('Validated siteType:', mappedSiteType);
+        console.log('SiteType type:', typeof mappedSiteType);
+        console.log('SiteType length:', mappedSiteType.length);
+        console.log('SiteType charCodes:', Array.from(mappedSiteType).map(c => c.charCodeAt(0)));
         
         const payload: CreateSitePayload = {
           info: {
@@ -118,12 +120,8 @@ export function useSiteCreation(): UseCreateSiteResult {
           },
         };
 
-        const requestBody = {
-          createSiteDto: payload,
-        };
-
-        console.log('Sending site creation payload:', JSON.stringify(requestBody, null, 2));
-        const response = await apiService.post<any>('/v1/Sites', requestBody);
+        console.log('Sending site creation payload:', JSON.stringify(payload, null, 2));
+        const response = await apiService.post<any>('/v1/Sites', payload);
         
         if (response) {
           toast.success(t('sites.stage3.createSuccess'));
