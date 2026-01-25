@@ -106,6 +106,8 @@
     "flowInLast24Hours": "Flow in Last 24 Hours",
     "sitesByDirectorate": "Sites by Directorate",
     "recentReadings": "Recent Readings",
+    "recentAlarmEvents": "Recent Alarm Events",
+    "recentReadingLogs": "Recent Reading Logs",
     "allConnected": "All sites connected",
     "critical": "Critical",
     "crisis": "Crisis",
@@ -116,7 +118,9 @@
     "uptimePercentage": "Uptime Rate",
     "viewAll": "View All",
     "noOfSites": "Total Sites",
-    "numSites": "Number of Sites"
+    "numSites": "Number of Sites",
+    "noRecentEvents": "No recent alarm events",
+    "noRecentReadings": "No recent reading logs"
   },
   "sites": {
     "title": "Sites Management",

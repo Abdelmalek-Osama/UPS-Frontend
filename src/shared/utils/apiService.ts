@@ -344,6 +344,16 @@ export const registerUser = async (userData: any): Promise<UserDto> => {
   return response.data;
 };
 
+export const getRecentAlarmEvents = async (): Promise<ApiResponse<AlarmEvent[]>> => {
+  const response = await axiosInstance.get<ApiResponse<AlarmEvent[]>>('/v1/AlarmEvents/recent');
+  return response.data;
+};
+
+export const getRecentReadingLogs = async (): Promise<ApiResponse<ReadingLog[]>> => {
+  const response = await axiosInstance.get<ApiResponse<ReadingLog[]>>('/v1/ReadingLogs/recent');
+  return response.data;
+};
+
 export const logoutUser = async (): Promise<ApiResponse<any>> => {
   const response = await axiosInstance.post<ApiResponse<any>>('/v1/Auth/logout');
   clearAllUserData(); // Use the centralized function
