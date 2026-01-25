@@ -127,13 +127,14 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
               <Input
                 id="new-password"
                 type={showNewPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder={t('placeholders.password')}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 style={{
                   paddingRight: !isRTL ? '2.5rem' : undefined,
                   paddingLeft: isRTL ? '2.5rem' : undefined
                 }}
+                
               />
               <Button
                 type="button"
@@ -162,7 +163,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
               <Input
                 id="confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder={t('placeholders.confirmPassword')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 style={{

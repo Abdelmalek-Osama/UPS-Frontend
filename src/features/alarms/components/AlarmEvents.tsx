@@ -373,11 +373,11 @@ export function AlarmEvents() {
 
       {/* Filters Card */}
       <Card>
-        <CardHeader>
+        {/* <CardHeader>
           <CardTitle className="text-lg">{t('common.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
+        </CardHeader> */}
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Site Filter */}
             <div className="space-y-2 md:w-64">
               <Label>{t('readings.site')}</Label>

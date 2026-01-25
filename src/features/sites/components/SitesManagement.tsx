@@ -170,11 +170,10 @@ export function SitesManagement() {
                 <TableRow>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteName')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteType')}</TableHead>
-                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.code')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.canal')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.directorate')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.location')}</TableHead>
-                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                  <TableHead className="text-center">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -195,7 +194,6 @@ export function SitesManagement() {
                         {site.siteType === 'WaterLevel' ? t('sites.waterLevel') : site.siteType === 'Pumps' ? t('sites.pumpStation') : site.siteType}
                       </Badge>
                     </TableCell>
-                    <TableCell>{site.code}</TableCell>
                     <TableCell>{site.canal}</TableCell>
                     <TableCell>{site.directorateName}</TableCell>
                     <TableCell>
@@ -211,7 +209,7 @@ export function SitesManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"

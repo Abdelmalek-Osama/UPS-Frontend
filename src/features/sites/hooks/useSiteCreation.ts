@@ -7,13 +7,20 @@ import { getDirectorateIdByName } from '../utils/directorateMapping';
 
 // Map siteType string to numeric string value for API
 const mapSiteTypeToNumericString = (siteType: string): string => {
-  switch (siteType) {
+  if (!siteType || typeof siteType !== 'string' || siteType.trim() === '') {
+    throw new Error('Site type is required');
+  }
+  
+  // Trim whitespace and convert to string
+  const cleanSiteType = String(siteType).trim();
+  
+  switch (cleanSiteType) {
     case 'WaterLevel':
       return '0';
     case 'Pumps':
       return '1';
     default:
-      return '0';
+      throw new Error(`Invalid site type: ${cleanSiteType}`);
   }
 };
 
@@ -60,6 +67,19 @@ export function useSiteCreation(): UseCreateSiteResult {
       setError(null);
 
       try {
+        // Validate required fields
+        const siteTypeValue = siteData.siteType ? String(siteData.siteType).trim() : '';
+        console.log('Raw siteType value:', siteData.siteType, 'Trimmed:', siteTypeValue);
+        
+        if (!siteTypeValue) {
+          setError('Site type is required');
+          toast.error(t('errors.siteTypeRequired'));
+          return {
+            success: false,
+            messageKey: 'errors.siteTypeRequired',
+          };
+        }
+
         // Build dataMappings with required optional fields
         const dataMappingsWithDefaults = (siteData.dataMappings || []).map(mapping => ({
           ...mapping,
@@ -68,11 +88,14 @@ export function useSiteCreation(): UseCreateSiteResult {
           isActive: mapping.isActive ?? true,
         }));
 
+        const mappedSiteType = mapSiteTypeToNumericString(siteTypeValue);
+        console.log('Mapped siteType:', mappedSiteType);
+        
         const payload: CreateSitePayload = {
           info: {
             code: siteData.code || '',
             name: siteData.name || '',
-            siteType: mapSiteTypeToNumericString(siteData.siteType || ''),
+            siteType: mappedSiteType,
             canal: siteData.canal || '',
             longitude: siteData.longitude || 0,
             latitude: siteData.latitude || 0,
@@ -95,8 +118,12 @@ export function useSiteCreation(): UseCreateSiteResult {
           },
         };
 
-        console.log('Sending site creation payload:', JSON.stringify(payload, null, 2));
-        const response = await apiService.post<any>('/v1/Sites', payload);
+        const requestBody = {
+          createSiteDto: payload,
+        };
+
+        console.log('Sending site creation payload:', JSON.stringify(requestBody, null, 2));
+        const response = await apiService.post<any>('/v1/Sites', requestBody);
         
         if (response) {
           toast.success(t('sites.stage3.createSuccess'));
