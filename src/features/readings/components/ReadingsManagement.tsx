@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -49,6 +50,7 @@ import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 
 export function ReadingsManagement() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('waterLevel');
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -70,6 +72,7 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
+    deleteWaterLevelReading,
     isLoading, // For create/update operations
     isLoadingWaterLevel, // For water level readings fetch
     isLoadingPumpStation, // For pump station readings fetch
@@ -79,7 +82,22 @@ export function ReadingsManagement() {
     fetchPumpStationReadings,
     createPumpStationReading,
     updatePumpStationReading,
+    deletePumpStationReading,
     selectedSite,
+    // Pagination state for water level readings
+    waterLevelPageNumber,
+    setWaterLevelPageNumber,
+    waterLevelPageSize,
+    setWaterLevelPageSize,
+    waterLevelTotalPages,
+    waterLevelTotalCount,
+    // Pagination state for pump station readings
+    pumpStationPageNumber,
+    setPumpStationPageNumber,
+    pumpStationPageSize,
+    setPumpStationPageSize,
+    pumpStationTotalPages,
+    pumpStationTotalCount,
   } = useReadingsData(selectedSiteId);
 
   useEffect(() => {
@@ -167,14 +185,24 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      waterLevelPageNumber,
+      waterLevelPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageNumber, waterLevelPageSize]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (waterLevelPageNumber !== 1) {
+      setWaterLevelPageNumber(1);
+    }
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageSize]);
 
   // Added useEffect for fetching pump station readings
   useEffect(() => {
-    if (!selectedSiteId) {
+    // Only fetch when pump station tab is active
+    if (activeTab !== 'pumpStation' || !selectedSiteId) {
       return;
     }
     const siteNumericId = Number(selectedSiteId);
@@ -203,10 +231,19 @@ export function ReadingsManagement() {
     fetchPumpStationReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      pumpStationPageNumber,
+      pumpStationPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageNumber, pumpStationPageSize]);
+
+  // Reset to page 1 when filters change for pump station readings
+  useEffect(() => {
+    if (activeTab === 'pumpStation' && pumpStationPageNumber !== 1) {
+      setPumpStationPageNumber(1);
+    }
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageSize]);
 
 
   // const handleViewPumpDetails = (reading: PumpStationReading) => {
@@ -222,26 +259,26 @@ export function ReadingsManagement() {
   // Client-side Excel export functions (no API calls)
   const handleWaterLevelExport = () => {
     if (!selectedSiteId) {
-      toast.error('الرجاء اختيار موقع أولاً');
+      toast.error(t('readings.selectSiteFirst'));
       return;
     }
 
     if (!waterLevelReadings || waterLevelReadings.length === 0) {
-      toast.error('لا توجد بيانات للتصدير');
+      toast.error(t('readings.noData'));
       return;
     }
 
     try {
       // Prepare water level readings data for Excel
       const worksheetData = waterLevelReadings.map((reading: WaterLevelReading) => ({
-        'الموقع': reading.site || '',
-        'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString() : '',
+        [t('readings.selectSite')]: reading.site || '',
+        [t('readings.dateAndTime')]: reading.timestamp ? new Date(reading.timestamp).toLocaleString() : '',
         'USWL': reading.uswl ?? '',
         'DSWL1': reading.dswL1 ?? '',
         'DSWL2': reading.dswL2 ?? '',
-        'البطارية': reading.battery ?? '',
-        'التدفق المحسوب': reading.calculatedFlow ?? '',
-        'يدوي': reading.isManual ? 'نعم' : 'لا',
+        [t('readings.battery')]: reading.battery ?? '',
+        [t('readings.calculatedFlow')]: reading.calculatedFlow ?? '',
+        [t('readings.isManual')]: reading.isManual ? t('common.yes') : t('common.no'),
       }));
 
       // Generate filename
@@ -258,25 +295,25 @@ export function ReadingsManagement() {
       // Create workbook and worksheet
       const worksheet = XLSX.utils.json_to_sheet(worksheetData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'قراءات القناطر');
+      XLSX.utils.book_append_sheet(workbook, worksheet, t('readings.waterLevel'));
 
       // Generate Excel file and download (client-side, no API call)
       XLSX.writeFile(workbook, filename);
-      toast.success('تم تصدير البيانات بنجاح');
+      toast.success(t('readings.exportSuccess'));
     } catch (error: any) {
       console.error('Error exporting water level data', error);
-      toast.error('حدث خطأ أثناء تصدير البيانات');
+      toast.error(t('readings.exportError'));
     }
   };
 
   const handlePumpStationExport = () => {
     if (!selectedSiteId) {
-      toast.error('الرجاء اختيار موقع أولاً');
+      toast.error(t('readings.selectSiteFirst'));
       return;
     }
 
     if (!pumpStationReadings || pumpStationReadings.length === 0) {
-      toast.error('لا توجد بيانات للتصدير');
+      toast.error(t('readings.noData'));
       return;
     }
 
@@ -284,21 +321,21 @@ export function ReadingsManagement() {
       // Prepare pump station readings data for Excel
       const worksheetData = pumpStationReadings.map((reading: PumpStationReading) => {
         const pumpData: any = {
-          'الموقع': reading.site || '',
-          'التاريخ والوقت': reading.timestamp ? new Date(reading.timestamp).toLocaleString('ar-SA') : '',
-          'US Level': reading.usLevel ?? '',
-          'DS1 Level': reading.ds1Level ?? '',
-          'DS2 Level': reading.ds2Level ?? '',
-          'إجمالي وقت التشغيل': reading.totalUptime ?? '',
-          'إجمالي التدفق': reading.totalFlow ?? '',
-          'رقم السجل': reading.recordNumber ?? '',
-          'يدوي': reading.isManual ? 'نعم' : 'لا',
+          [t('readings.selectSite')]: reading.site || '',
+          [t('readings.dateAndTime')]: reading.timestamp ? new Date(reading.timestamp).toLocaleString('ar-SA') : '',
+          [t('readings.usLevel')]: reading.usLevel ?? '',
+          [t('readings.ds1Level')]: reading.ds1Level ?? '',
+          [t('readings.ds2Level')]: reading.ds2Level ?? '',
+          [t('readings.totalUptime')]: reading.totalUptime ?? '',
+          [t('readings.totalFlow')]: reading.totalFlow ?? '',
+          [t('readings.recordNumber')]: reading.recordNumber ?? '',
+          [t('readings.isManual')]: reading.isManual ? t('common.yes') : t('common.no'),
         };
 
         // Add pump data for each pump
         reading.pumps.forEach((pump, index) => {
-          pumpData[`مرفعة ${index + 1} - وقت التشغيل`] = pump.time ?? '';
-          pumpData[`مرفعة ${index + 1} - التدفق`] = pump.flow ?? '';
+          pumpData[`${t('readings.pumpNumber')} ${index + 1} - ${t('readings.pumpUptime')}`] = pump.time ?? '';
+          pumpData[`${t('readings.pumpNumber')} ${index + 1} - ${t('readings.pumpFlow')}`] = pump.flow ?? '';
         });
 
         return pumpData;
@@ -318,19 +355,19 @@ export function ReadingsManagement() {
       // Create workbook and worksheet
       const worksheet = XLSX.utils.json_to_sheet(worksheetData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'قراءات محطات رفع');
+      XLSX.utils.book_append_sheet(workbook, worksheet, t('readings.pumpStation'));
 
       // Generate Excel file and download (client-side, no API call)
       XLSX.writeFile(workbook, filename);
-      toast.success('تم تصدير البيانات بنجاح');
+      toast.success(t('readings.exportSuccess'));
     } catch (error: any) {
       console.error('Error exporting pump station data', error);
-      toast.error('حدث خطأ أثناء تصدير البيانات');
+      toast.error(t('readings.exportError'));
     }
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
           <Loader />
@@ -339,8 +376,8 @@ export function ReadingsManagement() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">إدارة القراءات</h2>
-          <p className="text-gray-500 mt-1">عرض وتحرير قراءات المواقع</p>
+          <h2 className="text-2xl font-bold">{t('readings.title')}</h2>
+          <p className="text-gray-500 mt-1">{t('readings.subtitle')}</p>
         </div>
 
 
@@ -350,11 +387,11 @@ export function ReadingsManagement() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select value={selectedSiteId} onValueChange={setSelectedSiteId}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر الموقع" />
+            <Select value={selectedSiteId} onValueChange={setSelectedSiteId} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <SelectTrigger className="rtl:flex-row-reverse">
+                <SelectValue placeholder={t('readings.selectSite')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 {sites.map(site => (
                   <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
                 ))}
@@ -362,13 +399,13 @@ export function ReadingsManagement() {
             </Select>
             <div className="flex gap-2">
               <DatePicker
-                placeholder="من تاريخ"
+                placeholder={t('readings.fromDate')}
                 value={fromDate}
                 onChange={setFromDate}
                 maxDate={toDate}
               />
               <DatePicker
-                placeholder="الى تاريخ"
+                placeholder={t('readings.toDate')}
                 value={toDate}
                 onChange={setToDate}
                 minDate={fromDate}
@@ -378,7 +415,7 @@ export function ReadingsManagement() {
                   variant="outline"
                   size="icon"
                   onClick={handleResetDates}
-                  title="إعادة تعيين التواريخ"
+                  title={t('readings.resetDates')}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -390,77 +427,94 @@ export function ReadingsManagement() {
 
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="waterLevel">قراءات القناطر</TabsTrigger>
-          <TabsTrigger
-            value="pumpStation"
-            disabled={selectedSite?.data?.numPumps === 0}
-          >قراءات محطات رفع</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+  <TabsList className="grid w-full grid-cols-2">
+    <TabsTrigger value="waterLevel" className="cursor-pointer">
+      {t('readings.waterLevel')}
+    </TabsTrigger>
+    <TabsTrigger
+      value="pumpStation"
+      disabled={selectedSite?.data ? !(selectedSite.data.siteType === 'Pumps' || (selectedSite.data.numPumps && selectedSite.data.numPumps > 0)) : false}
+      className="cursor-pointer"
+    >
+      {t('readings.pumpStation')}
+    </TabsTrigger>
+  </TabsList>
 
-        <TabsContent value="waterLevel" className="mt-6">
-          {isInitialLoading || isLoadingWaterLevel ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader />
-            </div>
-          ) : (
-            <WaterLevelTable
-              readings={waterLevelReadings}
-              isAddDialogOpen={isAddDialogOpen}
-              setIsAddDialogOpen={setIsAddDialogOpen}
-              sites={sites}
-              handleExport={handleWaterLevelExport}
-              isEditWaterLevelOpen={isEditWaterLevelOpen}
-              setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
-              editingWaterLevel={editingWaterLevel}
-              handleEditWaterLevel={handleEditWaterLevel}
-              isLoading={isLoading || isLoadingWaterLevel}
-              error={waterLevelError}
-              createWaterLevelReading={createWaterLevelReading}
-              updateWaterLevelReading={updateWaterLevelReading}
-              selectedSiteId={selectedSiteId}
-              fetchWaterLevelReadings={fetchWaterLevelReadings}
-              fromDate={fromDate}
-              toDate={toDate}
-            />
-          )}
+  <TabsContent value="waterLevel" className="mt-6">
+    {isInitialLoading || isLoadingWaterLevel ? (
+      <div className="flex justify-center items-center h-48">
+        <Loader />
+      </div>
+    ) : (
+      <WaterLevelTable
+        readings={waterLevelReadings}
+        isAddDialogOpen={isAddDialogOpen}
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        sites={sites}
+        handleExport={handleWaterLevelExport}
+        isEditWaterLevelOpen={isEditWaterLevelOpen}
+        setIsEditWaterLevelOpen={setIsEditWaterLevelOpen}
+        editingWaterLevel={editingWaterLevel}
+        handleEditWaterLevel={handleEditWaterLevel}
+        isLoading={isLoading || isLoadingWaterLevel}
+        error={waterLevelError}
+        createWaterLevelReading={createWaterLevelReading}
+        updateWaterLevelReading={updateWaterLevelReading}
+        selectedSiteId={selectedSiteId}
+        fetchWaterLevelReadings={fetchWaterLevelReadings}
+        fromDate={fromDate}
+        toDate={toDate}
+        pageNumber={waterLevelPageNumber}
+        setPageNumber={setWaterLevelPageNumber}
+        pageSize={waterLevelPageSize}
+        setPageSize={setWaterLevelPageSize}
+        totalPages={waterLevelTotalPages}
+        totalCount={waterLevelTotalCount}
+        deleteWaterLevelReading={deleteWaterLevelReading}
+      />
+    )}
+  </TabsContent>
 
-        </TabsContent>
-
-
-        <TabsContent value="pumpStation" className="mt-6">
-          {isInitialLoading || isLoadingPumpStation ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader />
-            </div>
-          ) : (
-            <PumpStationTable
-              readings={pumpStationReadings}
-              // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
-              isAddDialogOpen={isAddDialogOpen}
-              setIsAddDialogOpen={setIsAddDialogOpen}
-              sites={sites}
-              handleExport={handlePumpStationExport}
-              isEditPumpStationOpen={isEditPumpStationOpen}
-              setIsEditPumpStationOpen={setIsEditPumpStationOpen}
-              editingPumpStation={editingPumpStation}
-              setEditingPumpStation={setEditingPumpStation}
-              handleEditPumpStation={handleEditPumpStation}
-              selectedSiteId={selectedSiteId}
-              startDate={fromDate ?? undefined}
-              endDate={toDate ?? undefined}
-              isLoading={isLoading || isLoadingPumpStation}
-              error={pumpStationError}
-              fetchPumpStationReadings={fetchPumpStationReadings}
-              createPumpStationReading={createPumpStationReading}
-              updatePumpStationReading={updatePumpStationReading}
-              selectedSite={selectedSite?.data ?? null}
-              handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+  <TabsContent value="pumpStation" className="mt-6">
+    {isInitialLoading || isLoadingPumpStation ? (
+      <div className="flex justify-center items-center h-48">
+        <Loader />
+      </div>
+    ) : (
+      <PumpStationTable
+        readings={pumpStationReadings}
+        // onViewDetails={handleViewPumpDetails} // Removed, now handled internally by PumpStationTable
+        isAddDialogOpen={isAddDialogOpen}
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        sites={sites}
+        handleExport={handlePumpStationExport}
+        isEditPumpStationOpen={isEditPumpStationOpen}
+        setIsEditPumpStationOpen={setIsEditPumpStationOpen}
+        editingPumpStation={editingPumpStation}
+        setEditingPumpStation={setEditingPumpStation}
+        handleEditPumpStation={handleEditPumpStation}
+        selectedSiteId={selectedSiteId}
+        startDate={fromDate ?? undefined}
+        endDate={toDate ?? undefined}
+        isLoading={isLoading || isLoadingPumpStation}
+        error={pumpStationError}
+        fetchPumpStationReadings={fetchPumpStationReadings}
+        createPumpStationReading={createPumpStationReading}
+        updatePumpStationReading={updatePumpStationReading}
+        selectedSite={selectedSite?.data ?? null}
+        handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
+        pageNumber={pumpStationPageNumber}
+        setPageNumber={setPumpStationPageNumber}
+        pageSize={pumpStationPageSize}
+        setPageSize={setPumpStationPageSize}
+        totalPages={pumpStationTotalPages}
+        totalCount={pumpStationTotalCount}
+        deletePumpStationReading={deletePumpStationReading}
+      />
+    )}
+  </TabsContent>
+</Tabs>
 
 
       {/* Pump Details Dialog */}
@@ -473,22 +527,22 @@ export function ReadingsManagement() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Table>
+            <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">رقم المرفعة</TableHead>
-                  <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
-                  <TableHead className="text-right">التدفق (م³/س)</TableHead>
-                  <TableHead className="text-right">إجراءات</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpUptime')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpFlow')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {selectedReading?.pumps.map((pump, index) => (
                   <TableRow key={index}>
-                    <TableCell>مرفعة {index + 1}</TableCell>
-                    <TableCell>{pump.time.toFixed(1)}</TableCell>
-                    <TableCell>{pump.flow.toFixed(1)}</TableCell>
-                    <TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {index + 1}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.time.toFixed(1)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.flow.toFixed(1)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                       <Button 
                         variant="ghost" 
                         size="sm"

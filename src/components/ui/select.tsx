@@ -116,10 +116,7 @@ function SelectItem({
       )}
       {...props}
     >
-      <span 
-      className="absolute  flex size-3.5 items-center justify-center"
-      style={{left: '0.5rem', right: 'auto'}}
-      >
+      <span className="absolute right-2 flex size-3.5 items-center justify-center rtl:right-auto rtl:left-2">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>

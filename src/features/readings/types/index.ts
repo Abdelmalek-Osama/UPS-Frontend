@@ -149,3 +149,13 @@ export interface PumpStationApiResponse {
   isManual: boolean;
   alarms?: Alarm[];
 }
+
+export interface ReadingLogDTO {
+  id: number;
+  readingType: string;
+  actionType: string;
+  siteName: string;
+  actionDate: string;
+  timeStamp: string;
+  createdBy: string;
+}
