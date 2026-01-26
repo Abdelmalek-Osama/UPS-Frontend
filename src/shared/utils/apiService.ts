@@ -17,6 +17,7 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
+//const API_BASE_URL = 'https://localhost:5001/api/';
 //const API_BASE_URL = 'https://localhost:7123/api/';
 const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 //const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
@@ -209,6 +210,8 @@ axiosInstance.interceptors.response.use(
                 logoutInitiated = true; // Set flag to true
                 window.location.href = '/logout'; // Fallback if callback not set
               }
+
+              let errorMessage = 'فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.'; // Default custom error message
               
               let errorMessage = i18n.t('errors.tokenRefreshFailed', { ns: 'translation' }); // Default custom error message
               if (refreshError.isAxiosError && refreshError.response && refreshError.response.data) {
