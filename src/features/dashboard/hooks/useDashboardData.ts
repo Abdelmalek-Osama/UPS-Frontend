@@ -27,6 +27,8 @@ export function useDashboardData() {
 
   const [stats, setStats] = useState<DashboardStats>({
     totalSites: 45,
+    totalDirectorates: 5,
+    totalUsers: 1,
     connectedSites: 45,
     activeAlarms: 12,
     criticalAlarms: 3,
@@ -245,6 +247,66 @@ export function useDashboardData() {
     fetchWaterflowData();
   }, [isAuthenticated, selectedSiteId]);
 
+
+
+  // Fetch dashboard statistics
+  const fetchDashboardStats = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const { get } = await import('../../../shared/utils/apiService');
+
+      interface DirectorateStat {
+        directorateId: number;
+        directorateName: string;
+        totalSiteCount: number;
+        activeSiteCount: number;
+      }
+
+      interface StatisticsResponse {
+        totalSites: number;
+        totalDirectorates: number;
+        totalUsers: number;
+        activeAlarmEvents: number;
+        sitesPerDirectorate: DirectorateStat[];
+      }
+
+      const response = await get<StatisticsResponse>('/v1/LandingPage/statistics');
+
+      if (response) {
+        // Calculate active sites from directorate data
+        const activeSitesCount = response.sitesPerDirectorate.reduce(
+          (sum, dir) => sum + dir.activeSiteCount,
+          0
+        );
+
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          totalSites: response.totalSites,
+          totalDirectorates: response.totalDirectorates,
+          totalUsers: response.totalUsers,
+          activeAlarms: response.activeAlarmEvents,
+          activeStations: activeSitesCount,
+          totalStations: response.totalSites,
+          connectedSites: activeSitesCount,
+          // Keep other stats as they are or default/mocked for now as they aren't in this specific API
+        }));
+
+        // Update directorate data
+        const mappedDirectorateData: DirectorateData[] = response.sitesPerDirectorate.map(dir => ({
+          name: dir.directorateName,
+          sites: dir.totalSiteCount,
+          active: dir.activeSiteCount
+        }));
+
+        setDirectorateData(mappedDirectorateData);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
+
   // Fetch data when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
@@ -255,6 +317,8 @@ export function useDashboardData() {
       setSites([]);
       setStats({
         totalSites: 0,
+        totalDirectorates: 0,
+        totalUsers: 0,
         connectedSites: 0,
         activeAlarms: 0,
         criticalAlarms: 0,
@@ -269,6 +333,7 @@ export function useDashboardData() {
       fetchRecentAlarmEvents();
       fetchRecentReadingLogs();
       fetchSites();
+      fetchDashboardStats();
     }
   }, [isAuthenticated]);
 
@@ -283,5 +348,6 @@ export function useDashboardData() {
     setSelectedSiteId,
     fetchRecentAlarmEvents,
     fetchRecentReadingLogs,
+    fetchDashboardStats,
   };
 }

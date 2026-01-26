@@ -100,6 +100,10 @@
     "title": "لوحة التحكم الرئيسية",
     "subtitle": "نظرة عامة على شبكة الري الوطنية",
     "totalSites": "إجمالي المواقع",
+    "totalDirectorates": "إجمالي المديريات",
+    "totalUsers": "إجمالي المستخدمين",
+    "systemUsers": "مستخدمو النظام",
+    "allregions": "جميع المناطق نشطة",
     "activeAlarms": "التنبيهات النشطة",
     "totalFlow": "إجمالي ",
     "activeStations": "المحطات النشطة",
@@ -364,7 +368,6 @@
     "enterDuration": "أدخل المدّة",
     "monitoringHours": "ساعات المراقبة",
     "enterMonitoringHours": "أدخل ساعات المراقبة",
-    "PumpStatusIdvAlarms": "تنبيهات حالة المضخة الفردية",
     "field": "الحقل",
     "operator": "المقارن",
     "threshold": "قيمة الحد",
@@ -435,7 +438,8 @@
     "pumpStatusIdv": "حالة المضخة الفردية",
     "PumpStatusIdvAlarms": "تكوين التنبيهات لحالة المضخات الفردية",
     "PumpStatusPSAlarms": "تكوين التنبيهات لحالة المضخات",
-    "SensorStatusAlarms": "تكوين التنبيهات لحالة الاستشعار",    "battery": "البطارية",
+    "SensorStatusAlarms": "تكوين التنبيهات لحالة الاستشعار",
+    "battery": "البطارية",
     "totalFlow": "التدفق المحسوب",
     "totalUptime": "إجمالي وقت التشغيل",
     "validation": {
@@ -600,14 +604,16 @@
     "updated": "تم تحديث العنصر بنجاح",
     "loading": "جارٍ تحميل البيانات...",
     "noNetwork": "لا توجد اتصالات إنترنت"
-  },  "placeholders": {
+  },
+  "placeholders": {
     "fullName": "أدخل الاسم الكامل",
     "email": "user@example.com",
     "selectRole": "اختر دوراً",
     "username": "أدخل اسم المستخدم",
     "password": "••••••••",
     "confirmPassword": "••••••••"
-  },  "validation": {
+  },
+  "validation": {
     "required": "هذا الحقل مطلوب",
     "email": "يرجى إدخال عنوان بريد إلكتروني صحيح",
     "phone": "يرجى إدخال رقم هاتف صحيح",
@@ -615,9 +621,9 @@
     "maxLength": "الحد الأقصى للطول هو {{max}} أحرف",
     "invalidNumber": "يرجى إدخال رقم صحيح",
     "passwordMatch": "كلمات المرور غير متطابقة",
-    "passwordNeedsLowercase":"كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل.",
-    "passwordNeedsUppercase":"كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل.",
-    "passwordNeedsNumber":"كلمة المرور يجب أن تحتوي على رقم واحد على الأقل.",
+    "passwordNeedsLowercase": "كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل.",
+    "passwordNeedsUppercase": "كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل.",
+    "passwordNeedsNumber": "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل.",
     "invalidEmailFormat": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
     "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا."
   }

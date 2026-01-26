@@ -57,6 +57,8 @@ export interface ReadingLog {
 }
 
 export interface DashboardStats {
+  totalDirectorates: number;
+  totalUsers: number;
   totalSites: number;
   connectedSites: number;
   activeAlarms: number;
