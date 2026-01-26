@@ -209,10 +209,7 @@ axiosInstance.interceptors.response.use(
               } else if (!logoutInitiated) {
                 logoutInitiated = true; // Set flag to true
                 window.location.href = '/logout'; // Fallback if callback not set
-              }
-
-              let errorMessage = 'فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.'; // Default custom error message
-              
+              }              
               let errorMessage = i18n.t('errors.tokenRefreshFailed', { ns: 'translation' }); // Default custom error message
               if (refreshError.isAxiosError && refreshError.response && refreshError.response.data) {
                 errorMessage = getErrorMessageFromResponseData(refreshError.response.data); // Use helper for refresh error

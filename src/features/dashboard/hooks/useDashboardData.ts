@@ -189,17 +189,12 @@ export function useDashboardData() {
   // Fetch waterflow data from API
   useEffect(() => {
     const fetchWaterflowData = async () => {
-      if (!isAuthenticated) {
-        // Clear data if not authenticated
-        setFlowData([]);
-        setDirectorateData([]);
-        setActiveAlarms([]);
-        setRecentReadings([]);
-        setStats({
-          totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
-          warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
-          totalStations: 0, uptimePercentage: 0
-        });
+      if (!isAuthenticated || !selectedSiteId) {
+        // Clear data if not authenticated or no site selected
+        if (!isAuthenticated) {
+          setFlowData([]);
+          setDirectorateData([]);
+        }
         return;
       }
 
@@ -219,8 +214,8 @@ export function useDashboardData() {
           data: T;
         }
 
-        // Fetch waterflow data for site ID 2 using generic get method
-        const response = await get<ApiResponse<WaterflowDataPoint[]>>('/v1/LandingPage/waterflow/2');
+        // Fetch waterflow data for selected site using generic get method
+        const response = await get<ApiResponse<WaterflowDataPoint[]>>(`/v1/LandingPage/waterflow/${selectedSiteId}`);
 
         if (response.isSuccess && response.data) {
           // Transform API data to chart format
@@ -248,6 +243,8 @@ export function useDashboardData() {
     };
 
     fetchWaterflowData();
+  }, [isAuthenticated, selectedSiteId]);
+
   // Fetch data when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
