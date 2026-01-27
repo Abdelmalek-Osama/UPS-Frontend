@@ -146,6 +146,8 @@
     "addNewSite": "Add New Site",
     "editSite": "Edit Site",
     "deleteSite": "Delete Site",
+    "deleteConfirmation" : "Are you sure to delete site ?",
+    "deleteFailed" :"Failed to delete site",
     "sitesCount": "Sites",
     "latitude": "Latitude",
     "longitude": "Longitude",

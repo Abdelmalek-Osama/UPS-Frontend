@@ -146,6 +146,8 @@
     "addNewSite": "إضافة موقع جديد",
     "editSite": "تعديل موقع",
     "deleteSite": "حذف موقع",
+    "deleteConfirmation": "هل أنت متأكد من حذف هذا الموقع؟",
+    "deleteFailed": "فشل حذف الموقع. يرجى المحاولة مرة أخرى",
     "sitesCount": "المواقع",
     "latitude": "خط العرض",
     "longitude": "خط الطول",
