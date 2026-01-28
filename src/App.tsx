@@ -16,6 +16,7 @@ import { getAccessToken, removeAuthCookies } from './shared/utils/cookieService'
 import apiService from './shared/utils/apiService';
 import { AuthProvider, useAuth } from './shared/contexts/AuthContext'; // Import AuthProvider and useAuth
 // import { AuthResponse } from './shared/utils/apiService'; // No longer needed for App.tsx directly
+import { AlarmReportsConfiguration } from './features/alarm-reports';
 
 
 
@@ -55,6 +56,7 @@ function AuthRoutes() {
         <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
         <Route path="alarms" element={ <AlarmConfiguration />} />
         <Route path="alarms/events" element={<AlarmEvents />} />
+        <Route path="alarms/reports" element={<AlarmReportsConfiguration />} />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
         <Route path="reading-logs" element={<ReadingLogs />} />
