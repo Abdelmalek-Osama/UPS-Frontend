@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '../../../components/ui/table';
 import {
   Select,
@@ -25,10 +25,12 @@ import { Site } from '../types';
 import { Skeleton } from '../../../components/ui/skeleton';
 import Loader from '../../../components/ui/Loader';
 import SitesDialog from './dialogs/SitesDialog';
+import apiService from '../../../shared/utils/apiService';
+import { AlertDialog } from '../../../shared/components/AlertDialog';
 
 export function SitesManagement() {
   const { t } = useTranslation();
-  const { sites, directorates, loading, error } = useSitesData();
+  const { sites, setSites, directorates, loading, error } = useSitesData();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
@@ -37,6 +39,8 @@ export function SitesManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Site>>({});
   const [editingSite, setEditingSite] = useState<Site | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState<number | null>(null);
 
   const filteredSites = useFilteredSites(sites, { searchTerm, type: filterType, directorate: filterDirectorate, canal: filterCanal });
 
@@ -44,6 +48,19 @@ export function SitesManagement() {
     setEditingSite(site);
     setFormData(site);
     setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (siteId: number) => {
+    setSiteToDelete(siteId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (siteToDelete) {
+      await apiService.delete(`/v1/Sites/${siteToDelete}`);
+      setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+      setSiteToDelete(null);
+    }
   };
 
   return (
@@ -162,6 +179,17 @@ export function SitesManagement() {
                 }}
               />
 
+              <AlertDialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={t('sites.deleteSite')}
+                description={t('sites.deleteConfirmation') || 'Are you sure you want to delete this site?'}
+                type="error"
+                confirmText={t('common.delete')}
+                cancelText={t('common.cancel')}
+              />
+
             </div>
           </CardHeader>
           <CardContent>
@@ -220,10 +248,7 @@ export function SitesManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // Delete functionality will be added here
-                            console.log('Delete site:', site.id);
-                          }}
+                          onClick={() => handleDeleteClick(site.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

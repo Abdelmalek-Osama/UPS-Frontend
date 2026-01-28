@@ -1,6 +1,7 @@
 // SitesDialog.tsx
 import { useState, useEffect } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Loader2 } from "lucide-react";
+import apiService from '../../../../shared/utils/apiService';
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useSiteCreation } from '../../hooks/useSiteCreation';
@@ -22,10 +23,11 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
-  
+
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Sync form data with siteData prop when dialog opens or siteData changes
   useEffect(() => {
@@ -204,8 +206,69 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     }
   };
 
-  const handleNext = () => {
+  const saveStep = async (stepIndex: number): Promise<boolean> => {
+    if (!formData.id) return false;
+    setIsUpdating(true);
+    try {
+      let endpoint = '';
+      let payload = {};
+
+      switch (stepIndex) {
+        case 0: // Step 1: Info
+          endpoint = `/v1/Sites/${formData.id}/info`;
+          payload = {
+            code: formData.code,
+            name: formData.name,
+            siteType: formData.siteType,
+            canal: formData.canal,
+            longitude: formData.longitude,
+            latitude: formData.latitude,
+            directorateId: formData.directorateId,
+            simCardIP: formData.simId, // Mapping simId to simCardIP as requested
+            dataLoggerType: formData.dataLoggerType
+          };
+          break;
+        case 1: // Step 2: Config
+          endpoint = `/v1/Sites/${formData.id}/config`;
+          payload = {
+            hasUS: formData.hasUS,
+            hasDS1: formData.hasDS1,
+            hasDS2: formData.hasDS2,
+            numPumps: formData.numPumps
+          };
+          break;
+        case 2: // Step 3: Mappings
+          endpoint = `/v1/Sites/${formData.id}/mappings`;
+          payload = formData.dataMappings || [];
+          break;
+        case 3: // Step 4: Flow Calculation
+          endpoint = `/v1/Sites/${formData.id}/flow-calculation`;
+          payload = {
+            formulaConstants: formData.flowCalculation?.formulaConstants,
+            equationId: formData.flowCalculation?.equationId
+          };
+          break;
+      }
+
+      await apiService.put(endpoint, payload);
+      toast.success(t('notifications.saved'));
+      return true;
+    } catch (error) {
+      console.error(`Error saving step ${stepIndex}:`, error);
+      toast.error(t('errors.saveFailed'));
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleNext = async () => {
     if (isStepValid(currentTab)) {
+      if (mode === 'edit') {
+        const success = await saveStep(currentTab);
+        if (!success) return;
+      }
+
       const newCompleted = [...completedTabs];
       newCompleted[currentTab] = true;
       setCompletedTabs(newCompleted);
@@ -215,18 +278,21 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isStepValid(currentTab)) {
       // Handle create mode - call API
       if (mode === 'create') {
         handleCreateSite();
       } else {
-        // Handle edit mode - use existing callback
-        onSave(formData);
-        onCancel();
-        // Reset
-        setCurrentTab(0);
-        setCompletedTabs([false, false, false, false]);
+        // Handle edit mode - save final step then close
+        const success = await saveStep(currentTab);
+        if (success) {
+          onSave(formData);
+          onCancel();
+          // Reset
+          setCurrentTab(0);
+          setCompletedTabs([false, false, false, false]);
+        }
       }
     }
   };
@@ -250,11 +316,11 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       style={{ display: isOpen ? 'flex' : 'none' }}
     >
-      <div 
+      <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-3xl"
         style={{
           maxHeight: '80vh',
@@ -328,17 +394,17 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                       backgroundColor: isCurrent
                         ? 'hsl(217, 91%, 60%)'
                         : isCompleted
-                        ? 'hsl(142, 72%, 90%)'
-                        : isUnlocked
-                        ? 'hsl(var(--background))'
-                        : 'hsl(var(--muted))',
+                          ? 'hsl(142, 72%, 90%)'
+                          : isUnlocked
+                            ? 'hsl(var(--background))'
+                            : 'hsl(var(--muted))',
                       color: isCurrent
                         ? 'white'
                         : isCompleted
-                        ? 'hsl(140, 60%, 30%)'
-                        : isUnlocked
-                        ? 'hsl(var(--foreground))'
-                        : 'hsl(var(--muted-foreground))',
+                          ? 'hsl(140, 60%, 30%)'
+                          : isUnlocked
+                            ? 'hsl(var(--foreground))'
+                            : 'hsl(var(--muted-foreground))',
                       border: 'none',
                       fontSize: '0.875rem',
                       fontWeight: 500
@@ -357,15 +423,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         backgroundColor: isCurrent
                           ? 'hsl(217, 91%, 70%)'
                           : isCompleted
-                          ? 'hsl(142, 76%, 36%)'
-                          : isUnlocked
-                          ? 'hsl(var(--muted))'
-                          : 'hsl(var(--muted))',
+                            ? 'hsl(142, 76%, 36%)'
+                            : isUnlocked
+                              ? 'hsl(var(--muted))'
+                              : 'hsl(var(--muted))',
                         color: isCurrent || isCompleted
                           ? 'white'
                           : isUnlocked
-                          ? 'hsl(var(--muted-foreground))'
-                          : 'hsl(var(--muted-foreground))',
+                            ? 'hsl(var(--muted-foreground))'
+                            : 'hsl(var(--muted-foreground))',
                         flexShrink: 0
                       }}
                     >
@@ -382,32 +448,32 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
           <div style={formContentContainerStyle}>
             <div style={scrollContainerStyle}>
               {currentTab === 0 && (
-                <Stage1 
-                  data={formData} 
+                <Stage1
+                  data={formData}
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
                 />
               )}
               {currentTab === 1 && (
-                <Stage2 
-                  data={formData} 
+                <Stage2
+                  data={formData}
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
                 />
               )}
               {currentTab === 2 && (
-                <Stage3 
-                  data={formData} 
+                <Stage3
+                  data={formData}
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
                 />
               )}
               {currentTab === 3 && (
-                <Stage4 
-                  data={formData} 
+                <Stage4
+                  data={formData}
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
@@ -453,7 +519,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   {currentTab < tabs.length - 1 ? (
                     <button
                       onClick={handleNext}
-                      disabled={!isStepValid(currentTab)}
+                      disabled={!isStepValid(currentTab) || isUpdating}
                       style={{
                         paddingLeft: '1.5rem',
                         paddingRight: '1.5rem',
@@ -481,12 +547,19 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         }
                       }}
                     >
-                      {t('common.next')}
+                      {isUpdating ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t('common.saving')}
+                        </div>
+                      ) : (
+                        t('common.next')
+                      )}
                     </button>
                   ) : (
                     <button
                       onClick={handleSubmit}
-                      disabled={!isStepValid(currentTab) || isCreating}
+                      disabled={!isStepValid(currentTab) || isCreating || isUpdating}
                       style={{
                         paddingLeft: '1.5rem',
                         paddingRight: '1.5rem',
@@ -495,10 +568,10 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         backgroundColor: (isStepValid(currentTab) && !isCreating)
                           ? 'hsl(142, 72%, 45%)'
                           : 'hsl(var(--muted))',
-                        color: (isStepValid(currentTab) && !isCreating) ? 'white' : 'hsl(var(--muted-foreground))',
+                        color: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'white' : 'hsl(var(--muted-foreground))',
                         border: 'none',
                         borderRadius: '0.375rem',
-                        cursor: (isStepValid(currentTab) && !isCreating) ? 'pointer' : 'not-allowed',
+                        cursor: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'pointer' : 'not-allowed',
                         transition: 'background-color 150ms',
                         fontSize: '0.875rem',
                         fontWeight: 500,
@@ -515,7 +588,12 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         }
                       }}
                     >
-                      {isCreating ? t('common.saving') || 'Saving...' : t('common.save')}
+                      {isCreating || isUpdating ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t('common.saving') || 'Saving...'}
+                        </div>
+                      ) : t('common.save')}
                     </button>
                   )}
                 </div>
