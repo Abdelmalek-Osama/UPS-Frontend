@@ -26,7 +26,8 @@ export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTab
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
-    const translateFieldName = (fieldName: string) => {
+    const translateFieldName = (fieldName?: unknown) => {
+        if (typeof fieldName !== "string" || !fieldName.trim()) return "—";
         const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
         if (normalized === 'communicationloss') {
             return t('alarms.communicationLoss');
