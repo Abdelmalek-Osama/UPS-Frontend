@@ -694,7 +694,7 @@
     "configurationCreatedSuccess": "تم إنشاء تكوين التقرير بنجاح",
     "configurationDeletedSuccess": "تم حذف تكوين التقرير بنجاح",
     "deleteConfiguration": "حذف التكوين",
-    "deleteConfigurationMessage": "هل أنت متأكد من أنك تريد حذف التكوين '{name}'؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteConfigurationMessage": "هل أنت متأكد من أنك تريد حذف التكوين '{{name}}'؟ لا يمكن التراجع عن هذا الإجراء.",
     "pleaseFixErrors": "يرجى إصلاح الأخطاء قبل الإرسال",
     "noConfigurations": "لا توجد تكاوين تقارير بريد إلكتروني",
     "noConfigurationsDescription": "قم بإنشاء تكوين تقرير بريد إلكتروني أول لبدء إرسال تقارير التنبيهات المجدولة",

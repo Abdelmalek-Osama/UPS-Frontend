@@ -695,7 +695,7 @@
     "configurationCreatedSuccess": "Report configuration created successfully",
     "configurationDeletedSuccess": "Report configuration deleted successfully",
     "deleteConfiguration": "Delete Configuration",
-    "deleteConfigurationMessage": "Are you sure you want to delete the configuration '{name}'? This action cannot be undone.",
+    "deleteConfigurationMessage": "Are you sure you want to delete the configuration '{{name}}'? This action cannot be undone.",
     "pleaseFixErrors": "Please fix the errors before submitting",
     "noConfigurations": "No Email Report Configurations",
     "noConfigurationsDescription": "Create your first email report configuration to start sending scheduled alarm reports",
