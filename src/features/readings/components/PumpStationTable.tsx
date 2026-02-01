@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Download, Edit, FileText, Plus, CalendarIcon } from 'lucide-react';
+import { Download, Edit, FileText, Plus, CalendarIcon, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import apiService from '../../../../src/shared/utils/apiService';
 import type { Site } from '../../sites/types';
 import type {PumpStationApiResponse, PumpStationReading, SiteLookupOption, ApiResponse, CreatePumpStationReadingRequest} from "../types";
@@ -37,12 +38,19 @@ interface PumpStationTableProps {
   endDate: Date | undefined;
   isLoading: boolean;
   error: string | null;
-  fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  fetchPumpStationReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   createPumpStationReading: (data: CreatePumpStationReadingRequest) => Promise<any>;
   updatePumpStationReading: (data: CreatePumpStationReadingRequest & { id: number }) => Promise<any>;
+  deletePumpStationReading: (id: number) => Promise<any>;
   selectedSite: Site | null;
   handleEditPumpStation: (reading: PumpStationReading) => void;
   handleEditPump: (pumpIndex: number, reading: PumpStationReading) => void; // Added handleEditPump prop
+  pageNumber: number;
+  setPageNumber: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalPages: number;
+  totalCount: number;
 }
 
 export function PumpStationTable({
@@ -68,7 +76,15 @@ export function PumpStationTable({
   updatePumpStationReading,
   selectedSite,
   handleEditPump, // Added handleEditPump to destructuring
+  pageNumber,
+  setPageNumber,
+  pageSize,
+  setPageSize,
+  totalPages,
+  totalCount,
+  deletePumpStationReading,
 }: PumpStationTableProps) {
+    const { t } = useTranslation();
     const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
@@ -89,6 +105,8 @@ export function PumpStationTable({
     const [selectedReading, setSelectedReading] = useState<PumpStationReading | null>(null); // Added local state for selected reading
     const [addError, setAddError] = useState<string | null>(null); // New state for add dialog error
     const [editError, setEditError] = useState<string | null>(null); // New state for edit dialog error
+    const [isDeletePumpStationDialogOpen, setIsDeletePumpStationDialogOpen] = useState(false);
+    const [pumpStationReadingToDelete, setPumpStationReadingToDelete] = useState<PumpStationReading | null>(null);
 
     // Refs for auto-scrolling in dialogs
     const addDialogScrollRef = useRef<HTMLDivElement>(null);
@@ -180,6 +198,46 @@ export function PumpStationTable({
       }
     }, [editPumpReadings.length]);
 
+    const handleDeletePumpStation = (reading: PumpStationReading) => {
+      setPumpStationReadingToDelete(reading);
+      setIsDeletePumpStationDialogOpen(true);
+    };
+
+    const confirmDeletePumpStation = async () => {
+      if (pumpStationReadingToDelete) {
+        try {
+          await deletePumpStationReading(pumpStationReadingToDelete.id);
+          setIsDeletePumpStationDialogOpen(false);
+          setPumpStationReadingToDelete(null);
+
+          // Refresh readings after deletion
+          const siteNumericId = Number(selectedSiteId);
+          if (!Number.isNaN(siteNumericId)) {
+            let apiFromDate = startDate;
+            let apiToDate = endDate;
+
+            const bothUnset = startDate === undefined && endDate === undefined;
+            if (bothUnset) {
+              apiFromDate = new Date();
+              apiFromDate.setHours(0, 0, 0, 0);
+              apiToDate = new Date();
+              apiToDate.setHours(23, 59, 59, 999);
+            }
+
+            await fetchPumpStationReadings(
+              siteNumericId,
+              apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+              apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+              pageNumber,
+              pageSize
+            );
+          }
+        } catch (error) {
+          console.error("Failed to delete pump station reading:", error);
+        }
+      }
+    };
+
     const formatTimestamp = (value: string) => {
       if (!value) return '--';
       const parsed = new Date(value);
@@ -203,13 +261,13 @@ export function PumpStationTable({
         newPumpReadings[index] = { 
           ...newPumpReadings[index], 
           [field]: null,
-          [`${field}Error`]: 'يرجى إدخال رقم صحيح'
+          [`${field}Error`]: t('readings.enterValidNumber')
         };
       } else if (numValue < 0) {
         newPumpReadings[index] = { 
           ...newPumpReadings[index], 
           [field]: numValue,
-          [`${field}Error`]: 'يجب أن يكون رقماً موجباً.'
+          [`${field}Error`]: t('readings.mustBePositive')
         };
       } else {
         newPumpReadings[index] = { 
@@ -236,13 +294,13 @@ export function PumpStationTable({
         newEditPumpReadings[index] = { 
           ...newEditPumpReadings[index], 
           [field]: null,
-          [`${field}Error`]: 'يرجى إدخال رقم صحيح'
+          [`${field}Error`]: t('readings.enterValidNumber')
         };
       } else if (numValue < 0) {
         newEditPumpReadings[index] = { 
           ...newEditPumpReadings[index], 
           [field]: numValue,
-          [`${field}Error`]: 'يجب أن يكون رقماً موجباً.'
+          [`${field}Error`]: t('readings.mustBePositive')
         };
       } else {
         newEditPumpReadings[index] = { 
@@ -258,13 +316,13 @@ export function PumpStationTable({
     const handleAddReading = async () => {
       setAddError(null); // Clear previous errors
       if (!selectedSiteId || !readingDate || timePerHour === undefined) {
-        setAddError('الرجاء تعبئة جميع الحقول المطلوبة.');
+        setAddError(t('readings.fillAllFields'));
         return;
       }
 
       // Validate record number - must be positive and greater than zero
       if (recordNumber <= 0 || Number.isNaN(recordNumber) || recordNumberError) {
-        setAddError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
+        setAddError(t('readings.recordNumberPositive'));
         return;
       }
 
@@ -274,7 +332,7 @@ export function PumpStationTable({
       );
 
       if (hasEmptyPumpFields) {
-        setAddError('الرجاء تعبئة جميع حقول المضخات.');
+        setAddError(t('readings.fillAllPumpFields'));
         setIsSubmittingAdd(false);
         return;
       }
@@ -285,7 +343,7 @@ export function PumpStationTable({
       );
 
       if (hasInvalidPumpValue || pumpReadings.some(pump => pump.timeError || pump.flowError)) {
-        setAddError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
+        setAddError(t('readings.pumpValuesPositive'));
         setIsSubmittingAdd(false);
         return;
       }
@@ -297,7 +355,7 @@ export function PumpStationTable({
       // Validate that the combined datetime is not in the future
       const now = new Date();
       if (dateTime.getTime() > now.getTime()) {
-        setAddError('لا يمكن إضافة قراءة في المستقبل.');
+        setAddError(t('readings.cannotAddFutureReading'));
         setIsSubmittingAdd(false);
         return;
       }
@@ -347,7 +405,9 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startDate),
-            formatDateTimeForAPI(endDate, true)
+            formatDateTimeForAPI(endDate, true),
+            pageNumber,
+            pageSize
           );
         } else {
           const today = new Date();
@@ -356,11 +416,13 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startOfToday),
-            formatDateTimeForAPI(endOfToday, true)
+            formatDateTimeForAPI(endOfToday, true),
+            pageNumber,
+            pageSize
           );
         }
       } catch (error: any) {
-        setAddError(error.message || 'فشل في إضافة قراءة محطة الرفع.');
+        setAddError(error.message || t('readings.failedToAddReading'));
       } finally {
         setIsSubmittingAdd(false); // Ensure this is correctly set
       }
@@ -369,19 +431,19 @@ export function PumpStationTable({
     const handleSaveEditPumpStation = async () => {
       setEditError(null); // Clear previous errors
       if (!editingPumpStation || !editReadingDate || editTimePerHour === undefined) {
-        setEditError('الرجاء تعبئة جميع الحقول المطلوبة.');
+        setEditError(t('readings.fillAllFields'));
         return;
       }
 
       const siteId = Number(editingPumpStation.siteId); // Site cannot be changed for existing readings
       if (!siteId || Number.isNaN(siteId)) {
-        setEditError('الموقع المحدد غير صالح.');
+        setEditError(t('readings.invalidSite'));
         return;
       }
 
       // Validate record number - must be positive and greater than zero
       if (editRecordNumber <= 0 || Number.isNaN(editRecordNumber) || editRecordNumberError) {
-        setEditError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
+        setEditError(t('readings.recordNumberPositive'));
         return;
       }
 
@@ -391,7 +453,7 @@ export function PumpStationTable({
       // Validate that the combined datetime is not in the future
       const now = new Date();
       if (dateTime.getTime() > now.getTime()) {
-        setEditError('لا يمكن إضافة قراءة في المستقبل.');
+        setEditError(t('readings.cannotAddFutureReading'));
         return;
       }
 
@@ -401,7 +463,7 @@ export function PumpStationTable({
       );
 
       if (hasEmptyPumpFields) {
-        setEditError('الرجاء تعبئة جميع حقول المضخات.');
+        setEditError(t('readings.fillAllPumpFields'));
         setIsSubmittingEdit(false);
         return;
       }
@@ -412,7 +474,7 @@ export function PumpStationTable({
       );
 
       if (hasInvalidPumpValue || editPumpReadings.some(pump => pump.timeError || pump.flowError)) {
-        setEditError('وقت تشغيل المضخة وقيمة التدفق يجب أن تكون أرقاماً موجبة.');
+        setEditError(t('readings.pumpValuesPositive'));
         setIsSubmittingEdit(false);
         return;
       }
@@ -459,7 +521,7 @@ export function PumpStationTable({
         setIsEditPumpStationOpen(false);
         // Conditionally refetch readings based on existing date range or current day
         if (startDate && endDate) {
-          fetchPumpStationReadings(Number(selectedSiteId), formatDateTimeForAPI(startDate), formatDateTimeForAPI(endDate, true));
+          fetchPumpStationReadings(Number(selectedSiteId), formatDateTimeForAPI(startDate), formatDateTimeForAPI(endDate, true), pageNumber, pageSize);
         } else {
           const today = new Date();
           const startOfToday = new Date(today.setHours(0, 0, 0, 0));
@@ -467,11 +529,13 @@ export function PumpStationTable({
           fetchPumpStationReadings(
             Number(selectedSiteId),
             formatDateTimeForAPI(startOfToday),
-            formatDateTimeForAPI(endOfToday, true)
+            formatDateTimeForAPI(endOfToday, true),
+            pageNumber,
+            pageSize
           );
         }
       } catch (error: any) {
-        setEditError(error.message || 'فشل في تحديث قراءة محطة الرفع.');
+        setEditError(error.message || t('readings.failedToUpdateReading'));
       } finally {
         setIsSubmittingEdit(false); // Reset submitting state to false
       }
@@ -654,27 +718,27 @@ export function PumpStationTable({
     <Card >
       <CardHeader>
         <div className="flex items-center justify-between">
-            <CardTitle>قراءات محطات رفع ({readings.length})</CardTitle>
+            <CardTitle>{t('readings.pumpStation')} ({readings.length})</CardTitle>
             <div className="flex gap-2 justify-end">
             
           <Button variant="outline" onClick={handleExport}>
             <Download className="ml-2 h-4 w-4" />
-            تصدير
+            {t('common.export')}
           </Button>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="ml-2 h-4 w-4" />
-                إضافة قراءة يدوية
+                {t('readings.addManualReading')}
               </Button>
             </DialogTrigger>
             <DialogContent style={dialogContentStyle}>
               <div style={headerContainerStyle}>
                 <DialogHeader>
-                  <DialogTitle style={titleStyle}>إضافة قراءة يدوية</DialogTitle>
+                  <DialogTitle style={titleStyle}>{t('readings.addManualReading')}</DialogTitle>
                   <DialogDescription style={descriptionStyle}>
-                    أدخل بيانات القراءة الجديدة
+                    {t('readings.enterReadingData')}
                   </DialogDescription>
                 </DialogHeader>
                 {addError && (
@@ -685,10 +749,10 @@ export function PumpStationTable({
                 <div key={selectedSiteId} style={contentWrapperStyle}>
                 <div style={gridContainerStyle}>
                   <div style={fieldContainerStyle}>
-                    <Label>الموقع</Label>
+                    <Label>{t('readings.selectSite')}</Label>
                     <Select dir="rtl" value={selectedSiteId || ''} disabled>
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر الموقع" />
+                        <SelectValue placeholder={t('readings.selectSite')} />
                       </SelectTrigger>
                       <SelectContent>
                         {sites.map(site => (
@@ -698,9 +762,9 @@ export function PumpStationTable({
                     </Select>
                   </div>
                   <div style={fieldContainerStyle}>
-                    <Label>التاريخ</Label>
+                    <Label>{t('common.date')}</Label>
                     <DatePicker 
-                    placeholder="اختر التاريخ"
+                    placeholder={t('readings.selectDate')}
                     value={readingDate}
                     onChange={(date) => setReadingDate(date ?? undefined)}
                     maxDate={new Date()} // Disable dates after today
@@ -746,16 +810,16 @@ export function PumpStationTable({
                 )} */}
                 <div style={gridContainerStyle}>
                   <div style={fieldContainerStyle}>
-                    <Label>رقم السجل</Label>
+                    <Label>{t('readings.recordNumber')}</Label>
                     <Input
                       type="number"
                       min="1"
-                      placeholder="0"
+                      placeholder={t('common.zero')}
                       value={recordNumber === 0 ? '' : recordNumber}
                       onInput={(e: React.FormEvent<HTMLInputElement>) => {
                         const input = e.currentTarget;
                         if (input.validity.badInput) {
-                          setRecordNumberError('يرجى إدخال رقم صحيح');
+                          setRecordNumberError(t('readings.enterValidNumber'));
                         }
                       }}
                       onChange={(e) => {
@@ -766,9 +830,9 @@ export function PumpStationTable({
                         } else {
                           const num = parseFloat(value);
                           if (isNaN(num)) {
-                            setRecordNumberError('يرجى إدخال رقم صحيح');
+                            setRecordNumberError(t('readings.enterValidNumber'));
                           } else if (num <= 0) {
-                            setRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
+                            setRecordNumberError(t('readings.recordNumberPositive'));
                             setRecordNumber(num);
                           } else {
                             setRecordNumber(num);
@@ -782,16 +846,16 @@ export function PumpStationTable({
                     )}
                   </div>
                   <div style={fieldContainerStyle}>
-                    <Label>الوقت</Label>
+                    <Label>{t('common.time')}</Label>
                     <Select
-                      dir="rtl"
+                      dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                       value={timePerHour?.toString().padStart(2, '0') || ''}
                       onValueChange={(value) => setTimePerHour(value === '' ? undefined : parseFloat(value))}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الساعة" />
+                      <SelectTrigger className="rtl:flex-row-reverse">
+                        <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                         {getAvailableHours(readingDate).map((hourNum) => {
                           const hour = hourNum.toString().padStart(2, '0');
                           return (
@@ -808,12 +872,12 @@ export function PumpStationTable({
                 {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
                   <div key={index} style={gridContainerStyle}>
                     <div style={fieldContainerStyle}>
-                      <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
+                      <Label>{t('readings.pumpNumber')} {index + 1} {t('readings.pumpUptime')}</Label>
                       <Input
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="0.0"
+                        placeholder={t('common.zero')}
                         value={pumpReadings[index]?.time ?? ''}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
@@ -821,7 +885,7 @@ export function PumpStationTable({
                             const newPumpReadings = [...pumpReadings];
                             newPumpReadings[index] = { 
                               ...newPumpReadings[index], 
-                              timeError: 'يرجى إدخال رقم صحيح'
+                              timeError: t('readings.enterValidNumber')
                             };
                             setPumpReadings(newPumpReadings);
                           }
@@ -833,12 +897,12 @@ export function PumpStationTable({
                       )}
                     </div>
                     <div style={fieldContainerStyle}>
-                      <Label>مضخة {index + 1} التدفق (م³/س)</Label>
+                      <Label>{t('readings.pumpNumber')} {index + 1} {t('readings.pumpFlow')}</Label>
                       <Input
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="0.0"
+                        placeholder={t('common.zero')}
                         value={pumpReadings[index]?.flow ?? ''}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
@@ -846,7 +910,7 @@ export function PumpStationTable({
                             const newPumpReadings = [...pumpReadings];
                             newPumpReadings[index] = { 
                               ...newPumpReadings[index], 
-                              flowError: 'يرجى إدخال رقم صحيح'
+                              flowError: t('readings.enterValidNumber')
                             };
                             setPumpReadings(newPumpReadings);
                           }
@@ -865,7 +929,7 @@ export function PumpStationTable({
                 <DialogFooter style={footerStyle}>
                   <div style={footerButtonsContainerStyle}>
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                      إلغاء
+                      {t('common.cancel')}
                     </Button>
                     <Button onClick={handleAddReading} disabled={
                       isSubmittingAdd || 
@@ -875,8 +939,8 @@ export function PumpStationTable({
                       !!recordNumberError || 
                       pumpReadings.some(pump => pump.timeError || pump.flowError) ||
                       pumpReadings.some(pump => pump.time === null || pump.flow === null)
-                    } loadingText="جاري الحفظ..." isLoading={isSubmittingAdd}>
-                      حفظ القراءة
+                    } loadingText={t('readings.saving')} isLoading={isSubmittingAdd}>
+                      {t('readings.saveReading')}
                     </Button>
                   </div>
                 </DialogFooter>
@@ -889,9 +953,9 @@ export function PumpStationTable({
             <DialogContent style={dialogContentStyle}>
               <div style={headerContainerStyle}>
                 <DialogHeader>
-                  <DialogTitle style={titleStyle}>تعديل القراءة</DialogTitle>
+                  <DialogTitle style={titleStyle}>{t('readings.editReading')}</DialogTitle>
                   <DialogDescription style={descriptionStyle}>
-                    قم بتعديل بيانات القراءة
+                    {t('readings.editReadingData')}
                   </DialogDescription>
                 </DialogHeader>
                 {editError && (
@@ -902,10 +966,10 @@ export function PumpStationTable({
                 <div style={contentWrapperStyle}>
                 <div style={gridContainerStyle}>
                   <div style={fieldContainerStyle}>
-                    <Label>الموقع</Label>
+                    <Label>{t('readings.selectSite')}</Label>
                     <Select dir="rtl" value={editingPumpStation?.siteId?.toString() || ""} disabled>
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر الموقع" />
+                        <SelectValue placeholder={t('readings.selectSite')} />
                       </SelectTrigger>
                       <SelectContent>
                         {sites.map(site => (
@@ -915,9 +979,9 @@ export function PumpStationTable({
                     </Select>
                   </div>
                   <div style={fieldContainerStyle}>
-                    <Label>التاريخ</Label>
+                    <Label>{t('common.date')}</Label>
                     <DatePicker 
-                    placeholder="اختر التاريخ"
+                    placeholder={t('readings.selectDate')}
                     value={editReadingDate}
                     onChange={(date) => setEditReadingDate(date ?? undefined)}
                     maxDate={new Date()} // Disable dates after today
@@ -927,16 +991,16 @@ export function PumpStationTable({
                 
                 <div style={gridContainerStyle}>
                   <div style={fieldContainerStyle}>
-                    <Label>رقم السجل</Label>
+                    <Label>{t('readings.recordNumber')}</Label>
                     <Input
                       type="number"
                       min="1"
-                      placeholder="0"
+                      placeholder={t('common.zero')}
                       value={editRecordNumber === 0 ? '' : editRecordNumber.toString()}
                       onInput={(e: React.FormEvent<HTMLInputElement>) => {
                         const input = e.currentTarget;
                         if (input.validity.badInput) {
-                          setEditRecordNumberError('يرجى إدخال رقم صحيح');
+                          setEditRecordNumberError(t('readings.enterValidNumber'));
                         }
                       }}
                       onChange={(e) => {
@@ -947,9 +1011,9 @@ export function PumpStationTable({
                         } else {
                           const num = parseFloat(value);
                           if (isNaN(num)) {
-                            setEditRecordNumberError('يرجى إدخال رقم صحيح');
+                            setEditRecordNumberError(t('readings.enterValidNumber'));
                           } else if (num <= 0) {
-                            setEditRecordNumberError('رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر.');
+                            setEditRecordNumberError(t('readings.recordNumberPositive'));
                             setEditRecordNumber(num);
                           } else {
                             setEditRecordNumber(num);
@@ -963,16 +1027,16 @@ export function PumpStationTable({
                     )}
                   </div>
                   <div style={fieldContainerStyle}>
-                    <Label>الوقت</Label>
+                    <Label>{t('common.time')}</Label>
                     <Select
-                      dir="rtl"
+                      dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                       value={editTimePerHour?.toString().padStart(2, '0') || ''}
                       onValueChange={(value) => setEditTimePerHour(value === '' ? undefined : parseFloat(value))}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الساعة" />
+                      <SelectTrigger className="rtl:flex-row-reverse">
+                        <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                         {getAvailableHours(editReadingDate).map((hourNum) => {
                           const hour = hourNum.toString().padStart(2, '0');
                           return (
@@ -992,12 +1056,12 @@ export function PumpStationTable({
                 {numberOfPumps > 0 && Array.from({ length: numberOfPumps }).map((_, index) => (
                   <div key={index} style={gridContainerStyle}>
                     <div style={fieldContainerStyle}>
-                      <Label>مضخة {index + 1} وقت التشغيل (ساعة)</Label>
+                      <Label>{t('readings.pumpNumber')} {index + 1} {t('readings.pumpUptime')}</Label>
                       <Input
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="0.0"
+                        placeholder={t('common.zero')}
                         value={editPumpReadings[index]?.time ?? ''}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
@@ -1005,7 +1069,7 @@ export function PumpStationTable({
                             const newEditPumpReadings = [...editPumpReadings];
                             newEditPumpReadings[index] = { 
                               ...newEditPumpReadings[index], 
-                              timeError: 'يرجى إدخال رقم صحيح'
+                              timeError: t('readings.enterValidNumber')
                             };
                             setEditPumpReadings(newEditPumpReadings);
                           }
@@ -1017,12 +1081,12 @@ export function PumpStationTable({
                       )}
                     </div>
                     <div style={fieldContainerStyle}>
-                      <Label>مضخة {index + 1} التدفق (م³/س)</Label>
+                      <Label>{t('readings.pumpNumber')} {index + 1} {t('readings.pumpFlow')}</Label>
                       <Input
                         type="number"
                         step="0.1"
                         min="0"
-                        placeholder="0.0"
+                        placeholder={t('common.zero')}
                         value={editPumpReadings[index]?.flow ?? ''}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
@@ -1030,7 +1094,7 @@ export function PumpStationTable({
                             const newEditPumpReadings = [...editPumpReadings];
                             newEditPumpReadings[index] = { 
                               ...newEditPumpReadings[index], 
-                              flowError: 'يرجى إدخال رقم صحيح'
+                              flowError: t('readings.enterValidNumber')
                             };
                             setEditPumpReadings(newEditPumpReadings);
                           }
@@ -1049,7 +1113,7 @@ export function PumpStationTable({
                 <DialogFooter style={footerStyle}>
                   <div style={footerButtonsContainerStyle}>
                     <Button variant="outline" onClick={() => setIsEditPumpStationOpen(false)}>
-                      إلغاء
+                      {t('common.cancel')}
                     </Button>
                     <Button onClick={handleSaveEditPumpStation} disabled={
                       isSubmittingEdit || 
@@ -1060,44 +1124,64 @@ export function PumpStationTable({
                       !!editRecordNumberError || 
                       editPumpReadings.some(pump => pump.timeError || pump.flowError) ||
                       editPumpReadings.some(pump => pump.time === null || pump.flow === null)
-                    } loadingText="جاري الحفظ..." isLoading={isSubmittingEdit}>
-                      حفظ التعديلات
+                    } loadingText={t('readings.saving')} isLoading={isSubmittingEdit}>
+                      {t('readings.saveChanges')}
                     </Button>
                   </div>
                 </DialogFooter>
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={isDeletePumpStationDialogOpen} onOpenChange={setIsDeletePumpStationDialogOpen}>
+            <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <DialogHeader>
+                <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.confirmDelete')}</DialogTitle>
+                <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('readings.deleteConfirmationMessage', { site: pumpStationReadingToDelete?.site, timestamp: formatTimestamp(pumpStationReadingToDelete?.timestamp || '') })}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDeletePumpStationDialogOpen(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button variant="destructive" onClick={confirmDeletePumpStation}>
+                  {t('common.delete')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
             </div>
         </div>
       </CardHeader>
       <CardContent className="overflow-x-hidden">
-        <div className="overflow-x-auto">
-          <Table  className="" dir="rtl">
+        <div className="overflow-x-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+          <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">الموقع</TableHead>
-                <TableHead className="text-right">التاريخ والوقت</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.site')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateTime')}</TableHead>
                 {/* Removed US, DS1, DS2 table headers */}
-                {/* {selectedSite?.hasUS && <TableHead className="text-right">المستوى العلوي (US)</TableHead>} */}
-                {/* {selectedSite?.hasDS1 && <TableHead className="text-right">المستوى السفلي 1 (DS1)</TableHead>} */}
-                {/* {selectedSite?.hasDS2 && <TableHead className="text-right">المستوى السفلي 2 (DS2)</TableHead>} */}
+                {/* {selectedSite?.hasUS && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.usLevel')}</TableHead>} */}
+                {/* {selectedSite?.hasDS1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.ds1Level')}</TableHead>} */}
+                {/* {selectedSite?.hasDS2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.ds2Level')}</TableHead>} */}
                 {/* {totalPumps > 0 && Array.from({ length: totalPumps }).map((_, i) => (
                   <React.Fragment key={i}>
-                    <TableHead className="text-right">مضخة {i + 1} وقت التشغيل</TableHead>
-                    <TableHead className="text-right">مضخة {i + 1} التدفق</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {i + 1} {t('readings.pumpUptime')}</TableHead>
+                    <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {i + 1} {t('readings.pumpFlow')}</TableHead>
                   </React.Fragment>
                 ))} */}
-                <TableHead className="text-right">إجمالي وقت التشغيل</TableHead>
-                <TableHead className="text-right">إجمالي التدفق</TableHead>
-                <TableHead className="text-right">إجراءات</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.totalUptime')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.totalFlow')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
                   <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
-                    جاري تحميل البيانات...
+                    {t('common.loadingData')}
                   </TableCell>
                 </TableRow>
               )}
@@ -1113,7 +1197,7 @@ export function PumpStationTable({
               {!isLoading && !error && readings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
-                    لا توجد قراءات لعرضها
+                    {t('readings.noDataToDisplay')}
                   </TableCell>
                 </TableRow>
               )}
@@ -1121,15 +1205,15 @@ export function PumpStationTable({
                 const hasAlarms = reading.alarms && reading.alarms.length > 0;
                 return (
                 <TableRow key={reading.id} >
-                  <TableCell className="text-right font-medium">{reading.site}</TableCell>
-                  <TableCell className="text-right">{formatTimestamp(reading.timestamp)}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {/* Removed US, DS1, DS2 table cells */}
-                  {/* {selectedSite?.hasUS && <TableCell className="text-right">{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  {/* {selectedSite?.hasDS1 && <TableCell className="text-right">{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  {/* {selectedSite?.hasDS2 && <TableCell className="text-right">{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'TotalUptime'), fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} ساعة</TableCell>
-                  <TableCell className="text-right" style={{ color: getAlarmColor(reading, 'Total_flow'), fontWeight: getAlarmColor(reading, 'Total_flow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} م³/س</TableCell>
-                  <TableCell className="text-right">
+                  {/* {selectedSite?.hasUS && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS1 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS2 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'TotalUptime'), fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} {t('readings.hour')}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'Total_flow'), fontWeight: getAlarmColor(reading, 'Total_flow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} {t('readings.flowUnit')}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                     <div className="flex items-center justify-end gap-2">
                       <Button 
                         variant="ghost" 
@@ -1145,6 +1229,13 @@ export function PumpStationTable({
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeletePumpStation(reading)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1154,23 +1245,129 @@ export function PumpStationTable({
           </Table>
         </div>
       </CardContent>
+
+      {/* Pagination Controls */}
+      {!isLoading && !error && readings.length > 0 && totalPages > 0 && (
+        <CardContent className="pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPageNumber(1); // Reset to first page when page size changes
+                }}
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600">
+              {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  disabled={pageNumber === 1}
+                  className="h-9 w-9"
+                  aria-label={t('common.previousPage')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (pageNumber >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pageNumber - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === pageNumber ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setPageNumber(pageNum)}
+                      className="h-9 w-9"
+                      aria-label={`${t('common.page')} ${pageNum}`}
+                      aria-current={pageNum === pageNumber ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <span className="px-2 text-gray-500">...</span>
+                )}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPageNumber(totalPages)}
+                    className="h-9 w-9"
+                    aria-label={`${t('common.page')} ${totalPages}`}
+                  >
+                    {totalPages}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  disabled={pageNumber === totalPages}
+                  className="h-9 w-9"
+                  aria-label={t('common.nextPage')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
       {/* Pump Details Dialog */}
       <Dialog open={isPumpDetailsOpen} onOpenChange={setIsPumpDetailsOpen}>
-        <DialogContent className="sm:max-w-[700px]" dir="rtl">
+        <DialogContent className="sm:max-w-[700px]" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle className="text-right">تفاصيل قراءات المرفعات</DialogTitle>
-            <DialogDescription className="text-right">
+            <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpReadingDetails')}</DialogTitle>
+            <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
               {selectedReading?.site} - {selectedReading?.timestamp}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Table>
+            <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">رقم المرفعة</TableHead>
-                  <TableHead className="text-right">وقت التشغيل (ساعة)</TableHead>
-                  <TableHead className="text-right">التدفق (م³/س)</TableHead>
-                  <TableHead className="text-right">إجراءات</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpUptime')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpFlow')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1180,10 +1377,10 @@ export function PumpStationTable({
                   
                   return (
                     <TableRow key={index}>
-                      <TableCell>مرفعة {index + 1}</TableCell>
-                      <TableCell style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
-                      <TableCell style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
-                      <TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {index + 1}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -1199,20 +1396,20 @@ export function PumpStationTable({
             </Table>
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">إجمالي وقت التشغيل</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} ساعة</p>
+                <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                  <p className="text-sm text-gray-600">{t('readings.totalUptime')}</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} {t('readings.hour')}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">إجمالي التدفق</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} م³/س</p>
+                <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                  <p className="text-sm text-gray-600">{t('readings.totalFlow')}</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} {t('readings.flowUnit')}</p>
                 </div>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPumpDetailsOpen(false)}>
-              إغلاق
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

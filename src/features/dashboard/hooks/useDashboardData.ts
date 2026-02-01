@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { FlowDataPoint, DirectorateData, ActiveAlarm, RecentReading, DashboardStats } from '../types';
-import { useAuth } from '../../../shared/contexts/AuthContext'; // Import useAuth
+import type { FlowDataPoint, DirectorateData, RecentAlarmEvent, ReadingLog, DashboardStats, SiteLookup } from '../types';
+import { useAuth } from '../../../shared/contexts/AuthContext';
+import apiService from '../../../shared/utils/apiService';
 
 export function useDashboardData() {
   const [flowData, setFlowData] = useState<FlowDataPoint[]>([
@@ -19,20 +20,15 @@ export function useDashboardData() {
     { name: 'الدقهلية', sites: 10, active: 9 },
   ]);
 
-  const [activeAlarms, setActiveAlarms] = useState<ActiveAlarm[]>([
-    { id: 1, site: 'محطة رفع - الجيزة 01', type: 'battery', message: 'البطارية منخفضة', severity: 'Warning', time: '10:30' },
-    { id: 2, site: 'القناطر - القاهرة 03', type: 'communication', message: 'فقدان الاتصال', severity: 'Critical', time: '09:15' },
-    { id: 3, site: 'محطة رفع - الإسكندرية 02', type: 'flow', message: 'تدفق عالي غير طبيعي', severity: 'Warning', time: '08:45' },
-  ]);
-
-  const [recentReadings, setRecentReadings] = useState<RecentReading[]>([
-    { site: 'القناطر - القاهرة 01', type: 'WaterLevel', time: '11:30', uswl: 125.4, dswl: 122.1, flow: 34.5 },
-    { site: 'محطة رفع - الجيزة 02', type: 'PumpStation', time: '11:25', totalFlow: 145.2, uptime: 8.5 },
-    { site: 'القناطر - الدقهلية 05', type: 'WaterLevel', time: '11:20', uswl: 98.7, dswl: 95.2, flow: 28.9 },
-  ]);
+  const [recentAlarmEvents, setRecentAlarmEvents] = useState<RecentAlarmEvent[]>([]);
+  const [readingLogs, setReadingLogs] = useState<ReadingLog[]>([]);
+  const [sites, setSites] = useState<SiteLookup[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalSites: 45,
+    totalDirectorates: 5,
+    totalUsers: 1,
     connectedSites: 45,
     activeAlarms: 12,
     criticalAlarms: 3,
@@ -44,22 +40,163 @@ export function useDashboardData() {
     uptimePercentage: 92.7,
   });
 
-  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
+  const { isAuthenticated } = useAuth();
 
+  // Map severity number to string
+  const mapSeverityNumber = (severity: any): 'critical' | 'warning' | 'info' => {
+    if (typeof severity === 'string') {
+      return severity.toLowerCase() as 'critical' | 'warning' | 'info';
+    }
+    // Assuming: 0 = info, 1 = warning, 2 = critical
+    switch (severity) {
+      case 0:
+        return 'info';
+      case 1:
+        return 'warning';
+      case 2:
+        return 'critical';
+      default:
+        return 'info';
+    }
+  };
+
+  // Fetch recent alarm events
+  const fetchRecentAlarmEvents = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/alarm-events', {
+        params: {
+          unresolvedOnly: true,
+          'pagination.PageNumber': 1,
+          'pagination.PageSize': 5,
+        },
+      });
+
+      if (response) {
+        let events: RecentAlarmEvent[] = [];
+
+        // Extract events from nested response structure: response.data.data.data
+        if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
+          events = response.data.data.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          events = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          events = response.data;
+        }
+
+        // Map API response to RecentAlarmEvent
+        const mappedEvents = events.map((event: any) => ({
+          id: event.id,
+          alarmName: event.alarmName || 'Alarm',
+          siteName: event.siteName || '',
+          fieldName: event.fieldName || '',
+          actualValue: event.actualValue,
+          thresholdValue: event.thresholdValue,
+          severity: mapSeverityNumber(event.severity),
+          colorCode: event.colorCode,
+          triggeredAt: event.triggeredAt,
+          message: event.message,
+        }));
+
+        setRecentAlarmEvents(mappedEvents.slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Error fetching recent alarm events:', error);
+      setRecentAlarmEvents([]);
+    }
+  };
+
+  // Fetch recent reading logs
+  const fetchRecentReadingLogs = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/reading-logs', {
+        params: {
+          'PageNumber': 1,
+          'PageSize': 5,
+        },
+      });
+
+      if (response) {
+        let logs: any[] = [];
+
+        // Extract logs from nested response structure
+        if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
+          logs = response.data.data.data;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          logs = response.data.data;
+        } else if (response.data && Array.isArray(response.data)) {
+          logs = response.data;
+        } else if (Array.isArray(response)) {
+          logs = response;
+        }
+
+        // Map API response to ReadingLog
+        // The API returns audit logs with: readingType, id, siteName, actionType, timeStamp, createdBy, actionDate
+        const mappedLogs = logs.map((log: any) => ({
+          id: log.id,
+          site: log.siteName || '',
+          type: log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation',
+          timestamp: log.actionDate || log.timeStamp || new Date().toISOString(),
+          actionType: log.actionType || '',
+          uswl: undefined,
+          dswl: undefined,
+          calculatedFlow: undefined,
+          totalFlow: undefined,
+          uptime: undefined,
+          isManual: false,
+        }));
+
+        console.log('Mapped Reading Logs:', mappedLogs);
+        setReadingLogs(mappedLogs.slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Error fetching recent reading logs:', error);
+      setReadingLogs([]);
+    }
+  };
+
+  // Fetch sites
+  const fetchSites = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const response = await apiService.get<any>('/v1/Lookups/Lookup/Sites');
+
+      if (response) {
+        let sitesData: SiteLookup[] = [];
+
+        // Extract sites from response
+        if (Array.isArray(response.data)) {
+          sitesData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          sitesData = response.data.data;
+        } else if (Array.isArray(response)) {
+          sitesData = response;
+        }
+
+        setSites(sitesData);
+        // Set first site as default if available
+        if (sitesData.length > 0) {
+          setSelectedSiteId(sitesData[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      setSites([]);
+    }
+  };
   // Fetch waterflow data from API
   useEffect(() => {
     const fetchWaterflowData = async () => {
-      if (!isAuthenticated) {
-        // Clear data if not authenticated
-        setFlowData([]);
-        setDirectorateData([]);
-        setActiveAlarms([]);
-        setRecentReadings([]);
-        setStats({
-          totalSites: 0, connectedSites: 0, activeAlarms: 0, criticalAlarms: 0,
-          warningAlarms: 0, totalFlow: 0, flowChange: 0, activeStations: 0,
-          totalStations: 0, uptimePercentage: 0
-        });
+      if (!isAuthenticated || !selectedSiteId) {
+        // Clear data if not authenticated or no site selected
+        if (!isAuthenticated) {
+          setFlowData([]);
+          setDirectorateData([]);
+        }
         return;
       }
 
@@ -79,8 +216,8 @@ export function useDashboardData() {
           data: T;
         }
 
-        // Fetch waterflow data for site ID 2 using generic get method
-        const response = await get<ApiResponse<WaterflowDataPoint[]>>('/v1/LandingPage/waterflow/2');
+        // Fetch waterflow data for selected site using generic get method
+        const response = await get<ApiResponse<WaterflowDataPoint[]>>(`/v1/LandingPage/waterflow/${selectedSiteId}`);
 
         if (response.isSuccess && response.data) {
           // Transform API data to chart format
@@ -108,13 +245,109 @@ export function useDashboardData() {
     };
 
     fetchWaterflowData();
+  }, [isAuthenticated, selectedSiteId]);
+
+
+
+  // Fetch dashboard statistics
+  const fetchDashboardStats = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const { get } = await import('../../../shared/utils/apiService');
+
+      interface DirectorateStat {
+        directorateId: number;
+        directorateName: string;
+        totalSiteCount: number;
+        activeSiteCount: number;
+      }
+
+      interface StatisticsResponse {
+        totalSites: number;
+        totalDirectorates: number;
+        totalUsers: number;
+        activeAlarmEvents: number;
+        sitesPerDirectorate: DirectorateStat[];
+      }
+
+      const response = await get<StatisticsResponse>('/v1/LandingPage/statistics');
+
+      if (response) {
+        // Calculate active sites from directorate data
+        const activeSitesCount = response.sitesPerDirectorate.reduce(
+          (sum, dir) => sum + dir.activeSiteCount,
+          0
+        );
+
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          totalSites: response.totalSites,
+          totalDirectorates: response.totalDirectorates,
+          totalUsers: response.totalUsers,
+          activeAlarms: response.activeAlarmEvents,
+          activeStations: activeSitesCount,
+          totalStations: response.totalSites,
+          connectedSites: activeSitesCount,
+          // Keep other stats as they are or default/mocked for now as they aren't in this specific API
+        }));
+
+        // Update directorate data
+        const mappedDirectorateData: DirectorateData[] = response.sitesPerDirectorate.map(dir => ({
+          name: dir.directorateName,
+          sites: dir.totalSiteCount,
+          active: dir.activeSiteCount
+        }));
+
+        setDirectorateData(mappedDirectorateData);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
+
+  // Fetch data when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setFlowData([]);
+      setDirectorateData([]);
+      setRecentAlarmEvents([]);
+      setReadingLogs([]);
+      setSites([]);
+      setStats({
+        totalSites: 0,
+        totalDirectorates: 0,
+        totalUsers: 0,
+        connectedSites: 0,
+        activeAlarms: 0,
+        criticalAlarms: 0,
+        warningAlarms: 0,
+        totalFlow: 0,
+        flowChange: 0,
+        activeStations: 0,
+        totalStations: 0,
+        uptimePercentage: 0,
+      });
+    } else {
+      fetchRecentAlarmEvents();
+      fetchRecentReadingLogs();
+      fetchSites();
+      fetchDashboardStats();
+    }
   }, [isAuthenticated]);
 
   return {
     flowData,
     directorateData,
-    activeAlarms,
-    recentReadings,
+    recentAlarmEvents,
+    readingLogs,
     stats,
+    sites,
+    selectedSiteId,
+    setSelectedSiteId,
+    fetchRecentAlarmEvents,
+    fetchRecentReadingLogs,
+    fetchDashboardStats,
   };
 }

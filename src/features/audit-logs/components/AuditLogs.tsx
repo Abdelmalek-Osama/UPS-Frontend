@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -35,6 +36,7 @@ import { useSitesData } from '../../sites/hooks/useSitesData';
 import { toast } from 'react-toastify';
 
 export function AuditLogs() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUser, setFilterUser] = useState('all');
   const [filterSite, setFilterSite] = useState('all');
@@ -94,20 +96,20 @@ export function AuditLogs() {
   });
 
   const handleExport = () => {
-    toast.info('سيتم تصدير سجل التدقيق إلى ملف Excel');
+    toast.info(t('common.export'));
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl">سجل التدقيق</h2>
-          <p className="text-gray-500 mt-1">تتبع جميع التغييرات على القراءات والبيانات</p>
+          <h2 className="text-2xl">{t('auditLogs.title')}</h2>
+          <p className="text-gray-500 mt-1">{t('auditLogs.subtitle')}</p>
         </div>
         <Button variant="outline" onClick={handleExport}>
           <Download className="ml-2 h-4 w-4" />
-          تصدير السجل
+          {t('common.export')} {t('auditLogs.title')}
         </Button>
       </div>
 
@@ -124,33 +126,33 @@ export function AuditLogs() {
                 className="pr-10"
               />
             </div>
-            <Select value={filterUser} onValueChange={setFilterUser}>
-              <SelectTrigger>
+            <Select value={filterUser} onValueChange={setFilterUser} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <SelectTrigger className="rtl:flex-row-reverse">
                 <SelectValue placeholder="المستخدم" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <SelectItem value="all">جميع المستخدمين</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user} value={user}>{user}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterSite} onValueChange={setFilterSite}>
-              <SelectTrigger>
+            <Select value={filterSite} onValueChange={setFilterSite} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <SelectTrigger className="rtl:flex-row-reverse">
                 <SelectValue placeholder="الموقع" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <SelectItem value="all">جميع المواقع</SelectItem>
                 {sites.map(site => (
                   <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterAction} onValueChange={setFilterAction}>
-              <SelectTrigger>
+            <Select value={filterAction} onValueChange={setFilterAction} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+              <SelectTrigger className="rtl:flex-row-reverse">
                 <SelectValue placeholder="نوع الإجراء" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <SelectItem value="all">جميع الإجراءات</SelectItem>
                 <SelectItem value="create">إضافة</SelectItem>
                 <SelectItem value="update">تحديث</SelectItem>
@@ -172,17 +174,17 @@ export function AuditLogs() {
           <CardTitle>السجلات ({filteredLogs.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">التاريخ والوقت</TableHead>
-                <TableHead className="text-right">المستخدم</TableHead>
-                <TableHead className="text-right">الإجراء</TableHead>
-                <TableHead className="text-right">الموقع</TableHead>
-                <TableHead className="text-right">الحقل</TableHead>
-                <TableHead className="text-right">القيمة القديمة</TableHead>
-                <TableHead className="text-right">القيمة الجديدة</TableHead>
-                <TableHead className="text-right">رقم القراءة</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.timestamp')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.user')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.action')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.site')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.entity')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.details')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.details')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('auditLogs.details')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -1,4 +1,5 @@
 import { Plus, Edit3, Trash2, FileText } from 'lucide-react';
+import i18n from '../../../i18n';
 
 export function getActionIcon(action: string) {
   switch (action) {
@@ -14,13 +15,14 @@ export function getActionIcon(action: string) {
 }
 
 export function getActionLabel(action: string): string {
+  const t = i18n.t;
   switch (action) {
     case 'create':
-      return 'إضافة';
+      return t('auditLogs.create');
     case 'update':
-      return 'تحديث';
+      return t('auditLogs.update');
     case 'delete':
-      return 'حذف';
+      return t('auditLogs.delete');
     default:
       return action;
   }
