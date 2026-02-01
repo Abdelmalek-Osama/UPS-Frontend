@@ -147,7 +147,7 @@ export function FlowCalculations() {
                 <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                   {sites.map(site => (
                     <SelectItem key={site.id} value={site.id.toString()}>
-                      {site.name}
+                      {t('_rtl') === 'rtl' ? site.arabicName : site.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

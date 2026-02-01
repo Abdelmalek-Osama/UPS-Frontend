@@ -24,6 +24,7 @@ const validateSiteType = (siteType: string): string => {
 interface SiteInfoPayload {
   code: string;
   name: string;
+  arabicName: string;
   siteType: string;
   canal: string;
   longitude: number;
@@ -91,7 +92,8 @@ export function useSiteCreation(): UseCreateSiteResult {
         const payload: CreateSitePayload = {
           info: {
             code: siteData.code || '',
-            name: siteData.nameEn || '', // Using nameEn as name until API supports both
+            name: siteData.nameEn || '',
+            arabicName: siteData.nameAr || '',
             siteType: mappedSiteType,
             canal: siteData.canal || '',
             longitude: siteData.longitude || 0,

@@ -158,6 +158,9 @@ export function SitesManagement() {
                   setIsAddDialogOpen(false);
                   setFormData({});
                 }}
+                onSiteCreated={(newSite) => {
+                  setSites((prevSites) => [...prevSites, newSite]);
+                }}
               />
 
               {/* Edit Dialog */}
@@ -214,7 +217,7 @@ export function SitesManagement() {
                         ) : (
                           <Power className="h-4 w-4 text-green-600" />
                         )}
-                        {site.name}
+                        {t('_rtl') === 'rtl' ? site.nameAr : site.nameEn}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -225,7 +228,11 @@ export function SitesManagement() {
                     <TableCell>{site.simCardIP || site.simId}</TableCell>
                     <TableCell>{site.dataLoggerType}</TableCell>
                     <TableCell>{site.canal}</TableCell>
-                    <TableCell>{site.directorateName}</TableCell>
+                    <TableCell>
+                      {t('_rtl') === 'rtl' 
+                        ? site.directorateArabicName 
+                        : site.directorateName}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm text-gray-600">
                         <a

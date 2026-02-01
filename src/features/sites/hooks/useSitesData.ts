@@ -3,6 +3,12 @@ import type { Site, SiteFilters } from '../types';
 import apiService from '../../../../src/shared/utils/apiService';
 import { useAuth } from '../../../../src/shared/contexts/AuthContext'; // Import useAuth
 
+interface Directorate {
+  id: number;
+  name: string;
+  arabicName: string;
+}
+
 export function useSitesData() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -10,7 +16,7 @@ export function useSitesData() {
   const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
   useEffect(() => {
-    const fetchSites = async (signal?: AbortSignal) => {
+    const fetchSitesWithDirectorates = async (signal?: AbortSignal) => {
       if (!isAuthenticated) {
         setSites([]);
         setLoading(false);
@@ -18,9 +24,28 @@ export function useSitesData() {
       }
       try {
         setLoading(true);
-        const response = await apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal });
+        
+        // Fetch both sites and directorates in parallel
+        const [sitesResponse, directoratesResponse] = await Promise.all([
+          apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal }),
+          apiService.get<Directorate[]>('/v1/Lookups/Lookup/Directorates', { signal })
+        ]);
+        
         if (!signal?.aborted) {
-          setSites(Array.isArray(response) ? response : (response as { data: Site[] }).data || []);
+          const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
+          const directoratesList = directoratesResponse || [];
+          
+          // Enrich sites with directorate Arabic names
+          const enrichedSites = sitesList.map(site => {
+            const directorate = directoratesList.find(d => d.id === site.directorateId);
+            return {
+              ...site,
+              directorateName: directorate?.name || site.directorateName || '',
+              directorateArabicName: directorate?.arabicName || ''
+            };
+          });
+          
+          setSites(enrichedSites);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
@@ -37,7 +62,7 @@ export function useSitesData() {
     };
 
     const abortController = new AbortController();
-    fetchSites(abortController.signal);
+    fetchSitesWithDirectorates(abortController.signal);
     return () => abortController.abort();
   }, [isAuthenticated]); // Add isAuthenticated to dependency array
 

@@ -59,6 +59,7 @@ export interface AddPumpStatusIdvAlarmDialogProps {
 export interface Site {
   id: number;
   name: string;
+  arabicName?: string;
 }
 
 export interface SiteConfiguration {
