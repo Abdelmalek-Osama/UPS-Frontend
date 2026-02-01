@@ -1,4 +1,3 @@
-// SitesDialog.tsx
 import { useState, useEffect } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import apiService from '../../../../shared/utils/apiService';
@@ -29,10 +28,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Sync form data with siteData prop when dialog opens or siteData changes
+  
   useEffect(() => {
     if (isOpen && siteData) {
-      setFormData(siteData);
+      
+      const mappedData = {
+        ...siteData,
+        simId: (siteData as any).simCardIP || siteData.simId
+      };
+      setFormData(mappedData);
       // For edit mode, mark all tabs as completed since we have existing data
       if (mode === 'edit') {
         setCompletedTabs([true, true, true, true]);
@@ -50,7 +54,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     { id: "stage4", name: t('sites.stage4.title'), icon: "4" },
   ];
 
-  // Inline styles matching AddThresholdAlarmDialog pattern
+  
   const dialogContentStyle: React.CSSProperties = {
     maxHeight: '80vh',
     display: 'flex',
@@ -189,9 +193,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     opacity: 0
   };
 
-  // Check if current step is valid
   const isStepValid = (step: number): boolean => {
-    // For now, allow all steps. You can add validation logic here
     return true;
   };
 
@@ -218,13 +220,13 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
           endpoint = `/v1/Sites/${formData.id}/info`;
           payload = {
             code: formData.code,
-            name: formData.name,
+            name: formData.nameEn, 
             siteType: formData.siteType,
             canal: formData.canal,
             longitude: formData.longitude,
             latitude: formData.latitude,
             directorateId: formData.directorateId,
-            simCardIP: formData.simId, // Mapping simId to simCardIP as requested
+            simCardIP: formData.simId, 
             dataLoggerType: formData.dataLoggerType
           };
           break;

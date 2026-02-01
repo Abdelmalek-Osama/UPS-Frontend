@@ -23,6 +23,8 @@ export interface Site {
   id: number;
   name: string;
   siteName?: string;
+  nameAr?: string;
+  nameEn?: string;
   siteType: 'WaterLevel' | 'Pumps';
   directorateName: string;
   directorateId?: number;
@@ -35,6 +37,7 @@ export interface Site {
   location?: string;
   dataLoggerType?: DataLoggerType;
   simId?: string;
+  simCardIP?: string;
   hasUS?: boolean;
   hasDS1?: boolean;
   hasDS2?: boolean;

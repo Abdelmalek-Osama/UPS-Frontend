@@ -24,7 +24,7 @@ export function useSitesData() {
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.log('Fetch sites aborted');
+          // Fetch aborted
         } else {
           setError((err as Error).message);
           console.error('Error fetching sites:', err);
@@ -84,7 +84,7 @@ export function useSiteByNameDirectorateType(name?: string, directorateId?: stri
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.log('Fetch site by name, directorate, type aborted');
+          // Fetch aborted
         } else {
           setError((err as Error).message);
           console.error('Error fetching site by name, directorate, type:', err);
@@ -127,7 +127,7 @@ export function useSiteById(id?: string) {
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.log('Fetch site by ID aborted');
+          // Fetch aborted
         } else {
           setError((err as Error).message);
           console.error('Error fetching site by ID:', err);

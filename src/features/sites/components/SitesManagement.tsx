@@ -155,7 +155,6 @@ export function SitesManagement() {
                 isOpen={isAddDialogOpen}
                 onCancel={() => setIsAddDialogOpen(false)}
                 onSave={(data) => {
-                  console.log('Saving site:', data);
                   setIsAddDialogOpen(false);
                   setFormData({});
                 }}
@@ -172,7 +171,6 @@ export function SitesManagement() {
                   setFormData({});
                 }}
                 onSave={(data) => {
-                  console.log('Updating site:', data);
                   setIsEditDialogOpen(false);
                   setEditingSite(null);
                   setFormData({});
@@ -198,6 +196,8 @@ export function SitesManagement() {
                 <TableRow>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteName')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteType')}</TableHead>
+                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.simId')}</TableHead>
+                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.dataLoggerType')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.canal')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.directorate')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.location')}</TableHead>
@@ -222,6 +222,8 @@ export function SitesManagement() {
                         {site.siteType === 'WaterLevel' ? t('sites.waterLevel') : site.siteType === 'Pumps' ? t('sites.pumpStation') : site.siteType}
                       </Badge>
                     </TableCell>
+                    <TableCell>{site.simCardIP || site.simId}</TableCell>
+                    <TableCell>{site.dataLoggerType}</TableCell>
                     <TableCell>{site.canal}</TableCell>
                     <TableCell>{site.directorateName}</TableCell>
                     <TableCell>

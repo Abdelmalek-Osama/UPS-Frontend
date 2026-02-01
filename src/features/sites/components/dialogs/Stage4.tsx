@@ -158,7 +158,6 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
             }
           }
         } catch (error: any) {
-          console.log('No flow calculation found, allowing new input:', error);
           setHasLoadedFlowCalc(true);
         } finally {
           setLoadingFlowCalc(false);
