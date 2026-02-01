@@ -22,6 +22,15 @@ interface TabProps {
   onClose: () => void;
 }
 
+// Validation functions
+const isArabicOnly = (text: string): boolean => {
+  return /^[\u0600-\u06FF\s]*$/.test(text);
+};
+
+const isEnglishOnly = (text: string): boolean => {
+  return /^[a-zA-Z0-9\s]*$/.test(text);
+};
+
 export default function Stage1({ data, onChange }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
@@ -30,18 +39,51 @@ export default function Stage1({ data, onChange }: TabProps) {
   const directorateOptions = getDirectorateOptions();
   const dataLoggerTypeOptions = getDataLoggerTypeOptions();
 
+  const handleArabicNameChange = (value: string) => {
+    if (value === '' || isArabicOnly(value)) {
+      onChange('nameAr', value);
+    }
+  };
+
+  const handleEnglishNameChange = (value: string) => {
+    if (value === '' || isEnglishOnly(value)) {
+      onChange('nameEn', value);
+    }
+  };
+
   return (
     <div className="space-y-3">
-      {/* Site Name Field */}
-      <div className="space-y-2">
-        <Label htmlFor="siteName">{t('sites.stage1.siteNameLabel')}</Label>
-        <Input
-          id="siteName"
-          placeholder={t('sites.stage1.siteNamePlaceholder')}
-          value={data.name || data.siteName || ''}
-          onChange={(e) => onChange('name', e.target.value)}
-          className={dir === 'rtl' ? 'text-right' : 'text-left'}
-        />
+      {/* Site Name Fields - Arabic and English side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="nameAr">{t('sites.stage1.arabicNameLabel')}</Label>
+          <Input
+            id="nameAr"
+            placeholder={t('sites.stage1.arabicNamePlaceholder')}
+            value={data.nameAr || ''}
+            onChange={(e) => handleArabicNameChange(e.target.value)}
+            className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            dir="rtl"
+          />
+          {data.nameAr && !isArabicOnly(data.nameAr) && (
+            <p className="text-sm text-red-500">{t('sites.stage1.arabicOnlyError')}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="nameEn">{t('sites.stage1.englishNameLabel')}</Label>
+          <Input
+            id="nameEn"
+            placeholder={t('sites.stage1.englishNamePlaceholder')}
+            value={data.nameEn || ''}
+            onChange={(e) => handleEnglishNameChange(e.target.value)}
+            className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            dir="ltr"
+          />
+          {data.nameEn && !isEnglishOnly(data.nameEn) && (
+            <p className="text-sm text-red-500">{t('sites.stage1.englishOnlyError')}</p>
+          )}
+        </div>
       </div>
 
       {/* Code Field */}
