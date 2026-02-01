@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { Label } from '../../../components/ui/label';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, RotateCcw } from 'lucide-react';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import type { ReadingLogDTO } from '../types';
 import Loader from '../../../components/ui/Loader';
@@ -38,6 +38,7 @@ export function ReadingLogs() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
@@ -138,8 +139,21 @@ export function ReadingLogs() {
     }
   }, [searchTerm, pageSize]);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setPageNumber(1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleReset = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setPageNumber(1);
   };
 
   const formatDateTime = (dateString: string) => {
@@ -175,14 +189,29 @@ export function ReadingLogs() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t('readingLogs.searchPlaceholder') || "Search by Site, Action, Type or Date..."}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="pr-10"
+                />
+              </div>
               <Input
-                placeholder={t('readingLogs.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pr-10"
+                type="date"
+                className="w-auto"
+                value={!isNaN(Date.parse(searchInput)) && searchInput.match(/^\d{4}-\d{2}-\d{2}$/) ? searchInput : ''}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
+              <Button onClick={handleSearch}>
+                {t('common.search')}
+              </Button>
+              <Button variant="outline" onClick={handleReset} title={t('common.reset') || "Reset"}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
