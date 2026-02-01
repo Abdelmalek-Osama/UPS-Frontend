@@ -393,7 +393,7 @@ export function ReadingsManagement() {
               </SelectTrigger>
               <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 {sites.map(site => (
-                  <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                  <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

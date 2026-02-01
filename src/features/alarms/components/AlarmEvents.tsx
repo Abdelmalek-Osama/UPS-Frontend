@@ -89,6 +89,7 @@ type AlarmEventsApiResponse =
 interface AlarmEvent {
   id: number;
   alarmName: string;
+  siteId?: number;
   siteName: string;
   fieldName: string;
   value?: number;
@@ -148,6 +149,14 @@ export function AlarmEvents() {
       return format(date, 'dd/MM/yyyy HH:mm:ss', { locale: ar });
     }
   };
+
+  // Helper function to get site name based on language
+  const getSiteName = useCallback((siteId?: number, fallbackName?: string) => {
+    if (!siteId) return fallbackName || '-';
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return fallbackName || '-';
+    return t('_rtl') === 'rtl' ? site.arabicName || '-' : site.name;
+  }, [sites, t]);
 
   const handleTabChange = (value: string) => {
     setActiveView(value as 'table' | 'cards');
@@ -269,6 +278,7 @@ export function AlarmEvents() {
       const mappedEvents: AlarmEvent[] = result.events.map((event) => ({
         id: event.id,
         alarmName: event.alarmName,
+        siteId: event.siteId,
         siteName: event.siteName,
         fieldName: event.fieldName,
         value: event.actualValue ?? undefined,
@@ -396,7 +406,7 @@ export function AlarmEvents() {
                   ) : (
                     sites.map((site) => (
                       <SelectItem key={site.id} value={site.id.toString()}>
-                        {site.name}
+                        {t('_rtl') === 'rtl' ? (site.arabicName || site.name) : site.name}
                       </SelectItem>
                     ))
                   )}
@@ -547,7 +557,7 @@ export function AlarmEvents() {
                           <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>#{event.id}</TableCell>
                           <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{translateAlarmName(event.alarmName)}</TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden sm:table-cell`}>
-                            {event.siteName}
+                            {getSiteName(event.siteId, event.siteName)}
                           </TableCell>
                           <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>
                             <Badge variant="outline">{translateFieldName(event.fieldName)}</Badge>
@@ -597,7 +607,7 @@ export function AlarmEvents() {
                         <div>
                           <p className={`font-semibold ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>{translateAlarmName(event.alarmName)}</p>
                           <p className={`text-sm text-gray-500 ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
-                            {event.siteName}
+                            {getSiteName(event.siteId, event.siteName)}
                           </p>
                         </div>
 
@@ -767,7 +777,6 @@ export function AlarmEvents() {
                     {selectedEvent.colorCode}
                   </div>
                 </div>
-
                 {/* Alarm Name */}
                 <div>
                   <Label className="text-gray-500">{t('alarms.alarmName')}</Label>
@@ -777,7 +786,7 @@ export function AlarmEvents() {
                 {/* Site Information */}
                 <div>
                   <Label className="text-gray-500">{t('readings.site')}</Label>
-                  <p className="mt-1">{selectedEvent.siteName}</p>
+                  <p className="mt-1">{getSiteName(selectedEvent.siteId, selectedEvent.siteName)}</p>
                 </div>
 
                 {/* Field & Values */}

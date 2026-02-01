@@ -4,6 +4,7 @@ import apiService from '../../../../shared/utils/apiService';
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useSiteCreation } from '../../hooks/useSiteCreation';
+import { useDirectorates } from '../../hooks/useDirectorates';
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
 import Stage3 from "./Stage3";
@@ -16,12 +17,14 @@ interface SitesDialogProps {
   onSave: (data: Partial<Site>) => void;
   onCancel: () => void;
   isOpen: boolean;
+  onSiteCreated?: (site: Site) => void;
 }
 
-export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }: SitesDialogProps) {
+export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
+  const { directorates } = useDirectorates();
 
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
@@ -220,7 +223,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
           endpoint = `/v1/Sites/${formData.id}/info`;
           payload = {
             code: formData.code,
-            name: formData.nameEn, 
+            name: formData.nameEn,
+            arabicName: formData.nameAr,
             siteType: formData.siteType,
             canal: formData.canal,
             longitude: formData.longitude,
@@ -302,8 +306,44 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const handleCreateSite = async () => {
     try {
       const result = await createSite(formData);
-      if (result.success) {
+      if (result.success && result.data) {
         onSave(formData);
+        // Call the callback to add the new site to the list immediately
+        if (onSiteCreated) {
+          // Get directorate info from the directorates array
+          const directorate = directorates.find(d => d.id === formData.directorateId);
+          const directorateName = directorate?.name || '';
+          const directorateArabicName = directorate?.arabicName || '';
+          
+          // Transform the API response to match the Site interface
+          const newSite: Site = {
+            id: result.data.id || 0,
+            name: formData.nameEn || '',
+            nameAr: formData.nameAr || '',
+            nameEn: formData.nameEn || '',
+            siteType: formData.siteType as 'WaterLevel' | 'Pumps' || 'WaterLevel',
+            directorateName: directorateName,
+            directorateArabicName: directorateArabicName,
+            directorateId: formData.directorateId,
+            latitude: formData.latitude || 0,
+            longitude: formData.longitude || 0,
+            status: 'offline' as const,
+            code: formData.code || '',
+            canal: formData.canal || '',
+            location: formData.location || '',
+            dataLoggerType: formData.dataLoggerType,
+            simId: formData.simId || '',
+            simCardIP: formData.simId || '',
+            hasUS: formData.hasUS || false,
+            hasDS1: formData.hasDS1 || false,
+            hasDS2: formData.hasDS2 || false,
+            numPumps: formData.numPumps || 0,
+            dataMappings: formData.dataMappings || [],
+            flowCalculation: formData.flowCalculation,
+            ...result.data,
+          };
+          onSiteCreated(newSite);
+        }
         onCancel();
         // Reset
         setCurrentTab(0);

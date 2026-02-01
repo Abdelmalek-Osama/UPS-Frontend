@@ -27,6 +27,7 @@ export interface Site {
   nameEn?: string;
   siteType: 'WaterLevel' | 'Pumps';
   directorateName: string;
+  directorateArabicName?: string;
   directorateId?: number;
   latitude: number;
   longitude: number;

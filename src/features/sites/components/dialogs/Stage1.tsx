@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Site, DataLoggerType } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { Input } from '../../../../components/ui/input';
@@ -11,9 +12,9 @@ import {
 } from '../../../../components/ui/select';
 import {
   getCanalOptions,
-  getDirectorateOptions,
   getDataLoggerTypeOptions,
 } from '../../constants';
+import { useDirectorates } from '../../hooks/useDirectorates';
 
 interface TabProps {
   data: Partial<Site>;
@@ -36,19 +37,15 @@ export default function Stage1({ data, onChange }: TabProps) {
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
 
   const canalOptions = getCanalOptions();
-  const directorateOptions = getDirectorateOptions();
   const dataLoggerTypeOptions = getDataLoggerTypeOptions();
+  const { directorates, isLoading: isLoadingDirectorates } = useDirectorates();
 
   const handleArabicNameChange = (value: string) => {
-    if (value === '' || isArabicOnly(value)) {
-      onChange('nameAr', value);
-    }
+    onChange('nameAr', value);
   };
 
   const handleEnglishNameChange = (value: string) => {
-    if (value === '' || isEnglishOnly(value)) {
-      onChange('nameEn', value);
-    }
+    onChange('nameEn', value);
   };
 
   return (
@@ -66,7 +63,7 @@ export default function Stage1({ data, onChange }: TabProps) {
             dir="rtl"
           />
           {data.nameAr && !isArabicOnly(data.nameAr) && (
-            <p className="text-sm text-red-500">{t('sites.stage1.arabicOnlyError')}</p>
+            <p className="text-sm text-red-600">{t('sites.stage1.arabicOnlyError')}</p>
           )}
         </div>
 
@@ -81,7 +78,7 @@ export default function Stage1({ data, onChange }: TabProps) {
             dir="ltr"
           />
           {data.nameEn && !isEnglishOnly(data.nameEn) && (
-            <p className="text-sm text-red-500">{t('sites.stage1.englishOnlyError')}</p>
+            <p className="text-sm text-red-600">{t('sites.stage1.englishOnlyError')}</p>
           )}
         </div>
       </div>
@@ -136,26 +133,31 @@ export default function Stage1({ data, onChange }: TabProps) {
 
       {/* Directorate Dropdown */}
       <div className="space-y-2">
-        <Label htmlFor="directorateName">
+        <Label htmlFor="directorateId">
           {t('sites.stage1.directorateNameLabel')}
         </Label>
         <Select
-          value={data.directorateName || ''}
-          onValueChange={(value) => onChange('directorateName', value)}
+          value={data.directorateId?.toString() || ''}
+          onValueChange={(value) => onChange('directorateId', parseInt(value))}
           dir={dir}
+          disabled={isLoadingDirectorates}
         >
           <SelectTrigger
-            id="directorateName"
+            id="directorateId"
             className={dir === 'rtl' ? 'rtl:flex-row-reverse text-right' : 'text-left'}
           >
             <SelectValue
-              placeholder={t('sites.stage1.directorateNamePlaceholder')}
+              placeholder={
+                isLoadingDirectorates
+                  ? t('common.loading')
+                  : t('sites.stage1.directorateNamePlaceholder')
+              }
             />
           </SelectTrigger>
           <SelectContent dir={dir}>
-            {directorateOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {t(option.label)}
+            {directorates.map((directorate) => (
+              <SelectItem key={directorate.id} value={directorate.id.toString()}>
+                {dir === 'rtl' ? directorate.arabicName : directorate.name}
               </SelectItem>
             ))}
           </SelectContent>

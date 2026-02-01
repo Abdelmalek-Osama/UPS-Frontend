@@ -1,6 +1,7 @@
 export interface SiteLookupOption {
   id: number;
   name: string;
+  arabicName?: string;
 }
 
 export interface SiteConfiguration {
