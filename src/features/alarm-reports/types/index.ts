@@ -35,6 +35,7 @@ export interface CreateAlarmReportPayload {
   selectedFields: string[];
   recipients: string[];
   filters?: AlarmReportFilter;
+  siteId?: number | null; // Add siteId
 }
 
 export interface ApiResponse<T> {

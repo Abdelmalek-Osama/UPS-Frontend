@@ -155,6 +155,7 @@
     "longitude": "خط الطول",
     "coordinates": "الإحداثيات",
     "code": "الكود",
+    "selectSite": "اختر موقعاً",
     "stage1": {
       "title": "معلومات الموقع",
       "siteNameLabel": "اسم الموقع",

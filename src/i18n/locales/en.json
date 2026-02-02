@@ -155,6 +155,7 @@
     "longitude": "Longitude",
     "coordinates": "Coordinates",
     "code": "Code",
+    "selectSite": "Select a site",
     "stage1": {
       "title": "Site Information",
       "siteNameLabel": "Site Name",
