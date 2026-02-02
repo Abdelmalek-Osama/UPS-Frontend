@@ -96,8 +96,8 @@ export function EditSensorStatusAlarmDialog({
         borderTop: '1px solid hsl(var(--border))'
     };
 
-    const handleSiteChange = (siteName: string) => {
-        const selected = sites.find(site => site.name === siteName);
+    const handleSiteChange = (value: string) => {
+        const selected = sites.find(site => site.id.toString() === value);
         if (selected) {
             setForm(prev => ({ 
                 ...prev, 
@@ -168,7 +168,7 @@ export function EditSensorStatusAlarmDialog({
                                             <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                         ) : (
                                             sites.map(site => (
-                                                <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
+                                                <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                             ))
                                         )}
                                     </SelectContent>

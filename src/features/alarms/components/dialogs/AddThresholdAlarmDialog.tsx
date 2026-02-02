@@ -276,7 +276,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
                                         sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>

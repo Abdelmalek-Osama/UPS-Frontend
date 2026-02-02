@@ -29,6 +29,7 @@ interface SiteConfiguration {
   longitude: number;
   latitude: number;
   directorateName: string;
+  directorateArabicName: string;
   hasUS: boolean;
   hasDS1: boolean;
   hasDS2: boolean;
@@ -607,7 +608,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -849,7 +850,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

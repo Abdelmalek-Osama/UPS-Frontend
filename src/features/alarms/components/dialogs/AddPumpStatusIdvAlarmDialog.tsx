@@ -55,7 +55,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
     const [alarmNameError, setAlarmNameError] = useState<string | undefined>(undefined);
 
     const handleSiteChange = (value: string) => {
-        const selected = sites.find(site => site.name === value);
+        const selected = sites.find(site => site.id.toString() === value);
         if (selected) {
             setSite(selected.name);
             setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name, pumpNumber: 1 }));
@@ -120,8 +120,8 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                             </SelectTrigger>
                             <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 {sites.map(site => (
-                                    <SelectItem key={site.id} value={site.name}>
-                                        {site.name}
+                                    <SelectItem key={site.id} value={site.id.toString()}>
+                                        {t('_rtl') === 'rtl' ? site.arabicName : site.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

@@ -21,28 +21,27 @@ export interface FlowCalculation {
 
 export interface Site {
   id: number;
+  code?: string;
   name: string;
-  siteName?: string;
-  nameAr?: string;
-  nameEn?: string;
+  arabicName: string;
   siteType: 'WaterLevel' | 'Pumps';
-  directorateName: string;
-  directorateArabicName?: string;
-  directorateId?: number;
+  canal?: string;
   latitude: number;
   longitude: number;
-  status: 'online' | 'offline';
-  flowCalcMethod?: 'Formula' | 'HQCurve';
-  code?: string;
-  canal?: string;
-  location?: string;
-  dataLoggerType?: DataLoggerType;
-  simId?: string;
-  simCardIP?: string;
+  directorateName: string;
+  directorateArabicName: string;
   hasUS?: boolean;
   hasDS1?: boolean;
   hasDS2?: boolean;
   numPumps?: number;
+  simCardIP?: string;
+  simId?: string;
+  dataLoggerType?: DataLoggerType;
+  siteDataMappings?: DataMapping[];
+  directorateId?: number;
+  status?: 'online' | 'offline';
+  flowCalcMethod?: 'Formula' | 'HQCurve';
+  location?: string;
   dataMappings?: DataMapping[];
   flowCalculation?: FlowCalculation;
 }

@@ -179,19 +179,6 @@ export function EditThresholdAlarmDialog({
         flexShrink: 0,
         borderTop: '1px solid hsl(var(--border))'
     };
-    useEffect(() => {
-        if (currentAlarm && currentAlarm.threshold < 0) {
-            setForm(prev => ({
-                ...prev,
-                thresholdError: t('validation.invalidNumber')
-            }));
-        } else if (currentAlarm && currentAlarm.threshold >= 0) {
-            setForm(prev => ({
-                ...prev,
-                thresholdError: undefined
-            }));
-        }
-    }, [currentAlarm, setForm]);
 
    return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -253,7 +240,7 @@ export function EditThresholdAlarmDialog({
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
                                         sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>
