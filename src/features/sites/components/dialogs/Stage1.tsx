@@ -32,7 +32,7 @@ const isEnglishOnly = (text: string): boolean => {
   return /^[a-zA-Z0-9\s]*$/.test(text);
 };
 
-export default function Stage1({ data, onChange }: TabProps) {
+export default function Stage1({ data, onChange, isOpen }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
 
@@ -41,7 +41,7 @@ export default function Stage1({ data, onChange }: TabProps) {
   const { directorates, isLoading: isLoadingDirectorates } = useDirectorates();
 
   const handleArabicNameChange = (value: string) => {
-    onChange('nameAr', value);
+    onChange('arabicName', value);
   };
 
   const handleEnglishNameChange = (value: string) => {
