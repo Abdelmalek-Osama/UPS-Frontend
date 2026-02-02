@@ -37,8 +37,18 @@ export function useSitesData() {
           const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
           const directoratesList = directoratesResponse || [];
           
-          // Use sites as-is since API already provides directorateName and directorateArabicName
-          setSites(sitesList);
+          // Map directorate names to IDs
+          const sitesWithDirectorateIds = sitesList.map(site => {
+            const matchingDirectorate = directoratesList.find(
+              d => d.name === site.directorateName || d.arabicName === site.directorateArabicName
+            );
+            return {
+              ...site,
+              directorateId: matchingDirectorate?.id || site.directorateId
+            };
+          });
+          
+          setSites(sitesWithDirectorateIds);
           setDirectorates(directoratesList);
         }
       } catch (err: any) {
