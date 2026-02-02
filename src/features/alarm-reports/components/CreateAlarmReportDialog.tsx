@@ -36,6 +36,7 @@ interface CreateAlarmReportDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (payload: CreateAlarmReportPayload) => Promise<void>;
   isLoading?: boolean;
+  editingConfig?: AlarmReportConfiguration | null;
 }
 
 export function CreateAlarmReportDialog({
@@ -43,6 +44,7 @@ export function CreateAlarmReportDialog({
   onOpenChange,
   onSubmit,
   isLoading = false,
+  editingConfig = null,
 }: CreateAlarmReportDialogProps) {
   const { t } = useTranslation();
   const { sites, loading: sitesLoading } = useSitesData();
@@ -57,6 +59,31 @@ export function CreateAlarmReportDialog({
   const [recipients, setRecipients] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Initialize form with editing config data when dialog opens
+  React.useEffect(() => {
+    if (open && editingConfig) {
+      setName(editingConfig.name);
+      setSiteId(editingConfig.filters?.siteId || null);
+      setIsEnabled(editingConfig.isEnabled);
+      setFrequency(editingConfig.frequency);
+      setScheduledTime(editingConfig.scheduledTime || '06:00');
+      setDayOfWeek(editingConfig.dayOfWeek || 0);
+      setRecipients(editingConfig.recipients);
+      setSelectedFields(editingConfig.selectedFields);
+    } else if (open && !editingConfig) {
+      // Reset form for create mode
+      setName('');
+      setSiteId(null);
+      setIsEnabled(true);
+      setFrequency('Daily');
+      setScheduledTime('06:00');
+      setDayOfWeek(0);
+      setRecipients([]);
+      setSelectedFields([]);
+    }
+    setErrors({});
+  }, [open, editingConfig]);
 
   // Validation
   const validateForm = (): boolean => {
@@ -186,10 +213,10 @@ recipients,
       <div style={headerContainerStyle}>
    <DialogHeader>
      <DialogTitle dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-  {t('alarmReports.createNewConfiguration')}
-            </DialogTitle>
-            <DialogDescription dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-  {t('alarmReports.createConfigurationDescription')}
+  {editingConfig ? t('alarmReports.editConfiguration') : t('alarmReports.createNewConfiguration')}
+        </DialogTitle>
+         <DialogDescription dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+  {editingConfig ? t('alarmReports.editConfigurationDescription') : t('alarmReports.createConfigurationDescription')}
      </DialogDescription>
           </DialogHeader>
         </div>
@@ -337,8 +364,8 @@ placeholder={t('alarmReports.enterConfigurationName')}
        </Button>
        <Button onClick={handleSubmit} disabled={isLoading} className="gap-2">
        {isLoading && <Loader className="h-4 w-4 animate-spin" />}
-      {isLoading ? t('common.saving') : t('common.save')}
-              </Button>
+      {isLoading ? t('common.saving') : (editingConfig ? t('common.update') : t('common.save'))}
+</Button>
  </div>
     </DialogFooter>
         </div>

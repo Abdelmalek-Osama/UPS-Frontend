@@ -31,10 +31,11 @@ import { DAYS_OF_WEEK } from '../types';
 
 export function AlarmReportsConfiguration() {
   const { t } = useTranslation();
-  const { configurations, isLoading, fetchConfigurations, createConfiguration, deleteConfiguration } = useAlarmReports();
+  const { configurations, isLoading, fetchConfigurations, createConfiguration, updateConfiguration, deleteConfiguration } = useAlarmReports();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedConfigToDelete, setSelectedConfigToDelete] = useState<AlarmReportConfiguration | null>(null);
+  const [editingConfig, setEditingConfig] = useState<AlarmReportConfiguration | null>(null);
   const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
 
@@ -46,9 +47,29 @@ export function AlarmReportsConfiguration() {
   const handleCreateSubmit = async (payload: CreateAlarmReportPayload) => {
     setIsSubmittingCreate(true);
     try {
- await createConfiguration(payload);
+      if (editingConfig) {
+        // Edit mode
+        await updateConfiguration(editingConfig.id, payload);
+        setEditingConfig(null);
+      } else {
+        // Create mode
+        await createConfiguration(payload);
+      }
+      setIsCreateDialogOpen(false);
     } finally {
       setIsSubmittingCreate(false);
+    }
+  };
+
+  const handleEditClick = (config: AlarmReportConfiguration) => {
+    setEditingConfig(config);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsCreateDialogOpen(open);
+    if (!open) {
+      setEditingConfig(null);
     }
   };
 
@@ -266,22 +287,34 @@ export function AlarmReportsConfiguration() {
   {/* Actions */}
  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
           <div className="flex items-center gap-2">
+    <Button
+       variant="ghost"
+        size="icon"
+             onClick={() => handleEditClick(config)}
+         disabled={isSubmittingCreate}
+      className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+       aria-label={t('common.edit')}
+  >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+     </Button>
      <Button
        variant="ghost"
-          size="icon"
-             onClick={() => handleDeleteClick(config)}
-                    disabled={isDeletingId === config.id}
-      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+       size="icon"
+     onClick={() => handleDeleteClick(config)}
+   disabled={isDeletingId === config.id}
+className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
        aria-label={t('common.delete')}
   >
-            {isDeletingId === config.id ? (
-      <Loader className="h-4 w-4 animate-spin" />
+          {isDeletingId === config.id ? (
+ <Loader className="h-4 w-4 animate-spin" />
       ) : (
       <Trash2 className="h-4 w-4" />
-          )}
+  )}
   </Button>
    </div>
-            </TableCell>
+        </TableCell>
       </TableRow>
         ))}
      </TableBody>
@@ -293,9 +326,10 @@ export function AlarmReportsConfiguration() {
       {/* Create Dialog */}
       <CreateAlarmReportDialog
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
+    onOpenChange={handleDialogOpenChange}
         onSubmit={handleCreateSubmit}
-        isLoading={isSubmittingCreate}
+    isLoading={isSubmittingCreate}
+        editingConfig={editingConfig}
       />
 
       {/* Delete Dialog */}

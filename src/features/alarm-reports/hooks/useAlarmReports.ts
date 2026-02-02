@@ -24,7 +24,7 @@ export function useAlarmReports() {
     } catch (err) {
       const errorMessage = (err as Error).message;
       setError(errorMessage);
-      toast.error(errorMessage);
+ toast.error(errorMessage);
     } finally {
   setIsLoading(false);
     }
@@ -44,6 +44,20 @@ export function useAlarmReports() {
     }
   }, [t]);
 
+  // Update an existing configuration
+  const updateConfiguration = useCallback(async (id: number, payload: CreateAlarmReportPayload) => {
+  try {
+      const updatedConfig = await alarmReportsService.updateReportConfiguration(id, payload);
+      setConfigurations(prev => prev.map(config => config.id === id ? updatedConfig : config));
+      toast.success(t('alarmReports.configurationUpdatedSuccess'));
+  return updatedConfig;
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      toast.error(errorMessage);
+      throw err;
+    }
+  }, [t]);
+
   // Delete a configuration
   const deleteConfiguration = useCallback(async (id: number) => {
     try {
@@ -53,7 +67,7 @@ export function useAlarmReports() {
     } catch (err) {
       const errorMessage = (err as Error).message;
       toast.error(errorMessage);
-      throw err;
+    throw err;
     }
   }, [t]);
 
@@ -63,6 +77,7 @@ export function useAlarmReports() {
     error,
     fetchConfigurations,
     createConfiguration,
+    updateConfiguration,
     deleteConfiguration,
     setConfigurations
   };
