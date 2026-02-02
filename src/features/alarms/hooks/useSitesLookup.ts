@@ -6,11 +6,13 @@ export interface SiteDetails {
     id: number;
     code: string;
     name: string;
+    arabicName: string;
     siteType: string;
     canal: string;
     longitude: number;
     latitude: number;
     directorateName: string;
+    directorateArabicName: string;
     hasUS: boolean;
     hasDS1: boolean;
     hasDS2: boolean;

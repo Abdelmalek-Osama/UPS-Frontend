@@ -11,6 +11,7 @@ interface Directorate {
 
 export function useSitesData() {
   const [sites, setSites] = useState<Site[]>([]);
+  const [directorates, setDirectorates] = useState<Directorate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
@@ -19,6 +20,7 @@ export function useSitesData() {
     const fetchSitesWithDirectorates = async (signal?: AbortSignal) => {
       if (!isAuthenticated) {
         setSites([]);
+        setDirectorates([]);
         setLoading(false);
         return;
       }
@@ -35,17 +37,9 @@ export function useSitesData() {
           const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
           const directoratesList = directoratesResponse || [];
           
-          // Enrich sites with directorate Arabic names
-          const enrichedSites = sitesList.map(site => {
-            const directorate = directoratesList.find(d => d.id === site.directorateId);
-            return {
-              ...site,
-              directorateName: directorate?.name || site.directorateName || '',
-              directorateArabicName: directorate?.arabicName || ''
-            };
-          });
-          
-          setSites(enrichedSites);
+          // Use sites as-is since API already provides directorateName and directorateArabicName
+          setSites(sitesList);
+          setDirectorates(directoratesList);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
@@ -66,8 +60,6 @@ export function useSitesData() {
     return () => abortController.abort();
   }, [isAuthenticated]); // Add isAuthenticated to dependency array
 
-  const directorates = Array.from(new Set(sites?.map(site => site.directorateName) || []));
-
   return { sites, setSites, directorates, loading, error };
 }
 
@@ -80,7 +72,7 @@ export function useFilteredSites(sites: Site[], filters: SiteFilters) {
       (site.canal && site.canal.toLowerCase().includes(filters.searchTerm.toLowerCase()))
     );
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
-    const matchesDirectorate = filters.directorate === 'all' || site.directorateName === filters.directorate;
+    const matchesDirectorate = filters.directorate === 'all' || site.directorateId?.toString() === filters.directorate;
     const matchesCanal = filters.canal === 'all' || (site.canal && site.canal === filters.canal);
     return matchesSearch && matchesType && matchesDirectorate && matchesCanal;
   });

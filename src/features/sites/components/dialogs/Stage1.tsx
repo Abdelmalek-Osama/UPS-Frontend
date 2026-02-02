@@ -57,12 +57,12 @@ export default function Stage1({ data, onChange }: TabProps) {
           <Input
             id="nameAr"
             placeholder={t('sites.stage1.arabicNamePlaceholder')}
-            value={data.nameAr || ''}
+            value={data.arabicName || ''}
             onChange={(e) => handleArabicNameChange(e.target.value)}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="rtl"
           />
-          {data.nameAr && !isArabicOnly(data.nameAr) && (
+          {data.arabicName && !isArabicOnly(data.arabicName) && (
             <p className="text-sm text-red-600">{t('sites.stage1.arabicOnlyError')}</p>
           )}
         </div>
@@ -72,12 +72,12 @@ export default function Stage1({ data, onChange }: TabProps) {
           <Input
             id="nameEn"
             placeholder={t('sites.stage1.englishNamePlaceholder')}
-            value={data.nameEn || ''}
+            value={data.name || ''}
             onChange={(e) => handleEnglishNameChange(e.target.value)}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="ltr"
           />
-          {data.nameEn && !isEnglishOnly(data.nameEn) && (
+          {data.name && !isEnglishOnly(data.name) && (
             <p className="text-sm text-red-600">{t('sites.stage1.englishOnlyError')}</p>
           )}
         </div>

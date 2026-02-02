@@ -102,8 +102,10 @@ export function SitesManagement() {
               </SelectTrigger>
               <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <SelectItem value="all">{t('sites.allDirectorates')}</SelectItem>
-                {directorates.map(dir => (
-                  <SelectItem key={dir} value={dir}>{dir}</SelectItem>
+                {directorates.map((directorate) => (
+                  <SelectItem key={directorate.id} value={directorate.id.toString()}>
+                    {t('_rtl') === 'rtl' ? directorate.arabicName : directorate.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -217,7 +219,7 @@ export function SitesManagement() {
                         ) : (
                           <Power className="h-4 w-4 text-green-600" />
                         )}
-                        {t('_rtl') === 'rtl' ? site.nameAr : site.nameEn}
+                        {t('_rtl') === 'rtl' ? site.arabicName : site.name}
                       </div>
                     </TableCell>
                     <TableCell>
