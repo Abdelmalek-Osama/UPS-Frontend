@@ -25,7 +25,6 @@ export interface AddSensorStatusAlarmDialogProps {
   setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
   setPhones: (phones: string[]) => void;
-  setSentMessage : (sentMessage: string) => void;
   submissionError: string | null;
 }
 export interface AddPumpStatusPSAlarmDialogProps {
@@ -38,7 +37,6 @@ export interface AddPumpStatusPSAlarmDialogProps {
   setSite: (site: string) => void;
   setEmails: (emails: string[]) => void;
   setPhones: (phones: string[]) => void;
-  setSentMessage : (sentMessage: string) => void;
   submissionError: string | null;
 }
 
@@ -106,10 +104,14 @@ export interface CommunicationAlarmForm {
 
 export interface SensorStatusForm {
   alarmId: number | null;
+  alarmName: string;
   method: number;
   siteId: number | null;
   site: string;
-  sentMessage: string,
+  message: string;
+  threshold: number;
+  field: string;
+  readingValue: number;
   emails: string[];
   phones: string[];
 }
@@ -193,13 +195,13 @@ export interface CreateCommunicationAlarmRequest {
 
 export interface CreateSensorStatusAlarmRequest {
   alarmId: number | null;
+  alarmName: string;
   siteId: number|null;
   site: string;
+  message: string;
   method: AlarmMethod;
-  sentMessage: string;
   emails: string;
   phones: string;
-
 }
 
 export interface CreatePumpStatusPSAlarmRequest {
@@ -264,11 +266,14 @@ export interface ValueThresholdAlarm {
 
 export interface SensorStatusResponse {
   alarmId: number;
+  alarmName: string;
   siteId: number;
-  sentMessage: string;
   site: string;
+  message: string;
+  threshold: number;
+  field: string;
+  readingValue: number;
   recipients: string[]; // Assuming recipients can be an array of strings
-
 }
 
 export interface PumpStatusPSResponse {

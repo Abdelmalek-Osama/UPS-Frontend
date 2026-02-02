@@ -146,13 +146,11 @@ export function AlarmConfiguration() {
   const [pumpStatusIdvIdvPump,setPumpStatusIdvIdvPump] = useState<string>('');
   const [pumpStatusPSSite, setPumpStatusPSSite] = useState<string>('');
   const [psSiteId, setPsSiteId] = useState<number | undefined>(undefined);
-  const [sentMessage, setSentMessage] = useState<string>('');
   const [pumpStatusIdvSite, setPumpStatusIdvSite] = useState<string>('');
   const [pumpStatusIdvSiteError, setPumpStatusIdvSiteError] = useState<string | null>(null);
   const [pumpStatusPSSiteError, setPumpStatusPSSiteError] = useState<string | null>(null);
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
-
-  
+  const { availableFields: sensorStatusAvailableFields, isFetchingSiteDetails: sensorStatusIsFetchingSiteDetails } = useThresholdAlarmFields(newSensorStatusForm.siteId);
 
   const handleSensorStatusDialogOpenChange = useCallback((open: boolean) => {
     setIsAddSensorStatusOpen(open);
@@ -272,7 +270,7 @@ export function AlarmConfiguration() {
   const handleSubmitSensorStatusAlarm = async () => {
     setIsSubmittingSensorStatusAdd(true);
     setSensorStatusSubmissionError(null);
-    const { siteId, site, sentMessage } = newSensorStatusForm;
+    const { siteId, site, alarmName, message } = newSensorStatusForm;
 
     if (!siteId || !site) {
       console.error('Missing required sensor status alarm fields');
@@ -283,8 +281,9 @@ export function AlarmConfiguration() {
     const requestBody: CreateSensorStatusAlarmRequest = {
       alarmId: null,
       siteId,
+      alarmName,
       site: sites.find(s => s.id === siteId)?.name || '',
-      sentMessage,
+      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
       method: AlarmMethod.Email,
@@ -414,7 +413,7 @@ export function AlarmConfiguration() {
     setIsSubmittingSensorStatusEdit(true);
     if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
 
-    const { siteId, site, sentMessage } = newSensorStatusForm;
+    const { siteId, site, alarmName, message } = newSensorStatusForm;
 
     if (!siteId || !site) {
       console.error('Missing required sensor status alarm fields');
@@ -425,8 +424,9 @@ export function AlarmConfiguration() {
     const requestBody: CreateSensorStatusAlarmRequest = {
       alarmId: currentSensorStatusAlarm.alarmId,
       siteId,
+      alarmName,
       site,
-      sentMessage,
+      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
       method: AlarmMethod.Email,
@@ -641,19 +641,27 @@ export function AlarmConfiguration() {
     
     setCurrentSensorStatusAlarm({
       alarmId: alarm.alarmId,
+      alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
       site: alarm.site,
-      sentMessage: alarm.sentMessage,
+      message: alarm.message || '',
+      threshold: alarm.threshold || 0,
+      field: alarm.field || '',
+      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
     setNewSensorStatusForm({
       alarmId: alarm.alarmId,
+      alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
       site: alarm.site,
-      sentMessage: alarm.sentMessage,
+      message: alarm.message || '',
+      threshold: alarm.threshold || 0,
+      field: alarm.field || '',
+      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
@@ -738,10 +746,6 @@ export function AlarmConfiguration() {
 
   const setSensorStatusSiteId = (siteId: number | null) => {
     setNewSensorStatusForm(prev => ({ ...prev, siteId }));
-  };
-
-  const setSensorStatusSentMessage = (sentMessage: string) => {
-    setNewSensorStatusForm(prev => ({ ...prev, sentMessage }));
   };
 
   // Set default site when sites load
@@ -1052,10 +1056,10 @@ export function AlarmConfiguration() {
             <WifiOff className="ml-2 h-4 w-4" />
             {t('alarms.communicationAlarms')}
           </TabsTrigger>
-          {/* <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
+          <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
             <SmartphoneNfc className="ml-2 h-4 w-4" />
             {t('alarms.sensorStatus')}
-          </TabsTrigger> */}
+          </TabsTrigger>
           <TabsTrigger value="pumpStatusPS" className="flex items-center space-x-2">
             <Wrench className="ml-2 h-4 w-4" />
             {t('alarms.pumpStatusPS')}
@@ -1169,7 +1173,7 @@ export function AlarmConfiguration() {
         </TabsContent>
       
         {/* Sensor Status Tab - Temporarily Hidden */}
-        {/* <TabsContent value="sensorStatus" className="mt-6 space-y-6">
+         <TabsContent value="sensorStatus" className="mt-6 space-y-6">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader />
@@ -1202,10 +1206,10 @@ export function AlarmConfiguration() {
                       setSite={setSensorStatusSite}
                       setEmails={setSensorStatusEmails}
                       setPhones={setSensorStatusPhones}
-                      setSentMessage={setSensorStatusSentMessage}
                       submissionError={sensorStatusSubmissionError}
                       sites={sites}
                       sitesLoading={sitesLoading}
+                      availableFields={sensorStatusAvailableFields}
                     />
                   </Dialog>
                 )}
@@ -1219,7 +1223,7 @@ export function AlarmConfiguration() {
               </CardContent>
             </Card>
           )}
-        </TabsContent> */}
+        </TabsContent> 
 
         <TabsContent value="pumpStatusPS" className="mt-6 space-y-6">
           {isLoading ? (
@@ -1250,7 +1254,6 @@ export function AlarmConfiguration() {
                       setPhones={setPumpStatusPSPhones}
                       setSite={handleSetPumpStatusPSSite}
                       setSiteId={handleSetPumpStatusPSSiteId}
-                      setSentMessage={setSentMessage}
                       submissionError={pumpStatusPSSubmissionError}
                       onOpenChange={handlePumpStatusPSDialogOpenChange}
                       sites={sites}
@@ -1380,12 +1383,11 @@ export function AlarmConfiguration() {
         onSubmit={handleEditSensorStatusAlarm}
         isSubmitting={isSubmittingSensorStatusEdit}
         hasChanges={hasSensorStatusChanges}
-        sentMessage={newSensorStatusForm.sentMessage}
-        setSentMessage={setSensorStatusSentMessage}
         setHasChanges={setHasSensorStatusChanges}
         setEmails={setSensorStatusEmails}
         setPhones={setSensorStatusPhones}
         submissionError={sensorStatusSubmissionError}
+        availableFields={sensorStatusAvailableFields}
       />
 
       <EditPumpStatusPSAlarmDialog
