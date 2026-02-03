@@ -445,6 +445,7 @@
     "emailRecipients": "Email Recipients",
     "phoneRecipients": "Phone Recipients",
     "recipients": "Recipients",
+    "atLeastOneRecipient": "There must be at least one recipient (email or phone)",
     "operators": {
       "greaterThan": "Greater than",
       "lessThan": "Less than",

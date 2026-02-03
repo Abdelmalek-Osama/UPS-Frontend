@@ -72,6 +72,18 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
+                        <Label>{t('alarms.alarmName')}</Label>
+                        <Input
+                            type="text"
+                            placeholder={t('alarms.alarmName')}
+                            value={form.alarmName}
+                            onChange={handleAlarmNameChange}
+                        />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
+                    </div>
+                    <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
                         <Select
                             onValueChange={(value) => setForm(prev => ({
@@ -96,19 +108,6 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                 )}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>{t('alarms.alarmName')}</Label>
-                        <Input
-                            type="text"
-                            placeholder={t('alarms.alarmName')}
-                            value={form.alarmName}
-                            onChange={handleAlarmNameChange}
-                        />
-                        {alarmNameError && (
-                            <p className="text-red-600 text-sm">{alarmNameError}</p>
-                        )}
                     </div>
 
                     <div className="space-y-2">

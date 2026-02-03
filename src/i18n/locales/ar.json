@@ -443,7 +443,8 @@
     "cardsView": "عرض البطاقات",
     "emailRecipients": "المستلمون (البريد الإلكتروني)",
     "phoneRecipients": "المستلمون (أرقام الهواتف)",
-    "recipients": "المتلقين",
+    "recipients":"المستلمون",
+    "atLeastOneRecipient": "يجب أن يكون هناك مستلم واحد على الأقل (بريد إلكتروني أو هاتف)",
     "operators": {
       "greaterThan": "أكثر من",
       "lessThan": "أقل من",

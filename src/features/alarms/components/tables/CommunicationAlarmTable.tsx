@@ -40,7 +40,7 @@ export function CommunicationAlarmTable({ alarms, onEdit, error }: Communication
         },
         {
             key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: CommunicationAlarmResponse) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                     {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
