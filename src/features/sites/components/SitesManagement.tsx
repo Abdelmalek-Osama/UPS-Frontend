@@ -163,6 +163,8 @@ export function SitesManagement() {
                 onSiteCreated={(newSite) => {
                   setSites((prevSites) => [...prevSites, newSite]);
                 }}
+                directorates={directorates}
+                isLoadingDirectorates={loading}
               />
 
               {/* Edit Dialog */}
@@ -180,6 +182,8 @@ export function SitesManagement() {
                   setEditingSite(null);
                   setFormData({});
                 }}
+                directorates={directorates}
+                isLoadingDirectorates={loading}
               />
 
               <AlertDialog

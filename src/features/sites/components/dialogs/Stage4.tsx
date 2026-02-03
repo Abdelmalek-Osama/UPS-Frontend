@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../components/ui/select';
 import { Input } from '../../../../components/ui/input';
@@ -36,9 +36,10 @@ interface Stage4Props {
   isOpen: boolean;
   onClose: () => void;
   mode?: "create" | "edit";
+  onValidationChange?: (isValid: boolean) => void;
 }
 
-export default function Stage4({ data, onChange, isOpen, onClose, mode = "create" }: Stage4Props) {
+export default function Stage4({ data, onChange, isOpen, onClose, mode = "create", onValidationChange }: Stage4Props) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const [equations, setEquations] = useState<Equation[]>([]);
@@ -48,6 +49,25 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
   const [constants, setConstants] = useState<{ [key: string]: string }>({});
   const [selectedEquation, setSelectedEquation] = useState<Equation | null>(null);
   const [hasLoadedFlowCalc, setHasLoadedFlowCalc] = useState(false);
+
+  // Calculate validation state
+  const { isValid } = useMemo(() => {
+    // Stage 4 is valid if:
+    // 1. An equation is selected
+    // 2. All variable fields are filled
+    const hasEquationSelected = selectedEquationId !== null && selectedEquationId !== undefined;
+    const allFieldsFilled = hasEquationSelected && 
+      Object.values(constants).every(val => val !== null && val !== undefined && val.toString().trim() !== '');
+    
+    return { isValid: hasEquationSelected && allFieldsFilled };
+  }, [selectedEquationId, constants]);
+
+  // Call the validation change callback whenever validation state changes
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [isValid, onValidationChange]);
 
   // Fetch equations from API
   useEffect(() => {
