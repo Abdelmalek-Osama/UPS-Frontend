@@ -33,11 +33,12 @@ const isEnglishOnly = (text: string): boolean => {
   return /^[a-zA-Z0-9\s]*$/.test(text);
 };
 
-// Arabic name validation - accepts Arabic chars and special characters
+// Arabic name validation - accepts Arabic chars, numbers, and special characters
 const isValidArabicName = (text: string): boolean => {
-  // Pattern: Arabic characters (U+0600 to U+06FF) or common special characters/punctuation
-  // Allows: Arabic letters, diacritics, numbers, spaces, and special chars like -, (, ), etc.
-  return /^[\u0600-\u06FF\u0660-\u0669\s\-().,;:\/]*$/.test(text);
+  // Pattern: Arabic characters (U+0600 to U+06FF), Arabic-Indic numerals, Western numerals, 
+  // diacritics, spaces, and special chars like -, (, ), etc.
+  // Allows: Arabic letters, diacritics, numbers (both Arabic and Western), spaces, and special chars
+  return /^[\u0600-\u06FF0-9\u0660-\u0669\s\-().,;:\/]*$/.test(text);
 };
 
 // English name validation - accepts English chars and special characters
@@ -64,11 +65,6 @@ const getArabicNameErrors = (value: string, t: any): string[] => {
   // Check minimum length (after trimming)
   if (value.trim().length < 2) {
     errors.push(t('sites.stage1.arabicNameMinLength'));
-  }
-  
-  // Check if starts with a number
-  if (/^[0-9]/.test(value.trim())) {
-    errors.push(t('sites.stage1.arabicNameCannotStartWithNumber'));
   }
   
   // Check valid characters
