@@ -76,7 +76,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <Select value={form.site || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
+                        <Select value={form.siteId?.toString() || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
                             <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                                 <SelectValue placeholder={sitesLoading ? t('common.loading') : t('alarms.selectSite')} />
                             </SelectTrigger>

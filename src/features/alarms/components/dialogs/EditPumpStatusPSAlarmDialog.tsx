@@ -148,7 +148,7 @@ export function EditPumpStatusPSAlarmDialog({
                             ) : (
                                 <Select
                                     onValueChange={handleSiteChange}
-                                    value={form.site || ""}
+                                    value={form.siteId?.toString() || ""}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 >
                                     <SelectTrigger className="rtl:flex-row-reverse">
@@ -232,6 +232,9 @@ export function EditPumpStatusPSAlarmDialog({
                     <DialogFooter>
                         {submissionError && (
                             <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
+                        )}
+                        {form.emails.length === 0 && form.phones.length === 0 && (
+                            <p className="text-red-600 text-sm text-center w-full mb-4">{t('alarms.atLeastOneRecipient')}</p>
                         )}
                         <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                             <Button

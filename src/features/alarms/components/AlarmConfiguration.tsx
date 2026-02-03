@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import { useAlarmsData } from '../hooks/useAlarmsData';
 import { useSitesLookup } from '../hooks/useSitesLookup';
 import { useThresholdAlarmFields } from '../hooks/useThresholdAlarmFields';
+import { useSensorStatusAlarmFields } from '../hooks/useSensorStatusAlarmFields';
 
 // Types
 import {
@@ -150,7 +151,7 @@ export function AlarmConfiguration() {
   const [pumpStatusIdvSiteError, setPumpStatusIdvSiteError] = useState<string | null>(null);
   const [pumpStatusPSSiteError, setPumpStatusPSSiteError] = useState<string | null>(null);
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
-  const { availableFields: sensorStatusAvailableFields, isFetchingSiteDetails: sensorStatusIsFetchingSiteDetails } = useThresholdAlarmFields(newSensorStatusForm.siteId);
+  const { availableFields: sensorStatusAvailableFields, isFetchingSiteDetails: sensorStatusIsFetchingSiteDetails } = useSensorStatusAlarmFields(newSensorStatusForm.siteId);
 
   const handleSensorStatusDialogOpenChange = useCallback((open: boolean) => {
     setIsAddSensorStatusOpen(open);
@@ -821,12 +822,12 @@ export function AlarmConfiguration() {
       alarmName: alarm.alarmName,
       site: alarm.site,
       field: mapNumberToField[parseInt(alarm.field)] || '',
-      criticalOperator: mapNumberToOperator[parseInt(alarm.operator)] || '',
-      criticalThresholdValue: alarm.threshold || 0,
-      criticalColorCode: alarm.color || '#fbbf24',
-      crisisOperator: '<',
-      crisisThresholdValue: 0,
-      crisisColorCode: '#db0202ff',
+      criticalOperator: alarm.criticalOperator !== undefined ? mapNumberToOperator[parseInt(alarm.criticalOperator)] || '' : mapNumberToOperator[parseInt(alarm.operator)] || '',
+      criticalThresholdValue: alarm.criticalThresholdValue !== undefined ? alarm.criticalThresholdValue : alarm.threshold || 0,
+      criticalColorCode: alarm.criticalColorCode || alarm.color || '#fbbf24',
+      crisisOperator: alarm.crisisOperator !== undefined ? mapNumberToOperator[parseInt(alarm.crisisOperator)] || '' : '<',
+      crisisThresholdValue: alarm.crisisThresholdValue !== undefined ? alarm.crisisThresholdValue : 0,
+      crisisColorCode: alarm.crisisColorCode || '#db0202ff',
       severity: alarm.severity,
       emails: emails,
       phones: phones,
@@ -1336,7 +1337,13 @@ export function AlarmConfiguration() {
       {/* Edit Dialogs */}
       <EditThresholdAlarmDialog
         open={isEditThresholdOpen}
-        onOpenChange={setIsEditThresholdOpen}
+        onOpenChange={(open) => {
+          setIsEditThresholdOpen(open);
+          if (!open) {
+            // Clear error message when dialog closes
+            setThresholdSubmissionError(null);
+          }
+        }}
         form={newThresholdAlarmForm}
         setForm={setNewThresholdAlarmForm}
         currentAlarm={currentThresholdAlarm}

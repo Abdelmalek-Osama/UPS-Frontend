@@ -4,7 +4,7 @@ import apiService from '../../../../shared/utils/apiService';
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useSiteCreation } from '../../hooks/useSiteCreation';
-import { useDirectorates } from '../../hooks/useDirectorates';
+import type { Directorate } from '../../hooks/useDirectorates';
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
 import Stage3 from "./Stage3";
@@ -18,19 +18,24 @@ interface SitesDialogProps {
   onCancel: () => void;
   isOpen: boolean;
   onSiteCreated?: (site: Site) => void;
+  directorates: Directorate[];
+  isLoadingDirectorates?: boolean;
 }
 
-export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated }: SitesDialogProps) {
+export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated, directorates, isLoadingDirectorates }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
-  const { directorates } = useDirectorates();
 
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isStage1Valid, setIsStage1Valid] = useState(false);
+  const [isStage2Valid, setIsStage2Valid] = useState(false);
+  const [isStage3Valid, setIsStage3Valid] = useState(false);
+  const [isStage4Valid, setIsStage4Valid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   
   useEffect(() => {
@@ -48,6 +53,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
         setCompletedTabs([false, false, false, false]);
       }
       setCurrentTab(0);
+      setErrorMessage(null);
     }
   }, [isOpen, siteData, mode]);
 
@@ -201,11 +207,32 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     if (step === 0) {
       return isStage1Valid;
     }
+    if (step === 1) {
+      return isStage2Valid;
+    }
+    if (step === 2) {
+      return isStage3Valid;
+    }
+    if (step === 3) {
+      return isStage4Valid;
+    }
     return true;
   };
 
   const handleStage1ValidChange = (isValid: boolean) => {
     setIsStage1Valid(isValid);
+  };
+
+  const handleStage2ValidChange = (isValid: boolean) => {
+    setIsStage2Valid(isValid);
+  };
+
+  const handleStage3ValidChange = (isValid: boolean) => {
+    setIsStage3Valid(isValid);
+  };
+
+  const handleStage4ValidChange = (isValid: boolean) => {
+    setIsStage4Valid(isValid);
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -237,6 +264,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
             canal: formData.canal,
             longitude: formData.longitude,
             latitude: formData.latitude,
+            longitudeDirection: formData.longitudeDirection,
+            latitudeDirection: formData.latitudeDirection,
             directorateId: formData.directorateId,
             simCardIP: formData.simId, 
             dataLoggerType: formData.dataLoggerType
@@ -265,11 +294,19 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       }
 
       await apiService.put(endpoint, payload);
+      setErrorMessage(null);
       toast.success(t('notifications.saved'));
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving step ${stepIndex}:`, error);
-      toast.error(t('errors.saveFailed'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('errors.saveFailed');
+      
+      setErrorMessage(backendError);
       return false;
     } finally {
       setIsUpdating(false);
@@ -334,6 +371,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
             directorateId: formData.directorateId,
             latitude: formData.latitude || 0,
             longitude: formData.longitude || 0,
+            latitudeDirection: formData.latitudeDirection || 'N',
+            longitudeDirection: formData.longitudeDirection || 'E',
             status: 'offline' as const,
             code: formData.code || '',
             canal: formData.canal || '',
@@ -351,14 +390,22 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           };
           onSiteCreated(newSite);
         }
+        setErrorMessage(null);
         onCancel();
         // Reset
         setCurrentTab(0);
         setCompletedTabs([false, false, false, false]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating site:', error);
-      toast.error(t('sites.createError'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('sites.createError');
+      
+      setErrorMessage(backendError);
     }
   };
 
@@ -503,6 +550,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   isOpen={isOpen}
                   onClose={onCancel}
                   onValidationChange={handleStage1ValidChange}
+                  directorates={directorates}
+                  isLoadingDirectorates={isLoadingDirectorates}
                 />
               )}
               {currentTab === 1 && (
@@ -511,6 +560,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage2ValidChange}
                 />
               )}
               {currentTab === 2 && (
@@ -519,6 +569,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage3ValidChange}
                 />
               )}
               {currentTab === 3 && (
@@ -528,9 +579,56 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   isOpen={isOpen}
                   onClose={onCancel}
                   mode={mode}
+                  onValidationChange={handleStage4ValidChange}
                 />
               )}
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div style={{
+                paddingLeft: '1.5rem',
+                paddingRight: '1.5rem',
+                paddingTop: '1rem',
+                paddingBottom: '0rem',
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#fee2e2',
+                  borderRadius: '0.375rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '1rem'
+                }}>
+                  <p style={{
+                    color: '#991b1b',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    margin: 0,
+                    flex: 1
+                  }}>
+                    {errorMessage}
+                  </p>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#991b1b',
+                      cursor: 'pointer',
+                      padding: '0',
+                      fontSize: '1.25rem',
+                      lineHeight: '1',
+                      flexShrink: 0
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div style={footerContainerStyle}>

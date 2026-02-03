@@ -28,6 +28,8 @@ export interface Site {
   canal?: string;
   latitude: number;
   longitude: number;
+  longitudeDirection?: 'E' | 'W';
+  latitudeDirection?: 'N' | 'S';
   directorateName: string;
   directorateArabicName: string;
   hasUS?: boolean;

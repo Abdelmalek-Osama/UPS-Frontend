@@ -27,7 +27,7 @@ export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTab
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
     const translateFieldName = (fieldName?: unknown) => {
-        if (typeof fieldName !== "string" || !fieldName.trim()) return "—";
+        if (typeof fieldName !== "string" || !fieldName.trim()) return "ï¿½";
         const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
         if (normalized === 'communicationloss') {
             return t('alarms.communicationLoss');
@@ -69,7 +69,7 @@ export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTab
         },
         {
             key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: ValueThresholdAlarm) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                     {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
