@@ -94,6 +94,26 @@ export function EditCommunicationAlarmDialog({
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
+                        <Label>{t('alarms.alarmName')}</Label>
+                        <Input
+                            type="text"
+                            placeholder={t('alarms.alarmName')}
+                            value={form.alarmName}
+                            onChange={(e) => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    alarmName: e.target.value
+                                }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
+                                setHasChanges(true);
+                            }}
+                        />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
+                    </div>
+                    <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
                             <Input type="text" value={currentAlarm.site} disabled />
@@ -116,7 +136,7 @@ export function EditCommunicationAlarmDialog({
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
                                         sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>
@@ -124,26 +144,7 @@ export function EditCommunicationAlarmDialog({
                         )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>{t('alarms.alarmName')}</Label>
-                        <Input
-                            type="text"
-                            placeholder={t('alarms.alarmName')}
-                            value={form.alarmName}
-                            onChange={(e) => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    alarmName: e.target.value
-                                }));
-                                const error = validateAlarmName(e.target.value);
-                                setAlarmNameError(error);
-                                setHasChanges(true);
-                            }}
-                        />
-                        {alarmNameError && (
-                            <p className="text-red-600 text-sm">{alarmNameError}</p>
-                        )}
-                    </div>
+                    
 
                     <div className="space-y-2">
                         <Label>{t('alarms.noResponse')}</Label>
@@ -229,6 +230,9 @@ export function EditCommunicationAlarmDialog({
                 <DialogFooter>
                     {submissionError && (
                         <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
+                    )}
+                    {form.emails.length === 0 && form.phones.length === 0 && (
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t('alarms.atLeastOneRecipient')}</p>
                     )}
                     <div style={{
                         width: '100%',

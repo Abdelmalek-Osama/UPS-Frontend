@@ -179,26 +179,9 @@ export function EditThresholdAlarmDialog({
         flexShrink: 0,
         borderTop: '1px solid hsl(var(--border))'
     };
-    useEffect(() => {
-        if (currentAlarm && currentAlarm.threshold < 0) {
-            setForm(prev => ({
-                ...prev,
-                thresholdError: t('validation.invalidNumber')
-            }));
-        } else if (currentAlarm && currentAlarm.threshold >= 0) {
-            setForm(prev => ({
-                ...prev,
-                thresholdError: undefined
-            }));
-        }
-    }, [currentAlarm, setForm]);
 
    return (
     <Dialog open={open} onOpenChange={(newOpen) => {
-        if (!newOpen && submissionError) {
-            // Prevent closing if there's a submission error
-            return;
-        }
         onOpenChange(newOpen);
     }}>
         <DialogContent 
@@ -227,6 +210,27 @@ export function EditThresholdAlarmDialog({
             {/* Scrollable Content - THIS MUST HAVE flex-1 */}
             <div style={scrollContainerStyle}>
                 <div style={contentWrapperStyle}>
+                    
+                    <div style={fieldContainerStyle}>
+                        <Label>{t('alarms.alarmName')}</Label>
+                        <Input
+                            type="text"
+                            placeholder={t('alarms.alarmName')}
+                            value={form.alarmName}
+                            onChange={(e) => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    alarmName: e.target.value
+                                }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
+                                setHasChanges(true);
+                            }}
+                        />
+                        {alarmNameError && (
+                            <p style={errorTextStyle}>{alarmNameError}</p>
+                        )}
+                    </div>
                     <div style={fieldContainerStyle}>
                         <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
@@ -253,7 +257,7 @@ export function EditThresholdAlarmDialog({
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
                                         sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>
@@ -261,26 +265,6 @@ export function EditThresholdAlarmDialog({
                         )}
                     </div>
 
-                    <div style={fieldContainerStyle}>
-                        <Label>{t('alarms.alarmName')}</Label>
-                        <Input
-                            type="text"
-                            placeholder={t('alarms.alarmName')}
-                            value={form.alarmName}
-                            onChange={(e) => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    alarmName: e.target.value
-                                }));
-                                const error = validateAlarmName(e.target.value);
-                                setAlarmNameError(error);
-                                setHasChanges(true);
-                            }}
-                        />
-                        {alarmNameError && (
-                            <p style={errorTextStyle}>{alarmNameError}</p>
-                        )}
-                    </div>
 
                     <div style={fieldContainerStyle}>
                         <Label>{t('alarms.field')}</Label>
@@ -547,6 +531,9 @@ export function EditThresholdAlarmDialog({
                 <DialogFooter>
                     {submissionError && (
                         <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem'}}>{t(`errors.${submissionError}`, submissionError)}</p>
+                    )}
+                    {form.emails.length === 0 && form.phones.length === 0 && (
+                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem'}}>{t('alarms.atLeastOneRecipient')}</p>
                     )}
                     <div style={{
                         width: '100%',

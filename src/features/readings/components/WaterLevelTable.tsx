@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -29,6 +29,7 @@ interface SiteConfiguration {
   longitude: number;
   latitude: number;
   directorateName: string;
+  directorateArabicName: string;
   hasUS: boolean;
   hasDS1: boolean;
   hasDS2: boolean;
@@ -143,6 +144,14 @@ export function WaterLevelTable({
   const [editSelectedSiteData, setEditSelectedSiteData] = useState<SiteConfiguration | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [readingToDelete, setReadingToDelete] = useState<WaterLevelReading | null>(null);
+
+  // Helper function to get site name based on language
+  const getSiteName = useCallback((siteId?: number, fallbackName?: string) => {
+    if (!siteId) return fallbackName || '-';
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return fallbackName || '-';
+    return t('_rtl') === 'rtl' ? site.arabicName || '-' : site.name;
+  }, [sites, t]);
 
   // Initialize selectedSiteForAdd only when dialog first opens (not on every render)
   useEffect(() => {
@@ -599,7 +608,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -841,7 +850,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -1085,7 +1094,7 @@ export function WaterLevelTable({
           <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.selectSite')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.site')}</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateAndTime')}</TableHead>
                 {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>USWL ({t('readings.meter')})</TableHead>}
                 {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL1 ({t('readings.meter')})</TableHead>}
@@ -1119,11 +1128,10 @@ export function WaterLevelTable({
                   </TableCell>
                 </TableRow>
               )}
-
               {!isLoading && !error && readings.map((reading) => {
                 return (
                 <TableRow key={reading.id}>
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{getSiteName(reading.siteId, reading.site)}</TableCell>
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
                     <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>

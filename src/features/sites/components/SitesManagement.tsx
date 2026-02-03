@@ -102,8 +102,10 @@ export function SitesManagement() {
               </SelectTrigger>
               <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <SelectItem value="all">{t('sites.allDirectorates')}</SelectItem>
-                {directorates.map(dir => (
-                  <SelectItem key={dir} value={dir}>{dir}</SelectItem>
+                {directorates.map((directorate) => (
+                  <SelectItem key={directorate.id} value={directorate.id.toString()}>
+                    {t('_rtl') === 'rtl' ? directorate.arabicName : directorate.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -155,10 +157,14 @@ export function SitesManagement() {
                 isOpen={isAddDialogOpen}
                 onCancel={() => setIsAddDialogOpen(false)}
                 onSave={(data) => {
-                  console.log('Saving site:', data);
                   setIsAddDialogOpen(false);
                   setFormData({});
                 }}
+                onSiteCreated={(newSite) => {
+                  setSites((prevSites) => [...prevSites, newSite]);
+                }}
+                directorates={directorates}
+                isLoadingDirectorates={loading}
               />
 
               {/* Edit Dialog */}
@@ -172,11 +178,12 @@ export function SitesManagement() {
                   setFormData({});
                 }}
                 onSave={(data) => {
-                  console.log('Updating site:', data);
                   setIsEditDialogOpen(false);
                   setEditingSite(null);
                   setFormData({});
                 }}
+                directorates={directorates}
+                isLoadingDirectorates={loading}
               />
 
               <AlertDialog
@@ -198,6 +205,8 @@ export function SitesManagement() {
                 <TableRow>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteName')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteType')}</TableHead>
+                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.simId')}</TableHead>
+                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.dataLoggerType')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.canal')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.directorate')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.location')}</TableHead>
@@ -214,7 +223,7 @@ export function SitesManagement() {
                         ) : (
                           <Power className="h-4 w-4 text-green-600" />
                         )}
-                        {site.name}
+                        {t('_rtl') === 'rtl' ? site.arabicName : site.name}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -222,8 +231,14 @@ export function SitesManagement() {
                         {site.siteType === 'WaterLevel' ? t('sites.waterLevel') : site.siteType === 'Pumps' ? t('sites.pumpStation') : site.siteType}
                       </Badge>
                     </TableCell>
+                    <TableCell>{site.simCardIP || site.simId}</TableCell>
+                    <TableCell>{site.dataLoggerType}</TableCell>
                     <TableCell>{site.canal}</TableCell>
-                    <TableCell>{site.directorateName}</TableCell>
+                    <TableCell>
+                      {t('_rtl') === 'rtl' 
+                        ? site.directorateArabicName 
+                        : site.directorateName}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm text-gray-600">
                         <a

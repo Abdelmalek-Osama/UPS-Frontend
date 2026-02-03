@@ -28,7 +28,7 @@ export const alarmReportsService = {
 return Array.isArray(data) ? data : [];
     }
 
-    return [];
+  return [];
   },
 
   /**
@@ -37,15 +37,31 @@ return Array.isArray(data) ? data : [];
   async createReportConfiguration(payload: CreateAlarmReportPayload): Promise<AlarmReportConfiguration> {
     const response = await apiService.post<ApiResponse<AlarmReportConfiguration>>(
       '/v1/email-reports',
-      payload
+    payload
+    );
+
+  if (response && typeof response === 'object' && 'data' in response) {
+      return (response as ApiResponse<AlarmReportConfiguration>).data;
+    }
+
+  return response as AlarmReportConfiguration;
+},
+
+  /**
+   * Update an existing email report configuration
+   */
+  async updateReportConfiguration(id: number, payload: CreateAlarmReportPayload): Promise<AlarmReportConfiguration> {
+    const response = await apiService.put<ApiResponse<AlarmReportConfiguration>>(
+      `/v1/email-reports/${id}`,
+   payload
     );
 
     if (response && typeof response === 'object' && 'data' in response) {
       return (response as ApiResponse<AlarmReportConfiguration>).data;
     }
 
-  return response as AlarmReportConfiguration;
-},
+    return response as AlarmReportConfiguration;
+  },
 
   /**
    * Delete an email report configuration

@@ -1,10 +1,10 @@
-// SitesDialog.tsx
 import { useState, useEffect } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import apiService from '../../../../shared/utils/apiService';
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useSiteCreation } from '../../hooks/useSiteCreation';
+import type { Directorate } from '../../hooks/useDirectorates';
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
 import Stage3 from "./Stage3";
@@ -17,9 +17,12 @@ interface SitesDialogProps {
   onSave: (data: Partial<Site>) => void;
   onCancel: () => void;
   isOpen: boolean;
+  onSiteCreated?: (site: Site) => void;
+  directorates: Directorate[];
+  isLoadingDirectorates?: boolean;
 }
 
-export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }: SitesDialogProps) {
+export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated, directorates, isLoadingDirectorates }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
@@ -28,11 +31,21 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isStage1Valid, setIsStage1Valid] = useState(false);
+  const [isStage2Valid, setIsStage2Valid] = useState(false);
+  const [isStage3Valid, setIsStage3Valid] = useState(false);
+  const [isStage4Valid, setIsStage4Valid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Sync form data with siteData prop when dialog opens or siteData changes
+  
   useEffect(() => {
     if (isOpen && siteData) {
-      setFormData(siteData);
+      
+      const mappedData = {
+        ...siteData,
+        simId: (siteData as any).simCardIP || siteData.simId
+      };
+      setFormData(mappedData);
       // For edit mode, mark all tabs as completed since we have existing data
       if (mode === 'edit') {
         setCompletedTabs([true, true, true, true]);
@@ -40,6 +53,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
         setCompletedTabs([false, false, false, false]);
       }
       setCurrentTab(0);
+      setErrorMessage(null);
     }
   }, [isOpen, siteData, mode]);
 
@@ -50,7 +64,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     { id: "stage4", name: t('sites.stage4.title'), icon: "4" },
   ];
 
-  // Inline styles matching AddThresholdAlarmDialog pattern
+  
   const dialogContentStyle: React.CSSProperties = {
     maxHeight: '80vh',
     display: 'flex',
@@ -189,10 +203,36 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
     opacity: 0
   };
 
-  // Check if current step is valid
   const isStepValid = (step: number): boolean => {
-    // For now, allow all steps. You can add validation logic here
+    if (step === 0) {
+      return isStage1Valid;
+    }
+    if (step === 1) {
+      return isStage2Valid;
+    }
+    if (step === 2) {
+      return isStage3Valid;
+    }
+    if (step === 3) {
+      return isStage4Valid;
+    }
     return true;
+  };
+
+  const handleStage1ValidChange = (isValid: boolean) => {
+    setIsStage1Valid(isValid);
+  };
+
+  const handleStage2ValidChange = (isValid: boolean) => {
+    setIsStage2Valid(isValid);
+  };
+
+  const handleStage3ValidChange = (isValid: boolean) => {
+    setIsStage3Valid(isValid);
+  };
+
+  const handleStage4ValidChange = (isValid: boolean) => {
+    setIsStage4Valid(isValid);
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -219,12 +259,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
           payload = {
             code: formData.code,
             name: formData.name,
+            arabicName: formData.arabicName,
             siteType: formData.siteType,
             canal: formData.canal,
             longitude: formData.longitude,
             latitude: formData.latitude,
+            longitudeDirection: formData.longitudeDirection,
+            latitudeDirection: formData.latitudeDirection,
             directorateId: formData.directorateId,
-            simCardIP: formData.simId, // Mapping simId to simCardIP as requested
+            simCardIP: formData.simId, 
             dataLoggerType: formData.dataLoggerType
           };
           break;
@@ -251,11 +294,19 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
       }
 
       await apiService.put(endpoint, payload);
+      setErrorMessage(null);
       toast.success(t('notifications.saved'));
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving step ${stepIndex}:`, error);
-      toast.error(t('errors.saveFailed'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('errors.saveFailed');
+      
+      setErrorMessage(backendError);
       return false;
     } finally {
       setIsUpdating(false);
@@ -300,16 +351,61 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
   const handleCreateSite = async () => {
     try {
       const result = await createSite(formData);
-      if (result.success) {
+      if (result.success && result.data) {
         onSave(formData);
+        // Call the callback to add the new site to the list immediately
+        if (onSiteCreated) {
+          // Get directorate info from the directorates array
+          const directorate = directorates.find(d => d.id === formData.directorateId);
+          const directorateName = directorate?.name || '';
+          const directorateArabicName = directorate?.arabicName || '';
+          
+          // Transform the API response to match the Site interface
+          const newSite: Site = {
+            id: result.data.id || 0,
+            name: formData.name || '',
+            arabicName: formData.arabicName || '',
+            siteType: formData.siteType as 'WaterLevel' | 'Pumps' || 'WaterLevel',
+            directorateName: directorateName,
+            directorateArabicName: directorateArabicName,
+            directorateId: formData.directorateId,
+            latitude: formData.latitude || 0,
+            longitude: formData.longitude || 0,
+            latitudeDirection: formData.latitudeDirection || 'N',
+            longitudeDirection: formData.longitudeDirection || 'E',
+            status: 'offline' as const,
+            code: formData.code || '',
+            canal: formData.canal || '',
+            location: formData.location || '',
+            dataLoggerType: formData.dataLoggerType,
+            simId: formData.simId || '',
+            simCardIP: formData.simId || '',
+            hasUS: formData.hasUS || false,
+            hasDS1: formData.hasDS1 || false,
+            hasDS2: formData.hasDS2 || false,
+            numPumps: formData.numPumps || 0,
+            dataMappings: formData.dataMappings || [],
+            flowCalculation: formData.flowCalculation,
+            ...result.data,
+          };
+          onSiteCreated(newSite);
+        }
+        setErrorMessage(null);
         onCancel();
         // Reset
         setCurrentTab(0);
         setCompletedTabs([false, false, false, false]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating site:', error);
-      toast.error(t('sites.createError'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('sites.createError');
+      
+      setErrorMessage(backendError);
     }
   };
 
@@ -453,6 +549,9 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage1ValidChange}
+                  directorates={directorates}
+                  isLoadingDirectorates={isLoadingDirectorates}
                 />
               )}
               {currentTab === 1 && (
@@ -461,6 +560,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage2ValidChange}
                 />
               )}
               {currentTab === 2 && (
@@ -469,6 +569,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage3ValidChange}
                 />
               )}
               {currentTab === 3 && (
@@ -478,9 +579,56 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                   isOpen={isOpen}
                   onClose={onCancel}
                   mode={mode}
+                  onValidationChange={handleStage4ValidChange}
                 />
               )}
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div style={{
+                paddingLeft: '1.5rem',
+                paddingRight: '1.5rem',
+                paddingTop: '1rem',
+                paddingBottom: '0rem',
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#fee2e2',
+                  borderRadius: '0.375rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '1rem'
+                }}>
+                  <p style={{
+                    color: '#991b1b',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    margin: 0,
+                    flex: 1
+                  }}>
+                    {errorMessage}
+                  </p>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#991b1b',
+                      cursor: 'pointer',
+                      padding: '0',
+                      fontSize: '1.25rem',
+                      lineHeight: '1',
+                      flexShrink: 0
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div style={footerContainerStyle}>
@@ -527,8 +675,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         paddingBottom: '0.5rem',
                         backgroundColor: isStepValid(currentTab)
                           ? 'hsl(217, 91%, 60%)'
-                          : 'hsl(var(--muted))',
-                        color: isStepValid(currentTab) ? 'white' : 'hsl(var(--muted-foreground))',
+                          : 'hsl(217, 91%, 75%)',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
                         cursor: isStepValid(currentTab) ? 'pointer' : 'not-allowed',
@@ -567,8 +715,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen }
                         paddingBottom: '0.5rem',
                         backgroundColor: (isStepValid(currentTab) && !isCreating)
                           ? 'hsl(142, 72%, 45%)'
-                          : 'hsl(var(--muted))',
-                        color: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'white' : 'hsl(var(--muted-foreground))',
+                          : 'hsl(142, 72%, 75%)',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
                         cursor: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'pointer' : 'not-allowed',

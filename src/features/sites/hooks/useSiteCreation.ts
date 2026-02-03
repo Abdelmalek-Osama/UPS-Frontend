@@ -24,6 +24,7 @@ const validateSiteType = (siteType: string): string => {
 interface SiteInfoPayload {
   code: string;
   name: string;
+  arabicName: string;
   siteType: string;
   canal: string;
   longitude: number;
@@ -66,7 +67,6 @@ export function useSiteCreation(): UseCreateSiteResult {
       try {
         // Validate required fields
         const siteTypeValue = siteData.siteType ? String(siteData.siteType).trim() : '';
-        console.log('Raw siteType value:', siteData.siteType, 'Trimmed:', siteTypeValue);
         
         if (!siteTypeValue) {
           setError('Site type is required');
@@ -88,15 +88,12 @@ export function useSiteCreation(): UseCreateSiteResult {
         });
 
         const mappedSiteType = validateSiteType(siteTypeValue);
-        console.log('Validated siteType:', mappedSiteType);
-        console.log('SiteType type:', typeof mappedSiteType);
-        console.log('SiteType length:', mappedSiteType.length);
-        console.log('SiteType charCodes:', Array.from(mappedSiteType).map(c => c.charCodeAt(0)));
         
         const payload: CreateSitePayload = {
           info: {
             code: siteData.code || '',
-            name: siteData.name || '',
+            name: siteData.nameEn || '',
+            arabicName: siteData.nameAr || '',
             siteType: mappedSiteType,
             canal: siteData.canal || '',
             longitude: siteData.longitude || 0,
@@ -120,7 +117,6 @@ export function useSiteCreation(): UseCreateSiteResult {
           },
         };
 
-        console.log('Sending site creation payload:', JSON.stringify(payload, null, 2));
         const response = await apiService.post<any>('/v1/Sites', payload);
         
         if (response) {

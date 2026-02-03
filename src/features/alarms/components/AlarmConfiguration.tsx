@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import { useAlarmsData } from '../hooks/useAlarmsData';
 import { useSitesLookup } from '../hooks/useSitesLookup';
 import { useThresholdAlarmFields } from '../hooks/useThresholdAlarmFields';
+import { useSensorStatusAlarmFields } from '../hooks/useSensorStatusAlarmFields';
 
 // Types
 import {
@@ -146,13 +147,11 @@ export function AlarmConfiguration() {
   const [pumpStatusIdvIdvPump,setPumpStatusIdvIdvPump] = useState<string>('');
   const [pumpStatusPSSite, setPumpStatusPSSite] = useState<string>('');
   const [psSiteId, setPsSiteId] = useState<number | undefined>(undefined);
-  const [sentMessage, setSentMessage] = useState<string>('');
   const [pumpStatusIdvSite, setPumpStatusIdvSite] = useState<string>('');
   const [pumpStatusIdvSiteError, setPumpStatusIdvSiteError] = useState<string | null>(null);
   const [pumpStatusPSSiteError, setPumpStatusPSSiteError] = useState<string | null>(null);
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
-
-  
+  const { availableFields: sensorStatusAvailableFields, isFetchingSiteDetails: sensorStatusIsFetchingSiteDetails } = useSensorStatusAlarmFields(newSensorStatusForm.siteId);
 
   const handleSensorStatusDialogOpenChange = useCallback((open: boolean) => {
     setIsAddSensorStatusOpen(open);
@@ -272,7 +271,7 @@ export function AlarmConfiguration() {
   const handleSubmitSensorStatusAlarm = async () => {
     setIsSubmittingSensorStatusAdd(true);
     setSensorStatusSubmissionError(null);
-    const { siteId, site, sentMessage } = newSensorStatusForm;
+    const { siteId, site, alarmName, message } = newSensorStatusForm;
 
     if (!siteId || !site) {
       console.error('Missing required sensor status alarm fields');
@@ -283,8 +282,9 @@ export function AlarmConfiguration() {
     const requestBody: CreateSensorStatusAlarmRequest = {
       alarmId: null,
       siteId,
+      alarmName,
       site: sites.find(s => s.id === siteId)?.name || '',
-      sentMessage,
+      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
       method: AlarmMethod.Email,
@@ -414,7 +414,7 @@ export function AlarmConfiguration() {
     setIsSubmittingSensorStatusEdit(true);
     if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
 
-    const { siteId, site, sentMessage } = newSensorStatusForm;
+    const { siteId, site, alarmName, message } = newSensorStatusForm;
 
     if (!siteId || !site) {
       console.error('Missing required sensor status alarm fields');
@@ -425,8 +425,9 @@ export function AlarmConfiguration() {
     const requestBody: CreateSensorStatusAlarmRequest = {
       alarmId: currentSensorStatusAlarm.alarmId,
       siteId,
+      alarmName,
       site,
-      sentMessage,
+      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
       method: AlarmMethod.Email,
@@ -641,19 +642,27 @@ export function AlarmConfiguration() {
     
     setCurrentSensorStatusAlarm({
       alarmId: alarm.alarmId,
+      alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
       site: alarm.site,
-      sentMessage: alarm.sentMessage,
+      message: alarm.message || '',
+      threshold: alarm.threshold || 0,
+      field: alarm.field || '',
+      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
     setNewSensorStatusForm({
       alarmId: alarm.alarmId,
+      alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
       site: alarm.site,
-      sentMessage: alarm.sentMessage,
+      message: alarm.message || '',
+      threshold: alarm.threshold || 0,
+      field: alarm.field || '',
+      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
@@ -740,10 +749,6 @@ export function AlarmConfiguration() {
     setNewSensorStatusForm(prev => ({ ...prev, siteId }));
   };
 
-  const setSensorStatusSentMessage = (sentMessage: string) => {
-    setNewSensorStatusForm(prev => ({ ...prev, sentMessage }));
-  };
-
   // Set default site when sites load
   useEffect(() => {
     if (sites.length > 0 && newThresholdAlarmForm.siteId === 0) {
@@ -817,12 +822,12 @@ export function AlarmConfiguration() {
       alarmName: alarm.alarmName,
       site: alarm.site,
       field: mapNumberToField[parseInt(alarm.field)] || '',
-      criticalOperator: mapNumberToOperator[parseInt(alarm.operator)] || '',
-      criticalThresholdValue: alarm.threshold || 0,
-      criticalColorCode: alarm.color || '#fbbf24',
-      crisisOperator: '<',
-      crisisThresholdValue: 0,
-      crisisColorCode: '#db0202ff',
+      criticalOperator: alarm.criticalOperator !== undefined ? mapNumberToOperator[parseInt(alarm.criticalOperator)] || '' : mapNumberToOperator[parseInt(alarm.operator)] || '',
+      criticalThresholdValue: alarm.criticalThresholdValue !== undefined ? alarm.criticalThresholdValue : alarm.threshold || 0,
+      criticalColorCode: alarm.criticalColorCode || alarm.color || '#fbbf24',
+      crisisOperator: alarm.crisisOperator !== undefined ? mapNumberToOperator[parseInt(alarm.crisisOperator)] || '' : '<',
+      crisisThresholdValue: alarm.crisisThresholdValue !== undefined ? alarm.crisisThresholdValue : 0,
+      crisisColorCode: alarm.crisisColorCode || '#db0202ff',
       severity: alarm.severity,
       emails: emails,
       phones: phones,
@@ -1052,10 +1057,10 @@ export function AlarmConfiguration() {
             <WifiOff className="ml-2 h-4 w-4" />
             {t('alarms.communicationAlarms')}
           </TabsTrigger>
-          {/* <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
+          <TabsTrigger value="sensorStatus" className="flex items-center space-x-2">
             <SmartphoneNfc className="ml-2 h-4 w-4" />
             {t('alarms.sensorStatus')}
-          </TabsTrigger> */}
+          </TabsTrigger>
           <TabsTrigger value="pumpStatusPS" className="flex items-center space-x-2">
             <Wrench className="ml-2 h-4 w-4" />
             {t('alarms.pumpStatusPS')}
@@ -1169,7 +1174,7 @@ export function AlarmConfiguration() {
         </TabsContent>
       
         {/* Sensor Status Tab - Temporarily Hidden */}
-        {/* <TabsContent value="sensorStatus" className="mt-6 space-y-6">
+         <TabsContent value="sensorStatus" className="mt-6 space-y-6">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader />
@@ -1202,10 +1207,10 @@ export function AlarmConfiguration() {
                       setSite={setSensorStatusSite}
                       setEmails={setSensorStatusEmails}
                       setPhones={setSensorStatusPhones}
-                      setSentMessage={setSensorStatusSentMessage}
                       submissionError={sensorStatusSubmissionError}
                       sites={sites}
                       sitesLoading={sitesLoading}
+                      availableFields={sensorStatusAvailableFields}
                     />
                   </Dialog>
                 )}
@@ -1219,7 +1224,7 @@ export function AlarmConfiguration() {
               </CardContent>
             </Card>
           )}
-        </TabsContent> */}
+        </TabsContent> 
 
         <TabsContent value="pumpStatusPS" className="mt-6 space-y-6">
           {isLoading ? (
@@ -1250,7 +1255,6 @@ export function AlarmConfiguration() {
                       setPhones={setPumpStatusPSPhones}
                       setSite={handleSetPumpStatusPSSite}
                       setSiteId={handleSetPumpStatusPSSiteId}
-                      setSentMessage={setSentMessage}
                       submissionError={pumpStatusPSSubmissionError}
                       onOpenChange={handlePumpStatusPSDialogOpenChange}
                       sites={sites}
@@ -1333,7 +1337,13 @@ export function AlarmConfiguration() {
       {/* Edit Dialogs */}
       <EditThresholdAlarmDialog
         open={isEditThresholdOpen}
-        onOpenChange={setIsEditThresholdOpen}
+        onOpenChange={(open) => {
+          setIsEditThresholdOpen(open);
+          if (!open) {
+            // Clear error message when dialog closes
+            setThresholdSubmissionError(null);
+          }
+        }}
         form={newThresholdAlarmForm}
         setForm={setNewThresholdAlarmForm}
         currentAlarm={currentThresholdAlarm}
@@ -1380,12 +1390,11 @@ export function AlarmConfiguration() {
         onSubmit={handleEditSensorStatusAlarm}
         isSubmitting={isSubmittingSensorStatusEdit}
         hasChanges={hasSensorStatusChanges}
-        sentMessage={newSensorStatusForm.sentMessage}
-        setSentMessage={setSensorStatusSentMessage}
         setHasChanges={setHasSensorStatusChanges}
         setEmails={setSensorStatusEmails}
         setPhones={setSensorStatusPhones}
         submissionError={sensorStatusSubmissionError}
+        availableFields={sensorStatusAvailableFields}
       />
 
       <EditPumpStatusPSAlarmDialog

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Site, DataMapping } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { Input } from '../../../../components/ui/input';
@@ -18,6 +18,7 @@ interface TabProps {
   onChange: (field: string, value: any) => void;
   isOpen: boolean;
   onClose: () => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 // Static database column names for Water Level
@@ -101,7 +102,7 @@ const getTableColumns = (tableKey: string, numPumps: number = 0, hasUS: boolean 
   }
 };
 
-export default function Stage3({ data, onChange }: TabProps) {
+export default function Stage3({ data, onChange, onValidationChange }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
 
@@ -122,6 +123,20 @@ export default function Stage3({ data, onChange }: TabProps) {
   const [selectedTableForForm, setSelectedTableForForm] = useState<string>('');
   const [mappingForm, setMappingForm] = useState<Partial<DataMapping>>({});
   const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
+
+  // Calculate validation state
+  const { isValid } = useMemo(() => {
+    // Stage 3 is valid if at least 1 data mapping has been added
+    const hasAtLeastOneMapping = dataMappings.length > 0;
+    return { isValid: hasAtLeastOneMapping };
+  }, [dataMappings]);
+
+  // Call the validation change callback whenever validation state changes
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [isValid, onValidationChange]);
 
   // Get available table options based on site type and already mapped tables
   const availableTableOptions = useMemo(() => {
@@ -211,6 +226,25 @@ export default function Stage3({ data, onChange }: TabProps) {
     const updatedMappings = dataMappings.filter((_, i) => i !== index);
     onChange('dataMappings', updatedMappings);
   };
+
+  // Check if assignment form is complete (all required fields filled)
+  const isAssignmentFormComplete = useMemo(() => {
+    const hasSelectedTable = selectedTableForForm !== '';
+    const hasFolder = mappingForm.folder && mappingForm.folder.trim() !== '';
+    const hasFilename = mappingForm.filename && mappingForm.filename.trim() !== '';
+    
+    // Check if all column mappings are filled
+    let allColumnsFilled = true;
+    if (selectedTableForForm && currentTableColumns.length > 0) {
+      const filteredMappings = Object.entries(columnMappings)
+        .filter(([key]) => !key.toLowerCase().includes('timestamp'))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {} as Record<string, string>);
+      
+      allColumnsFilled = Object.values(filteredMappings).every((val: string) => val.trim() !== '');
+    }
+
+    return hasSelectedTable && hasFolder && hasFilename && allColumnsFilled;
+  }, [selectedTableForForm, mappingForm.folder, mappingForm.filename, columnMappings, currentTableColumns]);
 
   // Check if max mappings reached - can add more if there are available table options
   const canAddMore = availableTableOptions.length > 0;
@@ -315,7 +349,7 @@ export default function Stage3({ data, onChange }: TabProps) {
           <Button
             type="button"
             onClick={handleAddMapping}
-            disabled={!selectedTableForForm}
+            disabled={!isAssignmentFormComplete}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white"
           >
             {t('sites.stage3.addMappingButton', 'Add Mapping')}

@@ -41,7 +41,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
         },
         {
             key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                     {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
@@ -58,12 +58,40 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
                 </div>
             )
         },
+        
         {
-            key: 'sentMessage',
-            header: t('alarms.sentMessage'),
+            key: 'message',
+            header: t('alarms.message'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.sentMessage}
+                    {alarm.message}
+                </div>
+            )
+        },
+        {
+            key: 'readingValue',
+            header: t('alarms.readingValue'),
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.readingValue}
+                </div>
+            )
+        },
+        {
+            key: 'threshold',
+            header: t('alarms.threshold'),
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.threshold}
+                </div>
+            )
+        },
+        {
+            key: 'field',
+            header: t('alarms.field'),
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.field}
                 </div>
             )
         },
@@ -73,6 +101,15 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
                     {alarm.site}
+                </div>
+            )
+        },
+        {
+            key: 'alarmName',
+            header: t('alarms.alarmName'),
+            render: (alarm: SensorStatusResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
+                    {alarm.alarmName}
                 </div>
             )
         }

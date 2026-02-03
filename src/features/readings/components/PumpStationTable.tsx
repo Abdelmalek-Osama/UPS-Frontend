@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -117,6 +117,14 @@ export function PumpStationTable({
     const shouldShowDS1Level = selectedSite?.hasDS1 ?? false;
     const shouldShowDS2Level = selectedSite?.hasDS2 ?? false;
     const numberOfPumps = selectedSite?.numPumps ?? 0;
+
+    // Helper function to get site name based on language
+    const getSiteName = useCallback((siteId?: number, fallbackName?: string) => {
+      if (!siteId) return fallbackName || '-';
+      const site = sites.find(s => s.id === siteId);
+      if (!site) return fallbackName || '-';
+      return t('_rtl') === 'rtl' ? site.arabicName || '-' : site.name;
+    }, [sites, t]);
 
     useEffect(() => {
       console.log('useEffect (selectedSite?.numPumps) triggered. selectedSite.numPumps:', selectedSite?.numPumps);
@@ -756,7 +764,7 @@ export function PumpStationTable({
                       </SelectTrigger>
                       <SelectContent>
                         {sites.map(site => (
-                          <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                          <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -973,7 +981,7 @@ export function PumpStationTable({
                       </SelectTrigger>
                       <SelectContent>
                         {sites.map(site => (
-                          <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                          <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1205,7 +1213,7 @@ export function PumpStationTable({
                 const hasAlarms = reading.alarms && reading.alarms.length > 0;
                 return (
                 <TableRow key={reading.id} >
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{getSiteName(reading.siteId, reading.site)}</TableCell>
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {/* Removed US, DS1, DS2 table cells */}
                   {/* {selectedSite?.hasUS && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}

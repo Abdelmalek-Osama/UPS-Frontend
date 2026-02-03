@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import { SiteDetails } from '../types';
-import { FIELDS } from '../utils/alarmConstants';
 
-export const useThresholdAlarmFields = (siteId: number | null) => {
-  const [availableFields, setAvailableFields] = useState<string[]>(FIELDS);
+export const useSensorStatusAlarmFields = (siteId: number | null) => {
+  const [availableFields, setAvailableFields] = useState<string[]>([]);
   const [isFetchingSiteDetails, setIsFetchingSiteDetails] = useState(false);
 
   useEffect(() => {
     const fetchSiteDetails = async () => {
       if (!siteId) {
-        setAvailableFields(FIELDS);
+        setAvailableFields([]);
         return;
       }
 
@@ -19,27 +18,18 @@ export const useThresholdAlarmFields = (siteId: number | null) => {
         const response = await apiService.get<ApiResponse<SiteDetails>>(`/v1/Sites/${siteId}`);
         if (response.isSuccess && response.data) {
           const site = response.data;
-          const newFields = ['Calculated_flow', 'Battery'];
+          const newFields: string[] = [];
 
-          // Only add Total_uptime and Total_flow if site has pumps
-          if (site.numPumps > 0) {
-            newFields.push('Total_uptime', 'Total_flow');
-          }
-
+          // Only add sensor-related fields based on site configuration
           if (site.hasUS) newFields.push('USWL');
           if (site.hasDS1) newFields.push('DSWL1');
           if (site.hasDS2) newFields.push('DSWL2');
-
-          for (let i = 1; i <= site.numPumps; i++) {
-            newFields.push(`P${i}_Time`);
-            newFields.push(`P${i}_Flow`);
-          }
 
           setAvailableFields(newFields);
         }
       } catch (error) {
         console.error("Error fetching site details", error);
-        setAvailableFields(FIELDS);
+        setAvailableFields([]);
       } finally {
         setIsFetchingSiteDetails(false);
       }

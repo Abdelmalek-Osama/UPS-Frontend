@@ -53,7 +53,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
     const [alarmNameError, setAlarmNameError] = useState<string | undefined>(undefined);
 
     const handleSiteChange = (value: string) => {
-        const selected = sites.find(site => site.name === value);
+        const selected = sites.find(site => site.id.toString() === value);
         if (selected) {
             setSite(selected.name);
             setForm(prev => ({ ...prev, siteId: selected.id, site: selected.name }));
@@ -76,14 +76,14 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <Select value={form.site || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
+                        <Select value={form.siteId?.toString() || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
                             <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                                 <SelectValue placeholder={sitesLoading ? t('common.loading') : t('alarms.selectSite')} />
                             </SelectTrigger>
                             <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 {sites.map(site => (
-                                    <SelectItem key={site.id} value={site.name}>
-                                        {site.name}
+                                    <SelectItem key={site.id} value={site.id.toString()}>
+                                        {t('_rtl') === 'rtl' ? site.arabicName : site.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
