@@ -30,6 +30,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isStage1Valid, setIsStage1Valid] = useState(false);
 
   
   useEffect(() => {
@@ -197,7 +198,14 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
   };
 
   const isStepValid = (step: number): boolean => {
+    if (step === 0) {
+      return isStage1Valid;
+    }
     return true;
+  };
+
+  const handleStage1ValidChange = (isValid: boolean) => {
+    setIsStage1Valid(isValid);
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -223,8 +231,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           endpoint = `/v1/Sites/${formData.id}/info`;
           payload = {
             code: formData.code,
-            name: formData.nameEn,
-            arabicName: formData.nameAr,
+            name: formData.name,
+            arabicName: formData.arabicName,
             siteType: formData.siteType,
             canal: formData.canal,
             longitude: formData.longitude,
@@ -318,9 +326,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           // Transform the API response to match the Site interface
           const newSite: Site = {
             id: result.data.id || 0,
-            name: formData.nameEn || '',
-            nameAr: formData.nameAr || '',
-            nameEn: formData.nameEn || '',
+            name: formData.name || '',
+            arabicName: formData.arabicName || '',
             siteType: formData.siteType as 'WaterLevel' | 'Pumps' || 'WaterLevel',
             directorateName: directorateName,
             directorateArabicName: directorateArabicName,
@@ -495,6 +502,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage1ValidChange}
                 />
               )}
               {currentTab === 1 && (
@@ -569,8 +577,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                         paddingBottom: '0.5rem',
                         backgroundColor: isStepValid(currentTab)
                           ? 'hsl(217, 91%, 60%)'
-                          : 'hsl(var(--muted))',
-                        color: isStepValid(currentTab) ? 'white' : 'hsl(var(--muted-foreground))',
+                          : 'hsl(217, 91%, 75%)',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
                         cursor: isStepValid(currentTab) ? 'pointer' : 'not-allowed',
@@ -609,8 +617,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                         paddingBottom: '0.5rem',
                         backgroundColor: (isStepValid(currentTab) && !isCreating)
                           ? 'hsl(142, 72%, 45%)'
-                          : 'hsl(var(--muted))',
-                        color: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'white' : 'hsl(var(--muted-foreground))',
+                          : 'hsl(142, 72%, 75%)',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
                         cursor: (isStepValid(currentTab) && !isCreating && !isUpdating) ? 'pointer' : 'not-allowed',

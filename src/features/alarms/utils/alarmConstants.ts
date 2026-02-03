@@ -115,10 +115,14 @@ export const INITIAL_COMMUNICATION_FORM: CommunicationAlarmForm = {
 
 export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
     alarmId: null,
+    alarmName: '',
     method: 0,
     siteId: null,
     site: '',
-    sentMessage: '',
+    message: '',
+    threshold: 0,
+    field: '',
+    readingValue: 0,
     emails: [],
     phones: [],
 };
