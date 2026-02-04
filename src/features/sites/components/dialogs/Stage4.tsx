@@ -38,13 +38,13 @@ interface Stage4Props {
   mode?: "create" | "edit";
   onValidationChange?: (isValid: boolean) => void;
   userRole?: 'Admin' | 'Operator';
+  equations?: any[];
+  loadingEquations?: boolean;
 }
 
-export default function Stage4({ data, onChange, isOpen, onClose, mode = "create", onValidationChange, userRole }: Stage4Props) {
+export default function Stage4({ data, onChange, isOpen, onClose, mode = "create", onValidationChange, userRole, equations = [], loadingEquations = false }: Stage4Props) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
-  const [equations, setEquations] = useState<Equation[]>([]);
-  const [loadingEquations, setLoadingEquations] = useState(true);
   const [loadingFlowCalc, setLoadingFlowCalc] = useState(false);
   const [selectedEquationId, setSelectedEquationId] = useState<number | null>(null);
   const [constants, setConstants] = useState<{ [key: string]: string }>({});
@@ -69,27 +69,6 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
       onValidationChange(isValid);
     }
   }, [isValid, onValidationChange]);
-
-  // Fetch equations from API
-  useEffect(() => {
-    const fetchEquations = async () => {
-      try {
-        setLoadingEquations(true);
-        const response = await apiService.get<any>('/v1/Equations');
-        // apiService.get already returns response.data, so use it directly
-        const equationsData = Array.isArray(response) ? response : response?.data || [];
-        setEquations(equationsData);
-      } catch (error) {
-        console.error('Failed to fetch equations:', error);
-        // Fallback to empty array if API fails
-        setEquations([]);
-      } finally {
-        setLoadingEquations(false);
-      }
-    };
-
-    fetchEquations();
-  }, []);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -123,24 +102,55 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
                 setSelectedEquationId(flowCalcData.equationId);
                 
                 let constantsObj: { [key: string]: string } = {};
+                let commaSeparatedValues = '';
                 
-                // Parse constants
+                // Parse constants - handle array, comma-separated string, or JSON object
                 if (flowCalcData.formulaConstants) {
                   try {
-                    const parsed = typeof flowCalcData.formulaConstants === 'string' 
-                      ? JSON.parse(flowCalcData.formulaConstants)
-                      : flowCalcData.formulaConstants;
-                    constantsObj = parsed;
-                    setConstants(parsed);
+                    let values: string[] = [];
+                    
+                    if (Array.isArray(flowCalcData.formulaConstants)) {
+                      // It's an array of numbers [1, 2, 9]
+                      values = flowCalcData.formulaConstants.map((v: any) => String(v));
+                      commaSeparatedValues = values.join(',');
+                    } else if (typeof flowCalcData.formulaConstants === 'string' && 
+                        !flowCalcData.formulaConstants.startsWith('{')) {
+                      // It's a comma-separated string
+                      values = flowCalcData.formulaConstants.split(',');
+                      commaSeparatedValues = flowCalcData.formulaConstants;
+                    } else {
+                      // It's a JSON object
+                      const parsed = typeof flowCalcData.formulaConstants === 'string' 
+                        ? JSON.parse(flowCalcData.formulaConstants)
+                        : flowCalcData.formulaConstants;
+                      
+                      // Convert object to comma-separated array
+                      const extractedConstants = extractConstants(equation.displayFormula);
+                      values = extractedConstants.map(c => String(parsed[c] || ''));
+                      commaSeparatedValues = values.join(',');
+                      constantsObj = parsed;
+                    }
+                    
+                    // If we have values from array or string, convert to object for display
+                    if (!constantsObj || Object.keys(constantsObj).length === 0) {
+                      const extractedConstants = extractConstants(equation.displayFormula);
+                      constantsObj = extractedConstants.reduce((acc, c, idx) => ({
+                        ...acc,
+                        [c]: values[idx] || ''
+                      }), {});
+                    }
+                    
+                    setConstants(constantsObj);
                   } catch (e) {
                     console.error('Error parsing formula constants:', e);
                     setConstants({});
+                    commaSeparatedValues = '';
                   }
                 }
                 
                 onChange('flowCalculation', {
                   equationId: flowCalcData.equationId,
-                  formulaConstants: JSON.stringify(constantsObj)
+                  formulaConstants: commaSeparatedValues
                 });
               }
             } 
@@ -153,23 +163,54 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
                 setSelectedEquationId(matchingEquation.id);
                 
                 let constantsObj: { [key: string]: string } = {};
+                let commaSeparatedValues = '';
                 
                 if (flowCalcData.formulaConstants) {
                   try {
-                    const parsed = typeof flowCalcData.formulaConstants === 'string' 
-                      ? JSON.parse(flowCalcData.formulaConstants)
-                      : flowCalcData.formulaConstants;
-                    constantsObj = parsed;
-                    setConstants(parsed);
+                    let values: string[] = [];
+                    
+                    if (Array.isArray(flowCalcData.formulaConstants)) {
+                      // It's an array of numbers [1, 2, 9]
+                      values = flowCalcData.formulaConstants.map((v: any) => String(v));
+                      commaSeparatedValues = values.join(',');
+                    } else if (typeof flowCalcData.formulaConstants === 'string' && 
+                        !flowCalcData.formulaConstants.startsWith('{')) {
+                      // It's a comma-separated string
+                      values = flowCalcData.formulaConstants.split(',');
+                      commaSeparatedValues = flowCalcData.formulaConstants;
+                    } else {
+                      // It's a JSON object
+                      const parsed = typeof flowCalcData.formulaConstants === 'string' 
+                        ? JSON.parse(flowCalcData.formulaConstants)
+                        : flowCalcData.formulaConstants;
+                      
+                      // Convert object to comma-separated array
+                      const extractedConstants = extractConstants(matchingEquation.displayFormula);
+                      values = extractedConstants.map(c => String(parsed[c] || ''));
+                      commaSeparatedValues = values.join(',');
+                      constantsObj = parsed;
+                    }
+                    
+                    // If we have values from array or string, convert to object for display
+                    if (!constantsObj || Object.keys(constantsObj).length === 0) {
+                      const extractedConstants = extractConstants(matchingEquation.displayFormula);
+                      constantsObj = extractedConstants.reduce((acc, c, idx) => ({
+                        ...acc,
+                        [c]: values[idx] || ''
+                      }), {});
+                    }
+                    
+                    setConstants(constantsObj);
                   } catch (e) {
                     console.error('Error parsing formula constants:', e);
                     setConstants({});
+                    commaSeparatedValues = '';
                   }
                 }
                 
                 onChange('flowCalculation', {
                   equationId: matchingEquation.id,
-                  formulaConstants: JSON.stringify(constantsObj)
+                  formulaConstants: commaSeparatedValues
                 });
               }
             }
@@ -225,12 +266,14 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     setSelectedEquationId(id);
     setHasLoadedFlowCalc(false); // Clear the flag when manually changing equation
     
-    // Update parent form with equation ID and empty formula constants
+    // Update parent form with equation ID and empty formula constants as comma-separated
     if (equation) {
       const constants = extractConstants(equation.displayFormula);
+      // Create empty values placeholder (e.g., ",,")
+      const emptyCommaSeparatedValues = constants.map(() => '').join(',');
       onChange('flowCalculation', {
         equationId: id,
-        formulaConstants: JSON.stringify(constants.reduce((acc: { [key: string]: string }, c: string) => ({ ...acc, [c]: '' }), {}))
+        formulaConstants: emptyCommaSeparatedValues
       });
     }
   };
@@ -239,11 +282,15 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     const updated = { ...constants, [constantName]: value };
     setConstants(updated);
     
-    // Update parent form with updated formula constants
+    // Update parent form with updated formula constants as comma-separated values
     if (selectedEquationId) {
+      // Convert constants object to comma-separated values (a,b,c -> "1,5,6")
+      const constantsArray = extractConstants(selectedEquation?.displayFormula || '');
+      const commaSeparatedValues = constantsArray.map(c => updated[c] || '').join(',');
+      
       onChange('flowCalculation', {
         equationId: selectedEquationId,
-        formulaConstants: JSON.stringify(updated)
+        formulaConstants: commaSeparatedValues
       });
     }
   };

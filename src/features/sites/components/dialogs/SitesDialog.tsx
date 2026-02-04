@@ -37,6 +37,27 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
   const [isStage3Valid, setIsStage3Valid] = useState(false);
   const [isStage4Valid, setIsStage4Valid] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [equations, setEquations] = useState<any[]>([]);
+  const [loadingEquations, setLoadingEquations] = useState(true);
+
+  // Fetch equations once when component mounts
+  useEffect(() => {
+    const fetchEquations = async () => {
+      try {
+        setLoadingEquations(true);
+        const response = await apiService.get<any>('/v1/Equations');
+        const equationsData = Array.isArray(response) ? response : response?.data || [];
+        setEquations(equationsData);
+      } catch (error) {
+        console.error('Failed to fetch equations:', error);
+        setEquations([]);
+      } finally {
+        setLoadingEquations(false);
+      }
+    };
+
+    fetchEquations();
+  }, []);
 
   
   useEffect(() => {
@@ -572,6 +593,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   mode={mode}
                   onValidationChange={handleStage4ValidChange}
                   userRole={userRole}
+                  equations={equations}
+                  loadingEquations={loadingEquations}
                 />
               )}
             </div>
