@@ -4,7 +4,7 @@ import apiService from '../../../../shared/utils/apiService';
 import { Site } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useSiteCreation } from '../../hooks/useSiteCreation';
-import { useDirectorates } from '../../hooks/useDirectorates';
+import type { Directorate } from '../../hooks/useDirectorates';
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
 import Stage3 from "./Stage3";
@@ -18,19 +18,46 @@ interface SitesDialogProps {
   onCancel: () => void;
   isOpen: boolean;
   onSiteCreated?: (site: Site) => void;
+  directorates: Directorate[];
+  isLoadingDirectorates?: boolean;
+  userRole?: 'Admin' | 'Operator';
 }
 
-export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated }: SitesDialogProps) {
+export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated, directorates, isLoadingDirectorates, userRole }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
-  const { directorates } = useDirectorates();
 
   const [formData, setFormData] = useState<Partial<Site>>(siteData || {});
   const [currentTab, setCurrentTab] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<boolean[]>([false, false, false, false]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isStage1Valid, setIsStage1Valid] = useState(false);
+  const [isStage2Valid, setIsStage2Valid] = useState(false);
+  const [isStage3Valid, setIsStage3Valid] = useState(false);
+  const [isStage4Valid, setIsStage4Valid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [equations, setEquations] = useState<any[]>([]);
+  const [loadingEquations, setLoadingEquations] = useState(true);
+
+  // Fetch equations once when component mounts
+  useEffect(() => {
+    const fetchEquations = async () => {
+      try {
+        setLoadingEquations(true);
+        const response = await apiService.get<any>('/v1/Equations');
+        const equationsData = Array.isArray(response) ? response : response?.data || [];
+        setEquations(equationsData);
+      } catch (error) {
+        console.error('Failed to fetch equations:', error);
+        setEquations([]);
+      } finally {
+        setLoadingEquations(false);
+      }
+    };
+
+    fetchEquations();
+  }, []);
 
   
   useEffect(() => {
@@ -38,7 +65,10 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       
       const mappedData = {
         ...siteData,
-        simId: (siteData as any).simCardIP || siteData.simId
+        id: siteData.id, // Ensure id is preserved
+        simId: (siteData as any).simCardIP || siteData.simId,
+        // Normalize dataMappings - API might return siteDataMappings, use that if dataMappings not present
+        dataMappings: siteData.dataMappings || (siteData as any).siteDataMappings || [],
       };
       setFormData(mappedData);
       // For edit mode, mark all tabs as completed since we have existing data
@@ -48,6 +78,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
         setCompletedTabs([false, false, false, false]);
       }
       setCurrentTab(0);
+      setErrorMessage(null);
     }
   }, [isOpen, siteData, mode]);
 
@@ -57,6 +88,13 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     { id: "stage3", name: t('sites.stage3.title'), icon: "3" },
     { id: "stage4", name: t('sites.stage4.title'), icon: "4" },
   ];
+
+  // For operators, only show editable tabs
+  const visibleTabsWithIndices = userRole === 'Operator' && mode === 'edit' ? 
+    tabs
+      .map((tab, originalIndex) => ({ tab, originalIndex }))
+      .filter(item => ['stage1', 'stage4'].includes(item.tab.id)) :
+    tabs.map((tab, originalIndex) => ({ tab, originalIndex }));
 
   
   const dialogContentStyle: React.CSSProperties = {
@@ -201,11 +239,32 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     if (step === 0) {
       return isStage1Valid;
     }
+    if (step === 1) {
+      return isStage2Valid;
+    }
+    if (step === 2) {
+      return isStage3Valid;
+    }
+    if (step === 3) {
+      return isStage4Valid;
+    }
     return true;
   };
 
   const handleStage1ValidChange = (isValid: boolean) => {
     setIsStage1Valid(isValid);
+  };
+
+  const handleStage2ValidChange = (isValid: boolean) => {
+    setIsStage2Valid(isValid);
+  };
+
+  const handleStage3ValidChange = (isValid: boolean) => {
+    setIsStage3Valid(isValid);
+  };
+
+  const handleStage4ValidChange = (isValid: boolean) => {
+    setIsStage4Valid(isValid);
   };
 
   const handleFieldChange = (field: string, value: any) => {
@@ -237,6 +296,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
             canal: formData.canal,
             longitude: formData.longitude,
             latitude: formData.latitude,
+            longitudeDirection: formData.longitudeDirection,
+            latitudeDirection: formData.latitudeDirection,
             directorateId: formData.directorateId,
             simCardIP: formData.simId, 
             dataLoggerType: formData.dataLoggerType
@@ -265,11 +326,19 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       }
 
       await apiService.put(endpoint, payload);
+      setErrorMessage(null);
       toast.success(t('notifications.saved'));
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving step ${stepIndex}:`, error);
-      toast.error(t('errors.saveFailed'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('errors.saveFailed');
+      
+      setErrorMessage(backendError);
       return false;
     } finally {
       setIsUpdating(false);
@@ -286,8 +355,17 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       const newCompleted = [...completedTabs];
       newCompleted[currentTab] = true;
       setCompletedTabs(newCompleted);
-      if (currentTab < tabs.length - 1) {
-        setCurrentTab(currentTab + 1);
+
+      // Determine next tab index
+      let nextTabIndex = currentTab + 1;
+      
+      // For operators in edit mode, skip from stage 1 (index 0) directly to stage 4 (index 3)
+      if (userRole === 'Operator' && mode === 'edit' && currentTab === 0) {
+        nextTabIndex = 3;
+      }
+
+      if (nextTabIndex < tabs.length) {
+        setCurrentTab(nextTabIndex);
       }
     }
   };
@@ -316,49 +394,28 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       const result = await createSite(formData);
       if (result.success && result.data) {
         onSave(formData);
-        // Call the callback to add the new site to the list immediately
+        // Trigger a refetch by calling onSiteCreated with null/signal to parent to refetch
+        // Instead of immediately adding to list, let parent refetch the data
         if (onSiteCreated) {
-          // Get directorate info from the directorates array
-          const directorate = directorates.find(d => d.id === formData.directorateId);
-          const directorateName = directorate?.name || '';
-          const directorateArabicName = directorate?.arabicName || '';
-          
-          // Transform the API response to match the Site interface
-          const newSite: Site = {
-            id: result.data.id || 0,
-            name: formData.name || '',
-            arabicName: formData.arabicName || '',
-            siteType: formData.siteType as 'WaterLevel' | 'Pumps' || 'WaterLevel',
-            directorateName: directorateName,
-            directorateArabicName: directorateArabicName,
-            directorateId: formData.directorateId,
-            latitude: formData.latitude || 0,
-            longitude: formData.longitude || 0,
-            status: 'offline' as const,
-            code: formData.code || '',
-            canal: formData.canal || '',
-            location: formData.location || '',
-            dataLoggerType: formData.dataLoggerType,
-            simId: formData.simId || '',
-            simCardIP: formData.simId || '',
-            hasUS: formData.hasUS || false,
-            hasDS1: formData.hasDS1 || false,
-            hasDS2: formData.hasDS2 || false,
-            numPumps: formData.numPumps || 0,
-            dataMappings: formData.dataMappings || [],
-            flowCalculation: formData.flowCalculation,
-            ...result.data,
-          };
-          onSiteCreated(newSite);
+          // Pass empty object to signal that a new site was created and data should be refetched
+          onSiteCreated({} as Site);
         }
+        setErrorMessage(null);
         onCancel();
         // Reset
         setCurrentTab(0);
         setCompletedTabs([false, false, false, false]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating site:', error);
-      toast.error(t('sites.createError'));
+      
+      // Extract error message from backend response
+      const backendError = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message ||
+                          t('sites.createError');
+      
+      setErrorMessage(backendError);
     }
   };
 
@@ -417,15 +474,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           {/* Side Tabs */}
           <div style={sidebarStyle}>
             <nav style={navStyle}>
-              {tabs.map((tab, index) => {
-                const isCompleted = completedTabs[index];
-                const isCurrent = currentTab === index;
-                const isUnlocked = index === 0 || completedTabs[index - 1];
+              {visibleTabsWithIndices.map(({ tab, originalIndex }) => {
+                const isCompleted = completedTabs[originalIndex];
+                const isCurrent = currentTab === originalIndex;
+                const isUnlocked = originalIndex === 0 || completedTabs[originalIndex - 1];
 
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => handleTabClick(index)}
+                    onClick={() => handleTabClick(originalIndex)}
                     disabled={!isUnlocked}
                     style={{
                       width: '100%',
@@ -503,6 +560,10 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   isOpen={isOpen}
                   onClose={onCancel}
                   onValidationChange={handleStage1ValidChange}
+                  directorates={directorates}
+                  isLoadingDirectorates={isLoadingDirectorates}
+                  mode={mode}
+                  userRole={userRole}
                 />
               )}
               {currentTab === 1 && (
@@ -511,6 +572,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage2ValidChange}
                 />
               )}
               {currentTab === 2 && (
@@ -519,6 +581,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onChange={handleFieldChange}
                   isOpen={isOpen}
                   onClose={onCancel}
+                  onValidationChange={handleStage3ValidChange}
                 />
               )}
               {currentTab === 3 && (
@@ -528,9 +591,59 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   isOpen={isOpen}
                   onClose={onCancel}
                   mode={mode}
+                  onValidationChange={handleStage4ValidChange}
+                  userRole={userRole}
+                  equations={equations}
+                  loadingEquations={loadingEquations}
                 />
               )}
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div style={{
+                paddingLeft: '1.5rem',
+                paddingRight: '1.5rem',
+                paddingTop: '1rem',
+                paddingBottom: '0rem',
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#fee2e2',
+                  borderRadius: '0.375rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '1rem'
+                }}>
+                  <p style={{
+                    color: '#991b1b',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    margin: 0,
+                    flex: 1
+                  }}>
+                    {errorMessage}
+                  </p>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#991b1b',
+                      cursor: 'pointer',
+                      padding: '0',
+                      fontSize: '1.25rem',
+                      lineHeight: '1',
+                      flexShrink: 0
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div style={footerContainerStyle}>
@@ -539,7 +652,14 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                 <div style={footerLeftStyle}>
                   {currentTab > 0 && (
                     <button
-                      onClick={() => setCurrentTab(Math.max(0, currentTab - 1))}
+                      onClick={() => {
+                        // For operators in edit mode, going back from stage 4 goes to stage 1
+                        if (userRole === 'Operator' && mode === 'edit' && currentTab === 3) {
+                          setCurrentTab(0);
+                        } else {
+                          setCurrentTab(Math.max(0, currentTab - 1));
+                        }
+                      }}
                       style={backButtonStyle}
                       onMouseEnter={(e) => {
                         const btn = e.target as HTMLButtonElement;
@@ -560,13 +680,25 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                 {/* Center: Step Indicator */}
                 <div style={footerCenterStyle}>
                   <span style={stepIndicatorStyle}>
-                    {t('common.step')} {currentTab + 1} {t('common.of')} {tabs.length}
+                    {t('common.step')} {visibleTabsWithIndices.findIndex(item => item.originalIndex === currentTab) + 1} {t('common.of')} {visibleTabsWithIndices.length}
                   </span>
                 </div>
 
                 {/* Right: Next/Save Buttons */}
                 <div style={footerRightStyle}>
-                  {currentTab < tabs.length - 1 ? (
+                  {(() => {
+                    // Check if current tab is the last visible tab for the user
+                    const isLastVisibleTab = visibleTabsWithIndices.some(item => item.originalIndex === currentTab) &&
+                      visibleTabsWithIndices[visibleTabsWithIndices.length - 1].originalIndex === currentTab;
+                    
+                    // For non-operators or admins, use the original logic
+                    if (userRole !== 'Operator' || mode !== 'edit') {
+                      return currentTab < tabs.length - 1;
+                    }
+                    
+                    // For operators, check if on last visible tab
+                    return !isLastVisibleTab;
+                  })() ? (
                     <button
                       onClick={handleNext}
                       disabled={!isStepValid(currentTab) || isUpdating}

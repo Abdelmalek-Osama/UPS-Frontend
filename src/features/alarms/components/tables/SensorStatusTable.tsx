@@ -41,7 +41,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
         },
         {
             key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                     {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {

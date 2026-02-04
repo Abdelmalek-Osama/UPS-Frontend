@@ -14,7 +14,7 @@ import {
   getCanalOptions,
   getDataLoggerTypeOptions,
 } from '../../constants';
-import { useDirectorates } from '../../hooks/useDirectorates';
+import type { Directorate } from '../../hooks/useDirectorates';
 
 interface TabProps {
   data: Partial<Site>;
@@ -22,6 +22,10 @@ interface TabProps {
   isOpen: boolean;
   onClose: () => void;
   onValidationChange?: (isValid: boolean) => void;
+  directorates: Directorate[];
+  isLoadingDirectorates?: boolean;
+  mode?: "create" | "edit";
+  userRole?: 'Admin' | 'Operator';
 }
 
 // Validation functions
@@ -146,6 +150,44 @@ const getSIMIdErrors = (value: string, t: any): string[] => {
   return errors;
 };
 
+const getLongitudeErrors = (value: string | number, t: any): string[] => {
+  const errors: string[] = [];
+  
+  if (value === null || value === undefined || value === '') {
+    return errors; // Optional field
+  }
+
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  const absValue = Math.abs(numValue);
+  
+  if (isNaN(numValue)) {
+    errors.push(t('sites.stage1.longitudeInvalidFormat'));
+  } else if (absValue > 180) {
+    errors.push(t('sites.stage1.longitudeOutOfRange'));
+  }
+  
+  return errors;
+};
+
+const getLatitudeErrors = (value: string | number, t: any): string[] => {
+  const errors: string[] = [];
+  
+  if (value === null || value === undefined || value === '') {
+    return errors; // Optional field
+  }
+
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  const absValue = Math.abs(numValue);
+  
+  if (isNaN(numValue)) {
+    errors.push(t('sites.stage1.latitudeInvalidFormat'));
+  } else if (absValue > 90) {
+    errors.push(t('sites.stage1.latitudeOutOfRange'));
+  }
+  
+  return errors;
+};
+
 const getCanalErrors = (value: string, t: any): string[] => {
   const errors: string[] = [];
   
@@ -179,20 +221,24 @@ const getDataLoggerTypeErrors = (value: string, t: any): string[] => {
   return errors;
 };
 
-export default function Stage1({ data, onChange, isOpen, onValidationChange }: TabProps) {
+export default function Stage1({ data, onChange, isOpen, onValidationChange, directorates, isLoadingDirectorates, mode, userRole }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
+  
+  // For operators, restrict editing to certain fields
+  const isOperatorEditMode = userRole === 'Operator' && mode === 'edit';
+  
   const [arabicNameTouched, setArabicNameTouched] = useState(false);
   const [englishNameTouched, setEnglishNameTouched] = useState(false);
-  const [siteCodeTouched, setSiteCodeTouched] = useState(false);
   const [simIdTouched, setSimIdTouched] = useState(false);
   const [canalTouched, setCanalTouched] = useState(false);
   const [directorateTouched, setDirectorateTouched] = useState(false);
   const [dataLoggerTypeTouched, setDataLoggerTypeTouched] = useState(false);
+  const [longitudeTouched, setLongitudeTouched] = useState(false);
+  const [latitudeTouched, setLatitudeTouched] = useState(false);
 
   const canalOptions = getCanalOptions();
   const dataLoggerTypeOptions = getDataLoggerTypeOptions();
-  const { directorates, isLoading: isLoadingDirectorates } = useDirectorates();
 
   // Notify parent of validation status whenever data changes
   useEffect(() => {
@@ -228,19 +274,6 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
     return getEnglishNameErrors(data.name || '', t);
   };
 
-  const handleSiteCodeChange = (value: string) => {
-    onChange('code', value);
-  };
-
-  const handleSiteCodeBlur = () => {
-    setSiteCodeTouched(true);
-  };
-
-  const getSiteCodeErrorsList = (): string[] => {
-    if (!siteCodeTouched) return [];
-    return getSiteCodeErrors(data.code || '', t);
-  };
-
   const handleSIMIdChange = (value: string) => {
     onChange('simId', value);
   };
@@ -252,6 +285,32 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
   const getSIMIdErrorsList = (): string[] => {
     if (!simIdTouched) return [];
     return getSIMIdErrors(data.simId || '', t);
+  };
+
+  const handleLongitudeChange = (value: string) => {
+    onChange('longitude', parseFloat(value) || 0);
+  };
+
+  const handleLongitudeBlur = () => {
+    setLongitudeTouched(true);
+  };
+
+  const getLongitudeErrorsList = (): string[] => {
+    if (!longitudeTouched) return [];
+    return getLongitudeErrors(data.longitude || '', t);
+  };
+
+  const handleLatitudeChange = (value: string) => {
+    onChange('latitude', parseFloat(value) || 0);
+  };
+
+  const handleLatitudeBlur = () => {
+    setLatitudeTouched(true);
+  };
+
+  const getLatitudeErrorsList = (): string[] => {
+    if (!latitudeTouched) return [];
+    return getLatitudeErrors(data.latitude || '', t);
   };
 
   const handleCanalChange = (value: string) => {
@@ -290,33 +349,34 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
     // Check all required fields have values
     const hasArabicName = data.arabicName && data.arabicName.trim().length > 0;
     const hasEnglishName = data.name && data.name.trim().length > 0;
-    const hasCode = data.code && data.code.trim().length > 0;
     const hasSimId = data.simId && data.simId.trim().length > 0;
     const hasCanal = data.canal && data.canal.trim().length > 0;
     const hasDirectorate = data.directorateId && data.directorateId.toString().length > 0;
     const hasDataLoggerType = data.dataLoggerType && data.dataLoggerType.trim().length > 0;
 
-    if (!hasArabicName || !hasEnglishName || !hasCode || !hasSimId || !hasCanal || !hasDirectorate || !hasDataLoggerType) {
+    if (!hasArabicName || !hasEnglishName || !hasSimId || !hasCanal || !hasDirectorate || !hasDataLoggerType) {
       return false;
     }
 
     // Check if any required field has validation errors
     const arabicNameErrors = getArabicNameErrors(data.arabicName || '', t);
     const englishNameErrors = getEnglishNameErrors(data.name || '', t);
-    const codeErrors = getSiteCodeErrors(data.code || '', t);
     const simIdErrors = getSIMIdErrors(data.simId || '', t);
     const canalErrors = getCanalErrors(data.canal || '', t);
     const directorateErrors = getDirectorateErrors(data.directorateId?.toString() || '', t);
     const dataLoggerTypeErrors = getDataLoggerTypeErrors(data.dataLoggerType || '', t);
+    const longitudeErrors = getLongitudeErrorsList();
+    const latitudeErrors = getLatitudeErrorsList();
 
     return (
       arabicNameErrors.length === 0 &&
       englishNameErrors.length === 0 &&
-      codeErrors.length === 0 &&
       simIdErrors.length === 0 &&
       canalErrors.length === 0 &&
       directorateErrors.length === 0 &&
-      dataLoggerTypeErrors.length === 0
+      dataLoggerTypeErrors.length === 0 &&
+      longitudeErrors.length === 0 &&
+      latitudeErrors.length === 0
     );
   };
 
@@ -334,6 +394,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
             onBlur={handleArabicNameBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="rtl"
+            disabled={isOperatorEditMode}
           />
           {getArabicNameErrorsList().map((error, index) => (
             <p key={index} className="text-sm text-red-600">{error}</p>
@@ -350,6 +411,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
             onBlur={handleEnglishNameBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="ltr"
+            disabled={isOperatorEditMode}
           />
           {getEnglishNameErrorsList().map((error, index) => (
             <p key={index} className="text-sm text-red-600">{error}</p>
@@ -357,32 +419,94 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange }: T
         </div>
       </div>
 
-      {/* Code Field */}
+      {/* Longitude Field with Direction */}
       <div className="space-y-2">
-        <Label htmlFor="code">{t('sites.stage1.codeLabel')}</Label>
-        <Input
-          id="code"
-          placeholder={t('sites.stage1.codePlaceholder')}
-          value={data.code || ''}
-          onChange={(e) => handleSiteCodeChange(e.target.value)}
-          onBlur={handleSiteCodeBlur}
-          className={dir === 'rtl' ? 'text-right' : 'text-left'}
-        />
-        {getSiteCodeErrorsList().map((error, index) => (
+        <Label>{t('sites.stage1.longitudeLabel')}</Label>
+        <div className="flex gap-2">
+          <Input
+            id="longitude"
+            type="number"
+            min="0"
+            step="any"
+            max="180"
+            placeholder={t('sites.stage1.longitudePlaceholder')}
+            value={data.longitude ? Math.abs(data.longitude as number) : ''}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              const direction = (data.longitudeDirection || 'E') === 'W' ? -1 : 1;
+              onChange('longitude', value * direction);
+            }}
+            onBlur={handleLongitudeBlur}
+            className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            disabled={isOperatorEditMode}
+          />
+          <Select
+            value={data.longitudeDirection || 'E'}
+            onValueChange={(value) => {
+              const absLon = Math.abs(data.longitude as number) || 0;
+              onChange('longitude', value === 'W' ? -absLon : absLon);
+              onChange('longitudeDirection', value);
+            }}
+            dir={dir}
+            disabled={isOperatorEditMode}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="E">{t('sites.stage1.directionEast')}</SelectItem>
+              <SelectItem value="W">{t('sites.stage1.directionWest')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {getLongitudeErrorsList().map((error, index) => (
           <p key={index} className="text-sm text-red-600">{error}</p>
         ))}
       </div>
 
-      {/* Location Field */}
+      {/* Latitude Field with Direction */}
       <div className="space-y-2">
-        <Label htmlFor="location">{t('sites.stage1.locationLabel')}</Label>
-        <Input
-          id="location"
-          placeholder={t('sites.stage1.locationPlaceholder')}
-          value={data.location || ''}
-          onChange={(e) => onChange('location', e.target.value)}
-          className={dir === 'rtl' ? 'text-right' : 'text-left'}
-        />
+        <Label>{t('sites.stage1.latitudeLabel')}</Label>
+        <div className="flex gap-2">
+          <Input
+            id="latitude"
+            type="number"
+            min="0"
+            step="any"
+            max="90"
+            placeholder={t('sites.stage1.latitudePlaceholder')}
+            value={data.latitude ? Math.abs(data.latitude as number) : ''}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              const direction = (data.latitudeDirection || 'N') === 'S' ? -1 : 1;
+              onChange('latitude', value * direction);
+            }}
+            onBlur={handleLatitudeBlur}
+            className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            disabled={isOperatorEditMode}
+          />
+          <Select
+            value={data.latitudeDirection || 'N'}
+            onValueChange={(value) => {
+              const absLat = Math.abs(data.latitude as number) || 0;
+              onChange('latitude', value === 'S' ? -absLat : absLat);
+              onChange('latitudeDirection', value);
+            }}
+            dir={dir}
+            disabled={isOperatorEditMode}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="N">{t('sites.stage1.directionNorth')}</SelectItem>
+              <SelectItem value="S">{t('sites.stage1.directionSouth')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {getLatitudeErrorsList().map((error, index) => (
+          <p key={index} className="text-sm text-red-600">{error}</p>
+        ))}
       </div>
 
       {/* Canal Dropdown */}

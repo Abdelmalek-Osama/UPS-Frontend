@@ -41,7 +41,7 @@ export function PumpStatusPSTable({ alarms, onEdit, error }: PumpStatusPSRespons
         },
         {
             key: 'recipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: PumpStatusPSResponse) => {
                 const recipients: string[] = [];
                 if (alarm.emails) {

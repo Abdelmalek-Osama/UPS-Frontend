@@ -16,61 +16,61 @@ export function useSitesData() {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
 
-  useEffect(() => {
-    const fetchSitesWithDirectorates = async (signal?: AbortSignal) => {
-      if (!isAuthenticated) {
-        setSites([]);
-        setDirectorates([]);
+  const fetchSitesWithDirectorates = useCallback(async (signal?: AbortSignal) => {
+    if (!isAuthenticated) {
+      setSites([]);
+      setDirectorates([]);
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      
+      // Fetch both sites and directorates in parallel
+      const [sitesResponse, directoratesResponse] = await Promise.all([
+        apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal }),
+        apiService.get<Directorate[]>('/v1/Lookups/Lookup/Directorates', { signal })
+      ]);
+      
+      if (!signal?.aborted) {
+        const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
+        const directoratesList = directoratesResponse || [];
+        
+        // Map directorate names to IDs
+        const sitesWithDirectorateIds = sitesList.map(site => {
+          const matchingDirectorate = directoratesList.find(
+            d => d.name === site.directorateName || d.arabicName === site.directorateArabicName
+          );
+          return {
+            ...site,
+            directorateId: matchingDirectorate?.id || site.directorateId
+          };
+        });
+        
+        setSites(sitesWithDirectorateIds);
+        setDirectorates(directoratesList);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        // Fetch aborted
+      } else {
+        setError((err as Error).message);
+        console.error('Error fetching sites:', err);
+      }
+    } finally {
+      if (!signal?.aborted) {
         setLoading(false);
-        return;
       }
-      try {
-        setLoading(true);
-        
-        // Fetch both sites and directorates in parallel
-        const [sitesResponse, directoratesResponse] = await Promise.all([
-          apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal }),
-          apiService.get<Directorate[]>('/v1/Lookups/Lookup/Directorates', { signal })
-        ]);
-        
-        if (!signal?.aborted) {
-          const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
-          const directoratesList = directoratesResponse || [];
-          
-          // Map directorate names to IDs
-          const sitesWithDirectorateIds = sitesList.map(site => {
-            const matchingDirectorate = directoratesList.find(
-              d => d.name === site.directorateName || d.arabicName === site.directorateArabicName
-            );
-            return {
-              ...site,
-              directorateId: matchingDirectorate?.id || site.directorateId
-            };
-          });
-          
-          setSites(sitesWithDirectorateIds);
-          setDirectorates(directoratesList);
-        }
-      } catch (err: any) {
-        if (err.name === 'AbortError') {
-          // Fetch aborted
-        } else {
-          setError((err as Error).message);
-          console.error('Error fetching sites:', err);
-        }
-      } finally {
-        if (!signal?.aborted) {
-          setLoading(false);
-        }
-      }
-    };
+    }
+  }, [isAuthenticated]);
 
+  useEffect(() => {
     const abortController = new AbortController();
     fetchSitesWithDirectorates(abortController.signal);
     return () => abortController.abort();
-  }, [isAuthenticated]); // Add isAuthenticated to dependency array
+  }, [fetchSitesWithDirectorates]);
 
-  return { sites, setSites, directorates, loading, error };
+  return { sites, setSites, directorates, loading, error, refetch: fetchSitesWithDirectorates };
 }
 
 export function useFilteredSites(sites: Site[], filters: SiteFilters) {

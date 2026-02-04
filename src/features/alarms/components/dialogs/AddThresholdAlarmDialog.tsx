@@ -248,14 +248,32 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                             {t('alarms.addThresholdAlarm')}
                         </DialogTitle>
-                        <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                            {t('alarms.thresholdAlarmFormula')}
-                        </DialogDescription>
+                        
                     </DialogHeader>
                 </div>
 
                 <div ref={scrollContainerRef} style={scrollContainerStyle}>
                     <div style={contentWrapperStyle}>
+                        
+                        <div style={fieldContainerStyle}>
+                            <Label>{t('alarms.alarmName')}</Label>
+                            <Input
+                                type="text"
+                                placeholder={t('alarms.alarmName')}
+                                value={form.alarmName}
+                                onChange={(e) => {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        alarmName: e.target.value
+                                    }));
+                                    const error = validateAlarmName(e.target.value);
+                                    setAlarmNameError(error);
+                                }}
+                            />
+                            {alarmNameError && (
+                                <p style={errorTextStyle}>{alarmNameError}</p>
+                            )}
+                        </div>
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.site')}</Label>
                             <Select
@@ -283,25 +301,6 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             </Select>
                         </div>
 
-                        <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.alarmName')}</Label>
-                            <Input
-                                type="text"
-                                placeholder={t('alarms.alarmName')}
-                                value={form.alarmName}
-                                onChange={(e) => {
-                                    setForm(prev => ({
-                                        ...prev,
-                                        alarmName: e.target.value
-                                    }));
-                                    const error = validateAlarmName(e.target.value);
-                                    setAlarmNameError(error);
-                                }}
-                            />
-                            {alarmNameError && (
-                                <p style={errorTextStyle}>{alarmNameError}</p>
-                            )}
-                        </div>
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.field')}</Label>

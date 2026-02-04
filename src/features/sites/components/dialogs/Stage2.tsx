@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/select';
+import { useMemo, useEffect } from 'react';
 import {
   getCanalOptions,
   getDirectorateOptions,
@@ -21,16 +22,65 @@ interface TabProps {
   onChange: (field: string, value: any) => void;
   isOpen: boolean;
   onClose: () => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
-export default function Stage2({ data, onChange }: TabProps) {
+export default function Stage2({ data, onChange, onValidationChange }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
 
   const siteType = data.siteType as string | undefined;
 
+  // Calculate validation state and error message
+  const { isValid, errorMessage } = useMemo(() => {
+    // Site type is required
+    if (!siteType) {
+      return { isValid: false, errorMessage: null };
+    }
+
+    // For Water Level sites
+    if (siteType === 'WaterLevel') {
+      const hasAtLeastOneOption = data.hasUS || data.hasDS1;
+      if (!hasAtLeastOneOption) {
+        return { 
+          isValid: false, 
+          errorMessage: t('sites.stage2.waterLevelNoOptions') 
+        };
+      }
+    }
+
+    // For Pump stations
+    if (siteType === 'Pumps') {
+      const numPumps = data.numPumps || 0;
+      const hasAtLeastOneOption = data.hasUS || data.hasDS1;
+
+      if (numPumps <= 0) {
+        return { 
+          isValid: false, 
+          errorMessage: t('sites.stage2.pumpsMissingPumpsCount') 
+        };
+      }
+
+      if (!hasAtLeastOneOption) {
+        return { 
+          isValid: false, 
+          errorMessage: t('sites.stage2.pumpsNoOptions') 
+        };
+      }
+    }
+
+    return { isValid: true, errorMessage: null };
+  }, [siteType, data.hasUS, data.hasDS1, data.numPumps, t]);
+
+  // Call the validation change callback whenever validation state changes
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [isValid, onValidationChange]);
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 flex flex-col h-full">
       {/* Site Type Dropdown */}
       <div className="space-y-2">
         <Label htmlFor="siteType">{t('sites.stage2.siteTypeLabel')}</Label>
@@ -92,11 +142,19 @@ export default function Stage2({ data, onChange }: TabProps) {
             id="numPumps"
             type="number"
             min="0"
+            max="10"
             placeholder={t('sites.stage2.numPumpsPlaceholder')}
             value={data.numPumps || ''}
             onChange={(e) => onChange('numPumps', parseInt(e.target.value) || 0)}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
           />
+        </div>
+      )}
+
+      {/* Error Message - Bottom */}
+      {errorMessage && (
+        <div className="mt-auto p-3 bg-red-50 rounded-md">
+          <p className="text-red-600 text-sm font-medium">{errorMessage}</p>
         </div>
       )}
     </div>

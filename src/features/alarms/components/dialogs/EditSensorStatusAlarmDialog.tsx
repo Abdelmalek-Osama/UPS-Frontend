@@ -373,6 +373,9 @@ export function EditSensorStatusAlarmDialog({
                         {submissionError && (
                             <p style={submissionErrorStyle}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
+                        {form.emails.length === 0 && form.phones.length === 0 && (
+                            <p style={submissionErrorStyle}>{t('alarms.atLeastOneRecipient')}</p>
+                        )}
                         <div style={footerButtonsContainerStyle}>
                             <Button
                                 onClick={() => {
