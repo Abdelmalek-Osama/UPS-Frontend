@@ -152,6 +152,7 @@
     "deleteConfirmation": "هل أنت متأكد من حذف هذا الموقع؟",
     "deleteFailed": "فشل حذف الموقع. يرجى المحاولة مرة أخرى",
     "sitesCount": "المواقع",
+    "noSitesToShow": "لا توجد مواقع لعرضها",
     "latitude": "خط العرض",
     "longitude": "خط الطول",
     "coordinates": "الإحداثيات",

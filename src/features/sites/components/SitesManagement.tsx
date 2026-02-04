@@ -138,6 +138,14 @@ export function SitesManagement() {
         </Card>
       ) : error ? (
         <div className="text-red-500 text-center py-8">{t('errors.loadingFailed')}</div>
+      ) : sites.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center items-center h-48 text-gray-500 text-lg">
+              {t('sites.noSitesToShow')}
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardHeader className={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>

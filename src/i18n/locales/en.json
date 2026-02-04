@@ -152,6 +152,7 @@
     "deleteConfirmation" : "Are you sure to delete site ?",
     "deleteFailed" :"Failed to delete site",
     "sitesCount": "Sites",
+    "noSitesToShow": "No sites to show",
     "latitude": "Latitude",
     "longitude": "Longitude",
     "coordinates": "Coordinates",
