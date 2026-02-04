@@ -152,6 +152,7 @@
     "deleteConfirmation" : "Are you sure to delete site ?",
     "deleteFailed" :"Failed to delete site",
     "sitesCount": "Sites",
+    "noSitesToShow": "No sites to show",
     "latitude": "Latitude",
     "longitude": "Longitude",
     "coordinates": "Coordinates",
@@ -553,6 +554,7 @@
     "passwordsNotMatching": "Password and confirmation password do not match",
     "addUserSuccess": "User added successfully",
     "updateUserSuccess": "User updated successfully",
+    "updateUserDataSuccess": "User data updated successfully",
     "deleteUserSuccess": "User deleted successfully",
     "resetPasswordSuccess": "Password reset successfully",
     "resettingPassword": "Resetting password...",
@@ -675,7 +677,11 @@
     "passwordNeedsUppercase": "Password must contain at least one uppercase letter.",
     "passwordNeedsNumber": "Password must contain at least one number.",
     "invalidEmailFormat": "Please enter a valid email address.",
-    "phone11Digits": "Please enter a valid 11-digit phone number."
+    "phone11Digits": "Please enter a valid 11-digit phone number.",
+    "fullNameRequired": "Full name is required",
+    "fullNameMaxLength": "Full name must not exceed 100 characters",
+    "fullNameFormat": "Full name must contain at least 2 parts (first and last name) with at least 2 letters each, separated by space or hyphen",
+    "fullNameFormatEdit": "Full name must contain at least 2 parts (first and last name) with at least 2 letters each, separated by space or hyphen"
   },
   "alarmReports": {
     "title": "Alarm Reports Configuration",

@@ -14,7 +14,7 @@ import { toast } from 'react-toastify';
 
 // Hooks
 import { useAlarmsData } from '../hooks/useAlarmsData';
-import { useSitesLookup } from '../hooks/useSitesLookup';
+import { useSitesLookup, useSitesLookupWithPumpFilter } from '../hooks/useSitesLookup';
 import { useThresholdAlarmFields } from '../hooks/useThresholdAlarmFields';
 import { useSensorStatusAlarmFields } from '../hooks/useSensorStatusAlarmFields';
 
@@ -98,7 +98,11 @@ export function AlarmConfiguration() {
     pumpStatusPSConfigLoading,
   } = useAlarmsData();
 
+  // Use regular sites lookup for all alarms (threshold, communication, sensor status)
   const { sites, sitesLoading, sitesError } = useSitesLookup();
+  
+  // Use pump-filtered sites lookup specifically for pump status alarms
+  const { sites: pumpSites, sitesLoading: pumpSitesLoading, sitesError: pumpSitesError } = useSitesLookupWithPumpFilter();
 
   const [activeTab, setActiveTab] = useState('threshold');
   const [isAddThresholdOpen, setIsAddThresholdOpen] = useState(false);
@@ -1257,11 +1261,11 @@ export function AlarmConfiguration() {
                       setSiteId={handleSetPumpStatusPSSiteId}
                       submissionError={pumpStatusPSSubmissionError}
                       onOpenChange={handlePumpStatusPSDialogOpenChange}
-                      sites={sites}
-                      sitesLoading={sitesLoading}
+                      sites={pumpSites}
+                      sitesLoading={pumpSitesLoading}
                       siteConfiguration={pumpStatusPSSiteConfiguration}
                       configLoading={pumpStatusPSConfigLoading}
-                      siteError={pumpStatusPSSiteError}/>
+                      siteError={pumpSitesError}/>
                   </Dialog>
                 )}
               </CardHeader>
@@ -1309,11 +1313,11 @@ export function AlarmConfiguration() {
                     setSite={handleSetPumpStatusIdvSite}
                     setIdvPump={setPumpStatusIdvIdvPump}
                     submissionError={pumpStatusIdvSubmissionError}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
+                    sites={pumpSites}
+                    sitesLoading={pumpSitesLoading}
                     siteConfiguration={pumpStatusIdvSiteConfiguration}
                     configLoading={pumpStatusIdvConfigLoading}
-                    siteError={pumpStatusIdvSiteError}/>
+                    siteError={pumpSitesError}/>
                  
                   </Dialog>
           
@@ -1403,9 +1407,9 @@ export function AlarmConfiguration() {
         form={newPumpStatusPSForm}
         setForm={setNewPumpStatusPSForm}
         currentAlarm={currentPumpStatusPSAlarm}
-        sites={sites}
-        sitesLoading={sitesLoading}
-        sitesError={sitesError}
+        sites={pumpSites}
+        sitesLoading={pumpSitesLoading}
+        sitesError={pumpSitesError}
         onSubmit={handleEditPumpStatusPSAlarm}
         isSubmitting={isSubmittingPumpPSEdit}
         hasChanges={hasPumpStatusPSChanges}
@@ -1421,9 +1425,9 @@ export function AlarmConfiguration() {
         form={newPumpStatusIdvForm}
         setForm={setNewPumpStatusIdvForm}
         currentAlarm={currentPumpStatusIdvAlarm}
-        sites={sites}
-        sitesLoading={sitesLoading}
-        sitesError={sitesError}
+        sites={pumpSites}
+        sitesLoading={pumpSitesLoading}
+        sitesError={pumpSitesError}
         siteConfiguration={pumpStatusIdvSiteConfiguration}
         configLoading={pumpStatusIdvConfigLoading}
         siteError={pumpStatusIdvSiteError}

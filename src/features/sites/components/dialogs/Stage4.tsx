@@ -37,9 +37,10 @@ interface Stage4Props {
   onClose: () => void;
   mode?: "create" | "edit";
   onValidationChange?: (isValid: boolean) => void;
+  userRole?: 'Admin' | 'Operator';
 }
 
-export default function Stage4({ data, onChange, isOpen, onClose, mode = "create", onValidationChange }: Stage4Props) {
+export default function Stage4({ data, onChange, isOpen, onClose, mode = "create", onValidationChange, userRole }: Stage4Props) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const [equations, setEquations] = useState<Equation[]>([]);
@@ -75,8 +76,8 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
       try {
         setLoadingEquations(true);
         const response = await apiService.get<any>('/v1/Equations');
-        // Extract equations from the API response
-        const equationsData = response?.data || [];
+        // apiService.get already returns response.data, so use it directly
+        const equationsData = Array.isArray(response) ? response : response?.data || [];
         setEquations(equationsData);
       } catch (error) {
         console.error('Failed to fetch equations:', error);
@@ -102,82 +103,81 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
 
   // Fetch flow calculation when editing
   useEffect(() => {
-    if (mode === 'edit' && data.id && isOpen && !hasLoadedFlowCalc) {
+    // Only fetch if we have equations loaded and haven't already loaded flow calc
+    if (mode === 'edit' && data.id && isOpen && !hasLoadedFlowCalc && !loadingEquations && equations.length > 0) {
       const fetchFlowCalculation = async () => {
         try {
           setLoadingFlowCalc(true);
           const response = await apiService.get<any>(`/v1/FlowCalculation/${data.id}`);
-          const flowCalcData = response?.data;
+          // apiService.get already returns response.data, so handle accordingly
+          const flowCalcData = response?.data || response;
           
+          console.log('Fetched flow calculation:', flowCalcData);
           
           if (flowCalcData) {
-            // Check if we have formulaConstants as an array and need to find equation by formula
-            if (flowCalcData.equation && equations.length > 0) {
-              // Find equation by matching the formula string
-              const matchingEquation = equations.find(eq => eq.displayFormula === flowCalcData.equation);
-              
-              if (matchingEquation) {
-                setSelectedEquationId(matchingEquation.id);
+            // Try to match by equationId first (most reliable)
+            if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined) {
+              const equation = equations.find(eq => eq.id === flowCalcData.equationId);
+              if (equation) {
+                console.log('Found equation by ID:', equation);
+                setSelectedEquationId(flowCalcData.equationId);
                 
                 let constantsObj: { [key: string]: string } = {};
                 
-                // Parse constants from the array format if needed
-                if (Array.isArray(flowCalcData.formulaConstants)) {
-                  const extractedConstants = extractConstants(matchingEquation.displayFormula);
-                  
-                  extractedConstants.forEach((constant, index) => {
-                    if (flowCalcData.formulaConstants[index] !== undefined) {
-                      constantsObj[constant] = flowCalcData.formulaConstants[index].toString();
-                    }
-                  });
-                  
-                  setConstants(constantsObj);
-                } else if (typeof flowCalcData.formulaConstants === 'string') {
-                  // If it's a JSON string, parse it
+                // Parse constants
+                if (flowCalcData.formulaConstants) {
                   try {
-                    const parsed = JSON.parse(flowCalcData.formulaConstants);
+                    const parsed = typeof flowCalcData.formulaConstants === 'string' 
+                      ? JSON.parse(flowCalcData.formulaConstants)
+                      : flowCalcData.formulaConstants;
                     constantsObj = parsed;
                     setConstants(parsed);
-                  } catch {
+                  } catch (e) {
+                    console.error('Error parsing formula constants:', e);
                     setConstants({});
                   }
                 }
                 
-                // Update parent form with the fetched data
+                onChange('flowCalculation', {
+                  equationId: flowCalcData.equationId,
+                  formulaConstants: JSON.stringify(constantsObj)
+                });
+              }
+            } 
+            // Fallback: try to find equation by formula string
+            else if (flowCalcData.equation) {
+              const matchingEquation = equations.find(eq => eq.displayFormula === flowCalcData.equation);
+              
+              if (matchingEquation) {
+                console.log('Found equation by formula:', matchingEquation);
+                setSelectedEquationId(matchingEquation.id);
+                
+                let constantsObj: { [key: string]: string } = {};
+                
+                if (flowCalcData.formulaConstants) {
+                  try {
+                    const parsed = typeof flowCalcData.formulaConstants === 'string' 
+                      ? JSON.parse(flowCalcData.formulaConstants)
+                      : flowCalcData.formulaConstants;
+                    constantsObj = parsed;
+                    setConstants(parsed);
+                  } catch (e) {
+                    console.error('Error parsing formula constants:', e);
+                    setConstants({});
+                  }
+                }
+                
                 onChange('flowCalculation', {
                   equationId: matchingEquation.id,
                   formulaConstants: JSON.stringify(constantsObj)
                 });
-                setHasLoadedFlowCalc(true);
-              } else {
-                setHasLoadedFlowCalc(true);
               }
-            } else if (flowCalcData.equationId) {
-              // Legacy format with equationId
-              setSelectedEquationId(flowCalcData.equationId);
-              
-              if (flowCalcData.formulaConstants) {
-                try {
-                  const parsed = typeof flowCalcData.formulaConstants === 'string' 
-                    ? JSON.parse(flowCalcData.formulaConstants)
-                    : flowCalcData.formulaConstants;
-                  setConstants(parsed);
-                } catch {
-                  setConstants({});
-                }
-              }
-              
-              onChange('flowCalculation', flowCalcData);
-              setHasLoadedFlowCalc(true);
-            } else {
-              // Wait for equations to load if they haven't yet
-              if (equations.length === 0 && loadingEquations) {
-                return;
-              }
-              setHasLoadedFlowCalc(true);
             }
           }
+          
+          setHasLoadedFlowCalc(true);
         } catch (error: any) {
+          console.error('Error fetching flow calculation:', error);
           setHasLoadedFlowCalc(true);
         } finally {
           setLoadingFlowCalc(false);
