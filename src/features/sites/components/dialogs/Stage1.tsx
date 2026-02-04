@@ -24,6 +24,8 @@ interface TabProps {
   onValidationChange?: (isValid: boolean) => void;
   directorates: Directorate[];
   isLoadingDirectorates?: boolean;
+  mode?: "create" | "edit";
+  userRole?: 'Admin' | 'Operator';
 }
 
 // Validation functions
@@ -219,9 +221,13 @@ const getDataLoggerTypeErrors = (value: string, t: any): string[] => {
   return errors;
 };
 
-export default function Stage1({ data, onChange, isOpen, onValidationChange, directorates, isLoadingDirectorates }: TabProps) {
+export default function Stage1({ data, onChange, isOpen, onValidationChange, directorates, isLoadingDirectorates, mode, userRole }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
+  
+  // For operators, restrict editing to certain fields
+  const isOperatorEditMode = userRole === 'Operator' && mode === 'edit';
+  
   const [arabicNameTouched, setArabicNameTouched] = useState(false);
   const [englishNameTouched, setEnglishNameTouched] = useState(false);
   const [simIdTouched, setSimIdTouched] = useState(false);
@@ -388,6 +394,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             onBlur={handleArabicNameBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="rtl"
+            disabled={isOperatorEditMode}
           />
           {getArabicNameErrorsList().map((error, index) => (
             <p key={index} className="text-sm text-red-600">{error}</p>
@@ -404,6 +411,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             onBlur={handleEnglishNameBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
             dir="ltr"
+            disabled={isOperatorEditMode}
           />
           {getEnglishNameErrorsList().map((error, index) => (
             <p key={index} className="text-sm text-red-600">{error}</p>
@@ -430,6 +438,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             }}
             onBlur={handleLongitudeBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            disabled={isOperatorEditMode}
           />
           <Select
             value={data.longitudeDirection || 'E'}
@@ -439,6 +448,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
               onChange('longitudeDirection', value);
             }}
             dir={dir}
+            disabled={isOperatorEditMode}
           >
             <SelectTrigger className="w-20">
               <SelectValue />
@@ -473,6 +483,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             }}
             onBlur={handleLatitudeBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
+            disabled={isOperatorEditMode}
           />
           <Select
             value={data.latitudeDirection || 'N'}
@@ -482,6 +493,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
               onChange('latitudeDirection', value);
             }}
             dir={dir}
+            disabled={isOperatorEditMode}
           >
             <SelectTrigger className="w-20">
               <SelectValue />

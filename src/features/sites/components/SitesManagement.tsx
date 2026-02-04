@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import {
   Table,
   TableBody,
@@ -30,7 +31,8 @@ import { AlertDialog } from '../../../shared/components/AlertDialog';
 
 export function SitesManagement() {
   const { t } = useTranslation();
-  const { sites, setSites, directorates, loading, error } = useSitesData();
+  const { currentUser } = useAuth();
+  const { sites, setSites, directorates, loading, error, refetch } = useSitesData();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterDirectorate, setFilterDirectorate] = useState<string>('all');
@@ -141,16 +143,18 @@ export function SitesManagement() {
           <CardHeader className={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <div className="flex items-center justify-between">
               <CardTitle>{t('sites.sitesCount')} ({filteredSites.length})</CardTitle>
-              <button
-                onClick={() => {
-                  setFormData({});
-                  setIsAddDialogOpen(true);
-                }}
-                className="flex items-center gap-2 px-6 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                {t('sites.addNewSite')}
-              </button>
+              {currentUser?.role === 'Admin' && (
+                <button
+                  onClick={() => {
+                    setFormData({});
+                    setIsAddDialogOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-6 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('sites.addNewSite')}
+                </button>
+              )}
               <SitesDialog
                 mode="create"
                 siteData={formData}
@@ -160,11 +164,13 @@ export function SitesManagement() {
                   setIsAddDialogOpen(false);
                   setFormData({});
                 }}
-                onSiteCreated={(newSite) => {
-                  setSites((prevSites) => [...prevSites, newSite]);
+                onSiteCreated={() => {
+                  // Refetch sites after successful creation
+                  refetch();
                 }}
                 directorates={directorates}
                 isLoadingDirectorates={loading}
+                userRole={currentUser?.role}
               />
 
               {/* Edit Dialog */}
@@ -184,6 +190,7 @@ export function SitesManagement() {
                 }}
                 directorates={directorates}
                 isLoadingDirectorates={loading}
+                userRole={currentUser?.role}
               />
 
               <AlertDialog
