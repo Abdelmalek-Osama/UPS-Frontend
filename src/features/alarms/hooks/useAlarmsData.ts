@@ -85,12 +85,13 @@ export function useAlarmsData() {
         hasError = true;
       }
 
-      // const sensorStatusResponse = await apiService.get<{ isSuccess: boolean; data: SensorStatusResponse[] }>('/v1/alarm/sensor-status');
-      // if (sensorStatusResponse.isSuccess) {
-      //   setSensorStatusAlarms(sensorStatusResponse.data);
-      // } else {
-      //   console.error("Failed to fetch sensor status alarms, isSuccess was false:", sensorStatusResponse);
-      // }
+      const sensorStatusResponse = await apiService.get<{ isSuccess: boolean; data: SensorStatusResponse[] }>('/v1/alarm/sensor-status');
+      if (sensorStatusResponse.isSuccess) {
+        setSensorStatusAlarms(sensorStatusResponse.data);
+      } else {
+        console.error("Failed to fetch sensor status alarms, isSuccess was false:", sensorStatusResponse);
+        hasError = true;
+      }
 
       const pumpStatusPSResponse = await apiService.get<{ isSuccess: boolean; data: PumpStatusPSResponse[] }>('/v1/alarm/pump-status-operation');
       if (pumpStatusPSResponse.isSuccess) {

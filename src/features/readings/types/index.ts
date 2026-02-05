@@ -22,6 +22,9 @@ export interface WaterLevelReading {
   uswl: number | null;
   dswL1: number | null;
   dswL2: number | null;
+  uswlDisplay?: string;
+  dswL1Display?: string;
+  dswL2Display?: string;
   battery: number | null;
   calculatedFlow: number;
   hasAlarm: boolean;
@@ -40,6 +43,9 @@ export interface WaterLevelReadingApiResponse {
   uswl: number;
   dswL1: number;
   dswL2: number;
+  uswlDisplay?: string;
+  dswL1Display?: string;
+  dswL2Display?: string;
   calculatedFlow: number;
   battery: number;
   isManual: boolean;
