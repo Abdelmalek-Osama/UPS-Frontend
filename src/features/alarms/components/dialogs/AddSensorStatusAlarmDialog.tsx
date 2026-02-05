@@ -218,10 +218,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.site')}</Label>
                             <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    siteId: parseInt(value)
-                                }))}
+                                onValueChange={handleSiteChange}
                                 value={form.siteId?.toString() || ""}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
@@ -290,26 +287,6 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.readingValue')}</Label>
-                            <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    readingValue: value as any
-                                }))}
-                                value={form.readingValue?.toString() || ""}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('alarms.readingValue')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    <SelectItem value="***">***</SelectItem>
-                                    <SelectItem value="---">---</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div style={fieldContainerStyle}>
                             <Label>{t('alarms.message')}</Label>
                             <Textarea
                                 className="resize-none"
@@ -355,7 +332,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                                         onSubmit();
                                     }
                                 }}
-                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.message || (form.emails.length === 0 && form.phones.length === 0) || !!alarmNameError}
+                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.message || !form.field || form.threshold === 0 || (form.emails.length === 0 && form.phones.length === 0) || !!alarmNameError}
                                 loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >

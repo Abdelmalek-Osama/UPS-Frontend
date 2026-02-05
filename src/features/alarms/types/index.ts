@@ -111,7 +111,6 @@ export interface SensorStatusForm {
   message: string;
   threshold: number;
   field: string;
-  readingValue: number;
   emails: string[];
   phones: string[];
 }
@@ -194,14 +193,17 @@ export interface CreateCommunicationAlarmRequest {
 }
 
 export interface CreateSensorStatusAlarmRequest {
-  alarmId: number | null;
+  id: number;
+  siteId: number;
   alarmName: string;
-  siteId: number|null;
-  site: string;
-  message: string;
-  method: AlarmMethod;
   emails: string;
   phones: string;
+  method: number;
+  fieldName: number;
+  operator: number;
+  thresholdValue: number;
+  savingType: number;
+  customMessage: string;
 }
 
 export interface CreatePumpStatusPSAlarmRequest {
@@ -268,12 +270,21 @@ export interface SensorStatusResponse {
   alarmId: number;
   alarmName: string;
   siteId: number;
-  site: string;
-  message: string;
-  threshold: number;
-  field: string;
-  readingValue: number;
-  recipients: string[]; // Assuming recipients can be an array of strings
+  site?: string;
+  siteName?: string;
+  arabicName?: string;
+  message?: string;
+  customMessage?: string;
+  threshold?: number;
+  thresholdValue?: number;
+  field?: string;
+  fieldName?: string;
+  operator?: number;
+  method?: number;
+  savingType?: number;
+  emails?: string;
+  phones?: string;
+  recipients?: string[]; // Optional, in case it's also returned as an array
 }
 
 export interface PumpStatusPSResponse {

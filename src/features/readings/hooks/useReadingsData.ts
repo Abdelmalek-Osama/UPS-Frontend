@@ -91,7 +91,7 @@ export function useReadingsData(selectedSiteId: string) {
           '/v1/readings/water-level',
           data
         );
-        toast.success('تم إضافة القراءة بنجاح');
+        toast.success(t('readings.createSuccess'));
         return response;
       } catch (error: any) {
         console.error('Error creating water level reading', error);
@@ -102,7 +102,7 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    [isAuthenticated]
+    [isAuthenticated, t]
   );
 
   interface UpdateWaterLevelReadingRequest extends CreateWaterLevelReadingRequest {
@@ -122,7 +122,7 @@ export function useReadingsData(selectedSiteId: string) {
           `/v1/readings/water-level/${data.id}`,
           data
         );
-        toast.success('تم تحديث القراءة بنجاح');
+        toast.success(t('readings.updateSuccess'));
         return response;
       } catch (error: any) {
         console.error('Error updating water level reading', error);
@@ -133,7 +133,7 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    [isAuthenticated]
+    [isAuthenticated, t]
   );
 
   const deleteWaterLevelReading = useCallback(
@@ -164,7 +164,7 @@ export function useReadingsData(selectedSiteId: string) {
           '/v1/readings/pump-station',
           data
         );
-        toast.success('تم إضافة قراءة محطة الرفع بنجاح');
+        toast.success(t('readings.createPumpSuccess'));
         return response;
       } catch (error: any) {
         console.error('Error creating pump station reading', error);
@@ -175,7 +175,7 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    [isAuthenticated]
+    [isAuthenticated, t]
   );
 
   const updatePumpStationReading = useCallback(
@@ -187,7 +187,7 @@ export function useReadingsData(selectedSiteId: string) {
           `/v1/readings/pump-station/${data.id}`,
           data
         );
-        toast.success('تم تحديث قراءة محطة الرفع بنجاح');
+        toast.success(t('readings.updatePumpSuccess'));
         return response;
       } catch (error: any) {
         console.error('Error updating pump station reading', error);
@@ -198,7 +198,7 @@ export function useReadingsData(selectedSiteId: string) {
         setIsLoading(false); // End loading
       }
     },
-    [isAuthenticated]
+    [isAuthenticated, t]
   );
 
   const deletePumpStationReading = useCallback(
@@ -232,7 +232,7 @@ export function useReadingsData(selectedSiteId: string) {
       if (!signal?.aborted) {
         setSites(Array.isArray(response) ? response : (response as { data: SiteLookupOption[] }).data ?? []);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Fetch sites lookup aborted');
       } else {
@@ -254,6 +254,9 @@ export function useReadingsData(selectedSiteId: string) {
     uswl: reading.uswl,
     dswL1: reading.dswL1,
     dswL2: reading.dswL2,
+    uswlDisplay: reading.uswlDisplay,
+    dswL1Display: reading.dswL1Display,
+    dswL2Display: reading.dswL2Display,
     battery: reading.battery,
     calculatedFlow: reading.calculatedFlow,
     hasAlarm: false,
@@ -592,7 +595,7 @@ export function useReadingsData(selectedSiteId: string) {
           if (!signal?.aborted) {
             setSelectedSite(response);
           }
-        } catch (err) {
+        } catch (err: any) {
           if (err.name === 'AbortError') {
             console.log('Fetch selected site details aborted');
           } else {

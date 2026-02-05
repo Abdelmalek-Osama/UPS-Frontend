@@ -309,30 +309,6 @@ export function EditSensorStatusAlarmDialog({
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.readingValue')}</Label>
-                            {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.readingValue} disabled />
-                            ) : (
-                                <Select
-                                    onValueChange={(value) => {
-                                        setForm(prev => ({ ...prev, readingValue: value as any }));
-                                        setHasChanges(true);
-                                    }}
-                                    value={form.readingValue?.toString() || ""}
-                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                                >
-                                    <SelectTrigger className="rtl:flex-row-reverse">
-                                        <SelectValue placeholder={t('alarms.readingValue')} />
-                                    </SelectTrigger>
-                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                        <SelectItem value="***">***</SelectItem>
-                                        <SelectItem value="---">---</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-
-                        <div style={fieldContainerStyle}>
                             <Label>{t('alarms.message')}</Label>
                             {currentAlarm ? (
                                 <Input type="text" value={currentAlarm.message} disabled />

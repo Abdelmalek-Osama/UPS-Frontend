@@ -122,7 +122,6 @@ export const INITIAL_SENSOR_STATUS_FORM: SensorStatusForm = {
     message: '',
     threshold: 0,
     field: '',
-    readingValue: 0,
     emails: [],
     phones: [],
 };

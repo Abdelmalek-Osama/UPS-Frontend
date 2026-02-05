@@ -28,35 +28,51 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
 
    // Define columns in logical order (English/LTR)
     const columns = [
-        {
-            key: 'actions',
-            header: t('common.actions'),
-            render: (alarm: SensorStatusResponse) => (
-                <div className={textAlignClass}>
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
-                        <Edit className="h-4 w-4" />
-                    </Button>
-                </div>
-            )
-        },
+        // {
+        //     key: 'actions',
+        //     header: t('common.actions'),
+        //     render: (alarm: SensorStatusResponse) => (
+        //         <div className={textAlignClass}>
+        //             <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
+        //                 <Edit className="h-4 w-4" />
+        //             </Button>
+        //         </div>
+        //     )
+        // },
         {
             key: 'emailRecipients',
             header: t('alarms.recipients'),
-            render: (alarm: SensorStatusResponse) => (
-                <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                    {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
-                        const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                        const isPhone = /^\d{11}$/.test(recipient);
-                        return (
-                            <Badge key={idx} variant="secondary" className="text-xs flex items-center">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                            </Badge>
-                        );
-                    })}
-                </div>
-            )
+            render: (alarm: SensorStatusResponse) => {
+                // Handle both array format and comma-separated string format
+                let recipients: string[] = [];
+                if (alarm.recipients && Array.isArray(alarm.recipients)) {
+                    recipients = alarm.recipients;
+                } else {
+                    const emailList = alarm.emails ? alarm.emails.split(',').map(e => e.trim()).filter(Boolean) : [];
+                    const phoneList = alarm.phones ? alarm.phones.split(',').map(p => p.trim()).filter(Boolean) : [];
+                    recipients = [...emailList, ...phoneList];
+                }
+                
+                return (
+                    <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+                        {recipients.length > 0 ? (
+                            recipients.map((recipient, idx) => {
+                                const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                                const isPhone = /^\d{11}$/.test(recipient);
+                                return (
+                                    <Badge key={idx} variant="secondary" className="text-xs flex items-center">
+                                        {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                        {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                        {recipient}
+                                    </Badge>
+                                );
+                            })
+                        ) : (
+                            <span className="text-gray-500 text-xs">-</span>
+                        )}
+                    </div>
+                );
+            }
         },
         
         {
@@ -64,16 +80,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             header: t('alarms.message'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.message}
-                </div>
-            )
-        },
-        {
-            key: 'readingValue',
-            header: t('alarms.readingValue'),
-            render: (alarm: SensorStatusResponse) => (
-                <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.readingValue}
+                    {alarm.message || alarm.customMessage || '-'}
                 </div>
             )
         },
@@ -82,7 +89,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             header: t('alarms.threshold'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.threshold}
+                    {alarm.threshold || alarm.thresholdValue || '-'}
                 </div>
             )
         },
@@ -91,7 +98,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             header: t('alarms.field'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.field}
+                    {alarm.field || alarm.fieldName || '-'}
                 </div>
             )
         },
@@ -100,7 +107,7 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             header: t('alarms.site'),
             render: (alarm: SensorStatusResponse) => (
                 <div className={textAlignClass} style={{ fontWeight: 'normal' }}>
-                    {alarm.site}
+                    {isRTL ? (alarm.arabicName || alarm.site || alarm.siteName || '-') : (alarm.site || alarm.siteName || '-')}
                 </div>
             )
         },
