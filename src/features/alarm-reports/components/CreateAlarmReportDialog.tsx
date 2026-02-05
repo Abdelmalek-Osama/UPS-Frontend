@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ export function CreateAlarmReportDialog({
   editingConfig = null,
 }: CreateAlarmReportDialogProps) {
   const { t } = useTranslation();
+  const { currentUser } = useAuth();
   const { sites, loading: sitesLoading } = useSitesData();
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
@@ -108,6 +110,12 @@ export function CreateAlarmReportDialog({
   };
 
   const handleSubmit = async () => {
+    // Only admins can create/edit alarm reports
+    if (currentUser?.role !== 'Admin') {
+      toast.error(t('alarmReports.adminOnlyAction') || 'Only administrators can create alarm reports');
+      return;
+    }
+
     if (!validateForm()) {
       toast.error(t('alarmReports.pleaseFixErrors'));
       return;
@@ -219,7 +227,7 @@ export function CreateAlarmReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent style={dialogContentStyle}>
+      <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} style={dialogContentStyle}>
         <div style={headerContainerStyle}>
           <DialogHeader>
             <DialogTitle dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -271,7 +279,7 @@ export function CreateAlarmReportDialog({
               <Checkbox
                 id="isEnabled"
                 checked={isEnabled}
-                onCheckedChange={(checked) => setIsEnabled(checked as boolean)}
+                onCheckedChange={(checked: boolean) => setIsEnabled(checked)}
               />
               <Label htmlFor="isEnabled" className="font-medium mb-0 cursor-pointer">
                 {t('alarmReports.enableReport')}
