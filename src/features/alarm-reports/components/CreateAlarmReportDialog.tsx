@@ -17,19 +17,13 @@ import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import { Checkbox } from '../../../components/ui/checkbox';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '../../../components/ui/popover';
 import { Loader } from 'lucide-react';
-import { ScrollArea } from '../../../components/ui/scroll-area';
 import { EmailRecipientInput } from './EmailRecipientInput';
 import { FieldSelector } from './FieldSelector';
 import type { AlarmReportConfiguration, CreateAlarmReportPayload } from '../types';
 import { DAYS_OF_WEEK } from '../types';
 import { useSitesData } from '../../sites/hooks/useSitesData';
-import { ChevronDownIcon } from 'lucide-react'; // Import ChevronDownIcon
+import { SiteMultiSelectDropdown } from '../../sites/components/SiteMultiSelectDropdown';
 import {
   Select,
   SelectContent,
@@ -55,7 +49,6 @@ export function CreateAlarmReportDialog({
 }: CreateAlarmReportDialogProps) {
   const { t } = useTranslation();
   const { sites, loading: sitesLoading } = useSitesData();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Form state
@@ -67,10 +60,7 @@ export function CreateAlarmReportDialog({
   const [dayOfWeek, setDayOfWeek] = useState<number>(0);
   const [recipients, setRecipients] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const openScrollTopRef = useRef<number | null>(null);
 
   // Initialize form with editing config data when dialog opens
   React.useEffect(() => {
@@ -93,47 +83,9 @@ export function CreateAlarmReportDialog({
       setDayOfWeek(0);
       setRecipients([]);
       setSelectedFields([]);
-      setSearchQuery('');
     }
     setErrors({});
   }, [open, editingConfig]);
-
-  useEffect(() => {
-    const SCROLL_THRESHOLD = 60; // Pixels
-
-    const handleModalScroll = () => {
-      if (!isPopoverOpen) return;
-      if (!modalScrollRef.current) return;
-
-      if (openScrollTopRef.current === null) {
-        openScrollTopRef.current = modalScrollRef.current.scrollTop;
-      }
-
-      const currentScrollTop = modalScrollRef.current.scrollTop;
-      const scrolledDistance = Math.abs(currentScrollTop - openScrollTopRef.current);
-
-      if (scrolledDistance >= SCROLL_THRESHOLD) {
-        // Close popover immediately once threshold is met
-        setIsPopoverOpen(false);
-        // Reset openScrollTopRef so it recalcs on next open
-        openScrollTopRef.current = null;
-      }
-    };
-
-    const scrollElement = modalScrollRef.current;
-    if (isPopoverOpen && scrollElement) {
-      openScrollTopRef.current = scrollElement.scrollTop;
-      // Add small debounce to avoid closing on very tiny, unintentional scrolls
-      scrollElement.addEventListener('scroll', handleModalScroll, { passive: true });
-
-      return () => {
-        scrollElement.removeEventListener('scroll', handleModalScroll);
-      };
-    } else if (!isPopoverOpen) {
-      // Reset scroll position reference when popover closes
-      openScrollTopRef.current = null;
-    }
-  }, [isPopoverOpen, modalScrollRef]);
 
   // Validation
   const validateForm = (): boolean => {
@@ -265,11 +217,6 @@ export function CreateAlarmReportDialog({
     gap: '0.5rem'
   };
 
-  const selectedSiteNames = siteIds.map(id => {
-    const site = sites.find(s => s.id === id);
-    return site ? (t('_rtl') === 'rtl' ? (site.arabicName || site.name) : (site.name || site.name)) : '';
-  }).filter(name => name !== '');
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={dialogContentStyle}>
@@ -310,69 +257,13 @@ export function CreateAlarmReportDialog({
               <Label htmlFor="site" className="font-medium">
                 {t('sites.title')}
               </Label>
-              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={isPopoverOpen}
-                    className="w-full justify-between"
-                  >
-                    <span className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
-                      {siteIds.length === 0
-                        ? (t('sites.selectSite') || 'Select a site')
-                        : selectedSiteNames.join(', ')}
-                    </span>
-                    <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" onOpenAutoFocus={(e) => e.preventDefault()} sideOffset={5} collisionPadding={10} className="w-[var(--radix-popover-trigger-width)] p-0">
-                  <div className="p-2">
-                    <Input
-                      placeholder={t('sites.search') || 'Search sites...'}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                    />
-                  </div>
-                  <ScrollArea ref={scrollAreaRef} className="h-auto max-h-48 rounded-md bg-white">
-                    <div className="p-1">
-                      {sitesLoading ? (
-                        <div className="p-2 text-center text-sm text-gray-500">
-                          {t('common.loading') || 'Loading...'}
-                        </div>
-                      ) : sites.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-gray-500">
-                          {t('common.noData') || 'No sites available'}
-                        </div>
-                      ) : (
-                        sites
-                          .filter(site =>
-                            t('_rtl') === 'rtl'
-                              ? (site.arabicName || site.name).toLowerCase().includes(searchQuery.toLowerCase())
-                              : (site.name || site.name).toLowerCase().includes(searchQuery.toLowerCase())
-                          )
-                          .map((site) => (
-                            <div
-                              key={site.id}
-                              className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                            >
-                              <Checkbox
-                                id={`site-${site.id}`}
-                                checked={siteIds.includes(site.id)}
-                                onCheckedChange={() => handleSiteToggle(site.id)}
-                              />
-                              <Label htmlFor={`site-${site.id}`} className="ml-2 cursor-pointer">
-                                {t('_rtl') === 'rtl' ? (site.arabicName || site.name) : (site.name || site.name)}
-                              </Label>
-                            </div>
-                          ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
+              <SiteMultiSelectDropdown
+                sites={sites}
+                sitesLoading={sitesLoading}
+                selectedSiteIds={siteIds}
+                onSiteToggle={handleSiteToggle}
+                placeholder={t('sites.selectSite')}
+              />
             </div>
 
             {/* Enabled Toggle */}
@@ -395,7 +286,7 @@ export function CreateAlarmReportDialog({
               {/* Frequency */}
               <div className="space-y-2">
                 <Label htmlFor="frequency">{t('alarmReports.frequency')}</Label>
-                <Select value={frequency} onValueChange={(value) => setFrequency(value as 'Daily' | 'Weekly' | 'Hourly')} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                <Select value={frequency} onValueChange={(value) => setFrequency(value as 'Daily' | 'Weekly')} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                   <SelectTrigger id="frequency">
                     <SelectValue />
                   </SelectTrigger>

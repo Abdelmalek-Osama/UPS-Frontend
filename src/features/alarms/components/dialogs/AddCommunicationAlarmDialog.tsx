@@ -11,15 +11,9 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem
-} from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { CommunicationAlarmForm, AddCommunicationAlarmDialogProps } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
 
@@ -85,29 +79,17 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                     </div>
                     <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
-                        <Select
-                            onValueChange={(value) => setForm(prev => ({
+                        <SiteSingleSelectDropdown
+                            sites={sites}
+                            sitesLoading={sitesLoading}
+                            selectedSiteId={form.siteId}
+                            onSiteSelect={(siteId) => setForm(prev => ({
                                 ...prev,
-                                siteId: parseInt(value)
+                                siteId: siteId ? Number(siteId) : 0
                             }))}
-                            value={form.siteId?.toString() || ""}
-                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                        >
-                            <SelectTrigger className="rtl:flex-row-reverse">
-                                <SelectValue placeholder={t('common.select')} />
-                            </SelectTrigger>
-                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                {sitesLoading ? (
-                                    <SelectItem value="0">{t('common.loading')}</SelectItem>
-                                ) : sitesError ? (
-                                    <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                ) : (
-                                    sites.map(site => (
-                                        <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
+                            placeholder={t('readings.selectSite')}
+                            allowClear={false}
+                        />
                     </div>
 
                     <div className="space-y-2">
