@@ -275,23 +275,26 @@ export function AlarmConfiguration() {
   const handleSubmitSensorStatusAlarm = async () => {
     setIsSubmittingSensorStatusAdd(true);
     setSensorStatusSubmissionError(null);
-    const { siteId, site, alarmName, message } = newSensorStatusForm;
+    const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site) {
+    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
       console.error('Missing required sensor status alarm fields');
       setIsSubmittingSensorStatusAdd(false);
       return;
     }
 
     const requestBody: CreateSensorStatusAlarmRequest = {
-      alarmId: null,
+      id: 0,
       siteId,
       alarmName,
-      site: sites.find(s => s.id === siteId)?.name || '',
-      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
-      method: AlarmMethod.Email,
+      method: newSensorStatusForm.method,
+      fieldName: newSensorStatusForm.method,
+      operator: 4,
+      thresholdValue: newSensorStatusForm.threshold,
+      savingType: 0,
+      customMessage: message,
     };
 
     try {
@@ -418,23 +421,26 @@ export function AlarmConfiguration() {
     setIsSubmittingSensorStatusEdit(true);
     if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
 
-    const { siteId, site, alarmName, message } = newSensorStatusForm;
+    const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site) {
+    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
       console.error('Missing required sensor status alarm fields');
       setIsSubmittingSensorStatusEdit(false);
       return;
     }
 
     const requestBody: CreateSensorStatusAlarmRequest = {
-      alarmId: currentSensorStatusAlarm.alarmId,
+      id: currentSensorStatusAlarm.alarmId || 0,
       siteId,
       alarmName,
-      site,
-      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
-      method: AlarmMethod.Email,
+      method: newSensorStatusForm.method,
+      fieldName: newSensorStatusForm.method,
+      operator: 4,
+      thresholdValue: newSensorStatusForm.threshold,
+      savingType: 0,
+      customMessage: message,
     };
 
     try {
@@ -653,7 +659,6 @@ export function AlarmConfiguration() {
       message: alarm.message || '',
       threshold: alarm.threshold || 0,
       field: alarm.field || '',
-      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
@@ -666,7 +671,6 @@ export function AlarmConfiguration() {
       message: alarm.message || '',
       threshold: alarm.threshold || 0,
       field: alarm.field || '',
-      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
