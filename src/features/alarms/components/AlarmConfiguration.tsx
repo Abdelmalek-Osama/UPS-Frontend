@@ -490,7 +490,7 @@ export function AlarmConfiguration() {
     };
 
     try {
-      const result = await updatePumpStatusPSAlarm(currentPumpStatusPSAlarm.siteId, requestBody);
+      const result = await updatePumpStatusPSAlarm(currentPumpStatusPSAlarm.id || 0, requestBody);
       if (result.success) {
         toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditPumpStatusPSOpen(false);
