@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import { DAYS_OF_WEEK } from '../types';
 
 export function AlarmReportsConfiguration() {
   const { t } = useTranslation();
+  const { currentUser } = useAuth();
   const { configurations, isLoading, fetchConfigurations, createConfiguration, updateConfiguration, deleteConfiguration } = useAlarmReports();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -126,10 +128,15 @@ export function AlarmReportsConfiguration() {
     {t('alarmReports.subtitle')}
             </p>
      </div>
-    <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
-      <Plus className="h-4 w-4" />
-              {t('alarmReports.createNewConfiguration')}
-   </Button>
+    {currentUser?.role === 'Admin' && (
+      <Button 
+        onClick={() => setIsCreateDialogOpen(true)} 
+        className="gap-2"
+      >
+        <Plus className="h-4 w-4" />
+        {t('alarmReports.createNewConfiguration')}
+      </Button>
+    )}
    </div>
         </CardHeader>
 </Card>
@@ -247,34 +254,38 @@ export function AlarmReportsConfiguration() {
 
   {/* Actions */}
  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-          <div className="flex items-center gap-2">
-    <Button
-       variant="ghost"
-        size="icon"
-             onClick={() => handleEditClick(config)}
-         disabled={isSubmittingCreate}
-      className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-       aria-label={t('common.edit')}
-  >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-     </Button>
-     <Button
-       variant="ghost"
-       size="icon"
-     onClick={() => handleDeleteClick(config)}
-   disabled={isDeletingId === config.id}
-className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-       aria-label={t('common.delete')}
-  >
-          {isDeletingId === config.id ? (
- <Loader className="h-4 w-4 animate-spin" />
-      ) : (
-      <Trash2 className="h-4 w-4" />
-  )}
-  </Button>
-   </div>
+          {currentUser?.role === 'Admin' ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleEditClick(config)}
+                disabled={isSubmittingCreate}
+                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                aria-label={t('common.edit')}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteClick(config)}
+                disabled={isDeletingId === config.id}
+                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                aria-label={t('common.delete')}
+              >
+                {isDeletingId === config.id ? (
+                  <Loader className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400">-</span>
+          )}
         </TableCell>
       </TableRow>
         ))}
