@@ -48,6 +48,7 @@ import Loader from '../../../components/ui/Loader';
 import { formatDateTimeForAPI } from '../utils/utils';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
+import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 
 export function ReadingsManagement() {
   const { t } = useTranslation();
@@ -387,40 +388,39 @@ export function ReadingsManagement() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select value={selectedSiteId} onValueChange={setSelectedSiteId} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-              <SelectTrigger className="rtl:flex-row-reverse">
-                <SelectValue placeholder={t('readings.selectSite')} />
-              </SelectTrigger>
-              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                {sites.map(site => (
-                  <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2">
-              <DatePicker
-                placeholder={t('readings.fromDate')}
-                value={fromDate}
-                onChange={setFromDate}
-                maxDate={toDate}
+            <div className="space-y-2">
+              <Label>{t('readings.selectSite')}</Label>
+       <SiteSingleSelectDropdown
+                sites={sites}
+              selectedSiteId={selectedSiteId}
+   onSiteSelect={(siteId) => setSelectedSiteId(siteId ? String(siteId) : '')}
+   placeholder={t('readings.selectSite')}
               />
-              <DatePicker
-                placeholder={t('readings.toDate')}
-                value={toDate}
-                onChange={setToDate}
-                minDate={fromDate}
-              />
-              {(fromDate || toDate) && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleResetDates}
-                  title={t('readings.resetDates')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
+         <div className="flex gap-2">
+   <DatePicker
+                placeholder={t('readings.fromDate')}
+    value={fromDate}
+           onChange={setFromDate}
+      maxDate={toDate}
+     />
+      <DatePicker
+          placeholder={t('readings.toDate')}
+     value={toDate}
+        onChange={setToDate}
+      minDate={fromDate}
+         />
+              {(fromDate || toDate) && (
+ <Button
+        variant="outline"
+         size="icon"
+  onClick={handleResetDates}
+                  title={t('readings.resetDates')}
+     >
+            <X className="h-4 w-4" />
+       </Button>
+   )}
+          </div>
           </div>
         </CardContent>
       </Card>

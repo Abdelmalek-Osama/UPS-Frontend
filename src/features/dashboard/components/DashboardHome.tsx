@@ -5,13 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../components/ui/select';
-import {
   MapPin,
   AlertTriangle,
   TrendingUp,
@@ -35,6 +28,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 
 export function DashboardHome() {
   const { t } = useTranslation();
@@ -145,18 +139,13 @@ export function DashboardHome() {
             <div className="flex items-center justify-between">
               <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
             </div>
-            <Select value={selectedSiteId?.toString()} onValueChange={(value) => setSelectedSiteId(parseInt(value))}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('dashboard.selectSite')} />
-              </SelectTrigger>
-              <SelectContent>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id.toString()}>
-                    {site.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SiteSingleSelectDropdown 
+              sites={sites} 
+              selectedSiteId={selectedSiteId}
+              onSiteSelect={(siteId) => setSelectedSiteId(siteId ? Number(siteId) : null)}
+              placeholder={t('dashboard.selectSite')}
+              allowClear={false}
+            />
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>

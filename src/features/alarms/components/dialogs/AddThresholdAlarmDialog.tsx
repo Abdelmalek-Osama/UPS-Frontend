@@ -19,6 +19,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, INITIAL_THRESHOLD_FORM, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
@@ -275,31 +276,19 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             )}
                         </div>
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.site')}</Label>
-                            <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    siteId: parseInt(value)
-                                }))}
-                                value={form.siteId?.toString() || ""}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('readings.selectSite')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {sitesLoading ? (
-                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
-                                    ) : sitesError ? (
-                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                    ) : (
-                                        sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
+    <Label>{t('alarms.site')}</Label>
+        <SiteSingleSelectDropdown
+    sites={sites}
+       sitesLoading={sitesLoading}
+       selectedSiteId={form.siteId}
+            onSiteSelect={(siteId) => setForm(prev => ({
+       ...prev,
+          siteId: siteId ? Number(siteId) : 0
+      }))}
+   placeholder={t('readings.selectSite')}
+   allowClear={false}
+         />
+          </div>
 
 
                         <div style={fieldContainerStyle}>

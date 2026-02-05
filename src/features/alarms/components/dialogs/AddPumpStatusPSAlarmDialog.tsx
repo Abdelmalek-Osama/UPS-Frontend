@@ -11,14 +11,8 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem
-} from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
 import { PumpStatusPSAlarmForm, Site, AddPumpStatusPSAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
@@ -76,18 +70,20 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <Select value={form.siteId?.toString() || ''} onValueChange={handleSiteChange} disabled={sitesLoading}>
-                            <SelectTrigger dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                                <SelectValue placeholder={sitesLoading ? t('common.loading') : t('alarms.selectSite')} />
-                            </SelectTrigger>
-                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                {sites.map(site => (
-                                    <SelectItem key={site.id} value={site.id.toString()}>
-                                        {t('_rtl') === 'rtl' ? site.arabicName : site.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SiteSingleSelectDropdown
+                            sites={sites}
+                            sitesLoading={sitesLoading}
+                            selectedSiteId={form.siteId}
+                            onSiteSelect={(siteId) => {
+                                const selected = sites.find(site => site.id === Number(siteId));
+                                if (selected) {
+                                    setSite(selected.name);
+                                    setForm(prev => ({ ...prev, siteId: Number(siteId), site: selected.name }));
+                                }
+                            }}
+                            placeholder={t('readings.selectSite')}
+                            allowClear={false}
+                        />
                         {siteError && (
                             <p className="text-red-600 text-sm">{t(siteError)}</p>
                         )}
