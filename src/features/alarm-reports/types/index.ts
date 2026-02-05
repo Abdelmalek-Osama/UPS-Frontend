@@ -4,7 +4,7 @@
 
 export interface AlarmReportFilter {
   alarmId?: number | null;
-  siteId?: number | null;
+  siteIds?: number[] | null;
   pumpStationId?: number | null;
   fieldName?: string;
   isResolved?: boolean | null;
@@ -16,7 +16,7 @@ export interface AlarmReportConfiguration {
   id: number;
   name: string;
   isEnabled: boolean;
-  frequency: 'Daily' | 'Weekly' | 'Hourly';
+  frequency: 'Daily' | 'Weekly';
   scheduledTime?: string; // HH:mm format
   dayOfWeek?: number; // 0-6, only for Weekly
   selectedFields: string[];
@@ -29,13 +29,13 @@ export interface AlarmReportConfiguration {
 export interface CreateAlarmReportPayload {
   name: string;
   isEnabled: boolean;
-  frequency: 'Daily' | 'Weekly' | 'Hourly';
+  frequency: 'Daily' | 'Weekly';
   scheduledTime: string; // HH:mm format
   dayOfWeek?: number; // 0-6, only for Weekly
   selectedFields: string[];
   recipients: string[];
   filters?: AlarmReportFilter;
-  siteId?: number | null; // Add siteId
+  siteIds?: number[] | null; // Add siteIds
 }
 
 export interface ApiResponse<T> {

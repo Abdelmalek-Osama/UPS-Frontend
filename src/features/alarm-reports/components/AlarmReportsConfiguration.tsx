@@ -17,14 +17,10 @@ import {
   TableRow,
 } from '../../../components/ui/table';
 import { Loader, Plus, Mail, Trash2, Clock, Calendar } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../../../components/ui/tooltip';
 import { CreateAlarmReportDialog } from './CreateAlarmReportDialog';
 import { DeleteAlarmReportDialog } from './DeleteAlarmReportDialog';
+import { EmailRecipientsCell } from './EmailRecipientsCell';
+import { SelectedFieldsCell } from './SelectedFieldsCell';
 import { useAlarmReports } from '../hooks/useAlarmReports';
 import type { AlarmReportConfiguration, CreateAlarmReportPayload } from '../types';
 import { DAYS_OF_WEEK } from '../types';
@@ -101,7 +97,7 @@ export function AlarmReportsConfiguration() {
   };
 
   const formatDateTime = (dateString: string): string => {
- try {
+    try {
       const date = new Date(dateString);
       return date.toLocaleString(t('_rtl') === 'rtl' ? 'ar-EG' : 'en-US', {
         year: 'numeric',
@@ -162,7 +158,7 @@ export function AlarmReportsConfiguration() {
 </div>
   <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 mt-4">
          <Plus className="h-4 w-4" />
-    {t('alarmReports.createFirstConfiguration')}
+    {'Create First Configuration'}
   </Button>
    </div>
   </CardContent>
@@ -227,62 +223,27 @@ export function AlarmReportsConfiguration() {
         <div className="flex items-center gap-2 text-sm">
     <Calendar className="h-4 w-4 text-gray-400" />
       <span>
-                 {config.scheduledTime && `${config.scheduledTime}`}
-             {config.dayOfWeek !== undefined && config.frequency === 'Weekly' && (
-         <> • {getDayOfWeekLabel(config.dayOfWeek)}</>
-       )}
+                 {config.frequency === 'Weekly' && config.dayOfWeek !== undefined && config.scheduledTime
+                    ? `${getDayOfWeekLabel(config.dayOfWeek)} : ${config.scheduledTime}`
+                    : config.scheduledTime}
   </span>
   </div>
   </TableCell>
 
-     {/* Recipients */}
+     {/* Recipients - Using new EmailRecipientsCell component */}
         <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden xl:table-cell`}>
-           <TooltipProvider>
-         <Tooltip>
-              <TooltipTrigger asChild>
-       <Badge variant="outline" className="cursor-help">
- {config.recipients.length} {t('alarmReports.recipients')}
-      </Badge>
-            </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs">
- <div className="space-y-1">
-          {config.recipients.map((email, idx) => (
-   <div key={idx} className="text-xs">
-            {email}
-         </div>
-    ))}
-      </div>
-     </TooltipContent>
-  </Tooltip>
-                </TooltipProvider>
+         <EmailRecipientsCell recipients={config.recipients} />
      </TableCell>
 
-          {/* Fields */}
-             <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden 2xl:table-cell`}>
-       <TooltipProvider>
-     <Tooltip>
-  <TooltipTrigger asChild>
-                <Badge variant="outline" className="cursor-help">
-           {config.selectedFields.length} {t('alarmReports.fields')}
-        </Badge>
-       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs">
-           <div className="space-y-1">
-       {config.selectedFields.map((field, idx) => (
-            <div key={idx} className="text-xs">
-  {field}
-</div>
-        ))}
-  </div>
-       </TooltipContent>
-           </Tooltip>
-          </TooltipProvider>
-       </TableCell>
+          {/* Fields - Using new SelectedFieldsCell component */}
+          <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden 2xl:table-cell`}>
+          <SelectedFieldsCell fields={config.selectedFields} />
+                  </TableCell>
 
-  {/* Created */}
-    <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden lg:table-cell text-sm text-gray-600`}>
-           {formatDateTime(config.createdAt)}
-          </TableCell>
+{/* Created */}
+            <TableCell className={`${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} hidden lg:table-cell text-sm text-gray-600`}>
+              {formatDateTime(config.createdAt)}
+       </TableCell>
 
   {/* Actions */}
  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
