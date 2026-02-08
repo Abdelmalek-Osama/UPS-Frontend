@@ -4,8 +4,10 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import i18n from '../../i18n';
 import { getAccessToken, getRefreshToken, setAuthCookies, removeAuthCookies } from './cookieService';
 import type { Site } from '../../features/sites/types';
+import type { RecentAlarmEvent, ReadingLog } from '../../features/dashboard/types';
 
 let onLogoutCallback: (() => void) | null = null;
 
@@ -16,9 +18,9 @@ export const setLogoutCallback = (callback: () => void) => {
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
 //const API_BASE_URL = 'https://localhost:5001/api/';
-//const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 //const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
-const API_BASE_URL = "https://tele-dairot.com/swagger/index.html";
+//const API_BASE_URL = "https://tele-dairot.com/swagger/index.html";
 
 
 /**
@@ -26,7 +28,7 @@ const API_BASE_URL = "https://tele-dairot.com/swagger/index.html";
  */
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,7 +39,7 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 const axiosRefreshInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
@@ -51,6 +53,15 @@ axiosInstance.interceptors.request.use(
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Log full request config for debugging
+    if (config.url?.includes('/v1/Sites')) {
+      console.log('Axios Request Config:', JSON.stringify({
+        url: config.url,
+        method: config.method,
+        headers: config.headers,
+        data: config.data
+      }, null, 2));
     }
     return config;
   },
@@ -102,30 +113,56 @@ const processQueue = (error: AxiosError | Error | null, token: string | null = n
   failedRequestsQueue = [];
 };
 
+// Helper function to translate known API error messages
+const translateApiError = (errorMessage: string): string => {
+  // Map of known API error messages to i18n keys
+  const errorMap: Record<string, string> = {
+    'The AlarmName field is required.': 'errors.alarmNameRequired',
+    'The SiteId field is required.': 'errors.siteIdRequired',
+    'The method field is required.': 'errors.methodRequired',
+    'The Emails field is required.': 'errors.emailsRequired',
+    'The Phones field is required.': 'errors.phonesRequired',
+    'The monitoringHours field is required.': 'errors.monitoringHoursRequired',
+    'The pumpStatusOperation field is required.': 'errors.pumpStatusOperationRequired',
+    'The MonitoringHours field is required.': 'errors.monitoringHoursRequired',
+    'Failed to create pump status PS alarm.': 'errors.failedToCreateAlarm',
+    'Failed to update pump status PS alarm.': 'errors.failedToUpdateAlarm',
+    'An unexpected error occurred.': 'errors.unexpectedError',
+  };
+
+  const translationKey = errorMap[errorMessage];
+  if (translationKey) {
+    return i18n.t(translationKey, { ns: 'translation' });
+  }
+  return errorMessage;
+};
+
 // Helper function to extract the most specific error message from Axios response data
 const getErrorMessageFromResponseData = (responseData: any): string => {
-  let errorMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'; // Default ultimate fallback
+  let errorMessage = i18n.t('errors.unexpectedError', { ns: 'translation' }); // Default ultimate fallback
 
   if (responseData.errors) {
     let validationErrors: string[] = [];
     for (const key in responseData.errors) {
       if (Array.isArray(responseData.errors[key])) {
-        validationErrors = validationErrors.concat(responseData.errors[key]);
+        // Translate each validation error
+        const translatedErrors = responseData.errors[key].map((err: string) => translateApiError(err));
+        validationErrors = validationErrors.concat(translatedErrors);
       }
     }
     if (validationErrors.length > 0) {
       return validationErrors.join(', '); // Prioritize validation errors
     } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
-      return responseData.title; // Fallback to title if errors object is empty
+      return translateApiError(responseData.title); // Fallback to title if errors object is empty
     } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
-      return responseData.message; // Fallback to message if errors object and title are empty
+      return translateApiError(responseData.message); // Fallback to message if errors object and title are empty
     } else {
-      return 'حدث خطأ في التحقق من صحة البيانات.'; // Generic validation error fallback
+      return i18n.t('errors.validationError', { ns: 'translation' }); // Generic validation error fallback
     }
   } else if (typeof responseData.message === 'string' && responseData.message.trim() !== '') {
-    return responseData.message; // Prioritize general message
+    return translateApiError(responseData.message); // Prioritize general message
   } else if (typeof responseData.title === 'string' && responseData.title.trim() !== '') {
-    return responseData.title; // Fallback to title
+    return translateApiError(responseData.title); // Fallback to title
   }
   return errorMessage;
 };
@@ -172,9 +209,8 @@ axiosInstance.interceptors.response.use(
               } else if (!logoutInitiated) {
                 logoutInitiated = true; // Set flag to true
                 window.location.href = '/logout'; // Fallback if callback not set
-              }
-              
-              let errorMessage = 'فشل في تحديث الرمز المميز. يرجى تسجيل الدخول مرة أخرى.'; // Default custom error message
+              }              
+              let errorMessage = i18n.t('errors.tokenRefreshFailed', { ns: 'translation' }); // Default custom error message
               if (refreshError.isAxiosError && refreshError.response && refreshError.response.data) {
                 errorMessage = getErrorMessageFromResponseData(refreshError.response.data); // Use helper for refresh error
               }
@@ -182,7 +218,7 @@ axiosInstance.interceptors.response.use(
             }
           } else {
             clearAllUserData(); // Clear all user data if no refresh token
-            processQueue(new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'), null); // Custom error message
+            processQueue(new Error(i18n.t('errors.noRefreshToken', { ns: 'translation' })), null); // Custom error message
             if (!logoutInitiated && onLogoutCallback) {
               logoutInitiated = true; // Set flag to true
               onLogoutCallback(); // Call callback before throwing error
@@ -190,7 +226,7 @@ axiosInstance.interceptors.response.use(
               logoutInitiated = true; // Set flag to true
               window.location.href = '/logout'; // Fallback if callback not set
             }
-            throw new Error('لا يوجد رمز تحديث متاح. يرجى تسجيل الدخول مرة أخرى.'); // Custom error message
+            throw new Error(i18n.t('errors.noRefreshToken', { ns: 'translation' })); // Custom error message
           }
         } else {
           return new Promise((resolve, reject) => {
@@ -220,10 +256,10 @@ axiosInstance.interceptors.response.use(
       throw new Error(customErrorMessage);
     } else if (error.request) {
       // Request made but no response
-      throw new Error('لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.'); // Custom network error message
+      throw new Error(i18n.t('errors.noServerResponse')); // Custom network error message
     } else {
       // Something else happened
-      throw new Error('حدث خطأ غير متوقع.'); // Custom generic error message
+      throw new Error(i18n.t('errors.unexpectedError')); // Custom generic error message
     }
   }
 );
@@ -315,6 +351,16 @@ export const loginUser = async (credentials: any): Promise<ApiResponse<AuthRespo
 
 export const registerUser = async (userData: any): Promise<UserDto> => {
   const response = await axiosInstance.post<UserDto>('/v1/Users', userData);
+  return response.data;
+};
+
+export const getRecentAlarmEvents = async (): Promise<ApiResponse<RecentAlarmEvent[]>> => {
+  const response = await axiosInstance.get<ApiResponse<RecentAlarmEvent[]>>('/v1/AlarmEvents/recent');
+  return response.data;
+};
+
+export const getRecentReadingLogs = async (): Promise<ApiResponse<ReadingLog[]>> => {
+  const response = await axiosInstance.get<ApiResponse<ReadingLog[]>>('/v1/ReadingLogs/recent');
   return response.data;
 };
 

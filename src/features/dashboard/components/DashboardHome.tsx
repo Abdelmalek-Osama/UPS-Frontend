@@ -1,24 +1,73 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { 
-  MapPin, 
-  AlertTriangle, 
-  TrendingUp, 
+import {
+  MapPin,
+  AlertTriangle,
+  TrendingUp,
   Activity,
   Droplets,
   Power,
-  Battery,
-  WifiOff
+  Clock,
+  Users,
+  Building
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 
 export function DashboardHome() {
   const { t } = useTranslation();
-  const { flowData, directorateData, activeAlarms, recentReadings, stats } = useDashboardData();
+  const navigate = useNavigate();
+  const { flowData, directorateData, recentAlarmEvents, readingLogs, stats, sites, selectedSiteId, setSelectedSiteId } = useDashboardData();
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return time;
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const severityMap: Record<string, { label: string; className: string }> = {
+      critical: { label: t('alarms.critical'), className: 'bg-red-100 text-red-700' },
+      warning: { label: t('alarms.warning'), className: 'bg-yellow-100 text-yellow-700' },
+      info: { label: t('alarms.info'), className: 'bg-blue-100 text-blue-700' },
+    };
+    const config = severityMap[severity.toLowerCase()] || severityMap['info'];
+    return (
+      <Badge className={`${config.className} border-0`}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getActionBadge = (actionType: string) => {
+    const actionMap: Record<string, { label: string; className: string }> = {
+      created: { label: t('Created') || 'Created', className: 'bg-green-100 text-green-700' },
+      updated: { label: t('Updated') || 'Updated', className: 'bg-blue-100 text-blue-700' },
+      deleted: { label: t('Deleted') || 'Deleted', className: 'bg-red-100 text-red-700' },
+    };
+    const config = actionMap[actionType?.toLowerCase()] || { label: actionType, className: 'bg-gray-100 text-gray-700' };
+    return (
+      <Badge className={`${config.className} border-0`}>
+        {config.label}
+      </Badge>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -58,26 +107,26 @@ export function DashboardHome() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">{t('dashboard.totalFlow')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm">{t('dashboard.totalDirectorates')}</CardTitle>
+            <Building className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.totalFlow.toLocaleString()} {t('dashboard.flowPerHour')}</div>
+            <div className="text-2xl">{stats.totalDirectorates}</div>
             <p className="text-xs text-green-600 mt-1">
-              ↑ {stats.flowChange}% {t('dashboard.flowChange')}
+              {t('dashboard.allregions')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">{t('dashboard.activeStations')}</CardTitle>
-            <Activity className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm">{t('dashboard.totalUsers')}</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.activeStations}/{stats.totalStations}</div>
+            <div className="text-2xl">{stats.totalUsers}</div>
             <p className="text-xs text-gray-500 mt-1">
-              {t('dashboard.uptimePercentage')}: {stats.uptimePercentage}%
+              {t('dashboard.systemUsers')}
             </p>
           </CardContent>
         </Card>
@@ -86,17 +135,26 @@ export function DashboardHome() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
         <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
+          <CardHeader className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>{t('dashboard.flowInLast24Hours')}</CardTitle>
+            </div>
+            <SiteSingleSelectDropdown 
+              sites={sites} 
+              selectedSiteId={selectedSiteId}
+              onSiteSelect={(siteId) => setSelectedSiteId(siteId ? Number(siteId) : null)}
+              placeholder={t('dashboard.selectSite')}
+              allowClear={false}
+            />
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
-                <YAxis 
-                  label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy:-20 }} 
-                  tick={{dx: -25}}
+                <YAxis
+                  label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy: -20 }}
+                  tick={{ dx: -25 }}
                 />
                 <Tooltip />
                 <Legend />
@@ -115,9 +173,9 @@ export function DashboardHome() {
               <BarChart data={directorateData} margin={{ top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis 
-                  label={{value: t('sites.sitesCount'), angle: -90, position: 'insideLeft', dy:-20 }} 
-                  tick={{dx: -15}}
+                <YAxis
+                  label={{ value: t('sites.sitesCount'), angle: -90, position: 'insideLeft', dy: -20 }}
+                  tick={{ dx: -15 }}
                 />
                 <Tooltip />
                 <Legend />
@@ -129,80 +187,84 @@ export function DashboardHome() {
         </Card>
       </div>
 
-      {/* Alarms and Recent Readings */}
+      {/* Recent Alarm Events and Recent Reading Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active Alarms */}
+        {/* Recent Alarm Events */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('dashboard.activeAlarms')}</CardTitle>
-            <Button variant="outline" size="sm">{t('dashboard.viewAll')}</Button>
+            <CardTitle>{t('dashboard.recentAlarmEvents')}</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => navigate('/alarms/events')}>
+              {t('dashboard.viewAll')}
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {activeAlarms.map((alarm) => (
-                <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                  <div className={`p-2 rounded-lg ${
-                    alarm.severity === 'Critical' ? 'bg-red-100' : 'bg-yellow-100'
-                  }`}>
-                    {alarm.type === 'battery' && <Battery className="h-4 w-4 text-yellow-700" />}
-                    {alarm.type === 'communication' && <WifiOff className="h-4 w-4 text-red-700" />}
-                    {alarm.type === 'flow' && <Droplets className="h-4 w-4 text-yellow-700" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <p className="text-sm">{alarm.site}</p>
-                      <Badge variant={alarm.severity === 'Critical' ? 'destructive' : 'outline'}>
-                        {alarm.severity === 'Critical' ? t('dashboard.critical') : t('dashboard.warnings')}
-                      </Badge>
+            {recentAlarmEvents.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>{t('dashboard.noRecentEvents')}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentAlarmEvents.map((alarm) => (
+                  <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
+                      }`}>
+                      <AlertTriangle className={`h-4 w-4 ${alarm.severity === 'critical' ? 'text-red-700' : alarm.severity === 'warning' ? 'text-yellow-700' : 'text-blue-700'
+                        }`} />
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{alarm.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{alarm.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium truncate">{alarm.siteName}</p>
+                        {getSeverityBadge(alarm.severity)}
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">{alarm.fieldName}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(alarm.triggeredAt)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Recent Readings */}
+        {/* Recent Reading Logs */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('dashboard.recentReadings')}</CardTitle>
-            <Button variant="outline" size="sm">{t('dashboard.viewAll')}</Button>
+            <CardTitle>{t('dashboard.recentReadingLogs')}</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => navigate('/reading-logs')}>
+              {t('dashboard.viewAll')}
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {recentReadings.map((reading, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                  <div className={`p-2 rounded-lg ${
-                    reading.type === 'WaterLevel' ? 'bg-blue-100' : 'bg-green-100'
-                  }`}>
-                    {reading.type === 'WaterLevel' ? (
-                      <Droplets className="h-4 w-4 text-blue-700" />
-                    ) : (
-                      <Power className="h-4 w-4 text-green-700" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">{reading.site}</p>
-                    <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+            {readingLogs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>{t('dashboard.noRecentReadings')}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {readingLogs.map((reading, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${reading.type === 'WaterLevel' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
                       {reading.type === 'WaterLevel' ? (
-                        <>
-                          <p>{t('readings.uswl')}: {reading.uswl} م • {t('readings.dswl')}: {reading.dswl} م</p>
-                          <p>{t('readings.calculatedFlow')}: {reading.flow} {t('dashboard.flowPerHour')}</p>
-                        </>
+                        <Droplets className="h-4 w-4 text-blue-700" />
                       ) : (
-                        <>
-                          <p>{t('readings.totalFlow')}: {reading.totalFlow} {t('dashboard.flowPerHour')}</p>
-                          <p>{t('readings.uptime')}: {reading.uptime} {t('common.time')}</p>
-                        </>
+                        <Power className="h-4 w-4 text-green-700" />
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">{reading.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium truncate">{reading.site}</p>
+                        {reading.actionType && getActionBadge(reading.actionType)}
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">{reading.type}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(reading.timestamp)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -76,11 +76,11 @@ export function EditCommunicationAlarmDialog({
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            if (!newOpen && submissionError) {
-                // Prevent closing if there's a submission error
-                return;
+            if (!newOpen) {
+                onOpenChange(newOpen);
+            } else {
+                onOpenChange(newOpen);
             }
-            onOpenChange(newOpen);
         }}>
                 <DialogContent 
                 className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" 
@@ -93,6 +93,26 @@ export function EditCommunicationAlarmDialog({
                     </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>{t('alarms.alarmName')}</Label>
+                        <Input
+                            type="text"
+                            placeholder={t('alarms.alarmName')}
+                            value={form.alarmName}
+                            onChange={(e) => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    alarmName: e.target.value
+                                }));
+                                const error = validateAlarmName(e.target.value);
+                                setAlarmNameError(error);
+                                setHasChanges(true);
+                            }}
+                        />
+                        {alarmNameError && (
+                            <p className="text-red-600 text-sm">{alarmNameError}</p>
+                        )}
+                    </div>
                     <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
                         {currentAlarm ? (
@@ -116,7 +136,7 @@ export function EditCommunicationAlarmDialog({
                                         <SelectItem value="0" disabled>{sitesError}</SelectItem>
                                     ) : (
                                         sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>
@@ -124,26 +144,7 @@ export function EditCommunicationAlarmDialog({
                         )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>{t('alarms.alarmName')}</Label>
-                        <Input
-                            type="text"
-                            placeholder={t('alarms.alarmName')}
-                            value={form.alarmName}
-                            onChange={(e) => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    alarmName: e.target.value
-                                }));
-                                const error = validateAlarmName(e.target.value);
-                                setAlarmNameError(error);
-                                setHasChanges(true);
-                            }}
-                        />
-                        {alarmNameError && (
-                            <p className="text-red-600 text-sm">{alarmNameError}</p>
-                        )}
-                    </div>
+                    
 
                     <div className="space-y-2">
                         <Label>{t('alarms.noResponse')}</Label>
@@ -228,12 +229,18 @@ export function EditCommunicationAlarmDialog({
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
+                    {form.emails.length === 0 && form.phones.length === 0 && (
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t('alarms.atLeastOneRecipient')}</p>
+                    )}
+                    <div style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '0.5rem',
+                        flexDirection: 'row'
+                    }}>
                         <Button
                             onClick={() => {
                                 if (!form.hoursError && !alarmNameError) {
@@ -245,6 +252,9 @@ export function EditCommunicationAlarmDialog({
                             isLoading={isSubmitting}
                         >
                             {t('readings.saveChanges')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

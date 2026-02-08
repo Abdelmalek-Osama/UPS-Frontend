@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Label } from '../../../components/ui/label';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
@@ -8,7 +9,7 @@ import { Plus, Mail, Phone } from 'lucide-react';
 
 interface RecipientInputProps {
     type: 'email' | 'phone';
-    forAlarmType: 'threshold' | 'communication';
+    forAlarmType: 'threshold' | 'communication' | 'sensorStatus' | 'pumpStatusPS' | 'pumpStatusIdv';
     recipients: string[];
     setRecipients: (newRecipients: string[]) => void;
     setHasChanges: (hasChanges: boolean) => void;
@@ -32,10 +33,10 @@ export function RecipientInput({
         const phoneRegex = /^\d{11}$/;
 
         if (isEmail && !emailRegex.test(newRecipient)) {
-            alert('Please enter a valid email address.');
+            toast.error(t('validation.invalidEmailFormat'));
             return;
         } else if (!isEmail && !phoneRegex.test(newRecipient)) {
-            alert('Please enter a valid 11-digit phone number.');
+            toast.error(t('validation.phone11Digits'));
             return;
         }
 
@@ -57,6 +58,7 @@ export function RecipientInput({
                     type={isEmail ? 'email' : 'tel'}
                     placeholder={isEmail ? 'email@example.com' : '0123456789'}
                     value={inputValue}
+                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     onChange={(e) => {
                         setInputValue(e.target.value);
                     }}
@@ -73,24 +75,26 @@ export function RecipientInput({
                 </Button>
             </div>
             {recipients.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                    {recipients.map(recipient => {
-                        const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
-                        const isPhone = /^\d{11}$/.test(recipient);
-                        return (
-                            <Badge key={recipient} variant="secondary" className="flex items-center gap-1">
-                                {isEmail && <Mail className="ml-1 h-3 w-3" />}
-                                {isPhone && <Phone className="ml-1 h-3 w-3" />}
-                                {recipient}
-                                <button
-                                    onClick={() => handleRemove(recipient)}
-                                    className="mr-1 hover:text-red-600"
-                                >
-                                    ×
-                                </button>
-                            </Badge>
-                        );
-                    })}
+                <div className="max-h-48 overflow-y-auto border rounded-md p-2 bg-gray-50">
+                    <div className="flex flex-wrap gap-2">
+                        {recipients.map(recipient => {
+                            const isEmail = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(recipient);
+                            const isPhone = /^\d{11}$/.test(recipient);
+                            return (
+                                <Badge key={recipient} variant="secondary" className="flex items-center gap-1 flex-shrink-0">
+                                    {isEmail && <Mail className="ml-1 h-3 w-3" />}
+                                    {isPhone && <Phone className="ml-1 h-3 w-3" />}
+                                    {recipient}
+                                    <button
+                                        onClick={() => handleRemove(recipient)}
+                                        className="mr-1 hover:text-red-600"
+                                    >
+                                        ×
+                                    </button>
+                                </Badge>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>

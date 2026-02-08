@@ -17,15 +17,17 @@ import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers'
 interface ThresholdAlarmTableProps {
     alarms: ValueThresholdAlarm[];
     onEdit: (alarm: any) => void;
+    error?: boolean;
 }
 
-export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps) {
+export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? 'text-right' : 'text-left';
 
-    const translateFieldName = (fieldName: string) => {
+    const translateFieldName = (fieldName?: unknown) => {
+        if (typeof fieldName !== "string" || !fieldName.trim()) return "�";
         const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
         if (normalized === 'communicationloss') {
             return t('alarms.communicationLoss');
@@ -66,37 +68,8 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             )
         },
         {
-            key: 'color',
-            header: t('alarms.color'),
-            render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
-                    <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.color }} />
-                </div>
-            )
-        },
-        {
-            key: 'field',
-            header: t('alarms.field'),
-            render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
-                    <Badge variant="outline">{translateFieldName(mapNumberToField[alarm.field])}</Badge>
-                </div>
-            )
-        },
-        {
-            key: 'operator',
-            header: t('alarms.operator'),
-            render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                        {mapNumberToOperator[alarm.operator]} {alarm.threshold}
-                    </code>
-                </div>
-            )
-        },
-        {
             key: 'emailRecipients',
-            header: t('alarms.emailRecipients'),
+            header: t('alarms.recipients'),
             render: (alarm: ValueThresholdAlarm) => (
                 <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
                     {alarm.recipients && Array.isArray(alarm.recipients) && alarm.recipients.map((recipient, idx) => {
@@ -114,11 +87,53 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
             )
         },
         {
-            key: 'severity',
-            header: t('alarms.severity'),
+            key: 'field',
+            header: t('alarms.field'),
             render: (alarm: ValueThresholdAlarm) => (
                 <div className={textAlignClass}>
-                    <Badge variant="outline">{translateSeverity(alarm.severity)}</Badge>
+                    <Badge variant="outline">{translateFieldName(mapNumberToField[alarm.field])}</Badge>
+                </div>
+            )
+        },
+        {
+            key: 'criticalThreshold',
+            header: t('alarms.critical'),
+            render: (alarm: ValueThresholdAlarm) => (
+                <div className="text-center">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center justify-center gap-1">
+                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                                {alarm.criticalOperator !== undefined ? mapNumberToOperator[alarm.criticalOperator] : (alarm.operator !== undefined ? mapNumberToOperator[alarm.operator] : '>')}
+                            </code>
+                            <span className="text-sm">
+                                {alarm.criticalThresholdValue !== undefined ? alarm.criticalThresholdValue : alarm.threshold}
+                            </span>
+                        </div>
+                        <div className="flex justify-center">
+                            <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.criticalColorCode || alarm.color || '#fbbf24' }} title={alarm.criticalColorCode || alarm.color} />
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: 'crisisThreshold',
+            header: t('alarms.crisis'),
+            render: (alarm: ValueThresholdAlarm) => (
+                <div className="text-center">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center justify-center gap-1">
+                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                                {alarm.crisisOperator !== undefined ? mapNumberToOperator[alarm.crisisOperator] : '-'}
+                            </code>
+                            <span className="text-sm">
+                                {alarm.crisisThresholdValue !== undefined ? alarm.crisisThresholdValue : '-'}
+                            </span>
+                        </div>
+                        <div className="flex justify-center">
+                            <div className="w-6 h-6 rounded border" style={{ backgroundColor: alarm.crisisColorCode || '#db0202ff' }} title={alarm.crisisColorCode} />
+                        </div>
+                    </div>
                 </div>
             )
         },
@@ -145,6 +160,14 @@ export function ThresholdAlarmTable({ alarms, onEdit }: ThresholdAlarmTableProps
     // For RTL (Arabic): keep original order
     // For LTR (English): reverse the columns
     const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
 
     return (
         <Table>

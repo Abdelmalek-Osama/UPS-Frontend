@@ -33,6 +33,7 @@ interface AddUserDialogProps {
 
 export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDialogProps) {
   const { t } = useTranslation();
+  const isRTL = t('_rtl') === 'rtl';
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -188,7 +189,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               <Label htmlFor="username">{t('auth.username')}</Label>
               <Input
                 id="username"
-                placeholder={t('placeholders.fullName')}
+                placeholder={t('placeholders.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="off"
@@ -228,17 +229,23 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder={t('placeholders.password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
-                  className="pr-10" // Padding at the end (visual left in RTL) to make room for icon
+                  className="pr-1" 
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent" // Positioned at the start
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    [isRTL ? 'left' : 'right']: 0,
+                    height: '2.25rem',
+                    width: '2.25rem',
+                  }}
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? (
@@ -256,17 +263,23 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder={t('placeholders.confirmPassword')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
-                  className="pr-10"
+                  className="pr-1"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute end-0 top-0 h-9 w-9 hover:bg-transparent"
+                  style={{
+                  position: 'absolute',
+                  top: 0,
+                  [isRTL ? 'left' : 'right']: 0,
+                  height: '2.25rem',
+                  width: '2.25rem',
+                }}
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                 >
                   {showConfirmPassword ? (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../components/ui/table';
-import { Edit, Download, Plus } from 'lucide-react';
+import { Edit, Download, Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Label } from '../../../components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/ui/select';
@@ -29,6 +29,7 @@ interface SiteConfiguration {
   longitude: number;
   latitude: number;
   directorateName: string;
+  directorateArabicName: string;
   hasUS: boolean;
   hasDS1: boolean;
   hasDS2: boolean;
@@ -70,10 +71,17 @@ interface WaterLevelTableProps {
     battery: number;
     isManual: boolean;
   }) => Promise<any>;
+  deleteWaterLevelReading: (id: number) => Promise<any>;
   selectedSiteId: string;
-  fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string) => Promise<void>;
+  fetchWaterLevelReadings: (siteId: number, startDate?: string, endDate?: string, pageNumber?: number, pageSize?: number) => Promise<void>;
   fromDate?: Date;
   toDate?: Date;
+  pageNumber: number;
+  setPageNumber: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalPages: number;
+  totalCount: number;
 }
 
 export function WaterLevelTable({
@@ -94,6 +102,13 @@ export function WaterLevelTable({
   fetchWaterLevelReadings,
   fromDate,
   toDate,
+  pageNumber,
+  setPageNumber,
+  pageSize,
+  setPageSize,
+  totalPages,
+  totalCount,
+  deleteWaterLevelReading,
 }: WaterLevelTableProps) {
   const { t } = useTranslation();
   const [readingDate, setReadingDate] = useState<Date | undefined>();
@@ -127,6 +142,16 @@ export function WaterLevelTable({
   const [editSiteDataError, setEditSiteDataError] = useState<string | null>(null);
   const prevDialogOpenRef = useRef(false);
   const [editSelectedSiteData, setEditSelectedSiteData] = useState<SiteConfiguration | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [readingToDelete, setReadingToDelete] = useState<WaterLevelReading | null>(null);
+
+  // Helper function to get site name based on language
+  const getSiteName = useCallback((siteId?: number, fallbackName?: string) => {
+    if (!siteId) return fallbackName || '-';
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return fallbackName || '-';
+    return t('_rtl') === 'rtl' ? site.arabicName || '-' : site.name;
+  }, [sites, t]);
 
   // Initialize selectedSiteForAdd only when dialog first opens (not on every render)
   useEffect(() => {
@@ -262,6 +287,46 @@ export function WaterLevelTable({
     }
   }, [isEditWaterLevelOpen]);
 
+  const handleDeleteWaterLevel = (reading: WaterLevelReading) => {
+    setReadingToDelete(reading);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteWaterLevel = async () => {
+    if (readingToDelete) {
+      try {
+        await deleteWaterLevelReading(readingToDelete.id);
+        setIsDeleteDialogOpen(false);
+        setReadingToDelete(null);
+
+        // Refresh readings after deletion
+        const siteNumericId = Number(selectedSiteId);
+        if (!Number.isNaN(siteNumericId)) {
+          let apiFromDate = fromDate;
+          let apiToDate = toDate;
+
+          const bothUnset = fromDate === undefined && toDate === undefined;
+          if (bothUnset) {
+            apiFromDate = new Date();
+            apiFromDate.setHours(0, 0, 0, 0);
+            apiToDate = new Date();
+            apiToDate.setHours(23, 59, 59, 999);
+          }
+
+          await fetchWaterLevelReadings(
+            siteNumericId,
+            apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
+            apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+            pageNumber,
+            pageSize
+          );
+        }
+      } catch (error) {
+        console.error("Failed to delete water level reading:", error);
+      }
+    }
+  };
+
   const formatTimestamp = (value: string) => {
     if (!value) return '--';
     const parsed = new Date(value);
@@ -383,7 +448,9 @@ export function WaterLevelTable({
         await fetchWaterLevelReadings(
           siteNumericId,
           apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+          pageNumber,
+          pageSize
         );
       }
     } catch (error: any) {
@@ -458,7 +525,9 @@ export function WaterLevelTable({
         await fetchWaterLevelReadings(
           siteNumericId,
           apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+          apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+          pageNumber,
+          pageSize
         );
       }
     } catch (error: any) {
@@ -539,7 +608,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -781,7 +850,7 @@ export function WaterLevelTable({
                         </SelectTrigger>
                         <SelectContent>
                           {sites.map(site => (
-                            <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
+                            <SelectItem key={site.id} value={String(site.id)}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -997,6 +1066,26 @@ export function WaterLevelTable({
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                <DialogHeader>
+                  <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.confirmDelete')}</DialogTitle>
+                  <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                    {t('readings.deleteConfirmationMessage', { site: readingToDelete?.site, timestamp: formatTimestamp(readingToDelete?.timestamp || '') })}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                    {t('common.cancel')}
+                  </Button>
+                  <Button variant="destructive" onClick={confirmDeleteWaterLevel}>
+                    {t('common.delete')}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </CardHeader>
@@ -1005,14 +1094,14 @@ export function WaterLevelTable({
           <Table className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
             <TableHeader>
               <TableRow>
-                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.selectSite')}</TableHead>
+                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.site')}</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateAndTime')}</TableHead>
                 {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>USWL ({t('readings.meter')})</TableHead>}
                 {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL1 ({t('readings.meter')})</TableHead>}
                 {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL2 ({t('readings.meter')})</TableHead>}
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.battery')} (V)</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.calculatedFlow')}</TableHead>
-                <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                <TableHead className="text-center">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1039,20 +1128,19 @@ export function WaterLevelTable({
                   </TableCell>
                 </TableRow>
               )}
-
               {!isLoading && !error && readings.map((reading) => {
                 return (
                 <TableRow key={reading.id}>
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{reading.site}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{getSiteName(reading.siteId, reading.site)}</TableCell>
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswl?.toFixed(2) ?? ''}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswlDisplay ?? (reading.uswl?.toFixed(2) ?? '')}</TableCell>
                   )}
                   {showDSWL1 && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1Display ?? (reading.dswL1?.toFixed(2))}</TableCell>
                   )}
                   {showDSWL2 && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2?.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2Display ?? (reading.dswL2?.toFixed(2))}</TableCell>
                   )}
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
                     {reading.battery?.toFixed(2) ?? ''}
@@ -1071,6 +1159,13 @@ export function WaterLevelTable({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteWaterLevel(reading)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1079,6 +1174,112 @@ export function WaterLevelTable({
           </Table>
         </div>
       </CardContent>
+
+      {/* Pagination Controls */}
+      {!isLoading && !error && readings.length > 0 && totalPages > 0 && (
+        <CardContent className="pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPageNumber(1); // Reset to first page when page size changes
+                }}
+                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600">
+              {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  disabled={pageNumber === 1}
+                  className="h-9 w-9"
+                  aria-label={t('common.previousPage')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (pageNumber >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pageNumber - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === pageNumber ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setPageNumber(pageNum)}
+                      className="h-9 w-9"
+                      aria-label={`${t('common.page')} ${pageNum}`}
+                      aria-current={pageNum === pageNumber ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <span className="px-2 text-gray-500">...</span>
+                )}
+
+                {totalPages > 5 && pageNumber < totalPages - 2 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPageNumber(totalPages)}
+                    className="h-9 w-9"
+                    aria-label={`${t('common.page')} ${totalPages}`}
+                  >
+                    {totalPages}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  disabled={pageNumber === totalPages}
+                  className="h-9 w-9"
+                  aria-label={t('common.nextPage')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 }

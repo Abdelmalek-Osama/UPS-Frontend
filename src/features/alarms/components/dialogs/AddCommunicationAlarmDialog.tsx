@@ -11,15 +11,9 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem
-} from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { CommunicationAlarmForm, AddCommunicationAlarmDialogProps } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
 
@@ -72,33 +66,6 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>{t('alarms.site')}</Label>
-                        <Select
-                            onValueChange={(value) => setForm(prev => ({
-                                ...prev,
-                                siteId: parseInt(value)
-                            }))}
-                            value={form.siteId?.toString() || ""}
-                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                        >
-                            <SelectTrigger className="rtl:flex-row-reverse">
-                                <SelectValue placeholder={t('common.select')} />
-                            </SelectTrigger>
-                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                {sitesLoading ? (
-                                    <SelectItem value="0">{t('common.loading')}</SelectItem>
-                                ) : sitesError ? (
-                                    <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                ) : (
-                                    sites.map(site => (
-                                        <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
                         <Label>{t('alarms.alarmName')}</Label>
                         <Input
                             type="text"
@@ -109,6 +76,20 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         {alarmNameError && (
                             <p className="text-red-600 text-sm">{alarmNameError}</p>
                         )}
+                    </div>
+                    <div className="space-y-2">
+                        <Label>{t('alarms.site')}</Label>
+                        <SiteSingleSelectDropdown
+                            sites={sites}
+                            sitesLoading={sitesLoading}
+                            selectedSiteId={form.siteId}
+                            onSiteSelect={(siteId) => setForm(prev => ({
+                                ...prev,
+                                siteId: siteId ? Number(siteId) : 0
+                            }))}
+                            placeholder={t('readings.selectSite')}
+                            allowClear={false}
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -190,12 +171,9 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('common.cancel')}
-                        </Button>
+                    <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                         <Button
                             onClick={() => {
                                 if (!form.hoursError && !alarmNameError) {
@@ -207,6 +185,9 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             isLoading={isSubmitting}
                         >
                             {t('alarms.addCommunicationAlarm')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

@@ -9,12 +9,14 @@ import { AlarmEvents } from './features/alarms/components/AlarmEvents';
 // import {LoginPage} from './features/auth/components/LoginPage';
 import {FlowCalculations} from './features/flow-calculations/components/FlowCalculations';
 import {ReadingsManagement} from './features/readings/components/ReadingsManagement';
+import {ReadingLogs} from './features/readings/components/ReadingLogs';
 import {SitesManagement} from './features/sites/components/SitesManagement';
 import {UserManagement} from './features/users/components/UserManagement';
 import { getAccessToken, removeAuthCookies } from './shared/utils/cookieService';
 import apiService from './shared/utils/apiService';
 import { AuthProvider, useAuth } from './shared/contexts/AuthContext'; // Import AuthProvider and useAuth
 // import { AuthResponse } from './shared/utils/apiService'; // No longer needed for App.tsx directly
+import { AlarmReportsConfiguration } from './features/alarm-reports';
 
 
 
@@ -54,8 +56,10 @@ function AuthRoutes() {
         <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
         <Route path="alarms" element={ <AlarmConfiguration />} />
         <Route path="alarms/events" element={<AlarmEvents />} />
+        <Route path="alarms/reports" element={<AlarmReportsConfiguration />} />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
+        <Route path="reading-logs" element={<ReadingLogs />} />
         <Route path="sites" element={<SitesManagement />} />
         <Route 
           path="users" 

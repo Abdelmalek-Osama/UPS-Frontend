@@ -48,6 +48,7 @@ import Loader from '../../../components/ui/Loader';
 import { formatDateTimeForAPI } from '../utils/utils';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
+import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 
 export function ReadingsManagement() {
   const { t } = useTranslation();
@@ -72,6 +73,7 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings,
     createWaterLevelReading,
     updateWaterLevelReading,
+    deleteWaterLevelReading,
     isLoading, // For create/update operations
     isLoadingWaterLevel, // For water level readings fetch
     isLoadingPumpStation, // For pump station readings fetch
@@ -81,7 +83,22 @@ export function ReadingsManagement() {
     fetchPumpStationReadings,
     createPumpStationReading,
     updatePumpStationReading,
+    deletePumpStationReading,
     selectedSite,
+    // Pagination state for water level readings
+    waterLevelPageNumber,
+    setWaterLevelPageNumber,
+    waterLevelPageSize,
+    setWaterLevelPageSize,
+    waterLevelTotalPages,
+    waterLevelTotalCount,
+    // Pagination state for pump station readings
+    pumpStationPageNumber,
+    setPumpStationPageNumber,
+    pumpStationPageSize,
+    setPumpStationPageSize,
+    pumpStationTotalPages,
+    pumpStationTotalCount,
   } = useReadingsData(selectedSiteId);
 
   useEffect(() => {
@@ -169,14 +186,24 @@ export function ReadingsManagement() {
     fetchWaterLevelReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      waterLevelPageNumber,
+      waterLevelPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageNumber, waterLevelPageSize]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (waterLevelPageNumber !== 1) {
+      setWaterLevelPageNumber(1);
+    }
+  }, [selectedSiteId, fromDate, toDate, waterLevelPageSize]);
 
   // Added useEffect for fetching pump station readings
   useEffect(() => {
-    if (!selectedSiteId) {
+    // Only fetch when pump station tab is active
+    if (activeTab !== 'pumpStation' || !selectedSiteId) {
       return;
     }
     const siteNumericId = Number(selectedSiteId);
@@ -205,10 +232,19 @@ export function ReadingsManagement() {
     fetchPumpStationReadings(
       siteNumericId,
       apiFromDate ? formatDateTimeForAPI(apiFromDate) : undefined,
-      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined
+      apiToDate ? formatDateTimeForAPI(apiToDate, true) : undefined,
+      pumpStationPageNumber,
+      pumpStationPageSize
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, fromDate, toDate]);
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageNumber, pumpStationPageSize]);
+
+  // Reset to page 1 when filters change for pump station readings
+  useEffect(() => {
+    if (activeTab === 'pumpStation' && pumpStationPageNumber !== 1) {
+      setPumpStationPageNumber(1);
+    }
+  }, [activeTab, selectedSiteId, fromDate, toDate, pumpStationPageSize]);
 
 
   // const handleViewPumpDetails = (reading: PumpStationReading) => {
@@ -352,40 +388,39 @@ export function ReadingsManagement() {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select value={selectedSiteId} onValueChange={setSelectedSiteId} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-              <SelectTrigger className="rtl:flex-row-reverse">
-                <SelectValue placeholder={t('readings.selectSite')} />
-              </SelectTrigger>
-              <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                {sites.map(site => (
-                  <SelectItem key={site.id} value={String(site.id)}>{site.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2">
-              <DatePicker
-                placeholder={t('readings.fromDate')}
-                value={fromDate}
-                onChange={setFromDate}
-                maxDate={toDate}
+            <div className="space-y-2">
+              <Label>{t('readings.selectSite')}</Label>
+       <SiteSingleSelectDropdown
+                sites={sites}
+              selectedSiteId={selectedSiteId}
+   onSiteSelect={(siteId) => setSelectedSiteId(siteId ? String(siteId) : '')}
+   placeholder={t('readings.selectSite')}
               />
-              <DatePicker
-                placeholder={t('readings.toDate')}
-                value={toDate}
-                onChange={setToDate}
-                minDate={fromDate}
-              />
-              {(fromDate || toDate) && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleResetDates}
-                  title={t('readings.resetDates')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
+         <div className="flex gap-2">
+   <DatePicker
+                placeholder={t('readings.fromDate')}
+    value={fromDate}
+           onChange={setFromDate}
+      maxDate={toDate}
+     />
+      <DatePicker
+          placeholder={t('readings.toDate')}
+     value={toDate}
+        onChange={setToDate}
+      minDate={fromDate}
+         />
+              {(fromDate || toDate) && (
+ <Button
+        variant="outline"
+         size="icon"
+  onClick={handleResetDates}
+                  title={t('readings.resetDates')}
+     >
+            <X className="h-4 w-4" />
+       </Button>
+   )}
+          </div>
           </div>
         </CardContent>
       </Card>
@@ -399,9 +434,8 @@ export function ReadingsManagement() {
     </TabsTrigger>
     <TabsTrigger
       value="pumpStation"
-      disabled={selectedSite?.data?.numPumps === 0}
-      // className={selectedSite?.data?.numPumps === 0 ? "cursor-not-allowed" : "cursor-pointer"}
-      style={selectedSite?.data?.numPumps === 0 ? { cursor: 'not-allowed' } : { cursor: 'pointer' }}
+      disabled={selectedSite?.data ? !(selectedSite.data.siteType === 'Pumps' || (selectedSite.data.numPumps && selectedSite.data.numPumps > 0)) : false}
+      className="cursor-pointer"
     >
       {t('readings.pumpStation')}
     </TabsTrigger>
@@ -431,6 +465,13 @@ export function ReadingsManagement() {
         fetchWaterLevelReadings={fetchWaterLevelReadings}
         fromDate={fromDate}
         toDate={toDate}
+        pageNumber={waterLevelPageNumber}
+        setPageNumber={setWaterLevelPageNumber}
+        pageSize={waterLevelPageSize}
+        setPageSize={setWaterLevelPageSize}
+        totalPages={waterLevelTotalPages}
+        totalCount={waterLevelTotalCount}
+        deleteWaterLevelReading={deleteWaterLevelReading}
       />
     )}
   </TabsContent>
@@ -463,6 +504,13 @@ export function ReadingsManagement() {
         updatePumpStationReading={updatePumpStationReading}
         selectedSite={selectedSite?.data ?? null}
         handleEditPump={handleEditPump} // Pass handleEditPump from useReadingsData
+        pageNumber={pumpStationPageNumber}
+        setPageNumber={setPumpStationPageNumber}
+        pageSize={pumpStationPageSize}
+        setPageSize={setPumpStationPageSize}
+        totalPages={pumpStationTotalPages}
+        totalCount={pumpStationTotalCount}
+        deletePumpStationReading={deletePumpStationReading}
       />
     )}
   </TabsContent>
@@ -485,7 +533,7 @@ export function ReadingsManagement() {
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpUptime')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpFlow')}</TableHead>
-                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                  <TableHead className="text-center">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

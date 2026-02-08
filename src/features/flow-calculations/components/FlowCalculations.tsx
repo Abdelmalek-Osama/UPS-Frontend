@@ -4,15 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Badge } from '../../../components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../components/ui/select';
 import { Label } from '../../../components/ui/label';
 import { useSitesData } from '../../sites/hooks/useSitesData';
+import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import type { FlowSite } from '../types';
 import { toast } from 'react-toastify';
@@ -27,7 +21,7 @@ interface FlowCalculationDto {
 
 export function FlowCalculations() {
   const { t } = useTranslation();
-  const [selectedSite, setSelectedSite] = useState('');
+  const [selectedSite, setSelectedSite] = useState<number | null>(null);
   const [formulaConstants, setFormulaConstants] = useState<number[]>([]);
   const [equation, setEquation] = useState('');
   const [calculationMethod, setCalculationMethod] = useState('');
@@ -41,14 +35,14 @@ export function FlowCalculations() {
 
   useEffect(() => {
     console.log('useEffect (selectedSite) triggered. Current selectedSite:', selectedSite); // Debug log
-    if (sites.length > 0 && !selectedSite) {
-      setSelectedSite(sites[0].id.toString()); 
+    if (sites.length > 0 && selectedSite === null) {
+   setSelectedSite(sites[0].id);
     }
   }, [sites, selectedSite]);
 
   useEffect(() => {
     console.log('useEffect (selectedSite) triggered. Current selectedSite:', selectedSite); // Debug log
-    if (!selectedSite) {
+    if (selectedSite === null) {
       return;
     }
 
@@ -59,39 +53,39 @@ export function FlowCalculations() {
       setSaveSuccessMessage(null);
       setSaveErrorMessage(null);
 
-      try {
-        const response = await apiService.get<ApiResponse<FlowCalculationDto>>(
-          `/v1/FlowCalculation/${selectedSite}`
+   try {
+   const response = await apiService.get<ApiResponse<FlowCalculationDto>>(
+  `/v1/FlowCalculation/${selectedSite}`
         );
         console.log('API response received in fetchFlowCalculation:', response); // Debug log
 
-        const flowData = response?.data;
+     const flowData = response?.data;
 
         if (flowData) {
           setEquation(flowData.equation ?? '');
-          setFormulaConstants(flowData.formulaConstants ?? []);
+   setFormulaConstants(flowData.formulaConstants ?? []);
           setCalculationMethod(flowData.calculationMethod ?? '');
         } else {
-          setEquation('');
+   setEquation('');
           setFormulaConstants([]);
           setCalculationMethod('');
         }
-      } catch (error) {
+    } catch (error) {
         setEquation('');
         setFormulaConstants([]);
         setCalculationMethod('');
         setConstantsError(
           (error as Error).message
-        );
+      );
       } finally {
-        setConstantsLoading(false);
+    setConstantsLoading(false);
       }
     };
 
-    fetchFlowCalculation();
+ fetchFlowCalculation();
   }, [selectedSite]);
 
-  const currentSite = sites.find(s => s.id.toString() === selectedSite) as FlowSite | undefined;
+  const currentSite = sites.find(s => s.id === selectedSite) as FlowSite | undefined;
 
   const handleConstantChange = (index: number, value: number) => {
     setFormulaConstants(prev =>
@@ -102,9 +96,9 @@ export function FlowCalculations() {
   };
 
   const handleSaveConstants = async () => {
-    if (!selectedSite) {
+    if (selectedSite === null) {
       setSaveErrorMessage(t('flowCalculations.selectSiteFirst'));
-      return;
+ return;
     }
 
     setSavingConstants(true);
@@ -113,11 +107,11 @@ export function FlowCalculations() {
 
     try {
       const payload = JSON.stringify(formulaConstants.join(','));
-      await apiService.put<ApiResponse<FlowCalculationDto>, string>(
+  await apiService.put<ApiResponse<FlowCalculationDto>, string>(
         `/v1/FlowCalculation/${selectedSite}`,
         payload
       );
-      toast.success(t('flowCalculations.formulaSaved'));
+    toast.success(t('flowCalculations.formulaSaved'));
 
     } catch (error) {
       toast.error((error as Error).message);
@@ -127,102 +121,98 @@ export function FlowCalculations() {
   };
 
   return (
-    <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+  <div className="space-y-6" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl">{t('flowCalculations.title')}</h2>
-        <p className="text-gray-500 mt-1">{t('flowCalculations.subtitle')}</p>
+     <h2 className="text-2xl">{t('flowCalculations.title')}</h2>
+    <p className="text-gray-500 mt-1">{t('flowCalculations.subtitle')}</p>
       </div>
 
-      {/* Site Selection */}
-      <Card>
-        <CardContent className="pt-6">
+  {/* Site Selection */}
+ <Card>
+<CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2" >
-              <Label>{t('common.select')} {t('readings.site')}</Label>
-              <Select  value={selectedSite} onValueChange={setSelectedSite} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                <SelectTrigger className="rtl:flex-row-reverse">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                  {sites.map(site => (
-                    <SelectItem key={site.id} value={site.id.toString()}>
-                      {site.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('flowCalculations.calculationMethod')}</Label>
-              <div className="flex items-center h-10 px-3 border rounded-md bg-gray-50">
-                <Badge variant="outline">
-                  {calculationMethod || '—'}
-                </Badge>
-              </div>
-            </div>
+  <div className="space-y-2" >
+      <Label>{t('common.select')} {t('readings.site')}</Label>
+              <SiteSingleSelectDropdown 
+   sites={sites}
+       sitesLoading={sitesLoading}
+      selectedSiteId={selectedSite}
+ onSiteSelect={setSelectedSite}
+   placeholder={t('readings.selectSite')}
+ allowClear={false}
+           />
           </div>
-        </CardContent>
+        <div className="space-y-2">
+  <Label>{t('flowCalculations.calculationMethod')}</Label>
+      <div className="flex items-center h-10 px-3 border rounded-md bg-gray-50">
+      <Badge variant="outline">
+       {calculationMethod || '—'}
+                </Badge>
+ </div>
+       </div>
+ </div>
+ </CardContent>
       </Card>
 
       {/* Formula Configuration */}
-      <Card>
-        <CardHeader>
+    <Card>
+ <CardHeader>
           <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('flowCalculations.equationConfiguration')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
             <p className="text-sm text-blue-800 text-center">
-              <strong>{t('alarms.formula')}: </strong> {equation || '—'}
+      <strong>{t('alarms.formula')}: </strong> {equation || '—'}
             </p>
           </div>
 
           {constantsError && (
-            <p className="text-sm text-red-600 text-center">{constantsError}</p>
+ <p className="text-sm text-red-600 text-center">{constantsError}</p>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {formulaConstants.map((value, index) => (
-              <div key={`constant-${index}`} className="space-y-2">
+     <div key={`constant-${index}`} className="space-y-2">
                 <Label htmlFor={`constant-${index}`}>
-                  {index === 0 ? 'a' : index === 1 ? 'b' : index === 2 ? 'c' : `C${index + 1}`}{" "}
-                  <span className="text-gray-500">({t('flowCalculations.constant')})</span>
-                </Label>
-                <Input
-                  id={`constant-${index}`}
-                  type="number"
-                  step="0.01"
-                  value={value}
-                  onChange={(e) =>
-                    handleConstantChange(index, parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-            ))}
+         {index === 0 ? 'a' : index === 1 ? 'b' : index === 2 ? 'c' : `C${index + 1}`}{" "}
+              <span className="text-gray-500">({t('flowCalculations.constant')})</span>
+     </Label>
+        <Input
+         id={`constant-${index}`}
+ type="number"
+      step="0.01"
+          value={value}
+    onChange={(e) =>
+       handleConstantChange(index, parseFloat(e.target.value) || 0)
+  }
+      />
+       </div>
+   ))}
 
-            {/* {!constantsLoading && formulaConstants.length === 0 && (
+     {/* {!constantsLoading && formulaConstants.length === 0 && (
               <p className="text-gray-500 text-center col-span-full">
-                لا توجد ثوابت متاحة لهذا الموقع.
-              </p>
-            )} */}
+     لا توجد ثوابت متاحة لهذا الموقع.
+        </p>
+        )} */}
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              disabled={constantsLoading || savingConstants}
-              onClick={handleSaveConstants}
-              loadingText={t('flowCalculations.saving')}
-              isLoading={savingConstants}
-            >
-              {t('flowCalculations.saveConstants')}
+    <div className="flex justify-end">
+     <Button
+  disabled={constantsLoading || savingConstants}
+  onClick={handleSaveConstants}
+            loadingText={t('flowCalculations.saving')}
+  isLoading={savingConstants}
+   >
+   {t('flowCalculations.saveConstants')}
             </Button>
           </div>
 
-          {saveSuccessMessage && (
-            <p className="text-sm text-green-600 text-center">{saveSuccessMessage}</p>
+   {saveSuccessMessage && (
+    <p className="text-sm text-green-600 text-center">{saveSuccessMessage}</p>
           )}
 
-          {saveErrorMessage && (
+       {saveErrorMessage && (
             <p className="text-sm text-red-600 text-center">{saveErrorMessage}</p>
           )}
         </CardContent>
