@@ -113,7 +113,7 @@ Browser: Modern browser with ES6+ support
 The application uses the following API configuration in [`src/shared/utils/apiService.ts`](src/shared/utils/apiService.ts#L22):
 
 ```typescript
-const API_BASE_URL = 'https://dairoot.duckdns.org:5050/api';
+const API_BASE_URL = 'https://tele-dairot:5050/api';
 ```
 
 ### Build Configuration
@@ -417,7 +417,23 @@ cn("base-classes", conditionalClasses, props.className)
 
 ## 5. Core Components Documentation
 
-### 5.1 DashboardLayout
+### 5.1 LoginPage
+
+**Location:** [`src/features/auth/components/LoginPage.tsx`](src/features/auth/components/LoginPage.tsx)
+
+**Purpose:** User authentication page for system access.
+
+![Login Page](./src/images/login.png)
+
+**Features:**
+- Email and password authentication
+- Form validation
+- Remember me functionality
+- Multi-language support
+
+---
+
+### 5.2 DashboardLayout
 
 **Location:** [`src/components/DashboardLayout.tsx`](src/components/DashboardLayout.tsx)
 
@@ -463,11 +479,13 @@ const [sidebarOpen, setSidebarOpen] = useState(true);
 
 ---
 
-### 5.2 DashboardHome
+### 5.3 DashboardHome
 
 **Location:** [`src/features/dashboard/components/DashboardHome.tsx`](src/features/dashboard/components/DashboardHome.tsx)
 
 **Purpose:** Admin-only dashboard showing system overview, statistics, and recent activities.
+
+![Dashboard](./src/images/dashboard.png)
 
 **Props:** None (uses hooks for data)
 
@@ -506,11 +524,13 @@ const {
 
 ---
 
-### 5.3 SitesManagement
+### 5.4 SitesManagement
 
 **Location:** [`src/features/sites/components/SitesManagement.tsx`](src/features/sites/components/SitesManagement.tsx)
 
 **Purpose:** CRUD operations for monitoring sites with filtering capabilities.
+
+![Sites Management](./src/images/sitesmanagement.png)
 
 **State Management:**
 ```typescript
@@ -534,11 +554,69 @@ const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
 ---
 
-### 5.4 AlarmConfiguration
+### 5.5 ReadingsManagement
+
+**Location:** [`src/features/readings/components/ReadingsManagement.tsx`](src/features/readings/components/ReadingsManagement.tsx)
+
+**Purpose:** Manage and view water level and pump readings from monitoring sites.
+
+**Water Level Readings:**
+
+![Readings Management - Water Level](./src/images/ReadingWL.png)
+
+**Pump Readings:**
+
+![Readings Management - Pump](./src/images/ReadingPumps.png)
+
+**Features:**
+- Real-time readings display
+- Historical data viewing
+- Site filtering
+- Data export capabilities
+
+---
+
+### 5.6 ReadingLogs
+
+**Location:** [`src/features/readings/components/ReadingLogs.tsx`](src/features/readings/components/ReadingLogs.tsx)
+
+**Purpose:** View comprehensive logs of all system readings.
+
+![Reading Logs](./src/images/ReadingLogs.png)
+
+**Features:**
+- Chronological reading history
+- Filter by site, date, and reading type
+- Search functionality
+- Export to Excel
+
+---
+
+### 5.7 AlarmConfiguration
 
 **Location:** [`src/features/alarms/components/AlarmConfiguration.tsx`](src/features/alarms/components/AlarmConfiguration.tsx)
 
 **Purpose:** Configure alarm rules for monitoring sites.
+
+**Threshold Alarms:**
+
+![Threshold Alarms](./src/images/threshold.png)
+
+**Communication Loss Alarms:**
+
+![Communication Loss Alarms](./src/images/commLoss.png)
+
+**Sensor Status Alarms:**
+
+![Sensor Status Alarms](./src/images/sensorstatus.png)
+
+**PS Pump Status Alarms:**
+
+![PS Pump Status Alarms](./src/images/alarmPS.png)
+
+**IDV Pump Status Alarms:**
+
+![IDV Pump Status Alarms](./src/images/alarmIdv.png)
 
 **Features:**
 - Multiple alarm types:
@@ -552,7 +630,75 @@ const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
 ---
 
-### 5.5 UI Component Library (shadcn/ui)
+### 5.8 AlarmEvents
+
+**Location:** [`src/features/alarms/components/AlarmEvents.tsx`](src/features/alarms/components/AlarmEvents.tsx)
+
+**Purpose:** Monitor and manage active alarm events in real-time.
+
+![Alarm Events](./src/images/alarmEvents.png)
+
+**Features:**
+- Real-time alarm event display
+- Event status tracking
+- Acknowledgement functionality
+- Event history
+- Priority-based sorting
+
+---
+
+### 5.9 AlarmReports
+
+**Location:** [`src/features/alarm-reports/components/AlarmReports.tsx`](src/features/alarm-reports/components/AlarmReports.tsx)
+
+**Purpose:** Generate and view comprehensive alarm reports.
+
+![Alarm Reports](./src/images/AlarmReports.png)
+
+**Features:**
+- Custom date range selection
+- Report generation by site, alarm type
+- Statistical analysis
+- Export to PDF/Excel
+- Scheduled reports
+
+---
+
+### 5.10 FlowCalculations
+
+**Location:** [`src/features/flow-calculations/components/FlowCalculations.tsx`](src/features/flow-calculations/components/FlowCalculations.tsx)
+
+**Purpose:** Configure and view flow calculation formulas for water monitoring.
+
+![Flow Calculations](./src/images/Flow.png)
+
+**Features:**
+- Formula-based calculations
+- Custom calculation rules
+- Real-time flow data
+- Historical flow trends
+- Calculation validation
+
+---
+
+### 5.11 UserManagement
+
+**Location:** [`src/features/users/components/UserManagement.tsx`](src/features/users/components/UserManagement.tsx)
+
+**Purpose:** Admin-only user account management interface.
+
+![User Management](./src/images/users.png)
+
+**Features:**
+- Create, edit, and delete user accounts
+- Role assignment (Admin/Operator)
+- Permission management
+- User activity monitoring
+- Password reset functionality
+
+---
+
+### 5.12 UI Component Library (shadcn/ui)
 
 **Location:** [`src/components/ui/`](src/components/ui/)
 
@@ -1063,7 +1209,7 @@ apiService.ts
 ### API Client Configuration
 
 ```typescript
-const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+const API_BASE_URL = 'https://tele-dairot:5050/api';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -1726,7 +1872,7 @@ build/
 
 Production environment configuration:
 ```env
-VITE_API_BASE_URL=https://fw3.soft-trend.com:8883/api/
+VITE_API_BASE_URL=https://tele-dairot:5050/api
 VITE_APP_VERSION=0.1.0
 ```
 
@@ -2265,7 +2411,7 @@ Cookies.set('accessToken', token, {
 
 3. **Verify API_BASE_URL in apiService.ts:**
    ```typescript
-   const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+   const API_BASE_URL = 'https://tele-dairot:5050/api';
    ```
 
 4. **Clear cookies and try again:**
