@@ -748,8 +748,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                         paddingTop: '0.5rem',
                         paddingBottom: '0.5rem',
                         backgroundColor: (isStepValid(currentTab) && !isCreating)
-                          ? 'hsl(142, 72%, 45%)'
-                          : 'hsl(142, 72%, 75%)',
+                          ? 'hsl(217, 91%, 60%)'
+                          : 'hsl(217, 91%, 75%)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
@@ -761,12 +761,12 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                       }}
                       onMouseEnter={(e) => {
                         if (isStepValid(currentTab) && !isCreating) {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 40%)';
+                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(217, 91%, 50%)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (isStepValid(currentTab) && !isCreating) {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 45%)';
+                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(217, 91%, 60%)';
                         }
                       }}
                     >
