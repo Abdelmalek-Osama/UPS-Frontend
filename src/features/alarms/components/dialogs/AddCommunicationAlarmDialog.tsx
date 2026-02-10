@@ -12,7 +12,7 @@ import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { CommunicationAlarmForm, AddCommunicationAlarmDialogProps } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
@@ -79,16 +79,15 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                     </div>
                     <div className="space-y-2">
                         <Label>{t('alarms.site')}</Label>
-                        <SiteSingleSelectDropdown
+                        <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}
                             selectedSiteId={form.siteId}
                             onSiteSelect={(siteId) => setForm(prev => ({
                                 ...prev,
-                                siteId: siteId ? Number(siteId) : 0
+                                siteId: siteId || 0
                             }))}
-                            placeholder={t('readings.selectSite')}
-                            allowClear={false}
+                            placeholder={t('alarms.selectSite')}
                         />
                     </div>
 

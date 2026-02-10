@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -19,8 +19,8 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
-import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps, SiteConfiguration } from '../../types';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
+import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_PumpStatusIdv_FORM } from '../../utils/alarmConstants';
@@ -115,7 +115,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <SiteSingleSelectDropdown
+                        <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}
                             selectedSiteId={form.siteId}

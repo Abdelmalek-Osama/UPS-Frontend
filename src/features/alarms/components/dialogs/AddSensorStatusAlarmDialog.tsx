@@ -20,7 +20,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { SensorStatusForm, Site, AddSensorStatusAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
@@ -220,7 +220,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.site')}</Label>
-                            <SiteSingleSelectDropdown
+                            <AlarmSiteSelector
                                 sites={sites}
                                 sitesLoading={sitesLoading}
                                 selectedSiteId={form.siteId}
