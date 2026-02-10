@@ -229,6 +229,64 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     }
   }, [mode, data.id, isOpen, onChange, hasLoadedFlowCalc, equations, loadingEquations]);
 
+  // Initialize from formData.flowCalculation when in create mode or returning to tab
+  useEffect(() => {
+    // Only restore if the dialog is open, equations are loaded, and we have flow calculation data
+    // Check if we need to restore by seeing if our current state doesn't match formData
+    if (isOpen && !loadingEquations && equations.length > 0 && data.flowCalculation) {
+      const flowCalc = data.flowCalculation;
+      
+      if (flowCalc.equationId) {
+        const equation = equations.find(eq => eq.id === flowCalc.equationId);
+        if (equation) {
+          // Check if we need to restore by comparing constants
+          const needsConstantRestore = flowCalc.formulaConstants && 
+            (Object.keys(constants).length === 0 || 
+             Object.values(constants).some(v => v === ''));
+          
+          // Check if equation ID needs to be restored
+          const needsEquationRestore = flowCalc.equationId !== selectedEquationId;
+          
+          if (needsEquationRestore || needsConstantRestore) {
+            console.log('Restoring flow calculation from formData:', flowCalc);
+            console.log('Needs equation restore:', needsEquationRestore, 'Needs constant restore:', needsConstantRestore);
+            
+            // Set flag FIRST to prevent the equation selection effect from overwriting constants
+            setHasLoadedFlowCalc(true);
+            
+            // Parse the saved constants
+            if (flowCalc.formulaConstants) {
+              try {
+                let constantsObj: { [key: string]: string } = {};
+                const formulaConstants = flowCalc.formulaConstants;
+                
+                // Handle comma-separated string
+                if (typeof formulaConstants === 'string') {
+                  const values = formulaConstants.split(',');
+                  const extractedConstants = extractConstants(equation.displayFormula);
+                  constantsObj = extractedConstants.reduce((acc, c, idx) => ({
+                    ...acc,
+                    [c]: values[idx] || ''
+                  }), {});
+                }
+                
+                console.log('Restored constants:', constantsObj);
+                setConstants(constantsObj);
+              } catch (e) {
+                console.error('Error restoring constants:', e);
+              }
+            }
+            
+            // Set equation ID AFTER setting flag and constants
+            if (needsEquationRestore) {
+              setSelectedEquationId(flowCalc.equationId);
+            }
+          }
+        }
+      }
+    }
+  }, [isOpen, loadingEquations, equations, data.flowCalculation, selectedEquationId, constants]);
+
   // Handle equation selection and extract constants
   useEffect(() => {
     if (selectedEquationId && equations.length > 0) {
