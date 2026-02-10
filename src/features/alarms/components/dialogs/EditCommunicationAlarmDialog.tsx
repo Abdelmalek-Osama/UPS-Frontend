@@ -84,6 +84,7 @@ export function EditCommunicationAlarmDialog({
         }}>
                 <DialogContent 
                 className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" 
+                style={{ minWidth: '500px' }}
                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                     <DialogHeader>
                         <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.editCommunicationAlarm')}</DialogTitle>
@@ -229,10 +230,10 @@ export function EditCommunicationAlarmDialog({
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4 break-words">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     {form.emails.length === 0 && form.phones.length === 0 && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{t('alarms.atLeastOneRecipient')}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4 break-words">{t('alarms.atLeastOneRecipient')}</p>
                     )}
                     <div style={{
                         width: '100%',
