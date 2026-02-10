@@ -8,7 +8,13 @@ import { useLandingOverview } from "../hooks/useLandingOverview";
 export function LandingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data, loading } = useLandingOverview();
+  const { data, loading, error } = useLandingOverview();
+
+  // Debug logging
+  console.log('LandingPage - data:', data);
+  console.log('LandingPage - data.sites:', data.sites);
+  console.log('LandingPage - loading:', loading);
+  console.log('LandingPage - error:', error);
 
 
 
@@ -106,7 +112,7 @@ export function LandingPage() {
         </div>
 
         {/* Main Content Grid - Map and Recent Alerts */}
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Geographic Status Map */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">

@@ -97,19 +97,11 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
 
   // Debug logging
   useEffect(() => {
-    console.log('MapPanel - pins:', pins);
-    console.log('MapPanel - pins length:', pins?.length);
-    console.log('MapPanel - isLoading:', isLoading);
-    console.log('MapPanel - error:', error);
-    console.log('MapPanel - hoveredPin:', hoveredPin);
-    console.log('MapPanel - mousePosition:', mousePosition);
+
     
     // Log first few pins for debugging
     if (pins && pins.length > 0) {
-      console.log('First pin:', pins[0]);
-      console.log('Pin coordinates check:', pins[0]?.coordinates);
-      console.log('Pin siteName:', pins[0]?.siteName);
-      console.log('Pin siteId:', pins[0]?.siteId);
+   
     }
   }, [pins, isLoading, error, hoveredPin, mousePosition]);
 
@@ -140,7 +132,6 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
 
   // Add a fallback if pins is empty or undefined
   if (!pins || pins.length === 0) {
-    console.log('No pins data available');
     return (
       <div className="h-[600px] w-full flex items-center justify-center">
         <Alert className="max-w-md">
@@ -289,13 +280,36 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
               {/* Header with site name */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#111827', lineHeight: '1.2' }}>
-                  {hoveredPin.siteName || hoveredPin.name}
+                  {hoveredPin.governorate} • {hoveredPin.siteName}
                 </div>
               </div>
+            
+              {/* Last Reading */}
+              {hoveredPin.lastReading && (
+                <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: '600' }}>Last Reading: </span>
+                  {new Date(hoveredPin.lastReading).toLocaleString()}
+                </div>
+              )}
               
-              {/* Location */}
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
-                {hoveredPin.governorate} • {hoveredPin.branch}
+              {/* Flow Rate */}
+              {hoveredPin.flowRate !== undefined && hoveredPin.flowRate !== null && (
+                <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: '600' }}>Flow Rate: </span>
+                  {hoveredPin.flowRate.toFixed(2)} m³/s
+                </div>
+              )}
+              
+              {/* Upstream */}
+              <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
+                <span style={{ fontWeight: '600' }}>Upstream: </span>
+                {hoveredPin.upstream?.toFixed(2) || 'N/A'} m
+              </div>
+              
+              {/* Downstream */}
+              <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '12px' }}>
+                <span style={{ fontWeight: '600' }}>Downstream: </span>
+                {hoveredPin.downstream?.toFixed(2) || 'N/A'} m
               </div>
               
               {/* Status badge */}
@@ -317,15 +331,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 </span>
               </div>
               
-              {/* Status bar */}
-              <div style={{
-                width: '100%',
-                height: '16px',
-                borderRadius: '8px',
-                backgroundColor: hoveredPin.status === 'active' ? '#3b82f6' :
-                               hoveredPin.status === 'alarm' ? '#ef4444' :
-                               hoveredPin.status === 'maintenance' ? '#f59e0b' : '#6b7280'
-              }}></div>
+
             </div>
           </div>
         )}

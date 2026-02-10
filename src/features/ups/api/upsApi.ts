@@ -15,7 +15,29 @@ export interface UpsApiResponse<T> {
   data: T;
 }
 
+// Backend API response types based on OpenAPI spec
+export interface DashboardSiteDto {
+  siteId: number;
+  siteName: string;
+  siteArabicName: string;
+  latitude: number;
+  longitude: number;
+  directorateName: string;
+  latestReading: LatestReadingDto;
+}
+
+export interface LatestReadingDto {
+  date: string; // ISO date format
+  time: string; // ISO time format
+  uswl: number | null;
+  dswl: number | null;
+  flowRate: number | null;
+  pumpStatus: string | null;
+  hasActiveAlarms: boolean;
+}
+
 const UPS_VIEWER_BASE = "/v1/ups-viewer";
+const DASHBOARD_BASE = "/v1/dashboard";
 
 const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   const params: Record<string, string> = {
@@ -31,6 +53,12 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   }
   
   return params;
+};
+
+// New API: Get dashboard sites for GIS map
+export const getDashboardSites = async (): Promise<DashboardSiteDto[]> => {
+  const response = await get<UpsApiResponse<DashboardSiteDto[]>>(`${DASHBOARD_BASE}/sites`);
+  return response.data;
 };
 
 export const getLandingOverview = async (): Promise<UpsApiResponse<LandingOverview>> =>

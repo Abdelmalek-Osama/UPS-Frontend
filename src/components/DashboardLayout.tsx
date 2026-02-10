@@ -68,7 +68,7 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <ApiModeToggle />
+       
             <LanguageSwitcher />
             <div className="text-right hidden sm:block" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
               <p className="text-sm font-medium" style={{ unicodeBidi: 'plaintext' }}>
