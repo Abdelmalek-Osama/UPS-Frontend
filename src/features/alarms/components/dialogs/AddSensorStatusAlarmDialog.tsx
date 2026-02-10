@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -52,6 +52,16 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
 }: ExtendedAddSensorStatusAlarmDialogProps, ref) => {
     const { t } = useTranslation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    }, [form.message, open]);
+
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
     const handleSiteChange = (value: string) => {
@@ -177,8 +187,8 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent 
-                ref={ref} 
+            <DialogContent
+                ref={ref}
                 className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
                 style={{
                     maxHeight: '80vh',
@@ -286,10 +296,12 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.message')}</Label>
                             <Textarea
-                                className="resize-none"
+                                ref={textareaRef}
+                                className="resize-none overflow-hidden min-h-[80px]"
+                                style={{ resize: 'none' }}
                                 placeholder={t('alarms.message')}
                                 value={form.message}
-                                rows={4}
+                                rows={1}
                                 onChange={(e) => {
                                     setForm(prev => ({
                                         ...prev,
