@@ -1,8 +1,3 @@
-/**
- * Email Recipient Input Component
- * Similar to RecipientInput in alarms, optimized for email only
- */
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -11,6 +6,12 @@ import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Plus, Mail, X } from 'lucide-react';
+import { validateEmail } from '../../../shared/utils/emailValidator';
+
+/**
+ * Email Recipient Input Component
+ * Similar to RecipientInput in alarms, optimized for email only
+ */
 
 interface EmailRecipientInputProps {
   recipients: string[];
@@ -23,28 +24,34 @@ export function EmailRecipientInput({
 }: EmailRecipientInputProps) {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
-
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
- return emailRegex.test(email);
-  };
+  const [error, setError] = useState<string>('');
 
   const handleAdd = (newEmail: string) => {
     if (newEmail.trim() === '') return;
 
     if (!validateEmail(newEmail)) {
-      toast.error(t('validation.invalidEmailFormat'));
+      // Check basic format first
+      const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+      if (!emailRegex.test(newEmail)) {
+        setError(t('validation.invalidEmailFormat'));
+        toast.error(t('validation.invalidEmailFormat'));
+      } else {
+        setError(t('validation.emailDomainNotSupported'));
+        toast.error(t('validation.emailDomainNotSupported'));
+      }
       return;
     }
 
     // Check for duplicates
     if (recipients.includes(newEmail)) {
+      setError(t('alarmReports.emailAlreadyAdded'));
       toast.error(t('alarmReports.emailAlreadyAdded'));
       return;
     }
 
     setRecipients([...recipients, newEmail]);
     setInputValue('');
+    setError('');
   };
 
   const handleRemove = (emailToRemove: string) => {
@@ -68,7 +75,10 @@ export function EmailRecipientInput({
           type="email"
           placeholder={t('alarmReports.emailPlaceholder')}
    value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            setError(''); // Clear error when user types
+          }}
     onKeyPress={handleKeyPress}
           dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
           className="flex-1"
@@ -83,6 +93,7 @@ size="icon"
     <Plus className="h-4 w-4" />
         </Button>
       </div>
+      {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
 
       {recipients.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
