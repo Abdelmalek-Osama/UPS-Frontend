@@ -737,8 +737,6 @@
     "atLeastOneRecipientRequired": "At least one recipient is required",
     "selectedFields": "Selected Fields",
     "selectedFieldsDescription": "Choose which fields to include in the email report",
-    "selectAll": "Select All",
-    "clearAll": "Clear All",
     "atLeastOneFieldRequired": "At least one field must be selected",
     "selectedFieldsSummary": "Selected Fields",
     "fieldId": "ID",
@@ -776,6 +774,9 @@
     "columnSchedule": "Schedule",
     "columnRecipients": "Recipients",
     "columnFields": "Fields",
-    "columnCreated": "Created At"
-  }
-}
+    "columnCreated": "Created At",
+    "configurationNameRequired": "Configuration name is required",
+    "atLeastOneSiteRequired": "At least one site must be selected",
+    "selectAll": "Select All",
+  "clearAll": "Clear All"
+  }}
