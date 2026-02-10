@@ -56,7 +56,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" style={{ minWidth: '500px' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
                     <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.addCommunicationAlarm')}</DialogTitle>
                     <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -171,7 +171,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{t(`errors.${submissionError}`, submissionError)}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4 break-words">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                         <Button
