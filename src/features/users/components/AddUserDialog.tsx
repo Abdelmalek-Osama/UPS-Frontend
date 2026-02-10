@@ -24,6 +24,7 @@ import { Plus, Mail, Eye, EyeOff } from 'lucide-react';
 import apiService from '../../../shared/utils/apiService';
 import type { Site } from '../../sites/types';
 import { toast } from 'react-toastify';
+import { getEmailValidationError } from '../../../shared/utils/emailValidator';
 
 interface AddUserDialogProps {
   open: boolean;
@@ -89,18 +90,13 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
     } else if (!/^[\p{L}]{2,}(?:[\s-][\p{L}]{2,})+$/u.test(fullName.trim())) {
       newErrors.fullName = t('validation.fullNameFormat');
     }
-    if (!email) {
-      newErrors.email = t('validation.emailRequired');
-    } else {
-
-      if (email.startsWith(' ') || email.endsWith(' ')) {
-        newErrors.email = t('validation.emailTrimmed');
-      } else if (email.includes(' ')) {
-        newErrors.email = t('validation.emailNoSpaces');
-      } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-        newErrors.email = t('validation.emailInvalid');
-      }
+    
+    // Use the new email validation utility
+    const emailError = getEmailValidationError(email);
+    if (emailError) {
+      newErrors.email = t(emailError);
     }
+    
     if (!password) {
       newErrors.password = t('validation.passwordRequired');
     } else if (password.length < 8) {
@@ -204,7 +200,19 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                 placeholder={t('placeholders.email')}
                 value={email}
                 onChange={(e) => {
-                  setEmail(e.target.value);
+                  const newEmail = e.target.value;
+                  setEmail(newEmail);
+                  // Real-time validation
+                  if (newEmail) {
+                    const emailError = getEmailValidationError(newEmail);
+                    if (emailError) {
+                      setErrors(prev => ({ ...prev, email: t(emailError) }));
+                    } else {
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }
+                  } else {
+                    setErrors(prev => ({ ...prev, email: '' }));
+                  }
                 }}
                 autoComplete="off"
               />
