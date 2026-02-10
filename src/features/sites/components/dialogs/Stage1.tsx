@@ -297,7 +297,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
 
   const getLongitudeErrorsList = (): string[] => {
     if (!longitudeTouched) return [];
-    return getLongitudeErrors(data.longitude || '', t);
+    return getLongitudeErrors(typeof data.longitude === 'number' ? data.longitude : '', t);
   };
 
   const handleLatitudeChange = (value: string) => {
@@ -310,7 +310,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
 
   const getLatitudeErrorsList = (): string[] => {
     if (!latitudeTouched) return [];
-    return getLatitudeErrors(data.latitude || '', t);
+    return getLatitudeErrors(typeof data.latitude === 'number' ? data.latitude : '', t);
   };
 
   const handleCanalChange = (value: string) => {
@@ -430,7 +430,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             step="any"
             max="180"
             placeholder={t('sites.stage1.longitudePlaceholder')}
-            value={data.longitude ? Math.abs(data.longitude as number) : ''}
+            value={typeof data.longitude === 'number' ? Math.abs(data.longitude) : ''}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
               const direction = (data.longitudeDirection || 'E') === 'W' ? -1 : 1;
@@ -443,7 +443,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
           <Select
             value={data.longitudeDirection || 'E'}
             onValueChange={(value) => {
-              const absLon = Math.abs(data.longitude as number) || 0;
+              const absLon = typeof data.longitude === 'number' ? Math.abs(data.longitude) : 0;
               onChange('longitude', value === 'W' ? -absLon : absLon);
               onChange('longitudeDirection', value);
             }}
@@ -475,7 +475,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             step="any"
             max="90"
             placeholder={t('sites.stage1.latitudePlaceholder')}
-            value={data.latitude ? Math.abs(data.latitude as number) : ''}
+            value={typeof data.latitude === 'number' ? Math.abs(data.latitude) : ''}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
               const direction = (data.latitudeDirection || 'N') === 'S' ? -1 : 1;
@@ -488,7 +488,7 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
           <Select
             value={data.latitudeDirection || 'N'}
             onValueChange={(value) => {
-              const absLat = Math.abs(data.latitude as number) || 0;
+              const absLat = typeof data.latitude === 'number' ? Math.abs(data.latitude) : 0;
               onChange('latitude', value === 'S' ? -absLat : absLat);
               onChange('latitudeDirection', value);
             }}
