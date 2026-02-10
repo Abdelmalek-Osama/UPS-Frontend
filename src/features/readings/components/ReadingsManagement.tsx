@@ -389,7 +389,7 @@ export function ReadingsManagement() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>{t('readings.selectSite')}</Label>
+              {/*<Label>{t('readings.selectSite')}</Label>*/}
        <SiteSingleSelectDropdown
                 sites={sites}
               selectedSiteId={selectedSiteId}
