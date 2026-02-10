@@ -12,7 +12,7 @@ import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { PumpStatusPSAlarmForm, Site, AddPumpStatusPSAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
@@ -54,8 +54,6 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
         }
     };
 
-    
-
     return (
         <>
             <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" style={{ minWidth: '500px' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
@@ -70,7 +68,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <SiteSingleSelectDropdown
+                        <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}
                             selectedSiteId={form.siteId}

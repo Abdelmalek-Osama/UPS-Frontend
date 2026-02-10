@@ -19,7 +19,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, INITIAL_THRESHOLD_FORM, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
@@ -280,18 +280,17 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </div>
                         <div style={fieldContainerStyle}>
     <Label>{t('alarms.site')}</Label>
-        <SiteSingleSelectDropdown
-    sites={sites}
-       sitesLoading={sitesLoading}
-       selectedSiteId={form.siteId}
-            onSiteSelect={(siteId) => setForm(prev => ({
-       ...prev,
-          siteId: siteId ? Number(siteId) : 0
-      }))}
-   placeholder={t('readings.selectSite')}
-   allowClear={false}
-         />
-          </div>
+    <AlarmSiteSelector
+     sites={sites}
+   sitesLoading={sitesLoading}
+             selectedSiteId={form.siteId}
+           onSiteSelect={(siteId) => setForm(prev => ({
+             ...prev,
+           siteId: siteId ? Number(siteId) : 0
+       }))}
+         placeholder={t('readings.selectSite')}
+  />
+    </div>
 
 
                         <div style={fieldContainerStyle}>
