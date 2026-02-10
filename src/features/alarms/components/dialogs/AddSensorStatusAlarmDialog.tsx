@@ -31,7 +31,6 @@ interface ExtendedAddSensorStatusAlarmDialogProps extends AddSensorStatusAlarmDi
     sites: Site[];
     sitesLoading?: boolean;
     siteError?: string | null;
-    open?: boolean;
     availableFields?: string[];
 }
 
@@ -48,7 +47,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
     sites,
     sitesLoading = false,
     siteError = null,
-    open = false,
+    open,
     availableFields = [],
 }: ExtendedAddSensorStatusAlarmDialogProps, ref) => {
     const { t } = useTranslation();
@@ -115,7 +114,9 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -181,6 +182,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                 className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
                 style={{
                     maxHeight: '80vh',
+                    minWidth: '500px',
                     display: 'flex',
                     flexDirection: 'column',
                     padding: 0,

@@ -444,7 +444,7 @@ export function CreateAlarmReportDialog({
             {/* Email Recipients */}
             <div className="space-y-2">
               <EmailRecipientInput recipients={recipients} setRecipients={setRecipients} />
-              {errors.recipients && <p className="text-xs text-red-500">{errors.recipients}</p>}
+              {errors.recipients && <p className="text-xs text-red-600">{errors.recipients}</p>}
             </div>
 
             {/* Selected Fields */}

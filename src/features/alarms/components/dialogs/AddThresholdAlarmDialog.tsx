@@ -213,7 +213,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -237,6 +239,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
     style={{
         maxHeight: '80vh',
+        minWidth: '500px',
         display: 'flex',
         flexDirection: 'column',
         padding: 0,
