@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Table,
     TableBody,
@@ -15,62 +16,108 @@ import { CommunicationAlarmResponse } from '../../types';
 interface CommunicationAlarmTableProps {
     alarms: CommunicationAlarmResponse[];
     onEdit: (alarm: CommunicationAlarmResponse) => void;
+    error?: boolean;
 }
 
-export function CommunicationAlarmTable({ alarms, onEdit }: CommunicationAlarmTableProps) {
+export function CommunicationAlarmTable({ alarms, onEdit, error }: CommunicationAlarmTableProps) {
+    const { t } = useTranslation();
+    const isRTL = t('_rtl') === 'rtl';
+    // Arabic/RTL should align right, English/LTR should align left
+    const textAlignClass = isRTL ? 'text-right' : 'text-left';
+
+    // Define columns in logical order (English/LTR)
+    const columns = [
+        {
+            key: 'actions',
+            header: t('common.actions'),
+            render: (alarm: CommunicationAlarmResponse) => (
+                <div className={textAlignClass}>
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
+        },
+        {
+            key: 'emailRecipients',
+            header: t('alarms.recipients'),
+            render: (alarm: CommunicationAlarmResponse) => (
+                <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+                    {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
+                        <Badge key={`email-${idx}`} variant="secondary" className="text-xs flex items-center">
+                            <Mail className="ml-1 h-3 w-3" /> {email.trim()}
+                        </Badge>
+                    ))}
+                    {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
+                        <Badge key={`phone-${idx}`} variant="secondary" className="text-xs flex items-center">
+                            <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
+                        </Badge>
+                    ))}
+                </div>
+            )
+        },
+        {
+            key: 'hours',
+            header: t('alarms.hours'),
+            render: (alarm: CommunicationAlarmResponse) => (
+                <div className={textAlignClass}>
+                    <Badge variant="outline" dir={isRTL ? 'rtl' : 'ltr'}>
+                        {alarm.numHours === 1 ? `${alarm.numHours} ${t('alarms.hour')}` : `${alarm.numHours} ${t('alarms.hours')}`}
+                    </Badge>
+                </div>
+            )
+        },
+        {
+            key: 'site',
+            header: t('alarms.site'),
+            render: (alarm: CommunicationAlarmResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'medium' }}>
+                    {alarm.siteName}
+                </div>
+            )
+        },
+        {
+            key: 'alarmName',
+            header: t('alarms.alarmName'),
+            render: (alarm: CommunicationAlarmResponse) => (
+                <div className={textAlignClass} style={{ fontWeight: 'medium' }}>
+                    {alarm.alarmName}
+                </div>
+            )
+        }
+    ];
+
+    // For RTL (Arabic): keep original order
+    // For LTR (English): reverse the columns
+    const displayColumns = isRTL ? columns : [...columns].reverse();
+
+    if (error) {
+        return (
+            <div className="text-red-600 text-center py-8">
+                {t('common.serverError')}
+            </div>
+        );
+    }
+
     return (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                    {/* <TableHead className="text-right">الخطورة</TableHead> */}
-                    <TableHead className="text-right">المستلمون</TableHead>
-                    <TableHead className="text-right">عدد الساعات</TableHead>
-                    <TableHead className="text-right">الموقع</TableHead>
-                    <TableHead className="text-right">الاسم</TableHead>
+                    {displayColumns.map((column) => (
+                        <TableHead key={column.key} className={textAlignClass}>
+                            {column.header}
+                        </TableHead>
+                    ))}
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {alarms.map((alarm) => (
                     <TableRow key={alarm.alarmId}>
-                        <TableCell className="text-right">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onEdit(alarm)}
-                            >
-                                <Edit className="h-4 w-4" />
-                            </Button>
-                        </TableCell>
-                        {/* <TableCell className="text-right">
-                            {alarm.severity === 0 && (
-                                <Badge style={{ backgroundColor: '#DAA520' }} dir="rtl">Warning</Badge>
-                            )}
-                            {alarm.severity === 1 && (
-                                <Badge variant="destructive" dir="rtl">Critical</Badge>
-                            )}
-                        </TableCell> */}
-                        <TableCell className="text-right">
-                            <div className="flex flex-wrap gap-1 justify-end">
-                                {alarm.emails && alarm.emails.split(',').filter(Boolean).map((email, idx) => (
-                                    <Badge key={`email-${idx}`} variant="secondary" className="text-xs">
-                                        <Mail className="ml-1 h-3 w-3" /> {email.trim()}
-                                    </Badge>
-                                ))}
-                                {alarm.phones && alarm.phones.split(',').filter(Boolean).map((phone, idx) => (
-                                    <Badge key={`phone-${idx}`} variant="secondary" className="text-xs">
-                                        <Phone className="ml-1 h-3 w-3" /> {phone.trim()}
-                                    </Badge>
-                                ))}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <Badge variant="outline" dir="rtl">
-                                {alarm.numHours === 1 ? `${alarm.numHours} ساعة ` : `${alarm.numHours} ساعات`}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">{alarm.siteName}</TableCell>
-                        <TableCell className="text-right font-medium">{alarm.alarmName}</TableCell>
+                        {displayColumns.map((column) => (
+                            <TableCell key={`${alarm.alarmId}-${column.key}`}>
+                                {column.render(alarm)}
+                            </TableCell>
+                        ))}
                     </TableRow>
                 ))}
             </TableBody>
