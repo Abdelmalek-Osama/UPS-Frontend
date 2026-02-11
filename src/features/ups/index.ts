@@ -2,6 +2,7 @@
 export { LandingPage } from "./components/LandingPage";
 export { SitePage } from "./components/SitePage";
 export { GovernoratePage } from "./components/GovernoratePage";
+export { DirectoratePage } from "./components/DirectoratePage";
 export { MasterPage } from "./components/MasterPage";
 export { ReportsPage } from "./components/ReportsPage";
 export { ApiModeToggle } from "./components/ApiModeToggle";

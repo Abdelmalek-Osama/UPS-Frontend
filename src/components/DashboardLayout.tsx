@@ -32,9 +32,8 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
 
   const allMenuItems = [
     { id: 'overview', label: t('navigation.overview'), icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
-    { id: 'governorate', label: t('navigation.governorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
-    { id: 'master', label: t('navigation.master'), icon: Globe2, path: '/master', roles: ['Admin', 'SuperAdmin'] },
-    { id: 'reports', label: t('navigation.reports'), icon: FileText, path: '/reports', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
+    { id: 'directorate', label: t('navigation.directorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
+    { id: 'reports', label: t('navigation.reports'), icon: FileText, path: '/reports', roles: ['Admin', 'SuperAdmin'] },
   ];
 
   // Filter menu items based on user role

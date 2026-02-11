@@ -587,6 +587,7 @@
   "navigation": {
     "overview": "نظرة عامة",
     "governorate": "عرض المحافظة",
+    "directorate": "عرض المديرية",
     "master": "العرض العام",
     "reports": "التقارير",
     "dashboard": "لوحة التحكم",

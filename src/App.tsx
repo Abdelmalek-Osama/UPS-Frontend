@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { LoginPage } from './features/auth';
 import { DashboardLayout } from './components/DashboardLayout';
 import { Routes, Route, Navigate } from "react-router-dom";
-import { LandingPage, SitePage, GovernoratePage, MasterPage, ReportsPage, UPSAuthProvider, ProtectedRoute } from './features/ups';
+import { LandingPage, SitePage, DirectoratePage, MasterPage, ReportsPage, UPSAuthProvider, ProtectedRoute } from './features/ups';
 import { AuthProvider, useAuth } from './shared/contexts/AuthContext';
 import { ApiConfig } from './features/ups/utils/apiConfig';
 
@@ -53,7 +53,7 @@ function AuthRoutes() {
                     } />
                     <Route path="governorates/:governorateId" element={
                       <ProtectedRoute>
-                        <GovernoratePage />
+                        <DirectoratePage />
                       </ProtectedRoute>
                     } />
                     <Route path="master" element={
@@ -62,7 +62,7 @@ function AuthRoutes() {
                       </ProtectedRoute>
                     } />
                     <Route path="reports" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute requireMasterAccess={true}>
                         <ReportsPage />
                       </ProtectedRoute>
                     } />

@@ -588,6 +588,7 @@
   "navigation": {
     "overview": "Overview",
     "governorate": "Governorate View",
+    "directorate": "Directorate View",
     "master": "Master View",
     "reports": "Reports",
     "dashboard": "Dashboard",

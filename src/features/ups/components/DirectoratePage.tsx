@@ -1,104 +1,74 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Checkbox } from "../../../components/ui/checkbox";
 import { ArrowLeft, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { useMasterOverview } from "../hooks/useMasterOverview";
+import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { exportReport } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
-export function MasterPage() {
+export function DirectoratePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const params = useParams();
+  const directorateId = params.governorateId || "minia";
   const [filter, setFilter] = useState<TimeFilter>("24h");
   const [range, setRange] = useState<DateRange>({});
   const [calculations, setCalculations] = useState<CalculationOptions>({
     levels: "average",
+    battery: "average",
+    flow: "sum"
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSites, setSelectedSites] = useState<string[]>([]);
-  const [selectedGovernorates, setSelectedGovernorates] = useState<string[]>([]);
+
   
-  const { data } = useMasterOverview(filter, range);
+  const { data, governorateName } = useGovernorateOverview(directorateId, filter, range);
 
   // Handle export functionality
   const handleExport = async (format: "pdf" | "excel") => {
     try {
-      await exportReport("master", format, filter, range);
+      await exportReport("governorate", format, filter, range, undefined, directorateId);
     } catch (error) {
       console.error("Export failed:", error);
     }
   };
 
-  // Get unique governorates
-  const governorates = useMemo(() => {
-    const unique = [...new Set(data.sites.map(site => site.governorate))];
-    return unique.sort();
-  }, [data.sites]);
-
-  // Get unique branches
-  const branches = useMemo(() => {
-    return ["Ibrahimiya", "Bahr Youssef"];
-  }, []);
-
-  const sortedSites = useMemo(
-    () => [...data.sites].sort((a, b) => a.position - b.position),
-    [data.sites],
-  );
+  const orderedBranches = useMemo(() => {
+    const order = ["Ibrahimiya", "Bahr Youssef"];
+    return [...data.branches].sort((a, b) => {
+      const indexA = order.indexOf(a.name);
+      const indexB = order.indexOf(b.name);
+      if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [data.branches]);
 
   const handleSiteClick = (siteId: string) => {
     navigate(`/sites/${siteId}`);
   };
 
-  const toggleSiteSelection = (siteId: string) => {
-    setSelectedSites(prev =>
-      prev.includes(siteId)
-        ? prev.filter(id => id !== siteId)
-        : [...prev, siteId]
-    );
-  };
-
-  const toggleGovernorateSelection = (governorate: string) => {
-    setSelectedGovernorates(prev =>
-      prev.includes(governorate)
-        ? prev.filter(g => g !== governorate)
-        : [...prev, governorate]
-    );
-  };
-
   const filterSites = (sites: SiteSummary[]) => {
-    let filtered = sites;
-    
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(site =>
-        site.siteName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Filter by governorate
-    if (selectedGovernorates.length > 0) {
-      filtered = filtered.filter(site =>
-        selectedGovernorates.includes(site.governorate)
-      );
-    }
-    
-    return filtered;
+    if (!searchTerm) return sites;
+    return sites.filter(site =>
+      site.siteName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
-  const filteredSites = filterSites(sortedSites);
-
-  const renderBranchSection = (branchName: string) => {
-    const branchSites = filteredSites.filter(site => site.branch === branchName);
+  const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
+    const sortedSites = sites.sort((a, b) => a.position - b.position);
+    const filteredSites = filterSites(sortedSites);
     
     // Separate main regulators and all sites for charts
-    const mainRegulators = branchSites.filter(site => 
+    const mainRegulators = sortedSites.filter(site => 
       !site.siteName.toLowerCase().includes("branch") && 
       !site.siteName.toLowerCase().includes("pump")
     );
@@ -112,7 +82,7 @@ export function MasterPage() {
     }));
 
     // Prepare chart data for flow rate (all sites)
-    const flowChartData = branchSites.map(site => ({
+    const flowChartData = sortedSites.map(site => ({
       name: site.siteName.split(' ').slice(0, 2).join(' '),
       flowRate: site.flowRate || 0,
       type: site.siteName.toLowerCase().includes("branch") ? "Branch" : 
@@ -121,7 +91,7 @@ export function MasterPage() {
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
-    const pumpStations = branchSites.filter(site => 
+    const pumpStations = sortedSites.filter(site => 
       site.siteName.toLowerCase().includes("pump")
     );
 
@@ -132,14 +102,27 @@ export function MasterPage() {
         {/* Sites Table */}
         <Card>
           <CardHeader>
-            <CardTitle>{branchName} Sites ({branchSites.length})</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{branchName} Sites</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search sites..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 w-64"
+                  />
+                </div>
+
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Governorate</TableHead>
                   <TableHead>Site Name</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Upstream (m)</TableHead>
@@ -150,22 +133,17 @@ export function MasterPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {branchSites.length === 0 ? (
+                {filteredSites.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500">
-                      No sites match your filters
+                    <TableCell colSpan={8} className="text-center text-gray-500">
+                      {searchTerm ? "No sites match your search" : t("common.noData")}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  branchSites.map((site) => (
+                  filteredSites.map((site) => (
                     <TableRow key={site.siteId} className="hover:bg-gray-50">
                       <TableCell>
-                        <Checkbox
-                          checked={selectedSites.includes(site.siteId)}
-                          onCheckedChange={() => toggleSiteSelection(site.siteId)}
-                        />
                       </TableCell>
-                      <TableCell className="text-gray-600">{site.governorate}</TableCell>
                       <TableCell className="font-medium">{site.siteName}</TableCell>
                       <TableCell>
                         <Badge 
@@ -204,63 +182,59 @@ export function MasterPage() {
         </Card>
 
         {/* Upstream/Downstream Profile Chart (Main Regulators Only) */}
-        {mainRegulators.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Upstream/Downstream Profile (South to North - Main Regulators)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={profileChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end" 
-                      height={80}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis label={{ value: 'Water Level (m)', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="upstream" fill="#3b82f6" name="Upstream" />
-                    <Bar dataKey="downstream" fill="#ef4444" name="Downstream" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upstream/Downstream Profile (South to North - Main Regulators)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={profileChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis label={{ value: 'Water Level (m)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="upstream" fill="#3b82f6" name="Upstream" />
+                  <Bar dataKey="downstream" fill="#ef4444" name="Downstream" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Flow Rate Chart (All Sites) */}
-        {branchSites.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Flow Rate Profile (All Sites - Main & Branch Canals)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={flowChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end" 
-                      height={80}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis label={{ value: 'Flow Rate (m³/s)', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="flowRate" fill="#06b6d4" name="Flow Rate" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Flow Rate Profile (All Sites - Main & Branch Canals)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={flowChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis label={{ value: 'Flow Rate (m³/s)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="flowRate" fill="#06b6d4" name="Flow Rate" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Pump Stations Table (Bahr Youssef only) */}
         {isPumpBranch && pumpStations.length > 0 && (
@@ -272,7 +246,6 @@ export function MasterPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Governorate</TableHead>
                     <TableHead>Pump Station</TableHead>
                     <TableHead>Timestamp</TableHead>
                     <TableHead>Pump 1</TableHead>
@@ -297,7 +270,6 @@ export function MasterPage() {
 
                     return (
                       <TableRow key={station.siteId}>
-                        <TableCell className="text-gray-600">{station.governorate}</TableCell>
                         <TableCell className="font-medium">{station.siteName}</TableCell>
                         <TableCell className="text-sm text-gray-500">
                           {new Date(station.lastReading).toLocaleString()}
@@ -341,14 +313,14 @@ export function MasterPage() {
           Overview
         </Button>
         <span className="text-gray-400">/</span>
-        <span className="font-medium text-gray-900">Master View</span>
+        <span className="font-medium text-gray-900">Directorate View</span>
       </div>
 
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Full System Master View</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{governorateName} Directorate</h1>
         <p className="text-gray-500 mt-1">
-          Complete overview of all monitoring sites across all directorates
+          Monitoring points across {orderedBranches.map(b => b.name).join(' & ')}
         </p>
       </div>
 
@@ -364,52 +336,11 @@ export function MasterPage() {
         showCalculations={filter !== "latest"}
       />
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search sites..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {/* Governorate Filter */}
-            <div>
-              <h4 className="text-sm font-medium mb-2">Governorates</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {governorates.map((gov) => (
-                  <div key={gov} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`gov-${gov}`}
-                      checked={selectedGovernorates.includes(gov)}
-                      onCheckedChange={() => toggleGovernorateSelection(gov)}
-                    />
-                    <label
-                      htmlFor={`gov-${gov}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {gov}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Branch Sections */}
       <div className="space-y-12">
-        {branches.map((branch) => renderBranchSection(branch))}
+        {orderedBranches.map((branch) => 
+          renderBranchSection(branch.name, branch.sites)
+        )}
       </div>
     </div>
   );
