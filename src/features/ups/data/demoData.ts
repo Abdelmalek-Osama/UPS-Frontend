@@ -95,7 +95,7 @@ const buildDailySeries = (
 // Legacy site data structure for easier maintenance
 const legacySites = [
   // Aswan Governorate (Southernmost)
-  { id: 1, name: "Aswan High Dam", governorate: "Aswan", branch: "Main Canal", status: "active", lat: 24.0084, lng: 32.8998, positionOrder: 1, upstream: 6.8, downstream: 6.2, batteryVoltage: 12.9, flowRate: 25.4 },
+  { id: 1, name: "Aswan High Dam pump", governorate: "Aswan", branch: "Main Canal", status: "active", lat: 24.0084, lng: 32.8998, positionOrder: 1, upstream: 6.8, downstream: 6.2, batteryVoltage: 12.9, flowRate: 25.4 },
   { id: 2, name: "Kom Ombo", governorate: "Aswan", branch: "Main Canal", status: "active", lat: 24.4667, lng: 32.9500, positionOrder: 2, upstream: 6.5, downstream: 5.9, batteryVoltage: 12.8, flowRate: 24.1 },
   { id: 3, name: "Edfu", governorate: "Aswan", branch: "Main Canal", status: "active", lat: 24.9833, lng: 32.8667, positionOrder: 3, upstream: 6.3, downstream: 5.7, batteryVoltage: 12.7, flowRate: 23.8 },
   

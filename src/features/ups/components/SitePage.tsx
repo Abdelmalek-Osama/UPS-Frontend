@@ -8,6 +8,10 @@ import { ArrowLeft } from "lucide-react";
 import { SiteMetricsCards } from "./SiteMetricsCards";
 import { SiteReadingsTable } from "./SiteReadingsTable";
 import { TimeFilterBar } from "./TimeFilterBar";
+import { PumpOperatingHoursTable } from "./PumpOperatingHoursTable";
+import { PumpFlowTable } from "./PumpFlowTable";
+import { PumpFlowChart } from "./PumpFlowChart";
+import { AlarmEventsTable } from "./AlarmEventsTable";
 import { useSiteDetails } from "../hooks/useSiteDetails";
 import { exportReport } from "../api/upsApi";
 import { aggregateTimeSeriesPoints, getPeriodType } from "../utils/calculations";
@@ -24,8 +28,49 @@ export function SitePage() {
     levels: "average",
     battery: "average", 
     flow: "sum"
+
   });
   const { data } = useSiteDetails(siteId, filter, range);
+
+  // Determine if this is a pump station site (mock logic - should come from backend)
+  const isPumpStation = data.site.siteName.toLowerCase().includes("pump");
+
+  // Mock pump data (should come from backend API)
+  const pumpOperatingHours = [
+    { pumpNumber: 1, operatingHours: 245.5, status: "running" as const },
+    { pumpNumber: 2, operatingHours: 198.2, status: "running" as const },
+    { pumpNumber: 3, operatingHours: 312.8, status: "stopped" as const },
+    { pumpNumber: 4, operatingHours: 156.4, status: "running" as const },
+    { pumpNumber: 5, operatingHours: 89.1, status: "maintenance" as const },
+    { pumpNumber: 6, operatingHours: 267.9, status: "running" as const },
+  ];
+
+  const pumpFlows = [
+    { pumpNumber: 1, flowRate: 3.2, percentage: 18.5 },
+    { pumpNumber: 2, flowRate: 2.8, percentage: 16.2 },
+    { pumpNumber: 3, flowRate: 0, percentage: 0 },
+    { pumpNumber: 4, flowRate: 3.5, percentage: 20.2 },
+    { pumpNumber: 5, flowRate: 0, percentage: 0 },
+    { pumpNumber: 6, flowRate: 7.8, percentage: 45.1 },
+  ];
+
+  const totalPumpFlow = pumpFlows.reduce((sum, pump) => sum + pump.flowRate, 0);
+
+  // Mock pump flow time series data
+  const pumpFlowSeries = useMemo(() => {
+    return [
+      { timestamp: '2026-02-05T10:00:00Z', label: '10:00', pump1: 3.1, pump2: 2.9, pump3: 0, pump4: 3.4, pump5: 0, pump6: 7.5 },
+      { timestamp: '2026-02-05T11:00:00Z', label: '11:00', pump1: 3.3, pump2: 2.7, pump3: 0, pump4: 3.6, pump5: 0, pump6: 7.9 },
+      { timestamp: '2026-02-05T12:00:00Z', label: '12:00', pump1: 3.2, pump2: 2.8, pump3: 0, pump4: 3.5, pump5: 0, pump6: 7.8 },
+      { timestamp: '2026-02-05T13:00:00Z', label: '13:00', pump1: 3.4, pump2: 2.9, pump3: 0, pump4: 3.7, pump5: 0, pump6: 8.1 },
+      { timestamp: '2026-02-05T14:00:00Z', label: '14:00', pump1: 3.1, pump2: 2.6, pump3: 0, pump4: 3.3, pump5: 0, pump6: 7.6 },
+      { timestamp: '2026-02-05T15:00:00Z', label: '15:00', pump1: 3.0, pump2: 2.8, pump3: 0, pump4: 3.5, pump5: 0, pump6: 7.7 },
+      { timestamp: '2026-02-05T16:00:00Z', label: '16:00', pump1: 3.2, pump2: 2.7, pump3: 0, pump4: 3.4, pump5: 0, pump6: 7.9 },
+      { timestamp: '2026-02-05T17:00:00Z', label: '17:00', pump1: 3.3, pump2: 2.9, pump3: 0, pump4: 3.6, pump5: 0, pump6: 8.0 },
+    ];
+  }, []);
+
+  const activePumps = [1, 2, 4, 6]; // Pumps that are currently active
 
   // Handle export functionality
   const handleExport = async (format: "pdf" | "excel") => {
@@ -110,8 +155,10 @@ export function SitePage() {
         </div>
       </div>
 
-      {/* Time Filter and Export Controls */}
-      <TimeFilterBar
+   
+      {/* 3. Calculation Methods - Water Level Average Only */}
+ 
+       <TimeFilterBar
         value={filter}
         onChange={setFilter}
         range={range}
@@ -120,11 +167,12 @@ export function SitePage() {
         onCalculationsChange={setCalculations}
         onExport={handleExport}
         showCalculations={filter !== "latest"}
-      />
+      /> 
 
-      {/* Metrics Cards */}
+      {/* 1. Metrics Cards */}
       <SiteMetricsCards site={data.site} />
 
+      {/* 2. Charts Section */}
       {/* Water Levels Chart */}
       <Card>
         <CardHeader>
@@ -158,58 +206,34 @@ export function SitePage() {
         </CardContent>
       </Card>
 
-      {/* Flow Rate and Battery Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Flow Rate Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Area 
-                    type="monotone" 
-                    dataKey="flowRate" 
-                    stroke="#06b6d4" 
-                    fill="#06b6d4" 
-                    fillOpacity={0.3} 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Flow Rate Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Flow Rate Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Area 
+                  type="monotone" 
+                  dataKey="flowRate" 
+                  stroke="#06b6d4" 
+                  fill="#06b6d4" 
+                  fillOpacity={0.3} 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Battery Voltage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line 
-                    type="stepAfter" 
-                    dataKey="batteryVoltage" 
-                    stroke="#10b981" 
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+
+      
 
       {/* Data Tables */}
       <Card>
@@ -221,65 +245,24 @@ export function SitePage() {
         </CardContent>
       </Card>
 
-      {/* Event Log */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Event Log</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex space-x-4 border-b pb-2">
-              <button className="text-sm font-medium text-gray-900 border-b-2 border-blue-500 pb-1">
-                Recent Readings
-              </button>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
-                Event Log
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 text-gray-600">Time</th>
-                    <th className="text-left py-2 text-gray-600">Type</th>
-                    <th className="text-left py-2 text-gray-600">Message</th>
-                    <th className="text-left py-2 text-gray-600">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.events.slice(0, 5).map((event) => (
-                    <tr key={event.id} className="border-b">
-                      <td className="py-2 text-gray-900">
-                        {new Date(event.timestamp).toLocaleString()}
-                      </td>
-                      <td className="py-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          event.type === 'alarm' ? 'bg-red-100 text-red-800' :
-                          event.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {event.type.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="py-2 text-gray-900">{event.message}</td>
-                      <td className="py-2">
-                        <span className={`inline-flex items-center text-xs ${
-                          event.acknowledged ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          <span className={`w-2 h-2 rounded-full mr-1 ${
-                            event.acknowledged ? 'bg-green-500' : 'bg-red-500'
-                          }`}></span>
-                          {event.acknowledged ? 'Acknowledged' : 'Active'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      {/* Pump Station Details - Only show for pump station sites */}
+      {isPumpStation && (
+        <>
+          {/* Pump Flow Chart */}
+          <PumpFlowChart data={pumpFlowSeries} activePumps={activePumps} />
+
+          {/* Pump Tables - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PumpOperatingHoursTable data={pumpOperatingHours} />
+            <PumpFlowTable data={pumpFlows} totalFlow={totalPumpFlow} />
           </div>
-        </CardContent>
-      </Card>
+        </>
+      )}
+
+      {/* Alarm Events Table */}
+      <AlarmEventsTable events={data.events} />
+
+
     </div>
   );
 }
