@@ -798,7 +798,25 @@
       "subtitle": "نظرة عامة على جميع المواقع المسموح بها",
       "mapTitle": "خريطة المواقع (مصر)",
       "mapHint": "اضغط على أي دبوس لفتح صفحة الموقع.",
-      "recentAlarms": "أحدث التنبيهات"
+      "recentAlarms": "أحدث التنبيهات",
+      "systemOverview": "نظرة عامة على النظام",
+      "systemOverviewDescription": "مراقبة لحظية للترعة الرئيسية والفروع (من أسيوط إلى الفيوم).",
+      "totalFlowRate": "إجمالي معدل التدفق",
+      "vsYesterday": "{{change}} مقارنة بالأمس",
+      "activeSites": "المواقع النشطة",
+      "operationalStatus": "الحالة التشغيلية",
+      "urgentAlarms": "التنبيهات العاجلة",
+      "requireAttention": "تتطلب اهتماماً فورياً",
+      "geographicMap": "خريطة الحالة الجغرافية",
+      "mapDirection": "الجنوب (أسيوط) ← الشمال (الفيوم)",
+      "recentAlerts": "التنبيهات الأخيرة",
+      "miniaBridge": "كوبري المنيا",
+      "maghaghaIntake": "مأخذ مغاغة",
+      "minia": "المنيا",
+      "timeAgo": "منذ {{time}}",
+      "criticalLevel": "مستوى حرج",
+      "viewAllAlerts": "عرض جميع التنبيهات",
+      "lastUpdated": "آخر تحديث"
     },
     "kpis": {
       "totalSites": "إجمالي المواقع",
@@ -858,6 +876,17 @@
       "readings": "جدول القراءات",
       "eventLog": "سجل الأحداث",
       "siteOverview": "ملخص المواقع"
+    },
+    "map": {
+      "legend": "مفتاح الخريطة",
+      "activeSite": "موقع نشط",
+      "alarmState": "حالة تنبيه",
+      "inactiveOffline": "غير نشط/غير متصل",
+      "lastReading": "آخر قراءة",
+      "active": "نشط",
+      "alarm": "تنبيه",
+      "maintenance": "صيانة",
+      "inactive": "غير نشط"
     },
     "governorate": {
       "title": "نظرة محافظة - {{governorate}}",

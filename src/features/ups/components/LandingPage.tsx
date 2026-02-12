@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Droplets, Activity, Zap, TrendingUp } from "lucide-react";
+import { AlertTriangle, Droplets, Activity, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "../../../components/ui/card";
 import { MapPanel } from "./MapPanel";
 import { useLandingOverview } from "../hooks/useLandingOverview";
@@ -8,15 +8,9 @@ import { useLandingOverview } from "../hooks/useLandingOverview";
 export function LandingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data, loading, error } = useLandingOverview();
+  const { data, loading } = useLandingOverview();
 
   // Debug logging
-  console.log('LandingPage - data:', data);
-  console.log('LandingPage - data.sites:', data.sites);
-  console.log('LandingPage - loading:', loading);
-  console.log('LandingPage - error:', error);
-
-
 
   const handleSiteClick = (siteId: number) => {
     navigate(`/sites/${siteId}`);
@@ -27,7 +21,6 @@ export function LandingPage() {
   const activeSites = data.sites?.filter(site => site.status === 'active').length || 7;
   const totalSites = data.sites?.length || 11;
   const urgentAlarms = data.kpis?.urgentAlarms || 2;
-  const avgBatteryLevel = data.sites?.reduce((sum, site) => sum + (site.batteryVoltage || 0), 0) / (data.sites?.length || 1) || 12.4;
 
   return (
     <div className="space-y-6">
@@ -37,8 +30,8 @@ export function LandingPage() {
       <div className="space-y-4">
         {/* System Overview Header */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">System Overview</h3>
-          <p className="text-sm text-gray-500 mt-1">Real-time monitoring of Main Canal and branches (Assiut to Faiyum).</p>
+          <h3 className="text-xl font-semibold text-gray-900">{t("ups.landing.systemOverview")}</h3>
+          <p className="text-sm text-gray-500 mt-1">{t("ups.landing.systemOverviewDescription")}</p>
         </div>
 
         {/* System Overview Cards */}
@@ -48,11 +41,11 @@ export function LandingPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Flow Rate</p>
+                  <p className="text-sm font-medium text-gray-600">{t("ups.landing.totalFlowRate")}</p>
                   <p className="text-2xl font-bold text-gray-900">{totalFlowRate.toFixed(0)} m³/s</p>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" />
-                    +2.5% vs yesterday
+                    {t("ups.landing.vsYesterday", { change: "+2.5%" })}
                   </p>
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -67,9 +60,9 @@ export function LandingPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Sites</p>
+                  <p className="text-sm font-medium text-gray-600">{t("ups.landing.activeSites")}</p>
                   <p className="text-2xl font-bold text-gray-900">{activeSites}/{totalSites}</p>
-                  <p className="text-xs text-gray-500 mt-1">Operational Status</p>
+                  <p className="text-xs text-gray-500 mt-1">{t("ups.landing.operationalStatus")}</p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Activity className="w-6 h-6 text-green-600" />
@@ -83,9 +76,9 @@ export function LandingPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Urgent Alarms</p>
+                  <p className="text-sm font-medium text-gray-600">{t("ups.landing.urgentAlarms")}</p>
                   <p className="text-2xl font-bold text-gray-900">{urgentAlarms}</p>
-                  <p className="text-xs text-red-600 mt-1">Require immediate attention</p>
+                  <p className="text-xs text-red-600 mt-1">{t("ups.landing.requireAttention")}</p>
                 </div>
                 <div className="p-2 bg-red-100 rounded-lg">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -103,8 +96,8 @@ export function LandingPage() {
           {/* Geographic Status Map */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Geographic Status Map</h3>
-              <p className="text-sm text-gray-500">South (Assiut) → North (Faiyum)</p>
+              <h3 className="text-lg font-semibold text-gray-900">{t("ups.landing.geographicMap")}</h3>
+              <p className="text-sm text-gray-500">{t("ups.landing.mapDirection")}</p>
             </div>
             {/* Map without card wrapper to match screenshot */}
             <div className="rounded-lg overflow-hidden border border-gray-200 h-[400px]">
@@ -119,7 +112,7 @@ export function LandingPage() {
 
           {/* Recent Alerts */}
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Alerts</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("ups.landing.recentAlerts")}</h3>
             <Card>
               <CardContent className="p-4">
                 {loading ? (
@@ -140,9 +133,9 @@ export function LandingPage() {
                         <AlertTriangle className="w-4 h-4 text-red-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">Minia Bridge</p>
-                        <p className="text-xs text-gray-500">Minia • 1 min ago</p>
-                        <p className="text-xs font-medium text-red-600 mt-1">CRITICAL LEVEL</p>
+                        <p className="text-sm font-medium text-gray-900">{t("ups.landing.miniaBridge")}</p>
+                        <p className="text-xs text-gray-500">{t("ups.landing.minia")} • {t("ups.landing.timeAgo", { time: "1 min" })}</p>
+                        <p className="text-xs font-medium text-red-600 mt-1">{t("ups.landing.criticalLevel")}</p>
                       </div>
                     </div>
 
@@ -152,15 +145,15 @@ export function LandingPage() {
                         <AlertTriangle className="w-4 h-4 text-red-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">Maghagha Intake</p>
-                        <p className="text-xs text-gray-500">Minia • 2 hours ago</p>
-                        <p className="text-xs font-medium text-red-600 mt-1">CRITICAL LEVEL</p>
+                        <p className="text-sm font-medium text-gray-900">{t("ups.landing.maghaghaIntake")}</p>
+                        <p className="text-xs text-gray-500">{t("ups.landing.minia")} • {t("ups.landing.timeAgo", { time: "2 hours" })}</p>
+                        <p className="text-xs font-medium text-red-600 mt-1">{t("ups.landing.criticalLevel")}</p>
                       </div>
                     </div>
 
                     {/* View All Button */}
                     <button className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium py-2">
-                      View All Alerts →
+                      {t("ups.landing.viewAllAlerts")} →
                     </button>
                   </div>
                 )}
@@ -174,7 +167,7 @@ export function LandingPage() {
 
       {/* Last Updated Info */}
       <div className="text-xs text-gray-500 text-center">
-        {t("ups.kpis.lastUpdated")}: {data.kpis?.lastUpdated?.toLocaleString() || t("common.loading")}
+        {t("ups.landing.lastUpdated")}: {data.kpis?.lastUpdated?.toLocaleString() || t("common.loading")}
       </div>
     </div>
   );

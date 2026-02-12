@@ -799,7 +799,25 @@
       "subtitle": "General overview for all accessible sites",
       "mapTitle": "GIS Overview (Egypt)",
       "mapHint": "Click any pin to open the site-specific page.",
-      "recentAlarms": "Recent Alarm Events"
+      "recentAlarms": "Recent Alarm Events",
+      "systemOverview": "System Overview",
+      "systemOverviewDescription": "Real-time monitoring of Main Canal and branches (Assiut to Faiyum).",
+      "totalFlowRate": "Total Flow Rate",
+      "vsYesterday": "{{change}} vs yesterday",
+      "activeSites": "Active Sites",
+      "operationalStatus": "Operational Status",
+      "urgentAlarms": "Urgent Alarms",
+      "requireAttention": "Require immediate attention",
+      "geographicMap": "Geographic Status Map",
+      "mapDirection": "South (Assiut) → North (Faiyum)",
+      "recentAlerts": "Recent Alerts",
+      "miniaBridge": "Minia Bridge",
+      "maghaghaIntake": "Maghagha Intake",
+      "minia": "Minia",
+      "timeAgo": "{{time}} ago",
+      "criticalLevel": "CRITICAL LEVEL",
+      "viewAllAlerts": "View All Alerts",
+      "lastUpdated": "Last Updated"
     },
     "kpis": {
       "totalSites": "Total Sites",
@@ -859,6 +877,17 @@
       "readings": "Readings Table",
       "eventLog": "Event Log",
       "siteOverview": "Site Overview"
+    },
+    "map": {
+      "legend": "Map Legend",
+      "activeSite": "Active Site",
+      "alarmState": "Alarm State",
+      "inactiveOffline": "Inactive/Offline",
+      "lastReading": "Last Reading",
+      "active": "Active",
+      "alarm": "Alarm",
+      "maintenance": "Maintenance",
+      "inactive": "Inactive"
     },
     "governorate": {
       "title": "Governorate Overview - {{governorate}}",

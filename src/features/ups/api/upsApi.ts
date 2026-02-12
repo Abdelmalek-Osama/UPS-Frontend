@@ -23,6 +23,7 @@ export interface DashboardSiteDto {
   latitude: number;
   longitude: number;
   directorateName: string;
+  directorateARName: string;
   latestReading: LatestReadingDto;
 }
 
