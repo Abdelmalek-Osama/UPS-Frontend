@@ -477,6 +477,7 @@
     "noEvents": "No Events",
     "noEventsYet": "No alarm events yet",
     "noEventsMatchFilters": "No events match your filter criteria",
+    "pending": "Pending",
     "message": "Message",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",

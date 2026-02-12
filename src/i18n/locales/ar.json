@@ -476,6 +476,7 @@
     "noEvents": "لا توجد أحداث",
     "noEventsYet": "لا توجد أحداث تنبيهات بعد",
     "noEventsMatchFilters": "لا توجد أحداث تطابق معايير التصفية الخاصة بك",
+    "pending": "قيد الانتظار",
     "message": "الرسالة",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",

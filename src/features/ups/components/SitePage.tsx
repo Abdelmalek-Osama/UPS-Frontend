@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -14,10 +14,9 @@ import { PumpFlowTable } from "./PumpFlowTable";
 import { PumpFlowChart } from "./PumpFlowChart";
 import { AlarmEventsTable } from "./AlarmEventsTable";
 import { useSiteDetails } from "../hooks/useSiteDetails";
-import { exportReport } from "../api/upsApi";
+import { exportReport, getAlarmEventsBySiteAndDateRange } from "../api/upsApi";
 import { aggregateTimeSeriesPoints, getPeriodType } from "../utils/calculations";
-import type { DateRange, TimeFilter } from "../types";
-import type { CalculationOptions } from "./TimeFilterBar";
+import type { DateRange, TimeFilter, Event } from "../types";
 
 // Custom Tooltip Components
 interface CustomTooltipProps extends TooltipProps<number, string> {
@@ -61,11 +60,40 @@ export function SitePage() {
   const siteId = Number(params.siteId || 1);
   const [filter, setFilter] = useState<TimeFilter>("week");
   const [range, setRange] = useState<DateRange>({});
-  const [calculations, setCalculations] = useState<CalculationOptions>({
-    levels: "average",
-    flow: "sum"
-  });
   const { data, loading } = useSiteDetails(siteId, filter, range);
+
+  // Alarm events state - managed separately
+  const [alarmEvents, setAlarmEvents] = useState<Event[]>([]);
+  const [alarmEventsLoading, setAlarmEventsLoading] = useState(false);
+  const [alarmStartDate, setAlarmStartDate] = useState<Date | undefined>();
+  const [alarmEndDate, setAlarmEndDate] = useState<Date | undefined>();
+
+  // Fetch alarm events when date filters change
+  useEffect(() => {
+    const fetchAlarmEvents = async () => {
+      setAlarmEventsLoading(true);
+      try {
+        const events = await getAlarmEventsBySiteAndDateRange(
+          siteId,
+          alarmStartDate,
+          alarmEndDate
+        );
+        setAlarmEvents(events);
+      } catch (error) {
+        console.error("Failed to fetch alarm events:", error);
+        setAlarmEvents([]);
+      } finally {
+        setAlarmEventsLoading(false);
+      }
+    };
+
+    fetchAlarmEvents();
+  }, [siteId, alarmStartDate, alarmEndDate]);
+
+  const handleClearAlarmFilters = () => {
+    setAlarmStartDate(undefined);
+    setAlarmEndDate(undefined);
+  };
 
   // Get language-appropriate names
   const isArabic = i18n.language === 'ar';
@@ -176,10 +204,11 @@ export function SitePage() {
       })
     }));
     
-    // Apply calculations for aggregation
+    // Apply default calculations for aggregation
     if (apiData.length > 0) {
       const periodType = getPeriodType(filter);
-      const aggregated = aggregateTimeSeriesPoints(apiData, calculations, periodType);
+      const defaultCalculations = { levels: "average" as const, flow: "sum" as const };
+      const aggregated = aggregateTimeSeriesPoints(apiData, defaultCalculations, periodType);
       return aggregated.map(point => ({
         ...point,
         label: new Date(point.timestamp).toLocaleTimeString('en-US', { 
@@ -190,7 +219,7 @@ export function SitePage() {
     }
     
     return apiData;
-  }, [data.series, filter, calculations]);
+  }, [data.series, filter]);
 
   // For pump stations, create a separate chart series using pump total flow
   const pumpTotalFlowSeries = useMemo(() => {
@@ -269,10 +298,8 @@ export function SitePage() {
         onChange={setFilter}
         range={range}
         onRangeChange={setRange}
-        calculations={calculations}
-        onCalculationsChange={setCalculations}
         onExport={handleExport}
-        showCalculations={true}
+        showCalculations={false}
       /> 
 
       {/* 1. Metrics Cards */}
@@ -410,7 +437,15 @@ export function SitePage() {
       })()}
 
       {/* Alarm Events Table */}
-      <AlarmEventsTable events={data.events} />
+      <AlarmEventsTable 
+        events={alarmEvents}
+        loading={alarmEventsLoading}
+        startDate={alarmStartDate}
+        endDate={alarmEndDate}
+        onStartDateChange={setAlarmStartDate}
+        onEndDateChange={setAlarmEndDate}
+        onClearFilters={handleClearAlarmFilters}
+      />
 
 
     </div>
