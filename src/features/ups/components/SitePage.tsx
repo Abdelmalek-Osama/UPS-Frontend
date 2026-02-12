@@ -13,8 +13,10 @@ import { PumpOperatingHoursTable } from "./PumpOperatingHoursTable";
 import { PumpFlowTable } from "./PumpFlowTable";
 import { PumpFlowChart } from "./PumpFlowChart";
 import { AlarmEventsTable } from "./AlarmEventsTable";
+import { ExportDropdown } from "./common/ExportDropdown";
 import { useSiteDetails } from "../hooks/useSiteDetails";
 import { exportReport, getAlarmEventsBySiteAndDateRange } from "../api/upsApi";
+import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
 import { aggregateTimeSeriesPoints, getPeriodType } from "../utils/calculations";
 import type { DateRange, TimeFilter, Event } from "../types";
 
@@ -300,6 +302,7 @@ export function SitePage() {
         onRangeChange={setRange}
         onExport={handleExport}
         showCalculations={false}
+        showExport={false}
       /> 
 
       {/* 1. Metrics Cards */}
@@ -309,10 +312,16 @@ export function SitePage() {
       {/* Water Levels Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("ups.charts.waterLevels")}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{t("ups.charts.waterLevels")}</CardTitle>
+            <ExportDropdown
+              onExportPNG={() => exportChartAsPNG('water-levels-chart', 'water-levels-chart')}
+              onExportSVG={() => exportChartAsSVG('water-levels-chart', 'water-levels-chart')}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
+          <div id="water-levels-chart" className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartSeries} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -344,9 +353,16 @@ export function SitePage() {
       {/* Flow Rate Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("ups.charts.totalFlow")} {isPumpStation && pumpTotalFlowSeries.length > 0 ? `(${t("ups.pumpStation")})` : `(${t("ups.waterLevel")})`}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{t("ups.charts.totalFlow")} {isPumpStation && pumpTotalFlowSeries.length > 0 ? `(${t("ups.pumpStation")})` : `(${t("ups.waterLevel")})`}</CardTitle>
+            <ExportDropdown
+              onExportPNG={() => exportChartAsPNG('flow-rate-chart', 'flow-rate-chart')}
+              onExportSVG={() => exportChartAsSVG('flow-rate-chart', 'flow-rate-chart')}
+            />
+          </div>
         </CardHeader>
         <CardContent>
+          <div id="flow-rate-chart">
           {(() => {
             const chartData = isPumpStation && pumpTotalFlowSeries.length > 0 ? pumpTotalFlowSeries : chartSeries;
             
@@ -403,6 +419,7 @@ export function SitePage() {
               </>
             );
           })()}
+          </div>
         </CardContent>
       </Card>
 

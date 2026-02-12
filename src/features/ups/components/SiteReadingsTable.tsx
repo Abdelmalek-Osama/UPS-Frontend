@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { Button } from "../../../components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 import type { ReadingRow } from "../types";
 
 interface SiteReadingsTableProps {
@@ -38,8 +40,55 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const handleExportCSV = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'upstream', header: t("ups.fields.upstream") },
+      { key: 'downstream', header: t("ups.fields.downstream") },
+      { key: 'flowRate', header: t("ups.fields.flowRate") },
+    ];
+
+    const data = rows.map(row => ({
+      date: formatDate(row.timestamp),
+      time: formatTime(row.timestamp),
+      upstream: row.upstream.toFixed(2),
+      downstream: row.downstream.toFixed(2),
+      flowRate: row.flowRate.toFixed(2),
+    }));
+
+    exportTableToCSV(data, columns, 'site-readings');
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'upstream', header: t("ups.fields.upstream") },
+      { key: 'downstream', header: t("ups.fields.downstream") },
+      { key: 'flowRate', header: t("ups.fields.flowRate") },
+    ];
+
+    const data = rows.map(row => ({
+      date: formatDate(row.timestamp),
+      time: formatTime(row.timestamp),
+      upstream: row.upstream.toFixed(2),
+      downstream: row.downstream.toFixed(2),
+      flowRate: row.flowRate.toFixed(2),
+    }));
+
+    exportTableToExcel(data, columns, 'site-readings');
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end mb-2">
+        <ExportDropdown
+          onExportCSV={handleExportCSV}
+          onExportExcel={handleExportExcel}
+          disabled={rows.length === 0}
+        />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

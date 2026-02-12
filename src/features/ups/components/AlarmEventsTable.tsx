@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui
 import { DatePicker } from "../../../components/ui/datepicker";
 import { Button } from "../../../components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 import type { Event } from "../types";
 
 interface AlarmEventsTableProps {
@@ -47,10 +49,61 @@ export function AlarmEventsTable({
     }
   };
 
+  const handleExportCSV = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'type', header: t("alarms.eventDetails") },
+      { key: 'severity', header: t("alarms.severity") },
+      { key: 'message', header: t("alarms.message") },
+      { key: 'status', header: t("common.status") },
+    ];
+
+    const data = events.map(event => ({
+      date: new Date(event.timestamp).toLocaleDateString(),
+      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: event.type?.toUpperCase() || 'N/A',
+      severity: event.severity?.toUpperCase() || 'N/A',
+      message: event.message || '-',
+      status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
+    }));
+
+    exportTableToCSV(data, columns, 'alarm-events');
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'type', header: t("alarms.eventDetails") },
+      { key: 'severity', header: t("alarms.severity") },
+      { key: 'message', header: t("alarms.message") },
+      { key: 'status', header: t("common.status") },
+    ];
+
+    const data = events.map(event => ({
+      date: new Date(event.timestamp).toLocaleDateString(),
+      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: event.type?.toUpperCase() || 'N/A',
+      severity: event.severity?.toUpperCase() || 'N/A',
+      message: event.message || '-',
+      status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
+    }));
+
+    exportTableToExcel(data, columns, 'alarm-events');
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("ups.charts.alarmEvents")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("ups.charts.alarmEvents")}</CardTitle>
+          <ExportDropdown
+            onExportCSV={handleExportCSV}
+            onExportExcel={handleExportExcel}
+            disabled={events.length === 0}
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-3 mt-4">
           <DatePicker
             placeholder={t("readings.fromDate")}

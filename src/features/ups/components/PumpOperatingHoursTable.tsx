@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 
 interface PumpOperatingHours {
   pumpNumber: number;
@@ -14,10 +16,49 @@ interface PumpOperatingHoursTableProps {
 export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) {
   const { t } = useTranslation();
   
+  const handleExportCSV = () => {
+    const columns = [
+      { key: 'pumpNumber', header: t("ups.fields.pumpNumber") },
+      { key: 'operatingHours', header: t("ups.fields.operatingHours") },
+      { key: 'status', header: t("ups.fields.status") },
+    ];
+
+    const exportData = data.map(pump => ({
+      pumpNumber: `${t("ups.fields.pumpNumber")} ${pump.pumpNumber}`,
+      operatingHours: `${pump.operatingHours.toFixed(1)} ${t("readings.hour")}`,
+      status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
+    }));
+
+    exportTableToCSV(exportData, columns, 'pump-operating-hours');
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'pumpNumber', header: t("ups.fields.pumpNumber") },
+      { key: 'operatingHours', header: t("ups.fields.operatingHours") },
+      { key: 'status', header: t("ups.fields.status") },
+    ];
+
+    const exportData = data.map(pump => ({
+      pumpNumber: `${t("ups.fields.pumpNumber")} ${pump.pumpNumber}`,
+      operatingHours: `${pump.operatingHours.toFixed(1)} ${t("readings.hour")}`,
+      status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
+    }));
+
+    exportTableToExcel(exportData, columns, 'pump-operating-hours');
+  };
+  
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("ups.charts.pumpOperatingHours")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("ups.charts.pumpOperatingHours")}</CardTitle>
+          <ExportDropdown
+            onExportCSV={handleExportCSV}
+            onExportExcel={handleExportExcel}
+            disabled={data.length === 0}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

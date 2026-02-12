@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 
 interface PumpFlow {
   pumpNumber: number;
@@ -15,10 +17,63 @@ interface PumpFlowTableProps {
 export function PumpFlowTable({ data, totalFlow }: PumpFlowTableProps) {
   const { t } = useTranslation();
   
+  const handleExportCSV = () => {
+    const columns = [
+      { key: 'pumpNumber', header: t("ups.fields.pumpNumber") },
+      { key: 'flowRate', header: t("ups.fields.flowRateValue") },
+      { key: 'percentage', header: t("ups.fields.percentage") },
+    ];
+
+    const exportData = [
+      ...data.map(pump => ({
+        pumpNumber: `${t("ups.fields.pumpNumber")} ${pump.pumpNumber}`,
+        flowRate: pump.flowRate.toFixed(2),
+        percentage: `${pump.percentage.toFixed(1)}%`,
+      })),
+      {
+        pumpNumber: t("ups.fields.totalFlow"),
+        flowRate: totalFlow.toFixed(2),
+        percentage: '100%',
+      }
+    ];
+
+    exportTableToCSV(exportData, columns, 'pump-flows');
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'pumpNumber', header: t("ups.fields.pumpNumber") },
+      { key: 'flowRate', header: t("ups.fields.flowRateValue") },
+      { key: 'percentage', header: t("ups.fields.percentage") },
+    ];
+
+    const exportData = [
+      ...data.map(pump => ({
+        pumpNumber: `${t("ups.fields.pumpNumber")} ${pump.pumpNumber}`,
+        flowRate: pump.flowRate.toFixed(2),
+        percentage: `${pump.percentage.toFixed(1)}%`,
+      })),
+      {
+        pumpNumber: t("ups.fields.totalFlow"),
+        flowRate: totalFlow.toFixed(2),
+        percentage: '100%',
+      }
+    ];
+
+    exportTableToExcel(exportData, columns, 'pump-flows');
+  };
+  
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("ups.charts.individualPumpFlows")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("ups.charts.individualPumpFlows")}</CardTitle>
+          <ExportDropdown
+            onExportCSV={handleExportCSV}
+            onExportExcel={handleExportExcel}
+            disabled={data.length === 0}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, TooltipProps } from "recharts";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
 
 interface PumpFlowDataPoint {
   timestamp: string;
@@ -110,9 +112,16 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("ups.charts.individualPumpFlow")}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("ups.charts.individualPumpFlow")}</CardTitle>
+          <ExportDropdown
+            onExportPNG={() => exportChartAsPNG('pump-flow-chart', 'pump-flow-chart')}
+            onExportSVG={() => exportChartAsSVG('pump-flow-chart', 'pump-flow-chart')}
+          />
+        </div>
       </CardHeader>
       <CardContent>
+        <div id="pump-flow-chart">
         <div className="text-sm text-gray-600 mb-2">
           {t("ups.dataPoints")}: {data.length} | {t("ups.activePumps")}: {activePumps.join(', ')}
         </div>
@@ -196,6 +205,7 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
               )}
             </LineChart>
           </ResponsiveContainer>
+        </div>
         </div>
       </CardContent>
     </Card>
