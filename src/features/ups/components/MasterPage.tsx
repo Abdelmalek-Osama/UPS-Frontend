@@ -16,10 +16,11 @@ import type { CalculationOptions } from "./TimeFilterBar";
 
 export function MasterPage() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<TimeFilter>("24h");
+  const [filter, setFilter] = useState<TimeFilter>("week");
   const [range, setRange] = useState<DateRange>({});
   const [calculations, setCalculations] = useState<CalculationOptions>({
     levels: "average",
+    flow: "sum"
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSites, setSelectedSites] = useState<string[]>([]);
@@ -138,15 +139,16 @@ export function MasterPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead>Governorate</TableHead>
-                  <TableHead>Site Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Upstream (m)</TableHead>
-                  <TableHead>Downstream (m)</TableHead>
-                  <TableHead>Flow (m³/s)</TableHead>
-                  <TableHead>Last Reading</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="w-12 text-center"></TableHead>
+                  <TableHead className="text-center">Governorate</TableHead>
+                  <TableHead className="text-center">Site Name</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Upstream (m)</TableHead>
+                  <TableHead className="text-center">Downstream (m)</TableHead>
+                  <TableHead className="text-center">Flow (m³/s)</TableHead>
+                  <TableHead className="text-center">Date</TableHead>
+                  <TableHead className="text-center">Hour</TableHead>
+                  <TableHead className="text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -159,15 +161,15 @@ export function MasterPage() {
                 ) : (
                   branchSites.map((site) => (
                     <TableRow key={site.siteId} className="hover:bg-gray-50">
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Checkbox
                           checked={selectedSites.includes(site.siteId)}
                           onCheckedChange={() => toggleSiteSelection(site.siteId)}
                         />
                       </TableCell>
-                      <TableCell className="text-gray-600">{site.governorate}</TableCell>
-                      <TableCell className="font-medium">{site.siteName}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-gray-600 text-center">{site.governorate}</TableCell>
+                      <TableCell className="font-medium text-center">{site.siteName}</TableCell>
+                      <TableCell className="text-center">
                         <Badge 
                           className={
                             site.status === "active" ? "bg-green-100 text-green-700 border-0" :
@@ -178,15 +180,18 @@ export function MasterPage() {
                           {site.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{site.upstream > 0 ? site.upstream.toFixed(2) : "-"}</TableCell>
-                      <TableCell>{site.downstream > 0 ? site.downstream.toFixed(2) : "-"}</TableCell>
-                      <TableCell className="text-blue-600 font-medium">
+                      <TableCell className="text-center">{site.upstream > 0 ? site.upstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-center">{site.downstream > 0 ? site.downstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-blue-600 font-medium text-center">
                         {site.flowRate > 0 ? site.flowRate.toFixed(1) : "-"}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {new Date(site.lastReading).toLocaleString()}
+                      <TableCell className="text-sm text-gray-500 text-center">
+                        {new Date(site.lastReading).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-sm text-gray-500 text-center">
+                        {new Date(site.lastReading).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -237,7 +242,7 @@ export function MasterPage() {
         {branchSites.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Flow Rate Profile (All Sites - Main & Branch Canals)</CardTitle>
+              <CardTitle>Total Flow (All Sites - Main & Branch Canals)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[350px]">
@@ -272,15 +277,16 @@ export function MasterPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Governorate</TableHead>
-                    <TableHead>Pump Station</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Pump 1</TableHead>
-                    <TableHead>Pump 2</TableHead>
-                    <TableHead>Pump 3</TableHead>
-                    <TableHead>Pump 4</TableHead>
-                    <TableHead>Pump 5</TableHead>
-                    <TableHead>Pump 6</TableHead>
+                    <TableHead className="text-center">Governorate</TableHead>
+                    <TableHead className="text-center">Pump Station</TableHead>
+                    <TableHead className="text-center">Date</TableHead>
+                    <TableHead className="text-center">Hour</TableHead>
+                    <TableHead className="text-center">Pump 1</TableHead>
+                    <TableHead className="text-center">Pump 2</TableHead>
+                    <TableHead className="text-center">Pump 3</TableHead>
+                    <TableHead className="text-center">Pump 4</TableHead>
+                    <TableHead className="text-center">Pump 5</TableHead>
+                    <TableHead className="text-center">Pump 6</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -297,13 +303,16 @@ export function MasterPage() {
 
                     return (
                       <TableRow key={station.siteId}>
-                        <TableCell className="text-gray-600">{station.governorate}</TableCell>
-                        <TableCell className="font-medium">{station.siteName}</TableCell>
-                        <TableCell className="text-sm text-gray-500">
-                          {new Date(station.lastReading).toLocaleString()}
+                        <TableCell className="text-gray-600 text-center">{station.governorate}</TableCell>
+                        <TableCell className="font-medium text-center">{station.siteName}</TableCell>
+                        <TableCell className="text-sm text-gray-500 text-center">
+                          {new Date(station.lastReading).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-500 text-center">
+                          {new Date(station.lastReading).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
                         </TableCell>
                         {pumpStatuses.map((status, idx) => (
-                          <TableCell key={idx}>
+                          <TableCell key={idx} className="text-center">
                             <Badge
                               className={
                                 status === "ON"
@@ -361,7 +370,7 @@ export function MasterPage() {
         calculations={calculations}
         onCalculationsChange={setCalculations}
         onExport={handleExport}
-        showCalculations={filter !== "latest"}
+        showCalculations={true}
       />
 
       {/* Filters */}

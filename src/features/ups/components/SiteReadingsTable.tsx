@@ -1,4 +1,3 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import type { ReadingRow } from "../types";
@@ -10,20 +9,25 @@ interface SiteReadingsTableProps {
 export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
   const { t } = useTranslation();
 
-  const formatDateTime = (value: string) => {
+  const formatDate = (value: string) => {
     const date = new Date(value);
-    return date.toLocaleString();
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (value: string) => {
+    const date = new Date(value);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>{t("common.dateTime")}</TableHead>
-          <TableHead>{t("ups.fields.upstream")}</TableHead>
-          <TableHead>{t("ups.fields.downstream")}</TableHead>
-          <TableHead>{t("ups.fields.batteryVoltage")}</TableHead>
-          <TableHead>{t("ups.fields.flowRate")}</TableHead>
+          <TableHead className="text-center">{t("common.date")}</TableHead>
+          <TableHead className="text-center">{t("common.hour")}</TableHead>
+          <TableHead className="text-center">{t("ups.fields.upstream")}</TableHead>
+          <TableHead className="text-center">{t("ups.fields.downstream")}</TableHead>
+          <TableHead className="text-center">{t("ups.fields.flowRate")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -36,11 +40,11 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
         ) : (
           rows.map((row) => (
             <TableRow key={row.timestamp}>
-              <TableCell>{formatDateTime(row.timestamp)}</TableCell>
-              <TableCell>{row.upstream.toFixed(2)}</TableCell>
-              <TableCell>{row.downstream.toFixed(2)}</TableCell>
-              <TableCell>{row.batteryVoltage.toFixed(2)}</TableCell>
-              <TableCell>{row.flowRate.toFixed(2)}</TableCell>
+              <TableCell className="text-center">{formatDate(row.timestamp)}</TableCell>
+              <TableCell className="text-center">{formatTime(row.timestamp)}</TableCell>
+              <TableCell className="text-center">{row.upstream.toFixed(2)}</TableCell>
+              <TableCell className="text-center">{row.downstream.toFixed(2)}</TableCell>
+              <TableCell className="text-center">{row.flowRate.toFixed(2)}</TableCell>
             </TableRow>
           ))
         )}

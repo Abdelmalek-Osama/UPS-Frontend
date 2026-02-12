@@ -57,27 +57,31 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2 px-4 text-gray-600">Timestamp</th>
-                <th className="text-left py-2 px-4 text-gray-600">Type</th>
-                <th className="text-left py-2 px-4 text-gray-600">Severity</th>
-                <th className="text-left py-2 px-4 text-gray-600">Message</th>
-                <th className="text-left py-2 px-4 text-gray-600">Status</th>
+                <th className="text-center py-2 px-4 text-gray-600">Date</th>
+                <th className="text-center py-2 px-4 text-gray-600">Hour</th>
+                <th className="text-center py-2 px-4 text-gray-600">Type</th>
+                <th className="text-center py-2 px-4 text-gray-600">Severity</th>
+                <th className="text-center py-2 px-4 text-gray-600">Message</th>
+                <th className="text-center py-2 px-4 text-gray-600">Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
                     No alarm events found for the selected date range
                   </td>
                 </tr>
               ) : (
                 filteredEvents.map((event) => (
                   <tr key={event.id} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-4 text-gray-900">
-                      {new Date(event.timestamp).toLocaleString()}
+                    <td className="py-2 px-4 text-gray-900 text-center">
+                      {new Date(event.timestamp).toLocaleDateString()}
                     </td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-4 text-gray-900 text-center">
+                      {new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    </td>
+                    <td className="py-2 px-4 text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           event.type === "alarm"
@@ -90,7 +94,7 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                         {event.type.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-4 text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           event.severity === "critical"
@@ -105,8 +109,8 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                         {event.severity.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-2 px-4 text-gray-900">{event.message}</td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-4 text-gray-900 text-center">{event.message}</td>
+                    <td className="py-2 px-4 text-center">
                       <span
                         className={`inline-flex items-center text-xs ${
                           event.acknowledged ? "text-green-600" : "text-red-600"

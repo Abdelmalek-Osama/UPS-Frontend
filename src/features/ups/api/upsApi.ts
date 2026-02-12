@@ -36,6 +36,53 @@ export interface LatestReadingDto {
   hasActiveAlarms: boolean;
 }
 
+// Site Dashboard Data Response (from /api/v1/Sites/Dashborad/Data)
+export interface SiteDashboardDataDto {
+  siteId: number;
+  siteNameEn: string;
+  siteNameAr: string;
+  directorateEn: string;
+  directorateAr: string;
+  waterLevel: WaterLevelDataDto;
+  pumpStation: PumpStationDataDto | null;
+}
+
+export interface WaterLevelDataDto {
+  timestamps: string[]; // Array of ISO date-time strings
+  uswl: number[]; // Upstream water level array
+  dswl: number[]; // Downstream water level array
+  flow: number[]; // Flow rate array
+  metrics: {
+    maxFlow: number;
+    minFlow: number;
+    avgFlow: number;
+    maxUSWL: number;
+    maxDSWL: number;
+  };
+}
+
+export interface PumpStationDataDto {
+  numPumps: number;
+  pumpDetails: PumpDetailDto[];
+}
+
+export interface PumpDetailDto {
+  timestamp: string; // ISO date-time
+  totalFlow: number;
+  p1Time: number;
+  p1Flow: number;
+  p2Time: number;
+  p2Flow: number;
+  p3Time: number;
+  p3Flow: number;
+  p4Time: number;
+  p4Flow: number;
+  p5Time: number;
+  p5Flow: number;
+  p6Time: number;
+  p6Flow: number;
+}
+
 const UPS_VIEWER_BASE = "/v1/ups-viewer";
 const DASHBOARD_BASE = "/v1/dashboard";
 
@@ -58,6 +105,37 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
 // New API: Get dashboard sites for GIS map
 export const getDashboardSites = async (): Promise<DashboardSiteDto[]> => {
   const response = await get<UpsApiResponse<DashboardSiteDto[]>>(`${DASHBOARD_BASE}/sites`);
+  return response.data;
+};
+
+// New API: Get site dashboard data
+export const getSiteDashboardData = async (
+  siteId: number,
+  isLast7Days?: boolean,
+  isLast30Days?: boolean,
+  startDate?: Date,
+  endDate?: Date
+): Promise<SiteDashboardDataDto> => {
+  const params: Record<string, string> = {
+    SiteId: siteId.toString(),
+  };
+
+  if (isLast7Days !== undefined) {
+    params.IsLast7Days = isLast7Days.toString();
+  }
+  if (isLast30Days !== undefined) {
+    params.IsLast30Days = isLast30Days.toString();
+  }
+  if (startDate) {
+    params.StartDate = startDate.toISOString().split('T')[0]; // Format as date only
+  }
+  if (endDate) {
+    params.EndDate = endDate.toISOString().split('T')[0]; // Format as date only
+  }
+
+  const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
+    params,
+  });
   return response.data;
 };
 

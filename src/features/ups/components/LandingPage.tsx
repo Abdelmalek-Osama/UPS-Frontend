@@ -95,20 +95,7 @@ export function LandingPage() {
           </Card>
 
           {/* Avg Battery Level */}
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Avg Battery Level</p>
-                  <p className="text-2xl font-bold text-gray-900">{avgBatteryLevel.toFixed(1)}V</p>
-                  <p className="text-xs text-gray-500 mt-1">Stable</p>
-                </div>
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Zap className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
 
         {/* Main Content Grid - Map and Recent Alerts */}

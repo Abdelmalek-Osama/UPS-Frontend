@@ -16,7 +16,6 @@ export type CalculationType = "average" | "sum" | "max" | "min";
 
 export interface CalculationOptions {
   levels: CalculationType; // For upstream/downstream
-  battery: CalculationType; // For battery voltage
   flow: CalculationType; // For flow rate
 }
 
@@ -46,16 +45,14 @@ export function TimeFilterBar({
   const { t } = useTranslation();
   const [format, setFormat] = React.useState<"pdf" | "excel">("pdf");
 
-  // Default calculation options based on time filter
-  const getDefaultCalculations = (timeFilter: TimeFilter): CalculationOptions => {
-    if (timeFilter === "latest" || timeFilter === "24h") {
-      return { levels: "average", battery: "average", flow: "sum" };
-    }
-    return { levels: "average", battery: "average", flow: "sum" };
+  // Default calculation options
+  const getDefaultCalculations = (): CalculationOptions => {
+    // All filters now use aggregated data
+    return { levels: "average", flow: "sum" };
   };
 
-  const currentCalculations = calculations || getDefaultCalculations(value);
-  const showPeriodCalculations = value !== "latest" && showCalculations;
+  const currentCalculations = calculations || getDefaultCalculations();
+  const showPeriodCalculations = showCalculations;
 
   return (
     <div className="space-y-4">
@@ -66,8 +63,6 @@ export function TimeFilterBar({
               <SelectValue placeholder={t("ups.filters.selectTime")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>
-              <SelectItem value="24h">{t("ups.filters.last24h")}</SelectItem>
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
@@ -90,11 +85,10 @@ export function TimeFilterBar({
           )}
 
           {/* Time period description */}
-          {value !== "latest" && value !== "custom" && (
+          {value !== "custom" && (
             <Badge variant="secondary" className="text-xs">
-              {value === "24h" && t("ups.filters.hourlyData")}
-              {value === "week" && t("ups.filters.dailyAverages")}
-              {value === "month" && t("ups.filters.dailyAverages")}
+              {value === "week" && t("ups.filters.last7Days")}
+              {value === "month" && t("ups.filters.last30Days")}
             </Badge>
           )}
         </div>
@@ -121,7 +115,7 @@ export function TimeFilterBar({
       {showPeriodCalculations && onCalculationsChange && (
         <div className="border rounded-lg p-4 bg-gray-50">
           <h4 className="text-sm font-medium mb-3">{t("ups.calculations.title")}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">
                 {t("ups.calculations.levels")}
@@ -130,27 +124,6 @@ export function TimeFilterBar({
                 value={currentCalculations.levels}
                 onValueChange={(calc) =>
                   onCalculationsChange({ ...currentCalculations, levels: calc as CalculationType })
-                }
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="average">{t("ups.calculations.average")}</SelectItem>
-                  <SelectItem value="max">{t("ups.calculations.max")}</SelectItem>
-                  <SelectItem value="min">{t("ups.calculations.min")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-600">
-                {t("ups.calculations.battery")}
-              </label>
-              <Select
-                value={currentCalculations.battery}
-                onValueChange={(calc) =>
-                  onCalculationsChange({ ...currentCalculations, battery: calc as CalculationType })
                 }
               >
                 <SelectTrigger className="h-8">

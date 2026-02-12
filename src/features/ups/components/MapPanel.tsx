@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MapContainer, CircleMarker, TileLayer } from "react-leaflet";
 import type { LatLngBoundsExpression } from "leaflet";
 import L from "leaflet";
@@ -93,7 +94,11 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
   const [mapError, setMapError] = useState<string | null>(null);
   const [hoveredPin, setHoveredPin] = useState<any>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
+  const { i18n } = useTranslation();
   const center = useMemo(() => [26.5, 30.5] as [number, number], []); // Center of Egypt along the Nile
+  
+  // Get language-appropriate names
+  const isArabic = i18n.language === 'ar';
 
   // Debug logging
   useEffect(() => {
@@ -280,7 +285,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
               {/* Header with site name */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#111827', lineHeight: '1.2' }}>
-                  {hoveredPin.governorate} • {hoveredPin.siteName}
+                  {isArabic && hoveredPin.governorateArabicName ? hoveredPin.governorateArabicName : hoveredPin.governorate} • {isArabic && hoveredPin.siteArabicName ? hoveredPin.siteArabicName : hoveredPin.siteName}
                 </div>
               </div>
             

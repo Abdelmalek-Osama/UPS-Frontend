@@ -1,5 +1,5 @@
 import { Card, CardContent } from "../../../components/ui/card";
-import { Activity, BatteryCharging, Droplets, Waves } from "lucide-react";
+import { Activity, Droplets, Waves } from "lucide-react";
 import type { SiteSummary } from "../types";
 
 interface SiteMetricsCardsProps {
@@ -29,17 +29,10 @@ export function SiteMetricsCards({ site }: SiteMetricsCardsProps) {
       color: "text-purple-600",
       bgColor: "bg-purple-50"
     },
-    { 
-      label: "Battery Voltage", 
-      value: `${site.batteryVoltage.toFixed(1)} V`, 
-      icon: BatteryCharging,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-3 gap-4">
       {items.map((item) => {
         const Icon = item.icon;
         return (

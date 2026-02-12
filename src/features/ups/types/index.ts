@@ -2,7 +2,7 @@
 // Core Types and Enums
 // ============================================================================
 
-export type TimeFilterType = 'latest' | '24h' | 'week' | 'month' | 'custom';
+export type TimeFilterType = 'week' | 'month' | 'custom';
 export type SiteStatus = 'active' | 'inactive' | 'maintenance' | 'alarm';
 export type EventType = 'alarm' | 'warning' | 'info' | 'maintenance' | 'system';
 export type EventSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -94,6 +94,7 @@ export interface SiteData {
 export interface SiteSummary {
   siteId: string;
   siteName: string;
+  siteArabicName?: string;
   position: number; // South-to-north ordering
   upstream: number;
   downstream: number;
@@ -103,6 +104,7 @@ export interface SiteSummary {
   lastReading: Date;
   coordinates: [number, number];
   governorate: string;
+  governorateArabicName?: string;
   branch: string;
 }
 
@@ -361,6 +363,17 @@ export interface SiteDetails {
   hourlyReadings: ReadingRow[];
   dailyReadings: ReadingRow[];
   events: Event[];
+  pumpStationDetails?: PumpStationDetails;
+}
+
+export interface PumpStationDetails {
+  pumps: PumpMetrics[];
+}
+
+export interface PumpMetrics {
+  pumpNumber: number;
+  operatingHours: number;
+  totalFlow: number;
 }
 
 export interface BranchOverview {
