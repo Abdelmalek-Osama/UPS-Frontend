@@ -47,12 +47,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (token) {
       const decodedToken = parseJwt(token);
       if (decodedToken) {
+        const rawSiteIds = decodedToken.siteIds || decodedToken.SiteIds;
+        const parsedSiteIds = Array.isArray(rawSiteIds)
+          ? rawSiteIds
+          : typeof rawSiteIds === 'string'
+            ? rawSiteIds.split(',').map((id: string) => Number(id.trim())).filter((id: number) => !Number.isNaN(id))
+            : undefined;
+
         setCurrentUser({
           id: decodedToken.sub,
           username: decodedToken.userName || decodedToken.email,
           email: decodedToken.email,
           fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
           role: decodedToken.role || decodedToken.Role,
+          governorateId: decodedToken.governorateId || decodedToken.GovernorateId,
+          governorateName: decodedToken.governorateName || decodedToken.GovernorateName,
+          siteIds: parsedSiteIds,
         });
         setUserLoaded(true);
       } else {

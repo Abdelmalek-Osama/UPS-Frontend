@@ -1,27 +1,18 @@
 import React, {useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-  LayoutDashboard, 
-  MapPin, 
-  Database, 
-  Bell, 
-  Calculator, 
-  Users,
+  LayoutDashboard,
+  MapPin,
+  Globe2,
+  FileText,
   LogOut,
   Menu,
   Droplets,
-  AlertTriangle,
-  FileText
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { DashboardHome } from '../features/dashboard';
-import { SitesManagement } from '../features/sites';
-import { ReadingsManagement } from '../features/readings';
-import { AlarmConfiguration } from '../features/alarms';
-import { FlowCalculations } from '../features/flow-calculations';
-import { UserManagement } from '../features/users';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ApiModeToggle } from '../features/ups/components/ApiModeToggle';
 import type { User } from '../features/auth';
 
 interface DashboardLayoutProps {
@@ -35,16 +26,14 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
+  const governorateSlug = currentUser.governorateName
+    ? encodeURIComponent(currentUser.governorateName.toLowerCase().replace(/\s+/g, '-'))
+    : 'minia';
+
   const allMenuItems = [
-    { id: 'dashboard', label: t('navigation.dashboard'), icon: LayoutDashboard, path: '/', roles: ['Admin'] },
-    { id: 'sites', label: t('navigation.sites'), icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
-    { id: 'readings', label: t('navigation.readings'), icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
-    { id: 'reading-logs', label: t('navigation.readingLogs'), icon: FileText, path: '/reading-logs', roles: ['Admin', 'Operator'] },
-    { id: 'alarms', label: t('navigation.alarms'), icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
-    { id: 'alarm-events', label: t('navigation.alarmEvents'), icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
-    { id: 'alarm-reports', label: t('navigation.alarmReports'), icon: Bell, path: '/alarms/reports', roles: ['Admin', 'Operator'] },
-    { id: 'calculations', label: t('navigation.calculations'), icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
-    { id: 'users', label: t('navigation.users'), icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
+    { id: 'overview', label: t('navigation.overview'), icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
+    { id: 'directorate', label: t('navigation.directorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
+    { id: 'reports', label: t('navigation.reports'), icon: FileText, path: '/reports', roles: ['Admin', 'SuperAdmin'] },
   ];
 
   // Filter menu items based on user role
@@ -71,19 +60,30 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
                 <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="font-semibold text-sm sm:text-base truncate">{t('auth.loginTitle')}</h1>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('auth.loginDescription')}</p>
+                <h1 className="font-semibold text-sm sm:text-base truncate">{t('ups.appName')}</h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('ups.appTagline')}</p>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+       
             <LanguageSwitcher />
             <div className="text-right hidden sm:block" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
               <p className="text-sm font-medium" style={{ unicodeBidi: 'plaintext' }}>
                 {currentUser.fullName}
               </p>
-              <p className="text-xs text-gray-500">{currentUser.role === 'Admin' ? t('users.admin') : t('users.operator')}</p>
+              <p className="text-xs text-gray-500">
+                {currentUser.role === 'SuperAdmin'
+                  ? t('users.superAdmin')
+                  : currentUser.role === 'Admin'
+                    ? t('users.admin')
+                    : currentUser.role === 'Governorate'
+                      ? t('users.governorate')
+                      : currentUser.role === 'Operator'
+                        ? t('users.operator')
+                        : t('users.viewer')}
+              </p>
             </div>
             <Button variant="ghost" size="icon" onClick={onLogout} className="flex-shrink-0">
               <LogOut className="h-5 w-5" />

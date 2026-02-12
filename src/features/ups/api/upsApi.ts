@@ -1,0 +1,234 @@
+import { downloadFile, get, post } from "../../../shared/utils/apiService";
+import type {
+  DateRange,
+  LandingOverview,
+  SiteDetails,
+  GovernorateOverview,
+  MasterOverview,
+  ScheduledReport,
+  TimeFilter,
+} from "../types";
+
+export interface UpsApiResponse<T> {
+  isSuccess: boolean;
+  message: string;
+  data: T;
+}
+
+// Backend API response types based on OpenAPI spec
+export interface DashboardSiteDto {
+  siteId: number;
+  siteName: string;
+  siteArabicName: string;
+  latitude: number;
+  longitude: number;
+  directorateName: string;
+  latestReading: LatestReadingDto;
+}
+
+export interface LatestReadingDto {
+  date: string; // ISO date format
+  time: string; // ISO time format
+  uswl: number | null;
+  dswl: number | null;
+  flowRate: number | null;
+  pumpStatus: string | null;
+  hasActiveAlarms: boolean;
+}
+
+// Site Dashboard Data Response (from /api/v1/Sites/Dashborad/Data)
+export interface SiteDashboardDataDto {
+  siteId: number;
+  siteNameEn: string;
+  siteNameAr: string;
+  directorateEn: string;
+  directorateAr: string;
+  waterLevel: WaterLevelDataDto;
+  pumpStation: PumpStationDataDto | null;
+}
+
+export interface WaterLevelDataDto {
+  timestamps: string[]; // Array of ISO date-time strings
+  uswl: number[]; // Upstream water level array
+  dswl: number[]; // Downstream water level array
+  flow: number[]; // Flow rate array
+  metrics: {
+    maxFlow: number;
+    minFlow: number;
+    avgFlow: number;
+    maxUSWL: number;
+    maxDSWL: number;
+  };
+}
+
+export interface PumpStationDataDto {
+  numPumps: number;
+  pumpDetails: PumpDetailDto[];
+}
+
+export interface PumpDetailDto {
+  timestamp: string; // ISO date-time
+  totalFlow: number;
+  p1Time: number;
+  p1Flow: number;
+  p2Time: number;
+  p2Flow: number;
+  p3Time: number;
+  p3Flow: number;
+  p4Time: number;
+  p4Flow: number;
+  p5Time: number;
+  p5Flow: number;
+  p6Time: number;
+  p6Flow: number;
+}
+
+const UPS_VIEWER_BASE = "/v1/ups-viewer";
+const DASHBOARD_BASE = "/v1/dashboard";
+
+const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
+  const params: Record<string, string> = {
+    timeFilter: filter,
+  };
+  
+  if (range?.start) {
+    params.startDate = range.start.toISOString();
+  }
+  
+  if (range?.end) {
+    params.endDate = range.end.toISOString();
+  }
+  
+  return params;
+};
+
+// New API: Get dashboard sites for GIS map
+export const getDashboardSites = async (): Promise<DashboardSiteDto[]> => {
+  const response = await get<UpsApiResponse<DashboardSiteDto[]>>(`${DASHBOARD_BASE}/sites`);
+  return response.data;
+};
+
+// New API: Get site dashboard data
+export const getSiteDashboardData = async (
+  siteId: number,
+  isLast7Days?: boolean,
+  isLast30Days?: boolean,
+  startDate?: Date,
+  endDate?: Date
+): Promise<SiteDashboardDataDto> => {
+  const params: Record<string, string> = {
+    SiteId: siteId.toString(),
+  };
+
+  if (isLast7Days !== undefined) {
+    params.IsLast7Days = isLast7Days.toString();
+  }
+  if (isLast30Days !== undefined) {
+    params.IsLast30Days = isLast30Days.toString();
+  }
+  if (startDate) {
+    params.StartDate = startDate.toISOString().split('T')[0]; // Format as date only
+  }
+  if (endDate) {
+    params.EndDate = endDate.toISOString().split('T')[0]; // Format as date only
+  }
+
+  const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
+    params,
+  });
+  return response.data;
+};
+
+export const getLandingOverview = async (): Promise<UpsApiResponse<LandingOverview>> =>
+  get<UpsApiResponse<LandingOverview>>(`${UPS_VIEWER_BASE}/landing`);
+
+export const getSiteDetails = async (
+  siteId: number,
+  filter: TimeFilter,
+  range?: DateRange,
+): Promise<UpsApiResponse<SiteDetails>> =>
+  get<UpsApiResponse<SiteDetails>>(`${UPS_VIEWER_BASE}/sites/${siteId}`, {
+    params: buildTimeParams(filter, range),
+  });
+
+export const getGovernorateOverview = async (
+  governorateId: string,
+  filter: TimeFilter,
+  range?: DateRange,
+): Promise<UpsApiResponse<GovernorateOverview>> =>
+  get<UpsApiResponse<GovernorateOverview>>(`${UPS_VIEWER_BASE}/governorates/${governorateId}`, {
+    params: buildTimeParams(filter, range),
+  });
+
+export const getMasterOverview = async (
+  filter: TimeFilter,
+  range?: DateRange,
+): Promise<UpsApiResponse<MasterOverview>> =>
+  get<UpsApiResponse<MasterOverview>>(`${UPS_VIEWER_BASE}/master`, {
+    params: buildTimeParams(filter, range),
+  });
+
+export const getScheduledReports = async (): Promise<UpsApiResponse<ScheduledReport[]>> =>
+  get<UpsApiResponse<ScheduledReport[]>>(`${UPS_VIEWER_BASE}/reports/schedules`);
+
+export const createScheduledReport = async (
+  payload: Omit<ScheduledReport, "id" | "nextRun">,
+): Promise<UpsApiResponse<ScheduledReport>> =>
+  post<UpsApiResponse<ScheduledReport>>(`${UPS_VIEWER_BASE}/reports/schedules`, payload);
+
+export const exportReport = async (
+  view: "landing" | "site" | "governorate" | "master",
+  format: "pdf" | "excel",
+  filter: TimeFilter,
+  range?: DateRange,
+  siteId?: string,
+  governorateId?: string,
+) => {
+  const params = new URLSearchParams({
+    view,
+    format,
+    timeFilter: filter,
+  });
+  
+  if (range?.start) {
+    params.append("startDate", range.start.toISOString());
+  }
+  if (range?.end) {
+    params.append("endDate", range.end.toISOString());
+  }
+  if (siteId) {
+    params.append("siteId", siteId);
+  }
+  if (governorateId) {
+    params.append("governorateId", governorateId);
+  }
+
+  const filename = `ups-${view}-report-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  await downloadFile(`${UPS_VIEWER_BASE}/reports/export?${params.toString()}`, filename);
+};
+
+export const exportFullData = async (
+  format: "pdf" | "excel",
+  filter: TimeFilter,
+  range?: DateRange,
+  siteIds?: string[],
+) => {
+  const params = new URLSearchParams({
+    scope: "full-data",
+    format,
+    timeFilter: filter,
+  });
+  
+  if (range?.start) {
+    params.append("startDate", range.start.toISOString());
+  }
+  if (range?.end) {
+    params.append("endDate", range.end.toISOString());
+  }
+  if (siteIds && siteIds.length > 0) {
+    params.append("siteIds", siteIds.join(","));
+  }
+
+  const filename = `ups-full-data-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  await downloadFile(`${UPS_VIEWER_BASE}/reports/export-full?${params.toString()}`, filename);
+};

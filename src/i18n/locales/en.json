@@ -77,8 +77,8 @@
   "auth": {
     "login": "Login",
     "logout": "Logout",
-    "loginTitle": "Irrigation Monitoring System",
-    "loginDescription": "Ministry of Water Resources and Irrigation - Egypt",
+    "loginTitle": "UPS Viewer Dashboard",
+    "loginDescription": "Unified Pumping Stations - Egypt",
     "username": "Username",
     "email": "Email",
     "password": "Password",
@@ -543,6 +543,9 @@
     "role": "Role",
     "admin": "Administrator",
     "operator": "Operator",
+    "viewer": "Viewer",
+    "governorate": "Governorate Viewer",
+    "superAdmin": "Master Viewer",
     "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
@@ -590,6 +593,11 @@
     "clearFilters": "Clear Filters"
   },
   "navigation": {
+    "overview": "Overview",
+    "governorate": "Governorate View",
+    "directorate": "Directorate View",
+    "master": "Master View",
+    "reports": "Reports",
     "dashboard": "Dashboard",
     "sites": "Sites Management",
     "readings": "Readings",
@@ -779,4 +787,104 @@
     "atLeastOneSiteRequired": "At least one site must be selected",
     "selectAll": "Select All",
   "clearAll": "Clear All"
-  }}
+  },
+  "ups": {
+    "appName": "UPS Viewer Dashboard",
+    "appTagline": "Real-time monitoring and reporting",
+    "landing": {
+      "title": "Main Landing Page",
+      "subtitle": "General overview for all accessible sites",
+      "mapTitle": "GIS Overview (Egypt)",
+      "mapHint": "Click any pin to open the site-specific page.",
+      "recentAlarms": "Recent Alarm Events"
+    },
+    "kpis": {
+      "totalSites": "Total Sites",
+      "activeSites": "Active Sites",
+      "inactiveSites": "Inactive Sites",
+      "urgentAlarms": "Urgent Alarms",
+      "updatedRealtime": "Updated in real time"
+    },
+    "filters": {
+      "selectTime": "Select time filter",
+      "latest": "Latest",
+      "last24h": "Last 24 Hours",
+      "week": "Last Week",
+      "month": "Last Month",
+      "custom": "Custom Range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "hourlyData": "Hourly data",
+      "dailyAverages": "Daily averages"
+    },
+    "calculations": {
+      "title": "Calculation Methods",
+      "description": "Choose how to aggregate data for periods longer than 24 hours",
+      "levels": "Water Levels",
+      "battery": "Battery Voltage",
+      "flow": "Flow Rate",
+      "average": "Average",
+      "sum": "Sum/Cumulative",
+      "max": "Maximum",
+      "min": "Minimum"
+    },
+    "fields": {
+      "site": "Site",
+      "field": "Field",
+      "severity": "Severity",
+      "message": "Message",
+      "upstream": "Upstream",
+      "downstream": "Downstream",
+      "batteryVoltage": "Battery Voltage",
+      "flowRate": "Flow Rate",
+      "latestReading": "Latest reading"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "charts": {
+      "upstreamDownstream": "Upstream vs Downstream",
+      "batteryTrend": "Battery Trend",
+      "flowTrend": "Flow Rate Trend",
+      "fullProfile": "Full Flow Profile"
+    },
+    "tables": {
+      "readings": "Readings Table",
+      "eventLog": "Event Log",
+      "siteOverview": "Site Overview"
+    },
+    "governorate": {
+      "title": "Governorate Overview - {{governorate}}",
+      "subtitle": "Branch split view with tables and bar charts"
+    },
+    "master": {
+      "title": "Master General View",
+      "subtitle": "All sites ordered south-to-north along the canal"
+    },
+    "reports": {
+      "title": "Reporting & Export",
+      "subtitle": "Configure and review scheduled reports",
+      "scheduleTitle": "Create Scheduled Report",
+      "scheduledList": "Scheduled Reports",
+      "name": "Report Name",
+      "namePlaceholder": "Daily Governorate Summary",
+      "sites": "Sites",
+      "sitesPlaceholder": "1, 2, 3 (comma separated)",
+      "sitesHint": "Leave empty to include all accessible sites.",
+      "frequency": "Frequency",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "time": "Time",
+      "recipients": "Recipients",
+      "recipientsPlaceholder": "ops@ups.local, viewer@ups.local",
+      "format": "Format",
+      "pdf": "PDF",
+      "excel": "Excel",
+      "create": "Create Schedule",
+      "nextRun": "Next Run"
+    }
+  }
+}

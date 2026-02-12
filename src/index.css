@@ -2799,3 +2799,18 @@ body {
   content: none !important;
   display: none !important;
 }
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+}
+
+.leaflet-container img,
+.leaflet-container svg {
+  max-width: none !important;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+}

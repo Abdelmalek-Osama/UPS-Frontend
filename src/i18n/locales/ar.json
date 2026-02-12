@@ -77,8 +77,8 @@
   "auth": {
     "login": "تسجيل الدخول",
     "logout": "تسجيل الخروج",
-    "loginTitle": "نظام مراقبة الري",
-    "loginDescription": "وزارة الموارد المائية والري - جمهورية مصر العربية",
+    "loginTitle": "لوحة عرض UPS",
+    "loginDescription": "محطات الضخ الموحدة - مصر",
     "username": "اسم المستخدم",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
@@ -542,6 +542,9 @@
     "role": "الدور",
     "admin": "مسؤول",
     "operator": "مشغل",
+    "viewer": "مشاهد",
+    "governorate": "مشاهد المحافظة",
+    "superAdmin": "مشاهد عام",
     "status": "الحالة",
     "active": "نشط",
     "inactive": "غير نشط",
@@ -589,6 +592,11 @@
     "clearFilters": "مسح التصفية"
   },
   "navigation": {
+    "overview": "نظرة عامة",
+    "governorate": "عرض المحافظة",
+    "directorate": "عرض المديرية",
+    "master": "العرض العام",
+    "reports": "التقارير",
     "dashboard": "لوحة التحكم",
     "sites": "إدارة المواقع",
     "readings": "القراءات",
@@ -776,5 +784,104 @@
     "columnRecipients": "المتلقين",
     "columnFields": "الحقول",
     "columnCreated": "تم الإنشاء في"
+  },
+  "ups": {
+    "appName": "لوحة عرض UPS",
+    "appTagline": "متابعة لحظية وتقارير تشغيلية",
+    "landing": {
+      "title": "الصفحة الرئيسية",
+      "subtitle": "نظرة عامة على جميع المواقع المسموح بها",
+      "mapTitle": "خريطة المواقع (مصر)",
+      "mapHint": "اضغط على أي دبوس لفتح صفحة الموقع.",
+      "recentAlarms": "أحدث التنبيهات"
+    },
+    "kpis": {
+      "totalSites": "إجمالي المواقع",
+      "activeSites": "المواقع النشطة",
+      "inactiveSites": "المواقع غير النشطة",
+      "urgentAlarms": "التنبيهات العاجلة",
+      "updatedRealtime": "محدثة لحظيًا"
+    },
+    "filters": {
+      "selectTime": "اختر الفترة الزمنية",
+      "latest": "الأحدث",
+      "last24h": "آخر 24 ساعة",
+      "week": "آخر أسبوع",
+      "month": "آخر شهر",
+      "custom": "فترة مخصصة",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "hourlyData": "بيانات ساعية",
+      "dailyAverages": "متوسطات يومية"
+    },
+    "calculations": {
+      "title": "طرق الحساب",
+      "description": "اختر كيفية تجميع البيانات للفترات الأطول من 24 ساعة",
+      "levels": "مناسيب المياه",
+      "battery": "جهد البطارية",
+      "flow": "معدل التدفق",
+      "average": "متوسط",
+      "sum": "مجموع/تراكمي",
+      "max": "أقصى",
+      "min": "أدنى"
+    },
+    "fields": {
+      "site": "الموقع",
+      "field": "الحقل",
+      "severity": "الخطورة",
+      "message": "الرسالة",
+      "upstream": "منسوب علوي",
+      "downstream": "منسوب سفلي",
+      "batteryVoltage": "جهد البطارية",
+      "flowRate": "معدل التدفق",
+      "latestReading": "آخر قراءة"
+    },
+    "severity": {
+      "critical": "حرج",
+      "warning": "تحذير",
+      "info": "معلومة"
+    },
+    "charts": {
+      "upstreamDownstream": "المنسوب العلوي مقابل السفلي",
+      "batteryTrend": "اتجاه البطارية",
+      "flowTrend": "اتجاه التدفق",
+      "fullProfile": "الملف الكامل للتدفق"
+    },
+    "tables": {
+      "readings": "جدول القراءات",
+      "eventLog": "سجل الأحداث",
+      "siteOverview": "ملخص المواقع"
+    },
+    "governorate": {
+      "title": "نظرة محافظة - {{governorate}}",
+      "subtitle": "عرض الفروع مع الجداول والرسوم البيانية"
+    },
+    "master": {
+      "title": "العرض العام للمشروع",
+      "subtitle": "جميع المواقع مرتبة من الجنوب إلى الشمال"
+    },
+    "reports": {
+      "title": "التقارير والتصدير",
+      "subtitle": "إعداد ومراجعة التقارير المجدولة",
+      "scheduleTitle": "إنشاء تقرير مجدول",
+      "scheduledList": "التقارير المجدولة",
+      "name": "اسم التقرير",
+      "namePlaceholder": "ملخص يومي للمحافظة",
+      "sites": "المواقع",
+      "sitesPlaceholder": "1, 2, 3 (أرقام مفصولة بفواصل)",
+      "sitesHint": "اتركه فارغًا لإضافة كل المواقع المتاحة.",
+      "frequency": "التكرار",
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "time": "الوقت",
+      "recipients": "المستلمون",
+      "recipientsPlaceholder": "ops@ups.local, viewer@ups.local",
+      "format": "الصيغة",
+      "pdf": "PDF",
+      "excel": "Excel",
+      "create": "إنشاء الجدولة",
+      "nextRun": "التشغيل القادم"
+    }
   }
 }
