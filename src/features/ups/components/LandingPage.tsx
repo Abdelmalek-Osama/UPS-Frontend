@@ -57,7 +57,12 @@ export function LandingPage() {
   const totalFlowRate = data.sites?.reduce((sum, site) => sum + (site.flowRate || 0), 0) || 2450;
   const activeSites = data.sites?.filter(site => site.status === 'active').length || 7;
   const totalSites = data.sites?.length || 11;
-  const urgentAlarms = data.kpis?.urgentAlarms || 2;
+  
+  // Calculate urgent alarms from recent alarm events API
+  // Urgent alarms are unacknowledged alarms with critical or high severity
+  const urgentAlarms = recentAlarms.filter(
+    alarm => !alarm.acknowledged && (alarm.severity === 'critical' || alarm.severity === 'high')
+  ).length;
 
   return (
     <div className="space-y-6">
