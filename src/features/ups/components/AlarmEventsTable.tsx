@@ -54,7 +54,7 @@ export function AlarmEventsTable({
       { key: 'date', header: t("common.date") },
       { key: 'time', header: t("common.hour") },
       { key: 'type', header: t("alarms.eventDetails") },
-      { key: 'severity', header: t("alarms.severity") },
+      { key: 'severity', header: t("alarms.severityLabel") },
       { key: 'message', header: t("alarms.message") },
       { key: 'status', header: t("common.status") },
     ];
@@ -76,7 +76,7 @@ export function AlarmEventsTable({
       { key: 'date', header: t("common.date") },
       { key: 'time', header: t("common.hour") },
       { key: 'type', header: t("alarms.eventDetails") },
-      { key: 'severity', header: t("alarms.severity") },
+      { key: 'severity', header: t("alarms.severityLabel") },
       { key: 'message', header: t("alarms.message") },
       { key: 'status', header: t("common.status") },
     ];
@@ -138,7 +138,7 @@ export function AlarmEventsTable({
                   <th className="text-center py-2 px-4 text-gray-600">{t("common.date")}</th>
                   <th className="text-center py-2 px-4 text-gray-600">{t("common.hour")}</th>
                   <th className="text-center py-2 px-4 text-gray-600">{t("alarms.eventDetails")}</th>
-                  <th className="text-center py-2 px-4 text-gray-600">{t("alarms.severity")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("alarms.severityLabel")}</th>
                   <th className="text-center py-2 px-4 text-gray-600">{t("alarms.message")}</th>
                   <th className="text-center py-2 px-4 text-gray-600">{t("common.status")}</th>
                 </tr>
@@ -169,7 +169,7 @@ export function AlarmEventsTable({
                             : "bg-blue-100 text-blue-800"
                         }`}
                       >
-                        {event.type?.toUpperCase() || 'N/A'}
+                        {event.type ? t(`alarms.type.${event.type}`) : 'N/A'}
                       </span>
                     </td>
                     <td className="py-2 px-4 text-center">
@@ -184,7 +184,7 @@ export function AlarmEventsTable({
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {event.severity?.toUpperCase() || 'N/A'}
+                        {event.severity ? t(`alarms.severity.${event.severity}`) : 'N/A'}
                       </span>
                     </td>
                     <td className="py-2 px-4 text-gray-900 text-center">{event.message || '-'}</td>

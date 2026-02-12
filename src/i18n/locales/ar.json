@@ -423,7 +423,7 @@
     "operator": "المقارن",
     "threshold": "قيمة الحد",
     "color": "اللون",
-    "severity": "شدة التنبيه",
+    "severityLabel": "شدة التنبيه",
     "crisis": "كارثية",
     "critical": "حرجة",
     "sensorStatus": "حالة الإستشعار",
@@ -481,6 +481,20 @@
     "noEventsYet": "لا توجد أحداث تنبيهات بعد",
     "noEventsMatchFilters": "لا توجد أحداث تطابق معايير التصفية الخاصة بك",
     "pending": "قيد الانتظار",
+    "type": {
+      "alarm": "تنبيه",
+      "warning": "تحذير",
+      "info": "معلومات",
+      "maintenance": "صيانة",
+      "system": "نظام"
+    },
+    "severity": {
+      "critical": "حرج",
+      "high": "عالي",
+      "medium": "متوسط",
+      "low": "منخفض",
+      "info": "معلومات"
+    },
     "message": "الرسالة",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",
@@ -871,11 +885,6 @@
       "percentage": "% من الإجمالي",
       "totalFlow": "إجمالي التدفق",
       "latestReading": "آخر قراءة"
-    },
-    "severity": {
-      "critical": "حرج",
-      "warning": "تحذير",
-      "info": "معلومة"
     },
     "tables": {
       "readings": "جدول القراءات",

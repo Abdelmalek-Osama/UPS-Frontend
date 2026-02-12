@@ -205,7 +205,7 @@ export function LandingPage() {
                               ? 'text-orange-600'
                               : 'text-blue-600'
                           }`}>
-                            {alarm.severity.toUpperCase()}
+                            {t(`alarms.severity.${alarm.severity}`)}
                           </p>
                         </div>
                       </div>

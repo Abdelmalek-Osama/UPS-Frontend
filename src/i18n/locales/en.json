@@ -424,7 +424,7 @@
     "operator": "Operator",
     "threshold": "Threshold Value",
     "color": "Color",
-    "severity": "Severity",
+    "severityLabel": "Severity",
     "crisis": "Crisis",
     "critical": "Critical",
     "warning": "Warning",
@@ -482,6 +482,20 @@
     "noEventsYet": "No alarm events yet",
     "noEventsMatchFilters": "No events match your filter criteria",
     "pending": "Pending",
+    "type": {
+      "alarm": "Alarm",
+      "warning": "Warning",
+      "info": "Info",
+      "maintenance": "Maintenance",
+      "system": "System"
+    },
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "info": "Info"
+    },
     "message": "Message",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
