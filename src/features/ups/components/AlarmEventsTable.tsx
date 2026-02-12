@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { DatePicker } from "../../../components/ui/datepicker";
 import { Button } from "../../../components/ui/button";
@@ -9,6 +10,7 @@ interface AlarmEventsTableProps {
 }
 
 export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
+  const { t } = useTranslation();
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
@@ -30,25 +32,25 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Alarm Events</CardTitle>
+        <CardTitle>{t("ups.charts.alarmEvents")}</CardTitle>
         <div className="flex flex-wrap items-center gap-3 mt-4">
           <DatePicker
-            placeholder="Start Date"
+            placeholder={t("readings.fromDate")}
             value={startDate}
             onChange={setStartDate}
           />
           <DatePicker
-            placeholder="End Date"
+            placeholder={t("readings.toDate")}
             value={endDate}
             onChange={setEndDate}
           />
           {(startDate || endDate) && (
             <Button variant="outline" size="sm" onClick={handleClearFilters}>
-              Clear Filters
+              {t("common.clearFilters")}
             </Button>
           )}
           <span className="text-sm text-gray-500">
-            Showing {filteredEvents.length} of {events.length} events
+            {t("common.showing")} {filteredEvents.length} {t("common.of")} {events.length} {t("alarms.events")}
           </span>
         </div>
       </CardHeader>
@@ -57,19 +59,19 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-center py-2 px-4 text-gray-600">Date</th>
-                <th className="text-center py-2 px-4 text-gray-600">Hour</th>
-                <th className="text-center py-2 px-4 text-gray-600">Type</th>
-                <th className="text-center py-2 px-4 text-gray-600">Severity</th>
-                <th className="text-center py-2 px-4 text-gray-600">Message</th>
-                <th className="text-center py-2 px-4 text-gray-600">Status</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("common.date")}</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("common.hour")}</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("alarms.eventDetails")}</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("alarms.severity")}</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("alarms.message")}</th>
+                <th className="text-center py-2 px-4 text-gray-600">{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
               {filteredEvents.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-gray-500">
-                    No alarm events found for the selected date range
+                    {t("alarms.noEventsMatchFilters")}
                   </td>
                 </tr>
               ) : (
@@ -121,7 +123,7 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                             event.acknowledged ? "bg-green-500" : "bg-red-500"
                           }`}
                         ></span>
-                        {event.acknowledged ? "Acknowledged" : "Active"}
+                        {event.acknowledged ? t("common.active") : t("common.active")}
                       </span>
                     </td>
                   </tr>

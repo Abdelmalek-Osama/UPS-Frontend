@@ -57,12 +57,7 @@ axiosInstance.interceptors.request.use(
     }
     // Log full request config for debugging
     if (config.url?.includes('/v1/Sites')) {
-      console.log('Axios Request Config:', JSON.stringify({
-        url: config.url,
-        method: config.method,
-        headers: config.headers,
-        data: config.data
-      }, null, 2));
+
     }
     return config;
   },

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Activity, Droplets, Waves } from "lucide-react";
 import type { SiteSummary } from "../types";
@@ -7,23 +8,25 @@ interface SiteMetricsCardsProps {
 }
 
 export function SiteMetricsCards({ site }: SiteMetricsCardsProps) {
+  const { t } = useTranslation();
+  
   const items = [
     { 
-      label: "Upstream Level", 
+      label: t("ups.fields.upstream"), 
       value: `${site.upstream.toFixed(2)} m`, 
       icon: Waves,
       color: "text-blue-600",
       bgColor: "bg-blue-50"
     },
     { 
-      label: "Downstream Level", 
+      label: t("ups.fields.downstream"), 
       value: `${site.downstream.toFixed(2)} m`, 
       icon: Droplets,
       color: "text-blue-600", 
       bgColor: "bg-blue-50"
     },
     { 
-      label: "Flow Rate", 
+      label: t("ups.fields.flowRate"), 
       value: `${site.flowRate.toFixed(0)} m³/s`, 
       icon: Activity,
       color: "text-purple-600",

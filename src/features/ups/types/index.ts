@@ -364,6 +364,18 @@ export interface SiteDetails {
   dailyReadings: ReadingRow[];
   events: Event[];
   pumpStationDetails?: PumpStationDetails;
+  pumpFlowTimeSeries?: PumpFlowTimeSeriesPoint[];
+}
+
+export interface PumpFlowTimeSeriesPoint {
+  timestamp: string;
+  totalFlow: number;
+  p1Flow: number;
+  p2Flow: number;
+  p3Flow: number;
+  p4Flow: number;
+  p5Flow: number;
+  p6Flow: number;
 }
 
 export interface PumpStationDetails {
