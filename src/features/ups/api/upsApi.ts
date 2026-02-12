@@ -247,23 +247,23 @@ export interface AlarmEventDto {
   waterLevelReadingId: number;
   fieldName: string;
   thresholdValue: number;
+  actualValue?: number; // Optional field
   triggeredAt: string; // ISO date-time string from API
   message: string;
   isResolved: boolean;
-  severity: number; // 0 = critical, 1 = high, 2 = medium, 3 = low
+  severity: number; // Backend enum: Crisis = 0, Critical = 1, Info = 2
 }
 
 // Helper function to map severity number to EventSeverity type
+// Backend enum: Crisis = 0, Critical = 1, Info = 2
 const mapSeverity = (severity: number): EventSeverity => {
   switch (severity) {
     case 0:
-      return 'critical';
+      return 'critical'; // Crisis maps to critical (highest severity)
     case 1:
-      return 'high';
+      return 'high'; // Critical maps to high
     case 2:
-      return 'medium';
-    case 3:
-      return 'low';
+      return 'info'; // Info maps to info
     default:
       return 'info';
   }
@@ -311,6 +311,39 @@ export const getAlarmEventsBySiteAndDateRange = async (
     }));
   } catch (error) {
     console.error('Failed to fetch alarm events:', error);
+    return [];
+  }
+};
+
+// New API: Get recent alarm events for landing page
+export const getRecentAlarmEvents = async (): Promise<Event[]> => {
+  try {
+    const response = await get<UpsApiResponse<AlarmEventDto[]>>(
+      '/v1/alarm-events/recent'
+    );
+    
+    console.log('Recent alarm events API response:', response);
+    
+    // Check if response.data is an array
+    if (!Array.isArray(response.data)) {
+      console.error('Expected array but got:', response.data);
+      return [];
+    }
+    
+    // Transform API response to Event type with Date objects
+    return response.data.map(event => ({
+      id: event.id.toString(),
+      siteId: event.siteId.toString(),
+      timestamp: new Date(event.triggeredAt),
+      type: 'alarm' as EventType,
+      severity: mapSeverity(event.severity),
+      message: event.message,
+      acknowledged: event.isResolved,
+      acknowledgedBy: undefined,
+      acknowledgedAt: undefined,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch recent alarm events:', error);
     return [];
   }
 };
