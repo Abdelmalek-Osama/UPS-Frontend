@@ -53,6 +53,8 @@
     "step": "خطوة",
     "filters": "التصفيات",
     "clearFilters": "مسح التصفيات",
+    "overview": "نظرة عامة",
+    "details": "التفاصيل",
     "message": "الرسالة",
     "serverError": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت."
   },
@@ -594,7 +596,7 @@
   "navigation": {
     "overview": "نظرة عامة",
     "governorate": "عرض المحافظة",
-    "directorate": "عرض المديرية",
+    "directorate": "عرض القناة",
     "master": "العرض العام",
     "reports": "التقارير",
     "dashboard": "لوحة التحكم",
@@ -851,6 +853,20 @@
       "readings": "جدول القراءات",
       "eventLog": "سجل الأحداث",
       "siteOverview": "ملخص المواقع"
+    },
+    "pages": {
+      "canalView": "عرض القناة",
+      "canalViewTitle": "عرض القناة",
+      "canalViewDescription": "نقاط المراقبة عبر {{branches}}",
+      "sites": "المواقع",
+      "pumpStationsStatus": "حالة محطات الضخ",
+      "pumpReadingsDetails": "تفاصيل قراءات الضخ",
+      "pump": "مضخة",
+      "noSitesAvailable": "لا توجد مواقع متاحة"
+    },
+    "branches": {
+      "ibrahimia": "إبراهيمية",
+      "bahrYoussef": "بحر يوسف"
     },
     "governorate": {
       "title": "نظرة محافظة - {{governorate}}",

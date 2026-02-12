@@ -53,6 +53,8 @@
     "step": "Step",
     "filters": "Filters",
     "clearFilters": "Clear Filters",
+    "overview": "Overview",
+    "details": "Details",
     "message": "Message",
     "serverError": "No response from server. Please check your internet connection."
   },
@@ -595,7 +597,7 @@
   "navigation": {
     "overview": "Overview",
     "governorate": "Governorate View",
-    "directorate": "Directorate View",
+    "directorate": "Canal View",
     "master": "Master View",
     "reports": "Reports",
     "dashboard": "Dashboard",
@@ -854,6 +856,20 @@
       "readings": "Readings Table",
       "eventLog": "Event Log",
       "siteOverview": "Site Overview"
+    },
+    "pages": {
+      "canalView": "Canal View",
+      "canalViewTitle": "Canal View",
+      "canalViewDescription": "Monitoring points across {{branches}}",
+      "sites": "Sites",
+      "pumpStationsStatus": "Pump Stations Status",
+      "pumpReadingsDetails": "Pump Readings Details",
+      "pump": "Pump",
+      "noSitesAvailable": "No sites available"
+    },
+    "branches": {
+      "ibrahimia": "Ibrahimia",
+      "bahrYoussef": "Bahr Youssef"
     },
     "governorate": {
       "title": "Governorate Overview - {{governorate}}",

@@ -24,9 +24,21 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
     let active = true;
     const load = async () => {
       setLoading(true);
-      if (!isAuthenticated) {
+      // TODO: Remove this when backend API is ready
+      // For now, use demo data - backend endpoint not available yet
+      if (active) {
         setData(demoData);
         setLoading(false);
+      }
+      return;
+
+      // Production code - uncomment when backend is ready
+      /*
+      if (!isAuthenticated) {
+        if (active) {
+          setData(demoData);
+          setLoading(false);
+        }
         return;
       }
 
@@ -38,6 +50,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
           setData(demoData);
         }
       } catch (error) {
+        console.warn("Error fetching governorate overview, using demo data:", error);
         if (active) {
           setData(demoData);
         }
@@ -46,6 +59,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
           setLoading(false);
         }
       }
+      */
     };
 
     if (governorateId) {
@@ -55,7 +69,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
     return () => {
       active = false;
     };
-  }, [demoData, filter, governorateId, isAuthenticated, range?.end, range?.start]);
+  }, [demoData, governorateId]);
 
   return { data, loading, governorateName };
 };
