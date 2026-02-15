@@ -38,17 +38,22 @@ export function LandingPage() {
   useEffect(() => {
     const fetchYesterdayFlow = async () => {
       try {
-        // Get yesterday's date
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        
         // Use the sites we already have from data.sites
         if (!data.sites || data.sites.length === 0) {
-          console.log('No sites available yet');
+          console.log('No sites available yet, setting default');
+          setYesterdayFlowRate(0);
           return;
         }
         
         console.log(`Fetching yesterday's flow data for ${data.sites.length} sites`);
+        
+        // Get yesterday's date range
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStart = new Date(yesterday);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterdayEnd = new Date(yesterday);
+        yesterdayEnd.setHours(23, 59, 59, 999);
         
         // Calculate yesterday's total flow by fetching each site's data
         // Use Promise.allSettled to handle failures gracefully
@@ -56,24 +61,20 @@ export function LandingPage() {
           try {
             const siteId = typeof site.siteId === 'string' ? parseInt(site.siteId) : site.siteId;
             
-            // Fetch site data for the last 7 days (more efficient than custom date range)
+            // Fetch site data for yesterday using custom date range
             const siteData = await getSiteDashboardData(
               siteId,
-              true, // isLast7Days - get last 7 days of data
+              false, // isLast7Days
               false, // isLast30Days
-              undefined,
-              undefined
+              yesterdayStart,
+              yesterdayEnd
             );
             
-            // Find yesterday's data from the time series
-            const yesterdayFlows = siteData.waterLevel.flow.filter((_, index) => {
-              const timestamp = new Date(siteData.waterLevel.timestamps[index]);
-              return timestamp.toDateString() === yesterday.toDateString();
-            });
+            // Calculate average flow from yesterday's data
+            const flows = siteData.waterLevel.flow.filter(f => f !== null && f !== undefined);
             
-            // Return the average flow from yesterday, or 0 if no data
-            if (yesterdayFlows.length > 0) {
-              const avgFlow = yesterdayFlows.reduce((sum, flow) => sum + flow, 0) / yesterdayFlows.length;
+            if (flows.length > 0) {
+              const avgFlow = flows.reduce((sum, flow) => sum + flow, 0) / flows.length;
               console.log(`Site ${siteId} yesterday avg flow:`, avgFlow);
               return avgFlow;
             }
@@ -106,8 +107,11 @@ export function LandingPage() {
 
     if (data.sites && data.sites.length > 0) {
       fetchYesterdayFlow();
+    } else if (!loading) {
+      // If not loading and no sites, set to 0 to prevent infinite loading
+      setYesterdayFlowRate(0);
     }
-  }, [data.sites]);
+  }, [data.sites, loading]);
 
   // Debug logging
 

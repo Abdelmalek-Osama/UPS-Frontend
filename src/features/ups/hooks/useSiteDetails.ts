@@ -150,11 +150,17 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
               timestamp: detail.timestamp,
               totalFlow: detail.totalFlow,
               p1Flow: detail.p1Flow,
+              p1Time: detail.p1Time,
               p2Flow: detail.p2Flow,
+              p2Time: detail.p2Time,
               p3Flow: detail.p3Flow,
+              p3Time: detail.p3Time,
               p4Flow: detail.p4Flow,
+              p4Time: detail.p4Time,
               p5Flow: detail.p5Flow,
+              p5Time: detail.p5Time,
               p6Flow: detail.p6Flow,
+              p6Time: detail.p6Time,
             }));
             
             console.log('useSiteDetails - Transformed pump data:', {

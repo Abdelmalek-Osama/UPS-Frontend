@@ -12,6 +12,7 @@ import { TimeFilterBar } from "./TimeFilterBar";
 import { PumpOperatingHoursTable } from "./PumpOperatingHoursTable";
 import { PumpFlowTable } from "./PumpFlowTable";
 import { PumpFlowChart } from "./PumpFlowChart";
+import { PumpOperatingHoursChart } from "./PumpOperatingHoursChart";
 import { AlarmEventsTable } from "./AlarmEventsTable";
 import { ExportDropdown } from "./common/ExportDropdown";
 import { useSiteDetails } from "../hooks/useSiteDetails";
@@ -441,13 +442,20 @@ export function SitePage() {
 
         return isPumpStation ? (
           <>
-            {/* Pump Flow Chart */}
-            <PumpFlowChart data={pumpFlowSeries} activePumps={activePumps} />
+            {/* Pump Charts - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PumpFlowChart data={pumpFlowSeries} activePumps={activePumps} />
+              <PumpOperatingHoursChart 
+                data={data.pumpFlowTimeSeries || []} 
+                numPumps={data.pumpStationDetails?.pumps.length || 0} 
+              />
+            </div>
 
             {/* Pump Tables - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PumpOperatingHoursTable data={pumpOperatingHours} />
               <PumpFlowTable data={pumpFlows} totalFlow={totalPumpFlow} />
+              <PumpOperatingHoursTable data={pumpOperatingHours} />
+              
             </div>
           </>
         ) : null;

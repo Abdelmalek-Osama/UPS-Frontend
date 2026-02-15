@@ -371,11 +371,17 @@ export interface PumpFlowTimeSeriesPoint {
   timestamp: string;
   totalFlow: number;
   p1Flow: number;
+  p1Time?: number;
   p2Flow: number;
+  p2Time?: number;
   p3Flow: number;
+  p3Time?: number;
   p4Flow: number;
+  p4Time?: number;
   p5Flow: number;
+  p5Time?: number;
   p6Flow: number;
+  p6Time?: number;
 }
 
 export interface PumpStationDetails {
