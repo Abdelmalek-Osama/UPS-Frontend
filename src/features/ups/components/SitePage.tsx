@@ -15,6 +15,7 @@ import { PumpFlowChart } from "./PumpFlowChart";
 import { PumpOperatingHoursChart } from "./PumpOperatingHoursChart";
 import { AlarmEventsTable } from "./AlarmEventsTable";
 import { ExportDropdown } from "./common/ExportDropdown";
+import { SiteSelector } from "./SiteSelector";
 import { useSiteDetails } from "../hooks/useSiteDetails";
 import { exportReport, getAlarmEventsBySiteAndDateRange } from "../api/upsApi";
 import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
@@ -96,6 +97,11 @@ export function SitePage() {
   const handleClearAlarmFilters = () => {
     setAlarmStartDate(undefined);
     setAlarmEndDate(undefined);
+  };
+
+  // Handle site change from selector
+  const handleSiteChange = (newSiteId: number) => {
+    navigate(`/sites/${newSiteId}`);
   };
 
   // Get language-appropriate names
@@ -277,19 +283,29 @@ export function SitePage() {
 
       {/* Site Title and Status */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {loading ? t("ups.loading") : siteName}
-          </h1>
-          <Badge 
-            className={`mt-2 ${
-              data.site.status === "active" 
-                ? "bg-green-100 text-green-800 border-green-200" 
-                : "bg-gray-100 text-gray-600 border-gray-200"
-            }`}
-          >
-            {data.site.status === "active" ? t("ups.status.active") : t("ups.status.inactive")}
-          </Badge>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {loading ? t("ups.loading") : siteName}
+            </h1>
+            <Badge 
+              className={`mt-2 ${
+                data.site.status === "active" 
+                  ? "bg-green-100 text-green-800 border-green-200" 
+                  : "bg-gray-100 text-gray-600 border-gray-200"
+              }`}
+            >
+              {data.site.status === "active" ? t("ups.status.active") : t("ups.status.inactive")}
+            </Badge>
+          </div>
+          
+          {/* Site Selector Dropdown */}
+          <div className="ml-4">
+            <SiteSelector
+              selectedSiteId={siteId}
+              onSiteChange={handleSiteChange}
+            />
+          </div>
         </div>
       </div>
 
