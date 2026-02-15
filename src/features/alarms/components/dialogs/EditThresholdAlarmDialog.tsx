@@ -189,6 +189,7 @@ export function EditThresholdAlarmDialog({
     style={{
         height: '80vh',
         maxHeight: '80vh',
+        minWidth: '500px',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden'
@@ -530,10 +531,10 @@ export function EditThresholdAlarmDialog({
             <div style={footerContainerStyle}>
                 <DialogFooter>
                     {submissionError && (
-                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem'}}>{t(`errors.${submissionError}`, submissionError)}</p>
+                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem', wordBreak: 'break-word', overflowWrap: 'break-word'}}>{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
                     {form.emails.length === 0 && form.phones.length === 0 && (
-                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem'}}>{t('alarms.atLeastOneRecipient')}</p>
+                        <p style={{...errorTextStyle, textAlign: 'center', width: '100%', marginBottom: '1rem', wordBreak: 'break-word', overflowWrap: 'break-word'}}>{t('alarms.atLeastOneRecipient')}</p>
                     )}
                     <div style={{
                         width: '100%',

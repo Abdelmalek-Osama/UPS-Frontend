@@ -14,7 +14,7 @@ import { toast } from 'react-toastify';
 
 // Hooks
 import { useAlarmsData } from '../hooks/useAlarmsData';
-import { useSitesLookup } from '../hooks/useSitesLookup';
+import { useSitesLookup, useSitesLookupWithPumpFilter } from '../hooks/useSitesLookup';
 import { useThresholdAlarmFields } from '../hooks/useThresholdAlarmFields';
 import { useSensorStatusAlarmFields } from '../hooks/useSensorStatusAlarmFields';
 
@@ -98,7 +98,11 @@ export function AlarmConfiguration() {
     pumpStatusPSConfigLoading,
   } = useAlarmsData();
 
+  // Use regular sites lookup for all alarms (threshold, communication, sensor status)
   const { sites, sitesLoading, sitesError } = useSitesLookup();
+  
+  // Use pump-filtered sites lookup specifically for pump status alarms
+  const { sites: pumpSites, sitesLoading: pumpSitesLoading, sitesError: pumpSitesError } = useSitesLookupWithPumpFilter();
 
   const [activeTab, setActiveTab] = useState('threshold');
   const [isAddThresholdOpen, setIsAddThresholdOpen] = useState(false);
@@ -271,23 +275,26 @@ export function AlarmConfiguration() {
   const handleSubmitSensorStatusAlarm = async () => {
     setIsSubmittingSensorStatusAdd(true);
     setSensorStatusSubmissionError(null);
-    const { siteId, site, alarmName, message } = newSensorStatusForm;
+    const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site) {
+    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
       console.error('Missing required sensor status alarm fields');
       setIsSubmittingSensorStatusAdd(false);
       return;
     }
 
     const requestBody: CreateSensorStatusAlarmRequest = {
-      alarmId: null,
+      id: 0,
       siteId,
       alarmName,
-      site: sites.find(s => s.id === siteId)?.name || '',
-      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
-      method: AlarmMethod.Email,
+      method: newSensorStatusForm.method,
+      fieldName: newSensorStatusForm.method,
+      operator: 4,
+      thresholdValue: newSensorStatusForm.threshold,
+      savingType: 0,
+      customMessage: message,
     };
 
     try {
@@ -414,23 +421,26 @@ export function AlarmConfiguration() {
     setIsSubmittingSensorStatusEdit(true);
     if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
 
-    const { siteId, site, alarmName, message } = newSensorStatusForm;
+    const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site) {
+    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
       console.error('Missing required sensor status alarm fields');
       setIsSubmittingSensorStatusEdit(false);
       return;
     }
 
     const requestBody: CreateSensorStatusAlarmRequest = {
-      alarmId: currentSensorStatusAlarm.alarmId,
+      id: currentSensorStatusAlarm.alarmId || 0,
       siteId,
       alarmName,
-      site,
-      message,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
-      method: AlarmMethod.Email,
+      method: newSensorStatusForm.method,
+      fieldName: newSensorStatusForm.method,
+      operator: 4,
+      thresholdValue: newSensorStatusForm.threshold,
+      savingType: 0,
+      customMessage: message,
     };
 
     try {
@@ -480,7 +490,7 @@ export function AlarmConfiguration() {
     };
 
     try {
-      const result = await updatePumpStatusPSAlarm(currentPumpStatusPSAlarm.siteId, requestBody);
+      const result = await updatePumpStatusPSAlarm(currentPumpStatusPSAlarm.id || 0, requestBody);
       if (result.success) {
         toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditPumpStatusPSOpen(false);
@@ -649,7 +659,6 @@ export function AlarmConfiguration() {
       message: alarm.message || '',
       threshold: alarm.threshold || 0,
       field: alarm.field || '',
-      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
@@ -662,7 +671,6 @@ export function AlarmConfiguration() {
       message: alarm.message || '',
       threshold: alarm.threshold || 0,
       field: alarm.field || '',
-      readingValue: alarm.readingValue || 0,
       emails: emails,
       phones: phones,
     });
@@ -1257,11 +1265,11 @@ export function AlarmConfiguration() {
                       setSiteId={handleSetPumpStatusPSSiteId}
                       submissionError={pumpStatusPSSubmissionError}
                       onOpenChange={handlePumpStatusPSDialogOpenChange}
-                      sites={sites}
-                      sitesLoading={sitesLoading}
+                      sites={pumpSites}
+                      sitesLoading={pumpSitesLoading}
                       siteConfiguration={pumpStatusPSSiteConfiguration}
                       configLoading={pumpStatusPSConfigLoading}
-                      siteError={pumpStatusPSSiteError}/>
+                      siteError={pumpSitesError}/>
                   </Dialog>
                 )}
               </CardHeader>
@@ -1309,11 +1317,11 @@ export function AlarmConfiguration() {
                     setSite={handleSetPumpStatusIdvSite}
                     setIdvPump={setPumpStatusIdvIdvPump}
                     submissionError={pumpStatusIdvSubmissionError}
-                    sites={sites}
-                    sitesLoading={sitesLoading}
+                    sites={pumpSites}
+                    sitesLoading={pumpSitesLoading}
                     siteConfiguration={pumpStatusIdvSiteConfiguration}
                     configLoading={pumpStatusIdvConfigLoading}
-                    siteError={pumpStatusIdvSiteError}/>
+                    siteError={pumpSitesError}/>
                  
                   </Dialog>
           
@@ -1403,9 +1411,9 @@ export function AlarmConfiguration() {
         form={newPumpStatusPSForm}
         setForm={setNewPumpStatusPSForm}
         currentAlarm={currentPumpStatusPSAlarm}
-        sites={sites}
-        sitesLoading={sitesLoading}
-        sitesError={sitesError}
+        sites={pumpSites}
+        sitesLoading={pumpSitesLoading}
+        sitesError={pumpSitesError}
         onSubmit={handleEditPumpStatusPSAlarm}
         isSubmitting={isSubmittingPumpPSEdit}
         hasChanges={hasPumpStatusPSChanges}
@@ -1421,9 +1429,9 @@ export function AlarmConfiguration() {
         form={newPumpStatusIdvForm}
         setForm={setNewPumpStatusIdvForm}
         currentAlarm={currentPumpStatusIdvAlarm}
-        sites={sites}
-        sitesLoading={sitesLoading}
-        sitesError={sitesError}
+        sites={pumpSites}
+        sitesLoading={pumpSitesLoading}
+        sitesError={pumpSitesError}
         siteConfiguration={pumpStatusIdvSiteConfiguration}
         configLoading={pumpStatusIdvConfigLoading}
         siteError={pumpStatusIdvSiteError}

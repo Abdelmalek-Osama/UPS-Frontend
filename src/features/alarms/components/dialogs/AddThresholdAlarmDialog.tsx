@@ -19,6 +19,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, INITIAL_THRESHOLD_FORM, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
@@ -212,7 +213,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -236,6 +239,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
     style={{
         maxHeight: '80vh',
+        minWidth: '500px',
         display: 'flex',
         flexDirection: 'column',
         padding: 0,
@@ -275,31 +279,19 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             )}
                         </div>
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.site')}</Label>
-                            <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    siteId: parseInt(value)
-                                }))}
-                                value={form.siteId?.toString() || ""}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('readings.selectSite')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {sitesLoading ? (
-                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
-                                    ) : sitesError ? (
-                                        <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                    ) : (
-                                        sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
+    <Label>{t('alarms.site')}</Label>
+        <SiteSingleSelectDropdown
+    sites={sites}
+       sitesLoading={sitesLoading}
+       selectedSiteId={form.siteId}
+            onSiteSelect={(siteId) => setForm(prev => ({
+       ...prev,
+          siteId: siteId ? Number(siteId) : 0
+      }))}
+   placeholder={t('readings.selectSite')}
+   allowClear={false}
+         />
+          </div>
 
 
                         <div style={fieldContainerStyle}>

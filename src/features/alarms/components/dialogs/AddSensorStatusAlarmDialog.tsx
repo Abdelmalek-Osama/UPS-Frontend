@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -20,6 +20,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
+import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
 import { SensorStatusForm, Site, AddSensorStatusAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
@@ -30,7 +31,6 @@ interface ExtendedAddSensorStatusAlarmDialogProps extends AddSensorStatusAlarmDi
     sites: Site[];
     sitesLoading?: boolean;
     siteError?: string | null;
-    open?: boolean;
     availableFields?: string[];
 }
 
@@ -47,11 +47,21 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
     sites,
     sitesLoading = false,
     siteError = null,
-    open = false,
+    open,
     availableFields = [],
 }: ExtendedAddSensorStatusAlarmDialogProps, ref) => {
     const { t } = useTranslation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    }, [form.message, open]);
+
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
     const handleSiteChange = (value: string) => {
@@ -114,7 +124,9 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -175,11 +187,12 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent 
-                ref={ref} 
+            <DialogContent
+                ref={ref}
                 className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
                 style={{
                     maxHeight: '80vh',
+                    minWidth: '500px',
                     display: 'flex',
                     flexDirection: 'column',
                     padding: 0,
@@ -217,29 +230,20 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.site')}</Label>
-                            <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    siteId: parseInt(value)
-                                }))}
-                                value={form.siteId?.toString() || ""}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('readings.selectSite')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {sitesLoading ? (
-                                        <SelectItem value="0">{t('common.loading')}</SelectItem>
-                                    ) : siteError ? (
-                                        <SelectItem value="0" disabled>{siteError}</SelectItem>
-                                    ) : (
-                                        sites.map(site => (
-                                            <SelectItem key={site.id} value={site.id.toString()}>{t('_rtl') === 'rtl' ? site.arabicName : site.name}</SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <SiteSingleSelectDropdown
+                                sites={sites}
+                                sitesLoading={sitesLoading}
+                                selectedSiteId={form.siteId}
+                                onSiteSelect={(siteId) => {
+                                    const selected = sites.find(site => site.id === Number(siteId));
+                                    if (selected) {
+                                        setSite(selected.name);
+                                        setForm(prev => ({ ...prev, siteId: Number(siteId), site: selected.name }));
+                                    }
+                                }}
+                                placeholder={t('readings.selectSite')}
+                                allowClear={false}
+                            />
                         </div>
 
                         <div style={fieldContainerStyle}>
@@ -290,32 +294,14 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.readingValue')}</Label>
-                            <Select
-                                onValueChange={(value) => setForm(prev => ({
-                                    ...prev,
-                                    readingValue: value as any
-                                }))}
-                                value={form.readingValue?.toString() || ""}
-                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                            >
-                                <SelectTrigger className="rtl:flex-row-reverse">
-                                    <SelectValue placeholder={t('alarms.readingValue')} />
-                                </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    <SelectItem value="***">***</SelectItem>
-                                    <SelectItem value="---">---</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div style={fieldContainerStyle}>
                             <Label>{t('alarms.message')}</Label>
                             <Textarea
-                                className="resize-none"
+                                ref={textareaRef}
+                                className="resize-none overflow-hidden min-h-[80px]"
+                                style={{ resize: 'none' }}
                                 placeholder={t('alarms.message')}
                                 value={form.message}
-                                rows={4}
+                                rows={1}
                                 onChange={(e) => {
                                     setForm(prev => ({
                                         ...prev,
@@ -355,7 +341,7 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                                         onSubmit();
                                     }
                                 }}
-                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.message || (form.emails.length === 0 && form.phones.length === 0) || !!alarmNameError}
+                                disabled={isSubmitting || !form.siteId || !form.alarmName || !form.message || !form.field || form.threshold === 0 || (form.emails.length === 0 && form.phones.length === 0) || !!alarmNameError}
                                 loadingText={t('alarms.addingAlarm')}
                                 isLoading={isSubmitting}
                             >

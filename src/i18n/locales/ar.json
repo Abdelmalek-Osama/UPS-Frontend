@@ -60,6 +60,9 @@
     "step": "خطوة",
     "filters": "التصفيات",
     "clearFilters": "مسح التصفيات",
+    "overview": "نظرة عامة",
+    "details": "التفاصيل",
+    "selectDirectorate": "تصفية حسب المديرية",
     "message": "الرسالة",
     "serverError": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت."
   },
@@ -159,6 +162,7 @@
     "deleteConfirmation": "هل أنت متأكد من حذف هذا الموقع؟",
     "deleteFailed": "فشل حذف الموقع. يرجى المحاولة مرة أخرى",
     "sitesCount": "المواقع",
+    "noSitesToShow": "لا توجد مواقع لعرضها",
     "latitude": "خط العرض",
     "longitude": "خط الطول",
     "coordinates": "الإحداثيات",
@@ -262,7 +266,7 @@
       "addedMappingsTitle": "تعيينات البيانات",
       "viewColumnsButton": "عرض تعيينات الأعمدة",
       "noMappingsMessage": "لم تتم إضافة أي تعيينات بيانات حتى الآن",
-      "allMappingsAddedMessage": "تم إضافة جميع تعيينات البيانات المتاحة",
+      "allMappingsAddedMessage": "تمت إضافة جميع تعيينات البيانات المتاحة",
       "tableWaterLevel": "منسوب المياه",
       "tablePumpStation": "محطة الرفع",
       "tablePumpStatus": "حالة المضخات",
@@ -324,6 +328,10 @@
     "noData": "لا توجد بيانات للتصدير",
     "exportSuccess": "تم تصدير البيانات بنجاح",
     "exportError": "حدث خطأ أثناء تصدير البيانات",
+    "createSuccess": "تم إضافة القراءة بنجاح",
+    "updateSuccess": "تم تحديث القراءة بنجاح",
+    "createPumpSuccess": "تم إضافة قراءة محطة الرفع بنجاح",
+    "updatePumpSuccess": "تم تحديث قراءة محطة الرفع بنجاح",
     "dswL1": "DSWL1",
     "dswL2": "DSWL2",
     "battery": "البطارية",
@@ -447,6 +455,7 @@
     "addAlarmSuccess": "تمت إضافة تنبيه القيمة الحدية بنجاح",
     "addCommunicationAlarmSuccess": "تمت إضافة تنبيه فقدان الاتصال بنجاح",
     "addSensorStatusSuccess": "تمت إضافة تنبيه حالة الاستشعار بنجاح",
+    "addSensorStatusAlarmSuccess": "تمت إضافة تنبيه حالة الاستشعار بنجاح",
     "addPumpStatusPSSuccess": "تمت إضافة تنبيه حالة المضخات بنجاح",
     "addPumpStatusIdvSuccess": "تمت إضافة تنبيه حالة المضخات الفردية بنجاح",
     "updateAlarmSuccess": "تم تحديث التنبيه بنجاح",
@@ -577,6 +586,7 @@
     "passwordsNotMatching": "كلمة المرور وتأكيدها غير متطابقين",
     "addUserSuccess": "تم إضافة المستخدم بنجاح",
     "updateUserSuccess": "تم تحديث المستخدم بنجاح",
+    "updateUserDataSuccess": "تم تحديث بيانات المستخدم بنجاح",
     "deleteUserSuccess": "تم حذف المستخدم بنجاح",
     "resetPasswordSuccess": "تم إعادة تعيين كلمة المرور بنجاح",
     "resettingPassword": "جاري إعادة تعيين كلمة المرور...",
@@ -704,7 +714,27 @@
     "passwordNeedsUppercase": "كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل.",
     "passwordNeedsNumber": "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل.",
     "invalidEmailFormat": "يرجى إدخال عنوان بريد إلكتروني صحيح.",
-    "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا."
+    "phone11Digits": "يرجى إدخال رقم هاتف صحيح مكون من 11 رقمًا.",
+    "fullNameRequired": "الاسم الكامل مطلوب",
+    "fullNameMaxLength": "الاسم الكامل يجب ألا يتجاوز 100 حرف",
+    "fullNameFormat": "الاسم الكامل يجب أن يحتوي على جزأين على الأقل (الاسم الأول والاسم الأخير) مع 2 حرف على الأقل لكل جزء، مفصول بفراغ أو شرطة",
+    "fullNameFormatEdit": "الاسم الكامل يجب أن يحتوي على جزأين على الأقل (الاسم الأول والاسم الأخير) مع 2 حرف على الأقل لكل جزء، مفصول بفراغ أو شرطة",
+    "usernameRequired": "اسم المستخدم مطلوب",
+    "usernameTrimmed": "اسم المستخدم لا يمكن أن يحتوي على مسافات في البداية أو النهاية",
+    "usernameNoSpaces": "اسم المستخدم لا يمكن أن يحتوي على مسافات",
+    "usernameMinLength": "اسم المستخدم يجب أن يكون على الأقل حرفين",
+    "usernameLettersOnly": "اسم المستخدم يجب أن يحتوي على أحرف فقط",
+    "usernameNotEmail": "اسم المستخدم لا يمكن أن يكون عنوان بريد إلكتروني",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "emailTrimmed": "البريد الإلكتروني لا يمكن أن يحتوي على مسافات في البداية أو النهاية",
+    "emailNoSpaces": "البريد الإلكتروني لا يمكن أن يحتوي على مسافات",
+    "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+    "emailDomainNotSupported": "نطاق البريد الإلكتروني غير مدعوم. يرجى استخدام مزود بريد إلكتروني شائع (Gmail، Outlook، Yahoo، إلخ.)",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "passwordMinLength": "كلمة المرور يجب أن تكون على الأقل 8 أحرف",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "roleRequired": "الدور مطلوب",
+    "siteAssignmentRequired": "يجب تعيين موقع واحد على الأقل لدور المشغل"
   },
   "alarmReports": {
     "title": "تكوين تقارير التنبيهات",
@@ -760,6 +790,10 @@
     "fieldIsResolved": "تم حلها",
     "recipients": "المتلقين",
     "fields": "الحقول",
+    "noRecipients": "لا يوجد متلقين",
+    "totalRecipients": "{{count}} إجمالي المتلقين",
+    "noFields": "لم يتم تحديد حقول",
+    "totalFields": "{{count}} إجمالي الحقول",
     "configurationCreatedSuccess": "تم إنشاء تكوين التقرير بنجاح",
     "configurationUpdatedSuccess": "تم تحديث تكوين التقرير بنجاح",
     "configurationDeletedSuccess": "تم حذف تكوين التقرير بنجاح",
@@ -859,7 +893,8 @@
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
       "hourlyData": "بيانات ساعية",
-      "dailyAverages": "متوسطات يومية"
+      "dailyAverages": "متوسطات يومية",
+      "latestReading": "آخر قراءة"
     },
     "calculations": {
       "title": "طرق الحساب",
@@ -908,6 +943,14 @@
     "governorate": {
       "title": "نظرة محافظة - {{governorate}}",
       "subtitle": "عرض الفروع مع الجداول والرسوم البيانية"
+    },
+    "branches": {
+      "ibrahimia": "ترعة الإبراهيمية",
+      "bahrYoussef": "ترعة بحر يوسف"
+    },
+    "pages": {
+      "canalViewTitle": "عرض الترعة",
+      "canalViewDescription": "عرض شامل لأقسام {{branches}}"
     },
     "master": {
       "title": "العرض العام للمشروع",

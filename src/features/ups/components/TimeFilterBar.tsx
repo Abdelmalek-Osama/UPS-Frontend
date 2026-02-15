@@ -1,7 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { DatePicker } from "../../../components/ui/datepicker";
+import { Input } from "../../../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Badge } from "../../../components/ui/badge";
 import type { DateRange, TimeFilter } from "../types";
 
 export type CalculationType = "average" | "sum" | "max" | "min";
@@ -29,6 +30,7 @@ interface TimeFilterBarProps {
   onExport?: (format: "pdf" | "excel") => void;
   showExport?: boolean;
   showCalculations?: boolean;
+  showLatestOption?: boolean;
 }
 
 export function TimeFilterBar({
@@ -41,6 +43,7 @@ export function TimeFilterBar({
   onExport,
   showExport = true,
   showCalculations = false,
+  showLatestOption = false,
 }: TimeFilterBarProps) {
   const { t } = useTranslation();
   const [format, setFormat] = React.useState<"pdf" | "excel">("pdf");
@@ -63,6 +66,7 @@ export function TimeFilterBar({
               <SelectValue placeholder={t("ups.filters.selectTime")} />
             </SelectTrigger>
             <SelectContent>
+              {showLatestOption && <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>}
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
@@ -76,10 +80,25 @@ export function TimeFilterBar({
                 value={range.start}
                 onChange={(date) => onRangeChange({ ...range, start: date })}
               />
+              <Input
+                type="time"
+                value={range.startTime || ""}
+                onChange={(e) => onRangeChange({ ...range, startTime: e.target.value })}
+                className="w-32"
+                required
+              />
+              <span className="text-gray-500">to</span>
               <DatePicker
                 placeholder={t("ups.filters.endDate")}
                 value={range.end}
                 onChange={(date) => onRangeChange({ ...range, end: date })}
+              />
+              <Input
+                type="time"
+                value={range.endTime || ""}
+                onChange={(e) => onRangeChange({ ...range, endTime: e.target.value })}
+                className="w-32"
+                required
               />
             </div>
           )}
@@ -87,6 +106,7 @@ export function TimeFilterBar({
           {/* Time period description */}
           {value !== "custom" && (
             <Badge variant="secondary" className="text-xs">
+              {value === "latest" && t("ups.filters.latestReading")}
               {value === "week" && t("ups.filters.last7Days")}
               {value === "month" && t("ups.filters.last30Days")}
             </Badge>

@@ -92,8 +92,8 @@ export function useSiteCreation(): UseCreateSiteResult {
         const payload: CreateSitePayload = {
           info: {
             code: siteData.code || '',
-            name: siteData.nameEn || '',
-            arabicName: siteData.nameAr || '',
+            name: siteData.name || '',
+            arabicName: siteData.arabicName || '',
             siteType: mappedSiteType,
             canal: siteData.canal || '',
             longitude: siteData.longitude || 0,

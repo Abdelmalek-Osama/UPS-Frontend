@@ -118,7 +118,9 @@ export function EditSensorStatusAlarmDialog({
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -182,6 +184,7 @@ export function EditSensorStatusAlarmDialog({
                 className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
                 style={{
                     maxHeight: '80vh',
+                    minWidth: '500px',
                     display: 'flex',
                     flexDirection: 'column',
                     padding: 0,
@@ -303,30 +306,6 @@ export function EditSensorStatusAlarmDialog({
                                         <SelectItem value="777">777</SelectItem>
                                         <SelectItem value="888">888</SelectItem>
                                         <SelectItem value="999">999</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-
-                        <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.readingValue')}</Label>
-                            {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.readingValue} disabled />
-                            ) : (
-                                <Select
-                                    onValueChange={(value) => {
-                                        setForm(prev => ({ ...prev, readingValue: value as any }));
-                                        setHasChanges(true);
-                                    }}
-                                    value={form.readingValue?.toString() || ""}
-                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                                >
-                                    <SelectTrigger className="rtl:flex-row-reverse">
-                                        <SelectValue placeholder={t('alarms.readingValue')} />
-                                    </SelectTrigger>
-                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                        <SelectItem value="***">***</SelectItem>
-                                        <SelectItem value="---">---</SelectItem>
                                     </SelectContent>
                                 </Select>
                             )}

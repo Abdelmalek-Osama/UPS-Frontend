@@ -144,6 +144,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    console.error('useAuth: Context is undefined. Make sure AuthProvider is wrapping your component tree.');
+    console.error('Component tree should be: BrowserRouter > AuthProvider > AuthRoutes > ...');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

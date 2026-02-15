@@ -20,9 +20,10 @@ interface SitesDialogProps {
   onSiteCreated?: (site: Site) => void;
   directorates: Directorate[];
   isLoadingDirectorates?: boolean;
+  userRole?: 'Admin' | 'Operator';
 }
 
-export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated, directorates, isLoadingDirectorates }: SitesDialogProps) {
+export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, onSiteCreated, directorates, isLoadingDirectorates, userRole }: SitesDialogProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
   const { createSite, isLoading: isCreating } = useSiteCreation();
@@ -36,6 +37,27 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
   const [isStage3Valid, setIsStage3Valid] = useState(false);
   const [isStage4Valid, setIsStage4Valid] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [equations, setEquations] = useState<any[]>([]);
+  const [loadingEquations, setLoadingEquations] = useState(true);
+
+  // Fetch equations once when component mounts
+  useEffect(() => {
+    const fetchEquations = async () => {
+      try {
+        setLoadingEquations(true);
+        const response = await apiService.get<any>('/v1/Equations');
+        const equationsData = Array.isArray(response) ? response : response?.data || [];
+        setEquations(equationsData);
+      } catch (error) {
+        console.error('Failed to fetch equations:', error);
+        setEquations([]);
+      } finally {
+        setLoadingEquations(false);
+      }
+    };
+
+    fetchEquations();
+  }, []);
 
   
   useEffect(() => {
@@ -43,7 +65,10 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       
       const mappedData = {
         ...siteData,
-        simId: (siteData as any).simCardIP || siteData.simId
+        id: siteData.id, // Ensure id is preserved
+        simId: (siteData as any).simCardIP || siteData.simId,
+        // Normalize dataMappings - API might return siteDataMappings, use that if dataMappings not present
+        dataMappings: siteData.dataMappings || (siteData as any).siteDataMappings || [],
       };
       setFormData(mappedData);
       // For edit mode, mark all tabs as completed since we have existing data
@@ -63,6 +88,13 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     { id: "stage3", name: t('sites.stage3.title'), icon: "3" },
     { id: "stage4", name: t('sites.stage4.title'), icon: "4" },
   ];
+
+  // For operators, only show editable tabs
+  const visibleTabsWithIndices = userRole === 'Operator' && mode === 'edit' ? 
+    tabs
+      .map((tab, originalIndex) => ({ tab, originalIndex }))
+      .filter(item => ['stage1', 'stage4'].includes(item.tab.id)) :
+    tabs.map((tab, originalIndex) => ({ tab, originalIndex }));
 
   
   const dialogContentStyle: React.CSSProperties = {
@@ -323,8 +355,17 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       const newCompleted = [...completedTabs];
       newCompleted[currentTab] = true;
       setCompletedTabs(newCompleted);
-      if (currentTab < tabs.length - 1) {
-        setCurrentTab(currentTab + 1);
+
+      // Determine next tab index
+      let nextTabIndex = currentTab + 1;
+      
+      // For operators in edit mode, skip from stage 1 (index 0) directly to stage 4 (index 3)
+      if (userRole === 'Operator' && mode === 'edit' && currentTab === 0) {
+        nextTabIndex = 3;
+      }
+
+      if (nextTabIndex < tabs.length) {
+        setCurrentTab(nextTabIndex);
       }
     }
   };
@@ -353,42 +394,11 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
       const result = await createSite(formData);
       if (result.success && result.data) {
         onSave(formData);
-        // Call the callback to add the new site to the list immediately
+        // Trigger a refetch by calling onSiteCreated with null/signal to parent to refetch
+        // Instead of immediately adding to list, let parent refetch the data
         if (onSiteCreated) {
-          // Get directorate info from the directorates array
-          const directorate = directorates.find(d => d.id === formData.directorateId);
-          const directorateName = directorate?.name || '';
-          const directorateArabicName = directorate?.arabicName || '';
-          
-          // Transform the API response to match the Site interface
-          const newSite: Site = {
-            id: result.data.id || 0,
-            name: formData.name || '',
-            arabicName: formData.arabicName || '',
-            siteType: formData.siteType as 'WaterLevel' | 'Pumps' || 'WaterLevel',
-            directorateName: directorateName,
-            directorateArabicName: directorateArabicName,
-            directorateId: formData.directorateId,
-            latitude: formData.latitude || 0,
-            longitude: formData.longitude || 0,
-            latitudeDirection: formData.latitudeDirection || 'N',
-            longitudeDirection: formData.longitudeDirection || 'E',
-            status: 'offline' as const,
-            code: formData.code || '',
-            canal: formData.canal || '',
-            location: formData.location || '',
-            dataLoggerType: formData.dataLoggerType,
-            simId: formData.simId || '',
-            simCardIP: formData.simId || '',
-            hasUS: formData.hasUS || false,
-            hasDS1: formData.hasDS1 || false,
-            hasDS2: formData.hasDS2 || false,
-            numPumps: formData.numPumps || 0,
-            dataMappings: formData.dataMappings || [],
-            flowCalculation: formData.flowCalculation,
-            ...result.data,
-          };
-          onSiteCreated(newSite);
+          // Pass empty object to signal that a new site was created and data should be refetched
+          onSiteCreated({} as Site);
         }
         setErrorMessage(null);
         onCancel();
@@ -464,15 +474,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           {/* Side Tabs */}
           <div style={sidebarStyle}>
             <nav style={navStyle}>
-              {tabs.map((tab, index) => {
-                const isCompleted = completedTabs[index];
-                const isCurrent = currentTab === index;
-                const isUnlocked = index === 0 || completedTabs[index - 1];
+              {visibleTabsWithIndices.map(({ tab, originalIndex }) => {
+                const isCompleted = completedTabs[originalIndex];
+                const isCurrent = currentTab === originalIndex;
+                const isUnlocked = originalIndex === 0 || completedTabs[originalIndex - 1];
 
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => handleTabClick(index)}
+                    onClick={() => handleTabClick(originalIndex)}
                     disabled={!isUnlocked}
                     style={{
                       width: '100%',
@@ -552,6 +562,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onValidationChange={handleStage1ValidChange}
                   directorates={directorates}
                   isLoadingDirectorates={isLoadingDirectorates}
+                  mode={mode}
+                  userRole={userRole}
                 />
               )}
               {currentTab === 1 && (
@@ -580,6 +592,9 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                   onClose={onCancel}
                   mode={mode}
                   onValidationChange={handleStage4ValidChange}
+                  userRole={userRole}
+                  equations={equations}
+                  loadingEquations={loadingEquations}
                 />
               )}
             </div>
@@ -637,7 +652,14 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                 <div style={footerLeftStyle}>
                   {currentTab > 0 && (
                     <button
-                      onClick={() => setCurrentTab(Math.max(0, currentTab - 1))}
+                      onClick={() => {
+                        // For operators in edit mode, going back from stage 4 goes to stage 1
+                        if (userRole === 'Operator' && mode === 'edit' && currentTab === 3) {
+                          setCurrentTab(0);
+                        } else {
+                          setCurrentTab(Math.max(0, currentTab - 1));
+                        }
+                      }}
                       style={backButtonStyle}
                       onMouseEnter={(e) => {
                         const btn = e.target as HTMLButtonElement;
@@ -658,13 +680,25 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                 {/* Center: Step Indicator */}
                 <div style={footerCenterStyle}>
                   <span style={stepIndicatorStyle}>
-                    {t('common.step')} {currentTab + 1} {t('common.of')} {tabs.length}
+                    {t('common.step')} {visibleTabsWithIndices.findIndex(item => item.originalIndex === currentTab) + 1} {t('common.of')} {visibleTabsWithIndices.length}
                   </span>
                 </div>
 
                 {/* Right: Next/Save Buttons */}
                 <div style={footerRightStyle}>
-                  {currentTab < tabs.length - 1 ? (
+                  {(() => {
+                    // Check if current tab is the last visible tab for the user
+                    const isLastVisibleTab = visibleTabsWithIndices.some(item => item.originalIndex === currentTab) &&
+                      visibleTabsWithIndices[visibleTabsWithIndices.length - 1].originalIndex === currentTab;
+                    
+                    // For non-operators or admins, use the original logic
+                    if (userRole !== 'Operator' || mode !== 'edit') {
+                      return currentTab < tabs.length - 1;
+                    }
+                    
+                    // For operators, check if on last visible tab
+                    return !isLastVisibleTab;
+                  })() ? (
                     <button
                       onClick={handleNext}
                       disabled={!isStepValid(currentTab) || isUpdating}
@@ -714,8 +748,8 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                         paddingTop: '0.5rem',
                         paddingBottom: '0.5rem',
                         backgroundColor: (isStepValid(currentTab) && !isCreating)
-                          ? 'hsl(142, 72%, 45%)'
-                          : 'hsl(142, 72%, 75%)',
+                          ? 'hsl(217, 91%, 60%)'
+                          : 'hsl(217, 91%, 75%)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '0.375rem',
@@ -727,12 +761,12 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
                       }}
                       onMouseEnter={(e) => {
                         if (isStepValid(currentTab) && !isCreating) {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 40%)';
+                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(217, 91%, 50%)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (isStepValid(currentTab) && !isCreating) {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(142, 72%, 45%)';
+                          (e.target as HTMLButtonElement).style.backgroundColor = 'hsl(217, 91%, 60%)';
                         }
                       }}
                     >

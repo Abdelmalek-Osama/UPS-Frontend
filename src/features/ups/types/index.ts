@@ -2,7 +2,7 @@
 // Core Types and Enums
 // ============================================================================
 
-export type TimeFilterType = 'week' | 'month' | 'custom';
+export type TimeFilterType = 'latest' | 'week' | 'month' | 'custom';
 export type SiteStatus = 'active' | 'inactive' | 'maintenance' | 'alarm';
 export type EventType = 'alarm' | 'warning' | 'info' | 'maintenance' | 'system';
 export type EventSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -319,6 +319,9 @@ export type AlarmSeverity = EventSeverity;
 export interface DateRange {
   start?: Date;
   end?: Date;
+  startTime?: string; // HH:mm format for average mode
+  endTime?: string; // HH:mm format for average mode
+  targetTime?: string; // HH:mm format for exact mode
 }
 
 export interface KpiSummary extends SystemKPIs {}
