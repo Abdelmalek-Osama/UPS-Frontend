@@ -62,6 +62,7 @@
     "clearFilters": "Clear Filters",
     "overview": "Overview",
     "details": "Details",
+    "selectDirectorate": "Filter by Directorate",
     "message": "Message",
     "serverError": "No response from server. Please check your internet connection."
   },
@@ -888,7 +889,8 @@
       "startDate": "Start date",
       "endDate": "End date",
       "hourlyData": "Hourly data",
-      "dailyAverages": "Daily averages"
+      "dailyAverages": "Daily averages",
+      "latestReading": "Latest reading"
     },
     "calculations": {
       "title": "Calculation Methods",
@@ -942,6 +944,14 @@
     "governorate": {
       "title": "Governorate Overview - {{governorate}}",
       "subtitle": "Branch split view with tables and bar charts"
+    },
+    "branches": {
+      "ibrahimia": "Ibrahimiya Canal",
+      "bahrYoussef": "Bahr Youssef Canal"
+    },
+    "pages": {
+      "canalViewTitle": "Canal View",
+      "canalViewDescription": "Comprehensive view of {{branches}} sections"
     },
     "master": {
       "title": "Master General View",

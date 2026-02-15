@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../../shared/contexts/AuthContext";
-import { getGovernorateOverview } from "../api/upsApi";
-import { buildDemoGovernorateOverview } from "../data/demoData";
-import type { DateRange, GovernorateOverview, TimeFilter } from "../types";
+import { getSiteReadingsByCanals } from "../api/upsApi";
+import type { DateRange, GovernorateOverview, TimeFilter, SiteSummary } from "../types";
 
 const toGovernorateName = (value: string) => {
   const decoded = decodeURIComponent(value).replace(/-/g, " ");
@@ -12,34 +11,233 @@ const toGovernorateName = (value: string) => {
     .join(" ");
 };
 
+const getCanalName = (canalId: number): string => {
+  return canalId === 0 ? "Ibrahimiya" : "Bahr Youssef";
+};
+
+const getDateRange = (filter: TimeFilter, range?: DateRange): { startDate: Date; endDate: Date } => {
+  const today = new Date();
+  
+  switch (filter) {
+    case "latest":
+      return { startDate: today, endDate: today };
+    case "week": {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 7);
+      return { startDate: start, endDate: today };
+    }
+    case "month": {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 30);
+      return { startDate: start, endDate: today };
+    }
+    case "custom":
+      if (range?.start && range?.end) {
+        return { startDate: range.start, endDate: range.end };
+      }
+      return { startDate: today, endDate: today };
+    default:
+      return { startDate: today, endDate: today };
+  }
+};
+
+const buildDateTime = (date: Date, time?: string): string => {
+  const dateStr = date.toISOString().split('T')[0];
+  const timeStr = time || "00:00";
+  return `${dateStr}T${timeStr}:00.000Z`;
+};
+
 export const useGovernorateOverview = (governorateId: string, filter: TimeFilter, range?: DateRange) => {
   const { isAuthenticated } = useAuth();
   const governorateName = useMemo(() => toGovernorateName(governorateId || "Minia"), [governorateId]);
-  const [data, setData] = useState<GovernorateOverview>(() => buildDemoGovernorateOverview(governorateName));
+  const [data, setData] = useState<GovernorateOverview>({
+    governorateName,
+    branches: [],
+  });
   const [loading, setLoading] = useState(true);
-
-  const demoData = useMemo(() => buildDemoGovernorateOverview(governorateName), [governorateName]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       setLoading(true);
+      setError(null);
+
       if (!isAuthenticated) {
-        setData(demoData);
-        setLoading(false);
+        if (active) {
+          setError("User not authenticated");
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        const response = await getGovernorateOverview(governorateId, filter, range);
-        if (active && response?.isSuccess && response.data) {
-          setData(response.data);
+        const { startDate, endDate } = getDateRange(filter, range);
+        
+        // Build date/time strings for API
+        const mode = filter === "latest" ? "Exact" : "Average";
+        
+        // Time selection is only for custom filter
+        const startTime = filter === "custom" ? range?.startTime : "00:00";
+        const endTime = filter === "custom" ? range?.endTime : "23:59";
+        
+        const targetDateTime = buildDateTime(startDate, startTime);
+        const startDateStr = buildDateTime(startDate, startTime);
+        const endDateStr = buildDateTime(endDate, endTime);
+
+        // Fetch data for both canals
+        const response = await getSiteReadingsByCanals(
+          [0, 1], // Both Ibrahimiya and Bahr Youssef
+          mode,
+          targetDateTime,
+          startDateStr,
+          endDateStr
+        );
+
+        if (active && response.isSuccess && response.data) {
+          // Log API response for debugging
+          console.log('=== API Response Summary ===');
+          console.log('Total sites:', response.data.length);
+          console.log('Pump stations:', response.data.filter((s: any) => s.siteType === 1).length);
+          console.log('Mode:', mode);
+          
+          // Log pump stations specifically
+          const pumpStations = response.data.filter((s: any) => s.siteType === 1);
+          if (pumpStations.length > 0) {
+            console.log('=== Pump Stations Data ===');
+            pumpStations.forEach((ps: any) => {
+              console.log(`${ps.siteNameEn}:`, {
+                siteId: ps.siteId,
+                siteType: ps.siteType,
+                pumpExact: ps.pumpExact,
+                pumpAverage: ps.pumpAverage
+              });
+            });
+          }
+          
+          // Transform API response to GovernorateOverview structure
+          const branches = [0, 1].map(canalId => {
+            const canalSites = (response.data || [])
+              .filter((site: any) => {
+                const matches = site.canalId === canalId;
+                return matches;
+              })
+              .map((site): SiteSummary => {
+                // Get water data based on mode
+                const waterData = mode === "Exact" ? site.waterExact : site.waterAverage;
+                
+                // Log pump station data for debugging
+                if (site.siteType === 1) {
+                  console.log(`Pump Station ${site.siteNameEn}:`, {
+                    siteType: site.siteType,
+                    pumpExact: site.pumpExact,
+                    pumpAverage: site.pumpAverage,
+                    mode: mode
+                  });
+                }
+                
+                // Extract values with proper field names based on mode
+                let upstream = 0;
+                let downstream = 0;
+                let flowRate = 0;
+                
+                if (mode === "Exact") {
+                  // Exact mode uses direct field names
+                  upstream = (waterData as any)?.uswl ?? 0;
+                  downstream = (waterData as any)?.dswL1 ?? 0;
+                  flowRate = (waterData as any)?.calculatedFlow ?? 0;
+                } else {
+                  // Average mode uses avg-prefixed field names
+                  upstream = (waterData as any)?.avgUSWL ?? 0;
+                  downstream = (waterData as any)?.avgDSWL1 ?? 0;
+                  flowRate = (waterData as any)?.avgCalculatedFlow ?? 0;
+                }
+
+                // For average mode, check if data exists
+                const hasData = mode === "Average" ? (waterData as any)?.count > 0 : true;
+                
+                // Get last reading time
+                const lastReadingTime = mode === "Exact" && (waterData as any)?.readingTime 
+                  ? new Date((waterData as any).readingTime) 
+                  : new Date();
+
+                return {
+                  siteId: site.siteId.toString(),
+                  siteName: site.siteNameEn,
+                  siteArabicName: site.siteNameAr,
+                  position: site.siteId, // Use siteId as position, could be customized
+                  upstream: hasData ? upstream : 0,
+                  downstream: hasData ? downstream : 0,
+                  batteryVoltage: 0, // Not provided by API
+                  flowRate: hasData ? flowRate : 0,
+                  status: site.status.toLowerCase() === "active" ? "active" : "inactive",
+                  lastReading: lastReadingTime,
+                  coordinates: [0, 0], // Not provided by API
+                  governorate: governorateName,
+                  branch: getCanalName(canalId),
+                  // Store site configuration for pump detection
+                  siteConfiguration: site.siteConfiguration,
+                  // Store pump data if available - check both exact and average modes
+                  pumpData: (() => {
+                    if (mode === "Exact" && site.pumpExact) {
+                      return {
+                        readingTime: site.pumpExact.readingTime,
+                        flows: [
+                          site.pumpExact.p1_Flow,
+                          site.pumpExact.p2_Flow,
+                          site.pumpExact.p3_Flow,
+                          site.pumpExact.p4_Flow,
+                          site.pumpExact.p5_Flow,
+                          site.pumpExact.p6_Flow,
+                          site.pumpExact.p7_Flow,
+                          site.pumpExact.p8_Flow,
+                          site.pumpExact.p9_Flow,
+                          site.pumpExact.p10_Flow,
+                        ].filter(f => f !== null && f !== undefined && f > 0),
+                      };
+                    } else if (mode === "Average" && site.pumpAverage) {
+                      // Handle average mode pump data if available
+                      const pumpAvg = site.pumpAverage;
+                      const flows = [
+                        pumpAvg.avgP1_Flow,
+                        pumpAvg.avgP2_Flow,
+                        pumpAvg.avgP3_Flow,
+                        pumpAvg.avgP4_Flow,
+                        pumpAvg.avgP5_Flow,
+                        pumpAvg.avgP6_Flow,
+                        pumpAvg.avgP7_Flow,
+                        pumpAvg.avgP8_Flow,
+                        pumpAvg.avgP9_Flow,
+                        pumpAvg.avgP10_Flow,
+                      ].filter(f => f !== null && f !== undefined && f > 0);
+                      return flows.length > 0 ? {
+                        readingTime: new Date().toISOString(),
+                        flows
+                      } : undefined;
+                    }
+                    return undefined;
+                  })(),
+                } as any;
+              });
+
+            return {
+              name: getCanalName(canalId),
+              sites: canalSites,
+            };
+          });
+
+         
+
+          if (active) {
+            setData({ governorateName, branches });
+          }
         } else if (active) {
-          setData(demoData);
+          setError("Failed to fetch site readings");
         }
-      } catch (error) {
+      } catch (err) {
         if (active) {
-          setData(demoData);
+          setError(err instanceof Error ? err.message : "Failed to fetch governorate overview");
+          console.error("Error fetching site readings:", err);
         }
       } finally {
         if (active) {
@@ -48,14 +246,14 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
       }
     };
 
-    if (governorateId) {
+    if (isAuthenticated) {
       load();
     }
 
     return () => {
       active = false;
     };
-  }, [demoData, filter, governorateId, isAuthenticated, range?.end, range?.start]);
+  }, [governorateId, isAuthenticated, filter, range]);
 
-  return { data, loading, governorateName };
+  return { data, loading, error, governorateName };
 };

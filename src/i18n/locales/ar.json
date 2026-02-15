@@ -62,6 +62,7 @@
     "clearFilters": "مسح التصفيات",
     "overview": "نظرة عامة",
     "details": "التفاصيل",
+    "selectDirectorate": "تصفية حسب المديرية",
     "message": "الرسالة",
     "serverError": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت."
   },
@@ -889,7 +890,8 @@
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
       "hourlyData": "بيانات ساعية",
-      "dailyAverages": "متوسطات يومية"
+      "dailyAverages": "متوسطات يومية",
+      "latestReading": "آخر قراءة"
     },
     "calculations": {
       "title": "طرق الحساب",
@@ -938,6 +940,14 @@
     "governorate": {
       "title": "نظرة محافظة - {{governorate}}",
       "subtitle": "عرض الفروع مع الجداول والرسوم البيانية"
+    },
+    "branches": {
+      "ibrahimia": "ترعة الإبراهيمية",
+      "bahrYoussef": "ترعة بحر يوسف"
+    },
+    "pages": {
+      "canalViewTitle": "عرض الترعة",
+      "canalViewDescription": "عرض شامل لأقسام {{branches}}"
     },
     "master": {
       "title": "العرض العام للمشروع",

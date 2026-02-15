@@ -87,6 +87,81 @@ export interface PumpDetailDto {
   p6Flow: number;
 }
 
+// Site readings API response types
+export interface SiteReadingDto {
+  siteId: number;
+  canalId: number;
+  siteType: number; // 0 = normal, 1 = pump station
+  siteNameEn: string;
+  siteNameAr: string;
+  status: string; // "Active", "Inactive", etc.
+  siteConfiguration: Record<string, unknown>;
+  modeMetadata: {
+    rangeStart?: string;
+    rangeEnd?: string;
+    hourStart?: string;
+    hourEnd?: string;
+  };
+  waterAverage?: {
+    count: number;
+    avgUSWL?: number;
+    avgDSWL1?: number;
+    avgDSWL2?: number;
+    avgCalculatedFlow?: number;
+  };
+  waterExact?: {
+    readingTime: string;
+    uswl: number;
+    dswL1: number;
+    calculatedFlow: number;
+  };
+  pumpExact?: {
+    readingTime: string;
+    p1_Flow: number;
+    p2_Flow: number;
+    p3_Flow: number;
+    p4_Flow: number;
+    p5_Flow: number;
+    p6_Flow: number;
+    p7_Flow: number;
+    p8_Flow: number;
+    p9_Flow: number;
+    p10_Flow: number;
+  };
+  pumpAverage?: {
+    count: number;
+    avgP1_Flow?: number;
+    avgP2_Flow?: number;
+    avgP3_Flow?: number;
+    avgP4_Flow?: number;
+    avgP5_Flow?: number;
+    avgP6_Flow?: number;
+    avgP7_Flow?: number;
+    avgP8_Flow?: number;
+    avgP9_Flow?: number;
+    avgP10_Flow?: number;
+  };
+}
+
+export interface SiteReadingsResponse {
+  isSuccess: boolean;
+  message: string;
+  data: SiteReadingDto[];
+}
+
+// Lookup Types
+export interface LookupItem {
+  id: string | number;
+  name: string;
+  nameArabic?: string;
+}
+
+export interface LookupResponse<T> {
+  isSuccess: boolean;
+  message: string;
+  data: T[];
+}
+
 const UPS_VIEWER_BASE = "/v1/ups-viewer";
 const DASHBOARD_BASE = "/v1/dashboard";
 
@@ -172,6 +247,21 @@ export const getMasterOverview = async (
     params: buildTimeParams(filter, range),
   });
 
+export const getSiteReadingsByCanals = async (
+  selectedCanals: number[],
+  mode: "Average" | "Exact",
+  targetDateTime: string,
+  startDate: string,
+  endDate: string,
+): Promise<SiteReadingsResponse> =>
+  post<SiteReadingsResponse>('/v1/site-readings/by-canals', {
+    selectedCanals,
+    mode,
+    targetDateTime,
+    startDate,
+    endDate,
+  });
+
 export const getScheduledReports = async (): Promise<UpsApiResponse<ScheduledReport[]>> =>
   get<UpsApiResponse<ScheduledReport[]>>(`${UPS_VIEWER_BASE}/reports/schedules`);
 
@@ -179,6 +269,12 @@ export const createScheduledReport = async (
   payload: Omit<ScheduledReport, "id" | "nextRun">,
 ): Promise<UpsApiResponse<ScheduledReport>> =>
   post<UpsApiResponse<ScheduledReport>>(`${UPS_VIEWER_BASE}/reports/schedules`, payload);
+
+// Lookup API Functions
+export const getDirectorates = async (): Promise<LookupItem[]> => {
+  const response = await get<LookupItem[]>('/v1/Lookups/Lookup/Directorates');
+  return response;
+};
 
 export const exportReport = async (
   view: "landing" | "site" | "governorate" | "master",
