@@ -119,6 +119,15 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
 
           // Transform pump station data if available
           let pumpStationDetails = undefined;
+          let pumpFlowTimeSeries = undefined;
+          
+          console.log('useSiteDetails - Pump station data check:', {
+            hasPumpStation: !!apiData.pumpStation,
+            numPumps: apiData.pumpStation?.numPumps,
+            pumpDetailsLength: apiData.pumpStation?.pumpDetails?.length,
+            pumpDetails: apiData.pumpStation?.pumpDetails
+          });
+          
           if (apiData.pumpStation && apiData.pumpStation.pumpDetails.length > 0) {
             // Get the latest pump details (last entry)
             const latestPumpData = apiData.pumpStation.pumpDetails[apiData.pumpStation.pumpDetails.length - 1];
@@ -135,6 +144,29 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
             }
 
             pumpStationDetails = { pumps };
+            
+            // Transform pump details time series for the chart
+            pumpFlowTimeSeries = apiData.pumpStation.pumpDetails.map(detail => ({
+              timestamp: detail.timestamp,
+              totalFlow: detail.totalFlow,
+              p1Flow: detail.p1Flow,
+              p1Time: detail.p1Time,
+              p2Flow: detail.p2Flow,
+              p2Time: detail.p2Time,
+              p3Flow: detail.p3Flow,
+              p3Time: detail.p3Time,
+              p4Flow: detail.p4Flow,
+              p4Time: detail.p4Time,
+              p5Flow: detail.p5Flow,
+              p5Time: detail.p5Time,
+              p6Flow: detail.p6Flow,
+              p6Time: detail.p6Time,
+            }));
+            
+            console.log('useSiteDetails - Transformed pump data:', {
+              pumpStationDetails,
+              pumpFlowTimeSeries
+            });
           }
 
           const transformedData: SiteDetails = {
@@ -159,6 +191,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
             dailyReadings: series,
             events: [], // API doesn't provide alarm events in this response
             pumpStationDetails,
+            pumpFlowTimeSeries,
           };
 
           setData(transformedData);

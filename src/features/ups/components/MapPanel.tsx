@@ -94,7 +94,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
   const [mapError, setMapError] = useState<string | null>(null);
   const [hoveredPin, setHoveredPin] = useState<any>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const center = useMemo(() => [26.5, 30.5] as [number, number], []); // Center of Egypt along the Nile
   
   // Get language-appropriate names
@@ -292,7 +292,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
               {/* Last Reading */}
               {hoveredPin.lastReading && (
                 <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '600' }}>Last Reading: </span>
+                  <span style={{ fontWeight: '600' }}>{t("ups.map.lastReading")}: </span>
                   {new Date(hoveredPin.lastReading).toLocaleString()}
                 </div>
               )}
@@ -300,20 +300,20 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
               {/* Flow Rate */}
               {hoveredPin.flowRate !== undefined && hoveredPin.flowRate !== null && (
                 <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '600' }}>Flow Rate: </span>
+                  <span style={{ fontWeight: '600' }}>{t("ups.fields.flowRate")}: </span>
                   {hoveredPin.flowRate.toFixed(2)} m³/s
                 </div>
               )}
               
               {/* Upstream */}
               <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '8px' }}>
-                <span style={{ fontWeight: '600' }}>Upstream: </span>
+                <span style={{ fontWeight: '600' }}>{t("ups.fields.upstream")}: </span>
                 {hoveredPin.upstream?.toFixed(2) || 'N/A'} m
               </div>
               
               {/* Downstream */}
               <div style={{ fontSize: '14px', color: '#000000ff', marginBottom: '12px' }}>
-                <span style={{ fontWeight: '600' }}>Downstream: </span>
+                <span style={{ fontWeight: '600' }}>{t("ups.fields.downstream")}: </span>
                 {hoveredPin.downstream?.toFixed(2) || 'N/A'} m
               </div>
               
@@ -332,7 +332,10 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                   color: 'white',
                   textTransform: 'uppercase'
                 }}>
-                  STATUS: {hoveredPin.status}
+                  {t("common.status")}: {hoveredPin.status === 'active' ? t("ups.map.active") : 
+                                         hoveredPin.status === 'alarm' ? t("ups.map.alarm") :
+                                         hoveredPin.status === 'maintenance' ? t("ups.map.maintenance") : 
+                                         t("ups.map.inactive")}
                 </span>
               </div>
               
@@ -359,7 +362,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
           }}
         >
           <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '12px', color: '#111827' }}>
-            Map Legend
+            {t("ups.map.legend")}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -370,7 +373,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 backgroundColor: '#2563eb',
                 flexShrink: 0
               }}></div>
-              <span style={{ fontSize: '14px', color: '#374151' }}>Active Site</span>
+              <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.activeSite")}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ 
@@ -380,7 +383,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 backgroundColor: '#dc2626',
                 flexShrink: 0
               }}></div>
-              <span style={{ fontSize: '14px', color: '#374151' }}>Alarm State</span>
+              <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.alarmState")}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ 
@@ -390,7 +393,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 backgroundColor: '#9ca3af',
                 flexShrink: 0
               }}></div>
-              <span style={{ fontSize: '14px', color: '#374151' }}>Inactive/Offline</span>
+              <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.inactiveOffline")}</span>
             </div>
           </div>
         </div>

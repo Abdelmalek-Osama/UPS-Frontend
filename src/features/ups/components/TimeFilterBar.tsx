@@ -29,7 +29,6 @@ interface TimeFilterBarProps {
   onExport?: (format: "pdf" | "excel") => void;
   showExport?: boolean;
   showCalculations?: boolean;
-  showLatestOption?: boolean;
 }
 
 export function TimeFilterBar({
@@ -42,7 +41,6 @@ export function TimeFilterBar({
   onExport,
   showExport = true,
   showCalculations = false,
-  showLatestOption = false,
 }: TimeFilterBarProps) {
   const { t } = useTranslation();
   const [format, setFormat] = React.useState<"pdf" | "excel">("pdf");
@@ -65,9 +63,6 @@ export function TimeFilterBar({
               <SelectValue placeholder={t("ups.filters.selectTime")} />
             </SelectTrigger>
             <SelectContent>
-              {showLatestOption && (
-                <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>
-              )}
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
@@ -90,13 +85,12 @@ export function TimeFilterBar({
           )}
 
           {/* Time period description */}
-          {/* {value !== "custom" && (
+          {value !== "custom" && (
             <Badge variant="secondary" className="text-xs">
-              {value === "latest" && t("ups.filters.latest")}
               {value === "week" && t("ups.filters.last7Days")}
               {value === "month" && t("ups.filters.last30Days")}
             </Badge>
-          )} */}
+          )}
         </div>
 
         {showExport && (

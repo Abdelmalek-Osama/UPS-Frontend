@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import { LineChart, Line, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, TooltipProps } from "recharts";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -12,47 +12,101 @@ import { TimeFilterBar } from "./TimeFilterBar";
 import { PumpOperatingHoursTable } from "./PumpOperatingHoursTable";
 import { PumpFlowTable } from "./PumpFlowTable";
 import { PumpFlowChart } from "./PumpFlowChart";
+import { PumpOperatingHoursChart } from "./PumpOperatingHoursChart";
 import { AlarmEventsTable } from "./AlarmEventsTable";
+import { ExportDropdown } from "./common/ExportDropdown";
 import { useSiteDetails } from "../hooks/useSiteDetails";
-import { exportReport } from "../api/upsApi";
+import { exportReport, getAlarmEventsBySiteAndDateRange } from "../api/upsApi";
+import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
 import { aggregateTimeSeriesPoints, getPeriodType } from "../utils/calculations";
-import type { DateRange, TimeFilter } from "../types";
-import type { CalculationOptions } from "./TimeFilterBar";
+import type { DateRange, TimeFilter, Event } from "../types";
+
+// Custom Tooltip Components
+interface CustomTooltipProps extends TooltipProps<number, string> {
+  t: (key: string) => string;
+}
+
+const WaterLevelsTooltip = ({ active, payload, label, t }: CustomTooltipProps) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+        <p className="text-sm font-medium text-gray-900 mb-2">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.dataKey === 'upstream' ? t("ups.fields.upstream") : t("ups.fields.downstream")}: {entry.value?.toFixed(2)} m
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const FlowRateTooltip = ({ active, payload, label, t }: CustomTooltipProps) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+        <p className="text-sm font-medium text-gray-900 mb-2">{label}</p>
+        <p className="text-sm" style={{ color: payload[0].color }}>
+          {t("ups.fields.flowRate")}: {payload[0].value?.toFixed(2)} m³/h
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function SitePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const siteId = Number(params.siteId || 1);
   const [filter, setFilter] = useState<TimeFilter>("week");
   const [range, setRange] = useState<DateRange>({});
-  const [calculations, setCalculations] = useState<CalculationOptions>({
-    levels: "average",
-    flow: "sum"
-  });
   const { data, loading } = useSiteDetails(siteId, filter, range);
+
+  // Alarm events state - managed separately
+  const [alarmEvents, setAlarmEvents] = useState<Event[]>([]);
+  const [alarmEventsLoading, setAlarmEventsLoading] = useState(false);
+  const [alarmStartDate, setAlarmStartDate] = useState<Date | undefined>();
+  const [alarmEndDate, setAlarmEndDate] = useState<Date | undefined>();
+
+  // Fetch alarm events when date filters change
+  useEffect(() => {
+    const fetchAlarmEvents = async () => {
+      setAlarmEventsLoading(true);
+      try {
+        const events = await getAlarmEventsBySiteAndDateRange(
+          siteId,
+          alarmStartDate,
+          alarmEndDate
+        );
+        setAlarmEvents(events);
+      } catch (error) {
+        console.error("Failed to fetch alarm events:", error);
+        setAlarmEvents([]);
+      } finally {
+        setAlarmEventsLoading(false);
+      }
+    };
+
+    fetchAlarmEvents();
+  }, [siteId, alarmStartDate, alarmEndDate]);
+
+  const handleClearAlarmFilters = () => {
+    setAlarmStartDate(undefined);
+    setAlarmEndDate(undefined);
+  };
 
   // Get language-appropriate names
   const isArabic = i18n.language === 'ar';
   const siteName = (isArabic && data.site.siteArabicName ? data.site.siteArabicName : data.site.siteName) || `Site ${siteId}`;
   const directorateName = (isArabic && data.site.governorateArabicName ? data.site.governorateArabicName : data.site.governorate) || 'Directorate';
   
-  // Debug logging
-  console.log('SitePage - Site data:', {
-    siteId,
-    siteName: data.site.siteName,
-    siteArabicName: data.site.siteArabicName,
-    governorate: data.site.governorate,
-    governorateArabicName: data.site.governorateArabicName,
-    isArabic,
-    displaySiteName: siteName,
-    displayDirectorateName: directorateName,
-    loading
-  });
 
   // Determine if this is a pump station site from API data
   const isPumpStation = !!data.pumpStationDetails && data.pumpStationDetails.pumps.length > 0;
-
+  
   // Transform pump data from API
   const pumpOperatingHours = useMemo(() => {
     if (!data.pumpStationDetails) return [];
@@ -82,30 +136,52 @@ export function SitePage() {
 
   // Transform pump flow time series data from API
   const pumpFlowSeries = useMemo(() => {
-    if (!data.pumpStationDetails) return [];
+   
+      if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) {
+     
+      return [];
+    }
     
-    // Get pump details from API if available
-    // Note: This requires the API to provide pumpDetails array with timestamps
-    // For now, we'll create a placeholder structure
-    // TODO: Update when API provides full pump flow time series
+    // Transform API pump details to chart format
+    const transformed = data.pumpFlowTimeSeries.map(detail => {
+      const date = new Date(detail.timestamp);
+      return {
+        timestamp: detail.timestamp,
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        pump1: detail.p1Flow,
+        pump2: detail.p2Flow,
+        pump3: detail.p3Flow,
+        pump4: detail.p4Flow,
+        pump5: detail.p5Flow,
+        pump6: detail.p6Flow,
+      };
+    });
     
-    return [
-      { timestamp: '2026-02-05T10:00:00Z', label: '10:00', pump1: 3.1, pump2: 2.9, pump3: 0, pump4: 3.4, pump5: 0, pump6: 7.5 },
-      { timestamp: '2026-02-05T11:00:00Z', label: '11:00', pump1: 3.3, pump2: 2.7, pump3: 0, pump4: 3.6, pump5: 0, pump6: 7.9 },
-      { timestamp: '2026-02-05T12:00:00Z', label: '12:00', pump1: 3.2, pump2: 2.8, pump3: 0, pump4: 3.5, pump5: 0, pump6: 7.8 },
-      { timestamp: '2026-02-05T13:00:00Z', label: '13:00', pump1: 3.4, pump2: 2.9, pump3: 0, pump4: 3.7, pump5: 0, pump6: 8.1 },
-      { timestamp: '2026-02-05T14:00:00Z', label: '14:00', pump1: 3.1, pump2: 2.6, pump3: 0, pump4: 3.3, pump5: 0, pump6: 7.6 },
-      { timestamp: '2026-02-05T15:00:00Z', label: '15:00', pump1: 3.0, pump2: 2.8, pump3: 0, pump4: 3.5, pump5: 0, pump6: 7.7 },
-      { timestamp: '2026-02-05T16:00:00Z', label: '16:00', pump1: 3.2, pump2: 2.7, pump3: 0, pump4: 3.4, pump5: 0, pump6: 7.9 },
-      { timestamp: '2026-02-05T17:00:00Z', label: '17:00', pump1: 3.3, pump2: 2.9, pump3: 0, pump4: 3.6, pump5: 0, pump6: 8.0 },
-    ];
-  }, [data.pumpStationDetails]);
+   
+    return transformed;
+  }, [data.pumpFlowTimeSeries]);
 
   const activePumps = useMemo(() => {
-    return pumpOperatingHours
-      .filter(pump => pump.status === "running")
-      .map(pump => pump.pumpNumber);
-  }, [pumpOperatingHours]);
+    // For the chart, show all pumps that have flow data in the time series
+    // Not just the ones currently running
+    if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) {
+      return [];
+    }
+    
+    const pumpsWithData = new Set<number>();
+    
+    // Check which pumps have any non-zero flow in the time series
+    data.pumpFlowTimeSeries.forEach(point => {
+      if (point.p1Flow > 0) pumpsWithData.add(1);
+      if (point.p2Flow > 0) pumpsWithData.add(2);
+      if (point.p3Flow > 0) pumpsWithData.add(3);
+      if (point.p4Flow > 0) pumpsWithData.add(4);
+      if (point.p5Flow > 0) pumpsWithData.add(5);
+      if (point.p6Flow > 0) pumpsWithData.add(6);
+    });
+    
+    return Array.from(pumpsWithData).sort((a, b) => a - b);
+  }, [data.pumpFlowTimeSeries]);
 
   // Handle export functionality
   const handleExport = async (format: "pdf" | "excel") => {
@@ -131,10 +207,11 @@ export function SitePage() {
       })
     }));
     
-    // Apply calculations for aggregation
+    // Apply default calculations for aggregation
     if (apiData.length > 0) {
       const periodType = getPeriodType(filter);
-      const aggregated = aggregateTimeSeriesPoints(apiData, calculations, periodType);
+      const defaultCalculations = { levels: "average" as const, flow: "sum" as const };
+      const aggregated = aggregateTimeSeriesPoints(apiData, defaultCalculations, periodType);
       return aggregated.map(point => ({
         ...point,
         label: new Date(point.timestamp).toLocaleTimeString('en-US', { 
@@ -145,7 +222,27 @@ export function SitePage() {
     }
     
     return apiData;
-  }, [data.series, filter, calculations]);
+  }, [data.series, filter]);
+
+  // For pump stations, create a separate chart series using pump total flow
+  const pumpTotalFlowSeries = useMemo(() => {
+
+    if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) {
+     
+      return [];
+    }
+    
+    const series = data.pumpFlowTimeSeries.map(point => {
+      const date = new Date(point.timestamp);
+      return {
+        timestamp: point.timestamp,
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        flowRate: point.totalFlow,
+      };
+    });
+
+    return series;
+  }, [data.pumpFlowTimeSeries]);
 
   const tableRows = useMemo(() => {
     return data.hourlyReadings;
@@ -163,11 +260,11 @@ export function SitePage() {
             className="text-gray-500 hover:text-gray-700"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Overview
+            {t("ups.overview")}
           </Button>
           <span className="text-gray-400">/</span>
           {loading ? (
-            <span className="text-gray-400">Loading...</span>
+            <span className="text-gray-400">{t("ups.loading")}</span>
           ) : (
             <>
               <span className="text-gray-500">{directorateName}</span>
@@ -182,7 +279,7 @@ export function SitePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            {loading ? 'Loading...' : siteName}
+            {loading ? t("ups.loading") : siteName}
           </h1>
           <Badge 
             className={`mt-2 ${
@@ -191,7 +288,7 @@ export function SitePage() {
                 : "bg-gray-100 text-gray-600 border-gray-200"
             }`}
           >
-            {data.site.status.toUpperCase()}
+            {data.site.status === "active" ? t("ups.status.active") : t("ups.status.inactive")}
           </Badge>
         </div>
       </div>
@@ -204,10 +301,9 @@ export function SitePage() {
         onChange={setFilter}
         range={range}
         onRangeChange={setRange}
-        calculations={calculations}
-        onCalculationsChange={setCalculations}
         onExport={handleExport}
-        showCalculations={true}
+        showCalculations={false}
+        showExport={false}
       /> 
 
       {/* 1. Metrics Cards */}
@@ -217,22 +313,29 @@ export function SitePage() {
       {/* Water Levels Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Water Levels (Upstream vs Downstream)</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{t("ups.charts.waterLevels")}</CardTitle>
+            <ExportDropdown
+              onExportPNG={() => exportChartAsPNG('water-levels-chart', 'water-levels-chart')}
+              onExportSVG={() => exportChartAsSVG('water-levels-chart', 'water-levels-chart')}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
+          <div id="water-levels-chart" className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartSeries} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<WaterLevelsTooltip t={t} />} />
                 <Line 
                   type="monotone" 
                   dataKey="upstream" 
                   stroke="#3b82f6" 
                   strokeWidth={2}
                   dot={false}
+                  name={t("ups.fields.upstream")}
                 />
                 <Line 
                   type="monotone" 
@@ -240,6 +343,7 @@ export function SitePage() {
                   stroke="#ef4444" 
                   strokeWidth={2}
                   dot={false}
+                  name={t("ups.fields.downstream")}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -250,25 +354,72 @@ export function SitePage() {
       {/* Flow Rate Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Total Flow</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{t("ups.charts.totalFlow")} {isPumpStation && pumpTotalFlowSeries.length > 0 ? `(${t("ups.pumpStation")})` : `(${t("ups.waterLevel")})`}</CardTitle>
+            <ExportDropdown
+              onExportPNG={() => exportChartAsPNG('flow-rate-chart', 'flow-rate-chart')}
+              onExportSVG={() => exportChartAsSVG('flow-rate-chart', 'flow-rate-chart')}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Area 
-                  type="monotone" 
-                  dataKey="flowRate" 
-                  stroke="#06b6d4" 
-                  fill="#06b6d4" 
-                  fillOpacity={0.3} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div id="flow-rate-chart">
+          {(() => {
+            const chartData = isPumpStation && pumpTotalFlowSeries.length > 0 ? pumpTotalFlowSeries : chartSeries;
+            
+            if (!chartData || chartData.length === 0) {
+              return (
+                <div className="h-[300px] w-full flex items-center justify-center text-gray-500">
+                  {t("ups.noFlowData")}
+                </div>
+              );
+            }
+            
+            // Calculate Y-axis domain
+            const flowRates = chartData.map(d => d.flowRate || 0);
+            const minFlow = Math.min(...flowRates);
+            const maxFlow = Math.max(...flowRates);
+            const yDomain = [Math.floor(minFlow * 0.9), Math.ceil(maxFlow * 1.1)];
+            
+        
+            
+            // Debug: Show data points count
+            return (
+              <>
+                <div className="text-sm text-gray-600 mb-2">
+                  {t("ups.dataPoints")}: {chartData.length} | {t("ups.using")}: {isPumpStation && pumpTotalFlowSeries.length > 0 ? t("ups.pumpData") : t("ups.waterLevelData")}
+                </div>
+                <div style={{ width: '100%', height: '300px' }}>
+                  <ResponsiveContainer>
+                    <AreaChart 
+                      data={chartData} 
+                      margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="label" 
+                        tick={{ fontSize: 11 }}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 11 }}
+                        domain={yDomain}
+                      />
+                      <Tooltip content={<FlowRateTooltip t={t} />} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="flowRate" 
+                        stroke="#06b6d4" 
+                        fill="#06b6d4" 
+                        fillOpacity={0.3}
+                        isAnimationActive={false}
+                        name={t("ups.fields.flowRate")}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            );
+          })()}
           </div>
         </CardContent>
       </Card>
@@ -279,7 +430,7 @@ export function SitePage() {
       {/* Data Tables */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Readings</CardTitle>
+          <CardTitle>{t("ups.charts.recentReadings")}</CardTitle>
         </CardHeader>
         <CardContent>
           <SiteReadingsTable rows={tableRows} />
@@ -287,21 +438,39 @@ export function SitePage() {
       </Card>
 
       {/* Pump Station Details - Only show for pump station sites */}
-      {isPumpStation && (
-        <>
-          {/* Pump Flow Chart */}
-          <PumpFlowChart data={pumpFlowSeries} activePumps={activePumps} />
+      {(() => {
 
-          {/* Pump Tables - Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PumpOperatingHoursTable data={pumpOperatingHours} />
-            <PumpFlowTable data={pumpFlows} totalFlow={totalPumpFlow} />
-          </div>
-        </>
-      )}
+        return isPumpStation ? (
+          <>
+            {/* Pump Charts - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PumpFlowChart data={pumpFlowSeries} activePumps={activePumps} />
+              <PumpOperatingHoursChart 
+                data={data.pumpFlowTimeSeries || []} 
+                numPumps={data.pumpStationDetails?.pumps.length || 0} 
+              />
+            </div>
+
+            {/* Pump Tables - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PumpFlowTable data={pumpFlows} totalFlow={totalPumpFlow} />
+              <PumpOperatingHoursTable data={pumpOperatingHours} />
+              
+            </div>
+          </>
+        ) : null;
+      })()}
 
       {/* Alarm Events Table */}
-      <AlarmEventsTable events={data.events} />
+      <AlarmEventsTable 
+        events={alarmEvents}
+        loading={alarmEventsLoading}
+        startDate={alarmStartDate}
+        endDate={alarmEndDate}
+        onStartDateChange={setAlarmStartDate}
+        onEndDateChange={setAlarmEndDate}
+        onClearFilters={handleClearAlarmFilters}
+      />
 
 
     </div>

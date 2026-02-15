@@ -7,6 +7,9 @@ import type {
   MasterOverview,
   ScheduledReport,
   TimeFilter,
+  Event,
+  EventType,
+  EventSeverity,
 } from "../types";
 
 export interface UpsApiResponse<T> {
@@ -23,6 +26,7 @@ export interface DashboardSiteDto {
   latitude: number;
   longitude: number;
   directorateName: string;
+  directorateARName: string;
   latestReading: LatestReadingDto;
 }
 
@@ -231,4 +235,115 @@ export const exportFullData = async (
 
   const filename = `ups-full-data-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
   await downloadFile(`${UPS_VIEWER_BASE}/reports/export-full?${params.toString()}`, filename);
+};
+
+// New API: Get alarm events for a site with date range filtering
+export interface AlarmEventDto {
+  id: number;
+  alarmId: number;
+  alarmName: string;
+  siteId: number;
+  siteName: string;
+  waterLevelReadingId: number;
+  fieldName: string;
+  thresholdValue: number;
+  actualValue?: number; // Optional field
+  triggeredAt: string; // ISO date-time string from API
+  message: string;
+  isResolved: boolean;
+  severity: number; // Backend enum: Crisis = 0, Critical = 1, Info = 2
+}
+
+// Helper function to map severity number to EventSeverity type
+// Backend enum: Crisis = 0, Critical = 1, Info = 2
+const mapSeverity = (severity: number): EventSeverity => {
+  switch (severity) {
+    case 0:
+      return 'critical'; // Crisis maps to critical (highest severity)
+    case 1:
+      return 'high'; // Critical maps to high
+    case 2:
+      return 'info'; // Info maps to info
+    default:
+      return 'info';
+  }
+};
+
+export const getAlarmEventsBySiteAndDateRange = async (
+  siteId: number,
+  startDate?: Date,
+  endDate?: Date
+): Promise<Event[]> => {
+  const params: Record<string, string> = {};
+
+  if (startDate) {
+    params.startDate = startDate.toISOString().split('T')[0]; // Format as date only
+  }
+  if (endDate) {
+    params.endDate = endDate.toISOString().split('T')[0]; // Format as date only
+  }
+
+  try {
+    const response = await get<UpsApiResponse<AlarmEventDto[]>>(
+      `/v1/alarm-events/site/${siteId}/date-range`,
+      { params }
+    );
+    
+    console.log('Alarm events API response:', response);
+    
+    // Check if response.data is an array
+    if (!Array.isArray(response.data)) {
+      console.error('Expected array but got:', response.data);
+      return [];
+    }
+    
+    // Transform API response to Event type with Date objects
+    return response.data.map(event => ({
+      id: event.id.toString(),
+      siteId: event.siteId.toString(),
+      timestamp: new Date(event.triggeredAt),
+      type: 'alarm' as EventType, // All events from this endpoint are alarms
+      severity: mapSeverity(event.severity),
+      message: event.message,
+      acknowledged: event.isResolved,
+      acknowledgedBy: undefined,
+      acknowledgedAt: undefined,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch alarm events:', error);
+    return [];
+  }
+};
+
+// New API: Get recent alarm events for landing page
+export const getRecentAlarmEvents = async (): Promise<Event[]> => {
+  try {
+    const response = await get<UpsApiResponse<AlarmEventDto[]>>(
+      '/v1/alarm-events/recent'
+    );
+    
+    console.log('Recent alarm events API response:', response);
+    
+    // Check if response.data is an array
+    if (!Array.isArray(response.data)) {
+      console.error('Expected array but got:', response.data);
+      return [];
+    }
+    
+    // Transform API response to Event type with Date objects
+    return response.data.map(event => ({
+      id: event.id.toString(),
+      siteId: event.siteId.toString(),
+      timestamp: new Date(event.triggeredAt),
+      type: 'alarm' as EventType,
+      severity: mapSeverity(event.severity),
+      message: event.message,
+      acknowledged: event.isResolved,
+      acknowledgedBy: undefined,
+      acknowledgedAt: undefined,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch recent alarm events:', error);
+    return [];
+  }
 };

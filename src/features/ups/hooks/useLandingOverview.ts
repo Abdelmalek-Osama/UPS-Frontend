@@ -83,7 +83,7 @@ export const useLandingOverview = () => {
                   lastReading,
                   coordinates: [site.latitude, site.longitude] as [number, number],
                   governorate: site.directorateName,
-                  governorateArabicName: site.directorateName, // API doesn't provide Arabic directorate name in dashboard sites endpoint
+                  governorateArabicName: site.directorateARName, // API doesn't provide Arabic directorate name in dashboard sites endpoint
                   branch: '', 
                   // Add date and time for map tooltip
                   date: site.latestReading?.date || '',

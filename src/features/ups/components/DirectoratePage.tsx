@@ -5,13 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
-import { ArrowLeft, Search, Info } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../../components/ui/tabs";
 import { TimeFilterBar } from "./TimeFilterBar";
-import { DirectorateWLChart } from "./DirectorateWLChart";
-import { DirectorateFlowChart } from "./DirectorateFlowChart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { exportReport } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary } from "../types";
@@ -31,7 +28,7 @@ export function DirectoratePage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   
-  const { data } = useGovernorateOverview(directorateId, filter, range);
+  const { data, governorateName } = useGovernorateOverview(directorateId, filter, range);
 
   // Handle export functionality
   const handleExport = async (format: "pdf" | "excel") => {
@@ -65,78 +62,56 @@ export function DirectoratePage() {
     );
   };
 
-  const generatePumpReadings = () => {
-    // Generate mock pump readings for up to 6 pumps
-    const readings = [];
-    for (let i = 1; i <= 6; i++) {
-      readings.push({
-        pump: i,
-        flow: (Math.random() * 100 + 20).toFixed(2),
-        time: new Date(Date.now() - Math.random() * 3600000).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false 
-        })
-      });
-    }
-    return readings;
-  };
-
   const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
     const sortedSites = sites.sort((a, b) => a.position - b.position);
     const filteredSites = filterSites(sortedSites);
     
-    // Always generate sample data for charts to ensure they display
-    const profileChartData = sortedSites
-      .filter(site => 
-        !site.siteName.toLowerCase().includes("branch") && 
-        !site.siteName.toLowerCase().includes("pump")
-      )
-      .map((site, idx) => ({
-        id: `uswl-dswl-${idx}`,
-        name: site.siteName.split(' ').slice(0, 2).join(' '),
-        uswl: site.upstream > 0 ? site.upstream : 15 + Math.random() * 5 + idx * 0.5,
-        dswl: site.downstream > 0 ? site.downstream : 14 + Math.random() * 4 + idx * 0.4
-      }));
+    // Separate main regulators and all sites for charts
+    const mainRegulators = sortedSites.filter(site => 
+      !site.siteName.toLowerCase().includes("branch") && 
+      !site.siteName.toLowerCase().includes("pump")
+    );
+    
+    // Prepare chart data for upstream/downstream profile (main regulators only)
+    const profileChartData = mainRegulators.map(site => ({
+      name: site.siteName.split(' ').slice(0, 2).join(' '),
+      upstream: site.upstream || 0,
+      downstream: site.downstream || 0,
+      hasData: site.upstream > 0 || site.downstream > 0
+    }));
 
-    // Always generate sample data for calculated flow to ensure it displays
-    const calculatedFlowData = sortedSites
-      .map((site, idx) => {
-        const baseFlow = site.siteName.toLowerCase().includes("branch") ? 50 : 
-                        site.siteName.toLowerCase().includes("pump") ? 30 : 100;
-        return {
-          id: `flow-${idx}`,
-          name: site.siteName.split(' ').slice(0, 2).join(' '),
-          calculatedFlow: site.flowRate > 0 ? site.flowRate : baseFlow + Math.random() * 20 - 10 + idx * 5
-        };
-      });
-
-
+    // Prepare chart data for flow rate (all sites)
+    const flowChartData = sortedSites.map(site => ({
+      name: site.siteName.split(' ').slice(0, 2).join(' '),
+      flowRate: site.flowRate || 0,
+      type: site.siteName.toLowerCase().includes("branch") ? "Branch" : 
+            site.siteName.toLowerCase().includes("pump") ? "Pump" : "Main"
+    }));
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
-    // Use all sites from Bahr Youssef branch as pump stations
-    const pumpStations = isPumpBranch ? sortedSites : [];
+    const pumpStations = sortedSites.filter(site => 
+      site.siteName.toLowerCase().includes("pump")
+    );
 
     return (
       <div key={branchName} className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">{branchName} Section</h2>
 
         {/* Sites Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{branchName} {t("ups.pages.sites")}</CardTitle>
+              <CardTitle>{branchName} Sites</CardTitle>
               <div className="flex items-center gap-3">
-                <div className="relative w-64 h-10">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Search sites..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-full"
-                    style={{ paddingLeft: '2.5rem' }}
+                    className="pl-9 w-64"
                   />
-                  <Search className="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none" style={{ top: '40%', transform: 'translateY(-50%)' }} />
                 </div>
 
               </div>
@@ -154,14 +129,13 @@ export function DirectoratePage() {
                   <TableHead className="text-center">Flow (m³/s)</TableHead>
                   <TableHead className="text-center">Date</TableHead>
                   <TableHead className="text-center">Hour</TableHead>
-                  <TableHead className="text-center">{t("common.details")}</TableHead>
                   <TableHead className="text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSites.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-gray-500">
+                    <TableCell colSpan={8} className="text-center text-gray-500">
                       {searchTerm ? "No sites match your search" : t("common.noData")}
                     </TableCell>
                   </TableRow>
@@ -194,16 +168,6 @@ export function DirectoratePage() {
                         {new Date(site.lastReading).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedPumpStation(site)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-center">
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -220,36 +184,84 @@ export function DirectoratePage() {
           </CardContent>
         </Card>
 
-        {/* Upstream/Downstream Profile Chart (USWL vs DSWL Histogram) */}
-        <DirectorateWLChart branchName={branchName} data={profileChartData} />
-
-        {/* Calculated Flow Chart (Line Graph) */}
-        <DirectorateFlowChart branchName={branchName} data={calculatedFlowData} />
-
-        {/* Pump Stations Table (Bahr Youssef only) */}
+        {/* Upstream/Downstream Profile Chart (Main Regulators Only) */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("ups.pages.pumpStationsStatus")}</CardTitle>
+            <CardTitle>Upstream/Downstream Profile (South to North - Main Regulators)</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center">Pump Station</TableHead>
-                  <TableHead className="text-center">Date</TableHead>
-                  <TableHead className="text-center">Hour</TableHead>
-                  <TableHead className="text-center">Pump 1</TableHead>
-                  <TableHead className="text-center">Pump 2</TableHead>
-                  <TableHead className="text-center">Pump 3</TableHead>
-                  <TableHead className="text-center">Pump 4</TableHead>
-                  <TableHead className="text-center">Pump 5</TableHead>
-                  <TableHead className="text-center">Pump 6</TableHead>
-                  <TableHead className="text-center">{t("common.details")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pumpStations.length > 0 ? (
-                  pumpStations.map((station) => {
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={profileChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis label={{ value: 'Water Level (m)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="upstream" fill="#3b82f6" name="Upstream" />
+                  <Bar dataKey="downstream" fill="#ef4444" name="Downstream" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Flow Rate Chart (All Sites) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Flow (All Sites - Main & Branch Canals)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={flowChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis label={{ value: 'Flow Rate (m³/s)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="flowRate" fill="#06b6d4" name="Flow Rate" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pump Stations Table (Bahr Youssef only) */}
+        {isPumpBranch && pumpStations.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Pump Stations Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center">Pump Station</TableHead>
+                    <TableHead className="text-center">Date</TableHead>
+                    <TableHead className="text-center">Hour</TableHead>
+                    <TableHead className="text-center">Pump 1</TableHead>
+                    <TableHead className="text-center">Pump 2</TableHead>
+                    <TableHead className="text-center">Pump 3</TableHead>
+                    <TableHead className="text-center">Pump 4</TableHead>
+                    <TableHead className="text-center">Pump 5</TableHead>
+                    <TableHead className="text-center">Pump 6</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pumpStations.map((station) => {
                     // Mock pump status - should come from backend
                     const pumpStatuses = [
                       Math.random() > 0.3 ? "ON" : "OFF",
@@ -282,30 +294,14 @@ export function DirectoratePage() {
                             </Badge>
                           </TableCell>
                         ))}
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedPumpStation(station)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
                       </TableRow>
                     );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4 text-gray-500">
-                      No pump stations available
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   };
@@ -321,17 +317,17 @@ export function DirectoratePage() {
           className="text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          {t("common.overview")}
+          Overview
         </Button>
         <span className="text-gray-400">/</span>
-        <span className="font-medium text-gray-900">{t("ups.pages.canalView")}</span>
+        <span className="font-medium text-gray-900">Directorate View</span>
       </div>
 
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t("ups.pages.canalViewTitle")}</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{governorateName} Directorate</h1>
         <p className="text-gray-500 mt-1">
-          {t("ups.pages.canalViewDescription", { branches: orderedBranches.map(b => b.name).join(' & ') })}
+          Monitoring points across {orderedBranches.map(b => b.name).join(' & ')}
         </p>
       </div>
 
@@ -344,27 +340,15 @@ export function DirectoratePage() {
         calculations={calculations}
         onCalculationsChange={setCalculations}
         onExport={handleExport}
-        showCalculations={false}
-        showLatestOption={true}
+        showCalculations={true}
       />
 
-      {/* Tabbed View for Branch Sections */}
-      <Tabs defaultValue="ibrahimia" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ibrahimia">{t("ups.branches.ibrahimia")}</TabsTrigger>
-          <TabsTrigger value="bahr-youssef">{t("ups.branches.bahrYoussef")}</TabsTrigger>
-        </TabsList>
-        
-        {orderedBranches.map((branch) => {
-          // Map branch names to tab values
-          const tabValue = branch.name === "Ibrahimiya" ? "ibrahimia" : "bahr-youssef";
-          return (
-            <TabsContent key={branch.name} value={tabValue} className="space-y-6 mt-6">
-              {renderBranchSection(branch.name, branch.sites)}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+      {/* Branch Sections */}
+      <div className="space-y-12">
+        {orderedBranches.map((branch) => 
+          renderBranchSection(branch.name, branch.sites)
+        )}
+      </div>
     </div>
   );
 }

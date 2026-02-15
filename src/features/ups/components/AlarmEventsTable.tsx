@@ -1,79 +1,157 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { DatePicker } from "../../../components/ui/datepicker";
 import { Button } from "../../../components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 import type { Event } from "../types";
 
 interface AlarmEventsTableProps {
   events: Event[];
+  loading?: boolean;
+  startDate?: Date;
+  endDate?: Date;
+  onStartDateChange: (date: Date | undefined) => void;
+  onEndDateChange: (date: Date | undefined) => void;
+  onClearFilters: () => void;
 }
 
-export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+export function AlarmEventsTable({ 
+  events, 
+  loading = false,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  onClearFilters
+}: AlarmEventsTableProps) {
+  const { t } = useTranslation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  // Filter events based on date range
-  const filteredEvents = events.filter((event) => {
-    const eventDate = new Date(event.timestamp);
-    
-    if (startDate && eventDate < startDate) return false;
-    if (endDate && eventDate > endDate) return false;
-    
-    return true;
-  });
+  // Calculate pagination
+  const totalPages = Math.ceil(events.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = events.slice(startIndex, endIndex);
 
-  const handleClearFilters = () => {
-    setStartDate(undefined);
-    setEndDate(undefined);
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'type', header: t("alarms.eventDetails") },
+      { key: 'severity', header: t("alarms.severityLabel") },
+      { key: 'message', header: t("alarms.message") },
+      { key: 'status', header: t("common.status") },
+    ];
+
+    const data = events.map(event => ({
+      date: new Date(event.timestamp).toLocaleDateString(),
+      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: event.type?.toUpperCase() || 'N/A',
+      severity: event.severity?.toUpperCase() || 'N/A',
+      message: event.message || '-',
+      status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
+    }));
+
+    exportTableToCSV(data, columns, 'alarm-events');
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'date', header: t("common.date") },
+      { key: 'time', header: t("common.hour") },
+      { key: 'type', header: t("alarms.eventDetails") },
+      { key: 'severity', header: t("alarms.severityLabel") },
+      { key: 'message', header: t("alarms.message") },
+      { key: 'status', header: t("common.status") },
+    ];
+
+    const data = events.map(event => ({
+      date: new Date(event.timestamp).toLocaleDateString(),
+      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: event.type?.toUpperCase() || 'N/A',
+      severity: event.severity?.toUpperCase() || 'N/A',
+      message: event.message || '-',
+      status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
+    }));
+
+    exportTableToExcel(data, columns, 'alarm-events');
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Alarm Events</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>{t("ups.charts.alarmEvents")}</CardTitle>
+          <ExportDropdown
+            onExportCSV={handleExportCSV}
+            onExportExcel={handleExportExcel}
+            disabled={events.length === 0}
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-3 mt-4">
           <DatePicker
-            placeholder="Start Date"
+            placeholder={t("readings.fromDate")}
             value={startDate}
-            onChange={setStartDate}
+            onChange={onStartDateChange}
           />
           <DatePicker
-            placeholder="End Date"
+            placeholder={t("readings.toDate")}
             value={endDate}
-            onChange={setEndDate}
+            onChange={onEndDateChange}
           />
           {(startDate || endDate) && (
-            <Button variant="outline" size="sm" onClick={handleClearFilters}>
-              Clear Filters
+            <Button variant="outline" size="sm" onClick={onClearFilters}>
+              {t("common.clearFilters")}
             </Button>
           )}
           <span className="text-sm text-gray-500">
-            Showing {filteredEvents.length} of {events.length} events
+            {t("common.showing")} {events.length} {t("alarms.events")}
           </span>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-center py-2 px-4 text-gray-600">Date</th>
-                <th className="text-center py-2 px-4 text-gray-600">Hour</th>
-                <th className="text-center py-2 px-4 text-gray-600">Type</th>
-                <th className="text-center py-2 px-4 text-gray-600">Severity</th>
-                <th className="text-center py-2 px-4 text-gray-600">Message</th>
-                <th className="text-center py-2 px-4 text-gray-600">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEvents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
-                    No alarm events found for the selected date range
-                  </td>
+        {loading ? (
+          <div className="py-8 text-center text-gray-500">
+            {t("ups.loading")}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-center py-2 px-4 text-gray-600">{t("common.date")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("common.hour")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("alarms.eventDetails")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("alarms.severityLabel")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("alarms.message")}</th>
+                  <th className="text-center py-2 px-4 text-gray-600">{t("common.status")}</th>
                 </tr>
-              ) : (
-                filteredEvents.map((event) => (
+              </thead>
+              <tbody>
+                {currentEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                      {t("alarms.noEventsMatchFilters")}
+                    </td>
+                  </tr>
+                ) : (
+                  currentEvents.map((event) => (
                   <tr key={event.id} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 text-gray-900 text-center">
                       {new Date(event.timestamp).toLocaleDateString()}
@@ -91,7 +169,7 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                             : "bg-blue-100 text-blue-800"
                         }`}
                       >
-                        {event.type.toUpperCase()}
+                        {event.type ? t(`alarms.type.${event.type}`) : 'N/A'}
                       </span>
                     </td>
                     <td className="py-2 px-4 text-center">
@@ -101,15 +179,15 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                             ? "bg-red-100 text-red-800"
                             : event.severity === "high"
                             ? "bg-orange-100 text-orange-800"
-                            : event.severity === "medium"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
+                            : event.severity === "info"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {event.severity.toUpperCase()}
+                        {event.severity ? t(`alarms.severity.${event.severity}`) : 'N/A'}
                       </span>
                     </td>
-                    <td className="py-2 px-4 text-gray-900 text-center">{event.message}</td>
+                    <td className="py-2 px-4 text-gray-900 text-center">{event.message || '-'}</td>
                     <td className="py-2 px-4 text-center">
                       <span
                         className={`inline-flex items-center text-xs ${
@@ -121,15 +199,50 @@ export function AlarmEventsTable({ events }: AlarmEventsTableProps) {
                             event.acknowledged ? "bg-green-500" : "bg-red-500"
                           }`}
                         ></span>
-                        {event.acknowledged ? "Acknowledged" : "Active"}
+                        {event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending")}
                       </span>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            {/* Pagination Controls */}
+            {events.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-4 px-4 py-3 border-t">
+                <div className="text-sm text-gray-700">
+                  {t("common.showing")} {startIndex + 1} {t("common.to")} {Math.min(endIndex, events.length)} {t("common.of")} {events.length} {t("alarms.events")}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevious}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    {t("common.previous")}
+                  </Button>
+                  <span className="text-sm text-gray-700">
+                    {t("readings.page")} {currentPage} {t("common.of")} {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNext}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1"
+                  >
+                    {t("common.next")}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
