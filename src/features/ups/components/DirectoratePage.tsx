@@ -262,7 +262,7 @@ export function DirectoratePage() {
                           size="sm"
                           onClick={() => handleSiteClick(site.siteId)}
                         >
-                          →
+                          {t('_rtl') === 'rtl' ? '←' : '→'}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -395,15 +395,20 @@ export function DirectoratePage() {
       <Dialog open={selectedPumpStation !== null} onOpenChange={(open) => {
         if (!open) setSelectedPumpStation(null);
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>{selectedPumpStation?.siteName} - {t("common.details")}</DialogTitle>
+            <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+              {selectedPumpStation && (t('_rtl') === 'rtl' 
+                ? (selectedPumpStation.siteArabicName || selectedPumpStation.siteName)
+                : selectedPumpStation.siteName
+              )} - {t("common.details")}
+            </DialogTitle>
           </DialogHeader>
           {selectedPumpStation && (
             <div className="space-y-4">
               {(selectedPumpStation as any).pumpData ? (
                 <>
-                  <div className="text-sm">
+                  <div className={`text-sm ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
                     <span className="text-gray-500">{t("ups.directorate.readingTime")}:</span>
                     <p className="font-medium mt-1">
                       {new Date((selectedPumpStation as any).pumpData.readingTime).toLocaleString()}
@@ -411,7 +416,9 @@ export function DirectoratePage() {
                   </div>
                   
                   <div className="mt-4">
-                    <h4 className="font-semibold mb-3">{t("ups.directorate.pumpFlows")}</h4>
+                    <h4 className={`font-semibold mb-3 ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
+                      {t("ups.directorate.pumpFlows")}
+                    </h4>
                     <div className="space-y-2">
                       {(selectedPumpStation as any).pumpData.flows.map((flow: number, index: number) => (
                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
