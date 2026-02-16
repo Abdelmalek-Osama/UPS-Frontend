@@ -127,16 +127,16 @@ export function LandingPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return t("ups.landing.timeAgo", { time: "just now" });
-    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins} min` });
-    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours} hours` });
+    if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
+    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}`+ t("ups.landing.min") });
+    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}`+ t("ups.landing.hours") });
     return t("ups.landing.timeAgo", { time: `${diffDays} days` });
   };
 
   // Calculate system overview metrics
-  const totalFlowRate = data.sites?.reduce((sum, site) => sum + (site.flowRate || 0), 0) || 2450;
-  const activeSites = data.sites?.filter(site => site.status === 'active').length || 7;
-  const totalSites = data.sites?.length || 11;
+  const totalFlowRate = data.sites?.reduce((sum, site) => sum + (site.flowRate || 0), 0) || 0;
+  const activeSites = data.sites?.filter(site => site.status === 'active').length || 0;
+  const totalSites = data.sites?.length || 0;
   
   // Calculate urgent alarms from recent alarm events API
   // Urgent alarms are unacknowledged alarms with critical or high severity

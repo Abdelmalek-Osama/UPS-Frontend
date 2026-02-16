@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   MapPin,
   Globe2,
-  FileText,
   LogOut,
   Menu,
   Droplets,
@@ -33,7 +32,6 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
   const allMenuItems = [
     { id: 'overview', label: t('navigation.overview'), icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
     { id: 'directorate', label: t('navigation.directorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
-    { id: 'reports', label: t('navigation.reports'), icon: FileText, path: '/reports', roles: ['Admin', 'SuperAdmin'] },
   ];
 
   // Filter menu items based on user role

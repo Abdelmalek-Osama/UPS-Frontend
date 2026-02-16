@@ -871,7 +871,10 @@
       "timeAgo": "{{time}} ago",
       "criticalLevel": "CRITICAL LEVEL",
       "viewAllAlerts": "View All Alerts",
-      "lastUpdated": "Last Updated"
+      "lastUpdated": "Last Updated",
+      "justNow":" Just Now",
+      "min":" Minute",
+      "hours":" Hours"
     },
     "kpis": {
       "totalSites": "Total Sites",

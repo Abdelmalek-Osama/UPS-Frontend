@@ -872,7 +872,10 @@
       "timeAgo": "منذ {{time}}",
       "criticalLevel": "مستوى حرج",
       "viewAllAlerts": "عرض جميع التنبيهات",
-      "lastUpdated": "آخر تحديث"
+      "lastUpdated": "آخر تحديث",
+      "justNow":" الآن",
+      "min":" دقيقة",
+      "hours":" ساعة"
     },
     "kpis": {
       "totalSites": "إجمالي المواقع",
