@@ -25,6 +25,12 @@ import { exportReport } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
+// Main regulators for each canal (in display order)
+const MAIN_REGULATORS = {
+  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1"],
+  "Bahr Youssef": ["7", "6", "20", "5", "19", "4", "3", "2"]
+};
+
 export function DirectoratePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -85,10 +91,35 @@ export function DirectoratePage() {
     const sortedSites = sites.sort((a, b) => a.position - b.position);
     const filteredSites = filterSites(sortedSites);
     
-    const profileChartData: any[] = [];
-    const calculatedFlowData: any[] = [];
+    // Transform site data for water level chart (USWL vs DSWL)
+    const profileChartData = sortedSites.map(site => ({
+      id: site.siteId,
+      name: site.siteName,
+      uswl: site.upstream,
+      dswl: site.downstream
+    }));
 
-
+    // Get main regulator IDs for this branch
+    const mainRegulatorIds = MAIN_REGULATORS[branchName as keyof typeof MAIN_REGULATORS] || [];
+    
+    // Filter and sort flow data to only include main regulators in specified order
+    const calculatedFlowData = mainRegulatorIds
+      .map(id => sites.find(site => site.siteId === id))
+      .filter((site): site is SiteSummary => site !== undefined)
+      .map(site => ({
+        id: site.siteId,
+        name: site.siteName,
+        calculatedFlow: site.flowRate
+      }));
+    
+    // If no main regulators found, show all sites in position order as fallback
+    const finalFlowData = calculatedFlowData.length > 0 
+      ? calculatedFlowData 
+      : sortedSites.map(site => ({
+          id: site.siteId,
+          name: site.siteName,
+          calculatedFlow: site.flowRate
+        }));
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
@@ -201,7 +232,7 @@ export function DirectoratePage() {
         <DirectorateWLChart branchName={branchName} data={profileChartData} />
 
         {/* Calculated Flow Chart (Line Graph) */}
-        <DirectorateFlowChart branchName={branchName} data={calculatedFlowData} />
+        <DirectorateFlowChart branchName={branchName} data={finalFlowData} />
 
         
       </div>
