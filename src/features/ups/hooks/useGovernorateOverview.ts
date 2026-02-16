@@ -95,11 +95,6 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         );
 
         if (active && response.isSuccess && response.data) {
-          // Log API response for debugging
-          console.log('=== API Response Summary ===');
-          console.log('Total sites:', response.data.length);
-          console.log('Pump stations:', response.data.filter((s: any) => s.siteType === 1).length);
-          console.log('Mode:', mode);
           
           // Log pump stations specifically
           const pumpStations = response.data.filter((s: any) => s.siteType === 1);
@@ -175,6 +170,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                   coordinates: [0, 0], // Not provided by API
                   governorate: governorateName,
                   branch: getCanalName(canalId),
+                  directorateId: site.directorateId, // Include directorateId from API
                   // Store site configuration for pump detection
                   siteConfiguration: site.siteConfiguration,
                   // Store pump data if available - check both exact and average modes
