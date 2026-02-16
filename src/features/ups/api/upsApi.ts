@@ -95,6 +95,7 @@ export interface SiteReadingDto {
   siteNameEn: string;
   siteNameAr: string;
   status: string; // "Active", "Inactive", etc.
+  directorateId?: number; // Directorate ID for filtering
   siteConfiguration: Record<string, unknown>;
   modeMetadata: {
     rangeStart?: string;

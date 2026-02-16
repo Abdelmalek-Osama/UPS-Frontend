@@ -953,6 +953,31 @@
       "canalViewTitle": "Canal View",
       "canalViewDescription": "Comprehensive view of {{branches}} sections"
     },
+    "directorate": {
+      "directorateView": "Directorate View",
+      "section": "Section",
+      "sites": "Sites",
+      "branchSites": "{{branch}} Sites",
+      "searchSites": "Search sites...",
+      "noSitesMatch": "No sites match your search",
+      "siteName": "Site Name",
+      "upstream": "Upstream (m)",
+      "downstream": "Downstream (m)",
+      "flow": "Flow (m³/s)",
+      "uswlVsDswl": "USWL vs DSWL Comparison ({{branch}})",
+      "calculatedFlow": "Calculated Flow ({{branch}})",
+      "waterLevel": "Water Level (m)",
+      "flowRate": "Flow Rate (m³/s)",
+      "uswl": "USWL",
+      "dswl": "DSWL",
+      "readingTime": "Reading Time",
+      "pumpFlows": "Pump Flows",
+      "pump": "Pump",
+      "totalFlow": "Total Flow",
+      "noPumpData": "No pump data available",
+      "selectTime": "Please select a time to fetch the data.",
+      "allDirectorates": "All Directorates"
+    },
     "master": {
       "title": "Master General View",
       "subtitle": "All sites ordered south-to-north along the canal"

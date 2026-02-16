@@ -106,6 +106,7 @@ export interface SiteSummary {
   governorate: string;
   governorateArabicName?: string;
   branch: string;
+  directorateId?: number;
 }
 
 // ============================================================================

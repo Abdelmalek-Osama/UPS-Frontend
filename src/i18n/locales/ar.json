@@ -949,6 +949,31 @@
       "canalViewTitle": "عرض الترعة",
       "canalViewDescription": "عرض شامل لأقسام {{branches}}"
     },
+    "directorate": {
+      "directorateView": "عرض المديرية",
+      "section": "القسم",
+      "sites": "المواقع",
+      "branchSites": "مواقع {{branch}}",
+      "searchSites": "البحث في المواقع...",
+      "noSitesMatch": "لا توجد مواقع تطابق بحثك",
+      "siteName": "اسم الموقع",
+      "upstream": "منسوب علوي (م)",
+      "downstream": "منسوب سفلي (م)",
+      "flow": "تدفق (م³/ث)",
+      "uswlVsDswl": "مقارنة المنسوب العلوي والسفلي ({{branch}})",
+      "calculatedFlow": "التدفق المحسوب ({{branch}})",
+      "waterLevel": "منسوب المياه (م)",
+      "flowRate": "معدل التدفق (م³/ث)",
+      "uswl": "منسوب علوي",
+      "dswl": "منسوب سفلي",
+      "readingTime": "وقت القراءة",
+      "pumpFlows": "تدفقات المضخات",
+      "pump": "مضخة",
+      "totalFlow": "إجمالي التدفق",
+      "noPumpData": "لا توجد بيانات مضخات متاحة",
+      "selectTime": "الرجاء اختيار وقت لجلب البيانات.",
+      "allDirectorates": "جميع المديريات"
+    },
     "master": {
       "title": "العرض العام للمشروع",
       "subtitle": "جميع المواقع مرتبة من الجنوب إلى الشمال"

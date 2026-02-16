@@ -80,21 +80,35 @@ export function DirectoratePage() {
 
   const filterSites = (sites: SiteSummary[]) => {
     if (!searchTerm) return sites;
-    return sites.filter(site =>
-      site.siteName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return sites.filter(site => {
+      const searchLower = searchTerm.toLowerCase();
+      const englishName = site.siteName.toLowerCase();
+      const arabicName = (site.siteArabicName || '').toLowerCase();
+      return englishName.includes(searchLower) || arabicName.includes(searchLower);
+    });
   };
 
 
 
   const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
-    const sortedSites = sites.sort((a, b) => a.position - b.position);
+    // Filter sites by directorate if a directorate is selected
+    let filteredByDirectorate = sites;
+    if (directorateId && directorateId !== "" && directorateId !== "all") {
+      const selectedDirId = parseInt(directorateId);
+      filteredByDirectorate = sites.filter(site => site.directorateId === selectedDirId);
+    }
+    
+    const sortedSites = filteredByDirectorate.sort((a, b) => a.position - b.position);
     const filteredSites = filterSites(sortedSites);
+    
+    // Get site name based on language
+    const getSiteName = (site: SiteSummary) => 
+      t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName;
     
     // Transform site data for water level chart (USWL vs DSWL)
     const profileChartData = sortedSites.map(site => ({
       id: site.siteId,
-      name: site.siteName,
+      name: getSiteName(site),
       uswl: site.upstream,
       dswl: site.downstream
     }));
@@ -108,7 +122,7 @@ export function DirectoratePage() {
       .filter((site): site is SiteSummary => site !== undefined)
       .map(site => ({
         id: site.siteId,
-        name: site.siteName,
+        name: getSiteName(site),
         calculatedFlow: site.flowRate
       }));
     
@@ -117,48 +131,72 @@ export function DirectoratePage() {
       ? calculatedFlowData 
       : sortedSites.map(site => ({
           id: site.siteId,
-          name: site.siteName,
+          name: getSiteName(site),
           calculatedFlow: site.flowRate
         }));
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
+    
+    // Get localized branch name
+    const branchKey = branchName === "Ibrahimiya" ? "ups.branches.ibrahimia" : "ups.branches.bahrYoussef";
+    const localizedBranchName = t(branchKey);
 
     return (
       <div key={branchName} className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">{branchName} Section</h2>
+        <h2 className={`text-2xl font-bold text-gray-900 ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>{localizedBranchName}</h2>
 
         {/* Sites Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{branchName} Sites</CardTitle>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search sites..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 w-64"
-                  />
-                </div>
-
-              </div>
+              {t('_rtl') === 'rtl' ? (
+                <>
+                  {/* Arabic: Search on left, Title on right */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder={t("ups.directorate.searchSites")}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 w-64"
+                      />
+                    </div>
+                  </div>
+                  <CardTitle className="text-right">{t("ups.directorate.branchSites", { branch: localizedBranchName })}</CardTitle>
+                </>
+              ) : (
+                <>
+                  {/* English: Title on left, Search on right */}
+                  <CardTitle className="text-left">{t("ups.directorate.branchSites", { branch: localizedBranchName })}</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder={t("ups.directorate.searchSites")}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 w-64"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12 text-center"></TableHead>
-                  <TableHead className="text-center">Site Name</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Upstream (m)</TableHead>
-                  <TableHead className="text-center">Downstream (m)</TableHead>
-                  <TableHead className="text-center">Flow (m³/s)</TableHead>
-                  <TableHead className="text-center">Date</TableHead>
-                  <TableHead className="text-center">Hour</TableHead>
+                  <TableHead className="text-center">{t("ups.directorate.siteName")}</TableHead>
+                  <TableHead className="text-center">{t("common.status")}</TableHead>
+                  <TableHead className="text-center">{t("ups.directorate.upstream")}</TableHead>
+                  <TableHead className="text-center">{t("ups.directorate.downstream")}</TableHead>
+                  <TableHead className="text-center">{t("ups.directorate.flow")}</TableHead>
+                  <TableHead className="text-center">{t("common.date")}</TableHead>
+                  <TableHead className="text-center">{t("common.hour")}</TableHead>
                   {isPumpBranch && <TableHead className="text-center">{t("common.details")}</TableHead>}
                   <TableHead className="text-center"></TableHead>
                 </TableRow>
@@ -167,7 +205,7 @@ export function DirectoratePage() {
                 {filteredSites.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={isPumpBranch ? 10 : 9} className="text-center text-gray-500">
-                      {searchTerm ? "No sites match your search" : t("common.noData")}
+                      {searchTerm ? t("ups.directorate.noSitesMatch") : t("common.noData")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -175,7 +213,7 @@ export function DirectoratePage() {
                     <TableRow key={site.siteId} className="hover:bg-gray-50">
                       <TableCell className="text-center">
                       </TableCell>
-                      <TableCell className="font-medium text-center">{site.siteName}</TableCell>
+                      <TableCell className="font-medium text-center">{getSiteName(site)}</TableCell>
                       <TableCell className="text-center">
                         <Badge 
                           className={
@@ -190,7 +228,14 @@ export function DirectoratePage() {
                       <TableCell className="text-center">{site.upstream > 0 ? site.upstream.toFixed(2) : "-"}</TableCell>
                       <TableCell className="text-center">{site.downstream > 0 ? site.downstream.toFixed(2) : "-"}</TableCell>
                       <TableCell className="text-blue-600 font-medium text-center">
-                        {site.flowRate > 0 ? site.flowRate.toFixed(1) : "-"}
+                        {(() => {
+                          const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                          if (numPumps > 0 && (site as any).pumpData?.flows) {
+                            const totalFlow = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
+                            return totalFlow > 0 ? totalFlow.toFixed(1) : "-";
+                          }
+                          return site.flowRate > 0 ? site.flowRate.toFixed(1) : "-";
+                        })()}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
                         {new Date(site.lastReading).toLocaleDateString()}
@@ -229,10 +274,10 @@ export function DirectoratePage() {
         </Card>
 
         {/* Upstream/Downstream Profile Chart (USWL vs DSWL Histogram) */}
-        <DirectorateWLChart branchName={branchName} data={profileChartData} />
+        <DirectorateWLChart branchName={localizedBranchName} data={profileChartData} />
 
         {/* Calculated Flow Chart (Line Graph) */}
-        <DirectorateFlowChart branchName={branchName} data={finalFlowData} />
+        <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
 
         
       </div>
@@ -250,10 +295,10 @@ export function DirectoratePage() {
           className="text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Overview
+          {t("common.overview")}
         </Button>
         <span className="text-gray-400">/</span>
-        <span className="font-medium text-gray-900">Directorate View</span>
+        <span className="font-medium text-gray-900">{t("ups.directorate.directorateView")}</span>
       </div>
 
       {/* Directorate Selection and Title */}
@@ -282,10 +327,10 @@ export function DirectoratePage() {
               disabled={directoratesLoading}
             >
               <SelectTrigger id="directorate-select">
-                <SelectValue placeholder="All Directorates" />
+                <SelectValue placeholder={t("ups.directorate.allDirectorates")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Directorates</SelectItem>
+                <SelectItem value="all">{t("ups.directorate.allDirectorates")}</SelectItem>
                 {directorates.map((directorate) => (
                   <SelectItem key={directorate.id} value={String(directorate.id)}>
                     {directorate.name}
@@ -321,7 +366,7 @@ export function DirectoratePage() {
       {!isTimeSelected && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="pt-6">
-            <p className="text-blue-700 text-sm">Please select a time to fetch the data.</p>
+            <p className="text-blue-700 text-sm">{t("ups.directorate.selectTime")}</p>
           </CardContent>
         </Card>
       )}
@@ -359,18 +404,18 @@ export function DirectoratePage() {
               {(selectedPumpStation as any).pumpData ? (
                 <>
                   <div className="text-sm">
-                    <span className="text-gray-500">Reading Time:</span>
+                    <span className="text-gray-500">{t("ups.directorate.readingTime")}:</span>
                     <p className="font-medium mt-1">
                       {new Date((selectedPumpStation as any).pumpData.readingTime).toLocaleString()}
                     </p>
                   </div>
                   
                   <div className="mt-4">
-                    <h4 className="font-semibold mb-3">Pump Flows</h4>
+                    <h4 className="font-semibold mb-3">{t("ups.directorate.pumpFlows")}</h4>
                     <div className="space-y-2">
                       {(selectedPumpStation as any).pumpData.flows.map((flow: number, index: number) => (
                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-gray-600">Pump {index + 1}:</span>
+                          <span className="text-gray-600">{t("ups.directorate.pump")} {index + 1}:</span>
                           <span className="font-semibold text-blue-600">{flow.toFixed(2)} m³/s</span>
                         </div>
                       ))}
@@ -379,7 +424,7 @@ export function DirectoratePage() {
                   
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                      <span className="text-gray-700 font-medium">Total Flow:</span>
+                      <span className="text-gray-700 font-medium">{t("ups.directorate.totalFlow")}:</span>
                       <span className="text-lg font-bold text-blue-600">
                         {(selectedPumpStation as any).pumpData.flows.reduce((sum: number, f: number) => sum + f, 0).toFixed(2)} m³/s
                       </span>
@@ -387,7 +432,7 @@ export function DirectoratePage() {
                   </div>
                 </>
               ) : (
-                <div className="text-gray-500 text-center py-4">No pump data available</div>
+                <div className="text-gray-500 text-center py-4">{t("ups.directorate.noPumpData")}</div>
               )}
             </div>
           )}
