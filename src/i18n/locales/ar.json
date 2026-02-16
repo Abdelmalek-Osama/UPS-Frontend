@@ -817,6 +817,9 @@
     "loading": "جارٍ التحميل...",
     "directorate": "المديرية",
     "site": "الموقع",
+    "selectSite": "اختر موقعاً",
+    "searchSite": "ابحث عن موقع...",
+    "noSiteFound": "لم يتم العثور على موقع",
     "dataPoints": "نقاط البيانات",
     "using": "باستخدام",
     "pumpData": "بيانات المضخات",
@@ -869,7 +872,10 @@
       "timeAgo": "منذ {{time}}",
       "criticalLevel": "مستوى حرج",
       "viewAllAlerts": "عرض جميع التنبيهات",
-      "lastUpdated": "آخر تحديث"
+      "lastUpdated": "آخر تحديث",
+      "justNow":" الآن",
+      "min":" دقيقة",
+      "hours":" ساعة"
     },
     "kpis": {
       "totalSites": "إجمالي المواقع",

@@ -816,6 +816,9 @@
     "loading": "Loading...",
     "directorate": "Directorate",
     "site": "Site",
+    "selectSite": "Select a site",
+    "searchSite": "Search sites...",
+    "noSiteFound": "No site found",
     "dataPoints": "Data points",
     "using": "Using",
     "pumpData": "Pump Data",
@@ -868,7 +871,10 @@
       "timeAgo": "{{time}} ago",
       "criticalLevel": "CRITICAL LEVEL",
       "viewAllAlerts": "View All Alerts",
-      "lastUpdated": "Last Updated"
+      "lastUpdated": "Last Updated",
+      "justNow":" Just Now",
+      "min":" Minute",
+      "hours":" Hours"
     },
     "kpis": {
       "totalSites": "Total Sites",
