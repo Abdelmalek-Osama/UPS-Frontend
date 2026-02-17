@@ -391,7 +391,8 @@
     "resetDates": "Reset Dates",
     "voltUnit": "Volt",
     "deleteWaterLevelSuccess": "Water level reading deleted successfully",
-    "deletePumpStationSuccess": "Pump station reading deleted successfully"
+    "deletePumpStationSuccess": "Pump station reading deleted successfully",
+    "page":"Page"
   },
   "alarms": {
     "title": "Alarm Configuration",
@@ -624,7 +625,7 @@
     "master": "Master View",
     "reports": "Reports",
     "dashboard": "Dashboard",
-    "sites": "Sites Management",
+    "sites": "Sites View",
     "readings": "Readings",
     "readingLogs": "Reading logs",
     "alarms": "Alarm Configuration",
