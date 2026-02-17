@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard,
@@ -11,7 +11,7 @@ import {
 import { Button } from './ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { ApiModeToggle } from '../features/ups/components/ApiModeToggle';
+import { useLandingOverview } from '../features/ups/hooks/useLandingOverview';
 import type { User } from '../features/auth';
 
 interface DashboardLayoutProps {
@@ -24,14 +24,28 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const { data: landingOverview } = useLandingOverview();
 
   const governorateSlug = currentUser.governorateName
     ? encodeURIComponent(currentUser.governorateName.toLowerCase().replace(/\s+/g, '-'))
     : 'minia';
 
-  const allMenuItems = [
+  const firstSiteId = landingOverview.sites?.[0]?.siteId;
+  const firstSitePath = firstSiteId ? `/sites/${firstSiteId}` : '/';
+
+  type MenuItem = {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    path: string;
+    roles: string[];
+    matchPrefix?: string;
+  };
+
+  const allMenuItems: MenuItem[] = [
     { id: 'overview', label: t('navigation.overview'), icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
     { id: 'directorate', label: t('navigation.directorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
+    { id: 'sites', label: t('navigation.sites'), icon: Globe2, path: firstSitePath, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'], matchPrefix: '/sites/' },
   ];
 
   // Filter menu items based on user role
@@ -97,14 +111,17 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
             <nav className="p-2 sm:p-4 space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = item.matchPrefix
+                  ? location.pathname.startsWith(item.matchPrefix)
+                  : (item.path === location.pathname ||
+                    (item.path === '/' && location.pathname === '/'));
                 
                 return (
                   <Link
                     key={item.id}
                     to={item.path}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors ${
-                      (item.path === location.pathname ||
-                        (item.path === '/' && location.pathname === '/'))
+                      isActive
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}

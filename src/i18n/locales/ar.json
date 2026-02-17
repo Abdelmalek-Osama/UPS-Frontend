@@ -391,7 +391,8 @@
     "resetDates": "إعادة تعيين التواريخ",
     "voltUnit": "فولت",
     "deleteWaterLevelSuccess": "تم حذف قراءة منسوب المياه بنجاح",
-    "deletePumpStationSuccess": "تم حذف قراءة محطة الرفع بنجاح"
+    "deletePumpStationSuccess": "تم حذف قراءة محطة الرفع بنجاح",
+    "page": "صفحة"
   },
   "alarms": {
     "title": "تكوين التنبيهات",
@@ -623,7 +624,7 @@
     "master": "العرض العام",
     "reports": "التقارير",
     "dashboard": "لوحة التحكم",
-    "sites": "إدارة المواقع",
+    "sites": "عرض المواقع",
     "readings": "القراءات",
     "readingLogs": "سجلات القراءات",
     "alarms": "تكوين التنبيهات",
