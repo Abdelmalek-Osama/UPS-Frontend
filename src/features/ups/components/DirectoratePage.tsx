@@ -212,7 +212,7 @@ export function DirectoratePage() {
                   <TableHead className="text-center">{t("common.date")}</TableHead>
                   <TableHead className="text-center">{t("common.hour")}</TableHead>
                   {isPumpBranch && <TableHead className="text-center">{t("common.details")}</TableHead>}
-                  <TableHead className="text-center"></TableHead>
+                  {/* <TableHead className="text-center"></TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -270,18 +270,19 @@ export function DirectoratePage() {
                       </TableCell>
                       {isPumpBranch && (
                         <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedPumpStation(site)}
-                            className="h-8 w-8 p-0"
-                            disabled={(site as any).siteConfiguration?.numPumps === 0}
-                          >
-                            <Info className="h-4 w-4" />
-                          </Button>
+                          {(site as any).siteConfiguration?.numPumps > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPumpStation(site)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       )}
-                      <TableCell className="text-center">
+                      {/* <TableCell className="text-center">
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -289,7 +290,7 @@ export function DirectoratePage() {
                         >
                           {t('_rtl') === 'rtl' ? '←' : '→'}
                         </Button>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}
@@ -376,6 +377,7 @@ export function DirectoratePage() {
         onExport={handleExport}
         showCalculations={false}
         showLatestOption={true}
+        showExport={false}
       />
 
       {/* Error Message */}

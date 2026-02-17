@@ -2,7 +2,7 @@
 // Core Types and Enums
 // ============================================================================
 
-export type TimeFilterType = 'latest' | 'specific' | 'week' | 'month' | 'custom';
+export type TimeFilterType = 'latest' | '24h' | 'specific' | 'week' | 'month' | 'custom';
 export type SiteStatus = 'active' | 'inactive' | 'maintenance' | 'alarm';
 export type EventType = 'alarm' | 'warning' | 'info' | 'maintenance' | 'system';
 export type EventSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';

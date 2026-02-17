@@ -21,6 +21,10 @@ const getDateRange = (filter: TimeFilter, range?: DateRange): { startDate: Date;
   switch (filter) {
     case "latest":
       return { startDate: today, endDate: today };
+    case "24h": {
+      const start = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      return { startDate: start, endDate: today };
+    }
     case "specific":
       if (range?.targetDate) {
         return { startDate: range.targetDate, endDate: range.targetDate };
