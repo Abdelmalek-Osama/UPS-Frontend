@@ -2,7 +2,7 @@
 // Core Types and Enums
 // ============================================================================
 
-export type TimeFilterType = 'latest' | 'week' | 'month' | 'custom';
+export type TimeFilterType = 'latest' | 'specific' | 'week' | 'month' | 'custom';
 export type SiteStatus = 'active' | 'inactive' | 'maintenance' | 'alarm';
 export type EventType = 'alarm' | 'warning' | 'info' | 'maintenance' | 'system';
 export type EventSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -101,7 +101,7 @@ export interface SiteSummary {
   batteryVoltage: number;
   flowRate: number;
   status: SiteStatus;
-  lastReading: Date;
+  lastReading: Date | null;
   coordinates: [number, number];
   governorate: string;
   governorateArabicName?: string;
@@ -322,6 +322,7 @@ export interface DateRange {
   end?: Date;
   startTime?: string; // HH:mm format for average mode
   endTime?: string; // HH:mm format for average mode
+  targetDate?: Date; // Specific date for exact mode
   targetTime?: string; // HH:mm format for exact mode
 }
 

@@ -6,6 +6,13 @@ import type { DateRange, SiteDetails, TimeFilter } from "../types";
 // Helper function to convert TimeFilter to API parameters
 const getDateRangeFromFilter = (filter: TimeFilter, range?: DateRange) => {
   switch (filter) {
+    case "specific":
+      return {
+        startDate: range?.targetDate,
+        endDate: range?.targetDate,
+        isLast7Days: false,
+        isLast30Days: false,
+      };
     case "week":
       return { isLast7Days: true, isLast30Days: false };
     case "month":
@@ -67,6 +74,15 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
         if (active) {
           setLoading(false);
           setError("Please select both start and end dates");
+        }
+        return;
+      }
+
+      // For specific filter, wait until date is selected
+      if (filter === "specific" && !range?.targetDate) {
+        if (active) {
+          setLoading(false);
+          setError("Please select a date and time");
         }
         return;
       }
@@ -214,7 +230,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
     return () => {
       active = false;
     };
-  }, [filter, isAuthenticated, range?.end, range?.start, siteId]);
+  }, [filter, isAuthenticated, range?.end, range?.start, range?.targetDate, siteId]);
 
   return { data, loading, error };
 };

@@ -887,6 +887,7 @@
     "filters": {
       "selectTime": "اختر الفترة الزمنية",
       "latest": "الأحدث",
+      "specific": "تاريخ ووقت محدد",
       "last24h": "آخر 24 ساعة",
       "week": "آخر أسبوع",
       "month": "آخر شهر",
@@ -895,6 +896,7 @@
       "last30Days": "آخر 30 يوم",
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
+      "selectDate": "اختر التاريخ",
       "hourlyData": "بيانات ساعية",
       "dailyAverages": "متوسطات يومية",
       "latestReading": "آخر قراءة"

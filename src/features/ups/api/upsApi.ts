@@ -179,6 +179,14 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
     params.endDate = range.end.toISOString();
   }
   
+  if (range?.targetDate) {
+    params.targetDate = range.targetDate.toISOString();
+  }
+  
+  if (range?.targetTime) {
+    params.targetTime = range.targetTime;
+  }
+  
   return params;
 };
 
@@ -297,6 +305,12 @@ export const exportReport = async (
   if (range?.end) {
     params.append("endDate", range.end.toISOString());
   }
+  if (range?.targetDate) {
+    params.append("targetDate", range.targetDate.toISOString());
+  }
+  if (range?.targetTime) {
+    params.append("targetTime", range.targetTime);
+  }
   if (siteId) {
     params.append("siteId", siteId);
   }
@@ -325,6 +339,12 @@ export const exportFullData = async (
   }
   if (range?.end) {
     params.append("endDate", range.end.toISOString());
+  }
+  if (range?.targetDate) {
+    params.append("targetDate", range.targetDate.toISOString());
+  }
+  if (range?.targetTime) {
+    params.append("targetTime", range.targetTime);
   }
   if (siteIds && siteIds.length > 0) {
     params.append("siteIds", siteIds.join(","));

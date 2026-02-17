@@ -67,11 +67,29 @@ export function TimeFilterBar({
             </SelectTrigger>
             <SelectContent>
               {showLatestOption && <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>}
+              <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem>
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
             </SelectContent>
           </Select>
+
+          {value === "specific" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <DatePicker
+                placeholder={t("ups.filters.selectDate")}
+                value={range.targetDate}
+                onChange={(date) => onRangeChange({ ...range, targetDate: date })}
+              />
+              <Input
+                type="time"
+                value={range.targetTime || ""}
+                onChange={(e) => onRangeChange({ ...range, targetTime: e.target.value })}
+                className="w-32"
+                required
+              />
+            </div>
+          )}
 
           {value === "custom" && (
             <div className="flex flex-wrap items-center gap-2">
@@ -104,7 +122,7 @@ export function TimeFilterBar({
           )}
 
           {/* Time period description */}
-          {value !== "custom" && (
+          {value !== "custom" && value !== "specific" && (
             <Badge variant="secondary" className="text-xs">
               {value === "latest" && t("ups.filters.latestReading")}
               {value === "week" && t("ups.filters.last7Days")}
