@@ -21,6 +21,11 @@ const getDateRange = (filter: TimeFilter, range?: DateRange): { startDate: Date;
   switch (filter) {
     case "latest":
       return { startDate: today, endDate: today };
+    case "specific":
+      if (range?.targetDate) {
+        return { startDate: range.targetDate, endDate: range.targetDate };
+      }
+      return { startDate: today, endDate: today };
     case "week": {
       const start = new Date(today);
       start.setDate(start.getDate() - 7);
@@ -42,7 +47,11 @@ const getDateRange = (filter: TimeFilter, range?: DateRange): { startDate: Date;
 };
 
 const buildDateTime = (date: Date, time?: string): string => {
-  const dateStr = date.toISOString().split('T')[0];
+  // Use local date components to avoid timezone conversion issues
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
   const timeStr = time || "00:00";
   return `${dateStr}T${timeStr}:00.000Z`;
 };
@@ -75,11 +84,25 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         const { startDate, endDate } = getDateRange(filter, range);
         
         // Build date/time strings for API
-        const mode = filter === "latest" ? "Exact" : "Average";
+        const mode = (filter === "latest" || filter === "specific") ? "Exact" : "Average";
         
-        // Time selection is only for custom filter
-        const startTime = filter === "custom" ? range?.startTime : "00:00";
-        const endTime = filter === "custom" ? range?.endTime : "23:59";
+        // Time selection based on filter type
+        let startTime: string | undefined;
+        let endTime: string | undefined;
+        
+        if (filter === "specific") {
+          // Use the specific date and time selected by the user
+          startTime = range?.targetTime || "00:00";
+          endTime = range?.targetTime || "00:00";
+        } else if (filter === "custom") {
+          // Use the custom range times
+          startTime = range?.startTime || "00:00";
+          endTime = range?.endTime || "23:59";
+        } else {
+          // For latest, week, month
+          startTime = "00:00";
+          endTime = "23:59";
+        }
         
         const targetDateTime = buildDateTime(startDate, startTime);
         const startDateStr = buildDateTime(startDate, startTime);
@@ -151,10 +174,9 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                 // For average mode, check if data exists
                 const hasData = mode === "Average" ? (waterData as any)?.count > 0 : true;
                 
-                // Get last reading time
-                const lastReadingTime = mode === "Exact" && (waterData as any)?.readingTime 
-                  ? new Date((waterData as any).readingTime) 
-                  : new Date();
+                // Get last reading time from waterData
+                const readingTimeStr = (waterData as any)?.readingTime;
+                const lastReadingTime = readingTimeStr ? new Date(readingTimeStr) : null;
 
                 return {
                   siteId: site.siteId.toString(),

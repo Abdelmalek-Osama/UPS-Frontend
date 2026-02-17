@@ -886,6 +886,7 @@
     "filters": {
       "selectTime": "Select time filter",
       "latest": "Latest",
+      "specific": "Specific Date & Time",
       "last24h": "Last 24 Hours",
       "week": "Last Week",
       "month": "Last Month",
@@ -894,6 +895,7 @@
       "last30Days": "Last 30 Days",
       "startDate": "Start date",
       "endDate": "End date",
+      "selectDate": "Select date",
       "hourlyData": "Hourly data",
       "dailyAverages": "Daily averages",
       "latestReading": "Latest reading"
