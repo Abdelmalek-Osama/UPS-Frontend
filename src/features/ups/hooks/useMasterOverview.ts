@@ -41,7 +41,7 @@ export const useMasterOverview = (filter: TimeFilter, range?: DateRange) => {
     return () => {
       active = false;
     };
-  }, [filter, isAuthenticated, range?.end, range?.start]);
+  }, [filter, isAuthenticated, range?.end, range?.start, range?.targetDate]);
 
   return { data, loading };
 };

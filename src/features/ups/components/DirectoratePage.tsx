@@ -71,8 +71,9 @@ export function DirectoratePage() {
   // Check if required time is selected
   const isTimeSelected = useMemo(() => {
     if (filter === "custom") return !!range.startTime && !!range.endTime;
+    if (filter === "specific") return !!range.targetDate && !!range.targetTime;
     return true; // latest, week, month don't require time selection
-  }, [filter, range.startTime, range.endTime]);
+  }, [filter, range.startTime, range.endTime, range.targetDate, range.targetTime]);
 
   const handleSiteClick = (siteId: string) => {
     navigate(`/sites/${siteId}`);
@@ -238,10 +239,21 @@ export function DirectoratePage() {
                         })()}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
-                        {new Date(site.lastReading).toLocaleDateString()}
+                        {site.lastReading ? (() => {
+                          const date = new Date(site.lastReading);
+                          const year = date.getUTCFullYear();
+                          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                          const day = String(date.getUTCDate()).padStart(2, '0');
+                          return `${year}-${month}-${day}`;
+                        })() : "-"}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
-                        {new Date(site.lastReading).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        {site.lastReading ? (() => {
+                          const date = new Date(site.lastReading);
+                          const hours = String(date.getUTCHours()).padStart(2, '0');
+                          const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                          return `${hours}:${minutes}`;
+                        })() : "-"}
                       </TableCell>
                       {isPumpBranch && (
                         <TableCell className="text-center">
@@ -411,7 +423,17 @@ export function DirectoratePage() {
                   <div className={`text-sm ${t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}`}>
                     <span className="text-gray-500">{t("ups.directorate.readingTime")}:</span>
                     <p className="font-medium mt-1">
-                      {new Date((selectedPumpStation as any).pumpData.readingTime).toLocaleString()}
+                      {(() => {
+                        const readingTime = (selectedPumpStation as any).pumpData.readingTime;
+                        if (!readingTime) return "-";
+                        const date = new Date(readingTime);
+                        const year = date.getUTCFullYear();
+                        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                        const day = String(date.getUTCDate()).padStart(2, '0');
+                        const hours = String(date.getUTCHours()).padStart(2, '0');
+                        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                        return `${year}-${month}-${day} ${hours}:${minutes}`;
+                      })()}
                     </p>
                   </div>
                   
