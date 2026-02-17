@@ -70,10 +70,10 @@ export function DirectoratePage() {
 
   // Check if required time is selected
   const isTimeSelected = useMemo(() => {
-    if (filter === "custom") return !!range.startTime && !!range.endTime;
+    if (filter === "custom") return !!range.start && !!range.end;
     if (filter === "specific") return !!range.targetDate && !!range.targetTime;
     return true; // latest, week, month don't require time selection
-  }, [filter, range.startTime, range.endTime, range.targetDate, range.targetTime]);
+  }, [filter, range.start, range.end, range.targetDate, range.targetTime]);
 
   const handleSiteClick = (siteId: string) => {
     navigate(`/sites/${siteId}`);
@@ -130,24 +130,12 @@ export function DirectoratePage() {
           dswl: site.downstream
         }));
     
-    // Filter and sort flow data to only include main regulators in specified order
-    const calculatedFlowData = mainRegulatorIds
-      .map(id => sites.find(site => site.siteId === id))
-      .filter((site): site is SiteSummary => site !== undefined)
-      .map(site => ({
-        id: site.siteId,
-        name: getSiteName(site),
-        calculatedFlow: site.flowRate
-      }));
-    
-    // If no main regulators found, show all sites in position order as fallback
-    const finalFlowData = calculatedFlowData.length > 0 
-      ? calculatedFlowData 
-      : sortedSites.map(site => ({
-          id: site.siteId,
-          name: getSiteName(site),
-          calculatedFlow: site.flowRate
-        }));
+    // Include all sites in position order for flow data
+    const finalFlowData = sortedSites.map(site => ({
+      id: site.siteId,
+      name: getSiteName(site),
+      calculatedFlow: site.flowRate
+    }));
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";

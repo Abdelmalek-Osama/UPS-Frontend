@@ -99,25 +99,12 @@ export function TimeFilterBar({
                 value={range.start}
                 onChange={(date) => onRangeChange({ ...range, start: date })}
               />
-              <Input
-                type="time"
-                value={range.startTime || ""}
-                onChange={(e) => onRangeChange({ ...range, startTime: e.target.value })}
-                className="w-32"
-                required
-              />
               <span className="text-gray-500">to</span>
               <DatePicker
                 placeholder={t("ups.filters.endDate")}
                 value={range.end}
+                minDate={range.start}
                 onChange={(date) => onRangeChange({ ...range, end: date })}
-              />
-              <Input
-                type="time"
-                value={range.endTime || ""}
-                onChange={(e) => onRangeChange({ ...range, endTime: e.target.value })}
-                className="w-32"
-                required
               />
             </div>
           )}
