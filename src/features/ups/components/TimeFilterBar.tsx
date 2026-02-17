@@ -103,6 +103,7 @@ export function TimeFilterBar({
               <DatePicker
                 placeholder={t("ups.filters.endDate")}
                 value={range.end}
+                minDate={range.start}
                 onChange={(date) => onRangeChange({ ...range, end: date })}
               />
             </div>
