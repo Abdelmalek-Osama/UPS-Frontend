@@ -375,7 +375,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
               }}></div>
               <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.activeSite")}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ 
                 width: '12px', 
                 height: '12px', 
@@ -384,7 +384,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 flexShrink: 0
               }}></div>
               <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.alarmState")}</span>
-            </div>
+            </div> */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ 
                 width: '12px', 
