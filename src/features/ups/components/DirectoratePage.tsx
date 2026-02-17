@@ -70,10 +70,10 @@ export function DirectoratePage() {
 
   // Check if required time is selected
   const isTimeSelected = useMemo(() => {
-    if (filter === "custom") return !!range.startTime && !!range.endTime;
+    if (filter === "custom") return !!range.start && !!range.end;
     if (filter === "specific") return !!range.targetDate && !!range.targetTime;
     return true; // latest, week, month don't require time selection
-  }, [filter, range.startTime, range.endTime, range.targetDate, range.targetTime]);
+  }, [filter, range.start, range.end, range.targetDate, range.targetTime]);
 
   const handleSiteClick = (siteId: string) => {
     navigate(`/sites/${siteId}`);
@@ -106,35 +106,36 @@ export function DirectoratePage() {
     const getSiteName = (site: SiteSummary) => 
       t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName;
     
-    // Transform site data for water level chart (USWL vs DSWL)
-    const profileChartData = sortedSites.map(site => ({
-      id: site.siteId,
-      name: getSiteName(site),
-      uswl: site.upstream,
-      dswl: site.downstream
-    }));
-
     // Get main regulator IDs for this branch
     const mainRegulatorIds = MAIN_REGULATORS[branchName as keyof typeof MAIN_REGULATORS] || [];
     
-    // Filter and sort flow data to only include main regulators in specified order
-    const calculatedFlowData = mainRegulatorIds
+    // Filter and sort water level data to only include main regulators in specified order
+    const profileChartData = mainRegulatorIds
       .map(id => sites.find(site => site.siteId === id))
       .filter((site): site is SiteSummary => site !== undefined)
       .map(site => ({
         id: site.siteId,
         name: getSiteName(site),
-        calculatedFlow: site.flowRate
+        uswl: site.upstream,
+        dswl: site.downstream
       }));
     
     // If no main regulators found, show all sites in position order as fallback
-    const finalFlowData = calculatedFlowData.length > 0 
-      ? calculatedFlowData 
+    const finalProfileData = profileChartData.length > 0 
+      ? profileChartData 
       : sortedSites.map(site => ({
           id: site.siteId,
           name: getSiteName(site),
-          calculatedFlow: site.flowRate
+          uswl: site.upstream,
+          dswl: site.downstream
         }));
+    
+    // Include all sites in position order for flow data
+    const finalFlowData = sortedSites.map(site => ({
+      id: site.siteId,
+      name: getSiteName(site),
+      calculatedFlow: site.flowRate
+    }));
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
@@ -199,7 +200,7 @@ export function DirectoratePage() {
                   <TableHead className="text-center">{t("common.date")}</TableHead>
                   <TableHead className="text-center">{t("common.hour")}</TableHead>
                   {isPumpBranch && <TableHead className="text-center">{t("common.details")}</TableHead>}
-                  <TableHead className="text-center"></TableHead>
+                  {/* <TableHead className="text-center"></TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -257,18 +258,19 @@ export function DirectoratePage() {
                       </TableCell>
                       {isPumpBranch && (
                         <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedPumpStation(site)}
-                            className="h-8 w-8 p-0"
-                            disabled={(site as any).siteConfiguration?.numPumps === 0}
-                          >
-                            <Info className="h-4 w-4" />
-                          </Button>
+                          {(site as any).siteConfiguration?.numPumps > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPumpStation(site)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       )}
-                      <TableCell className="text-center">
+                      {/* <TableCell className="text-center">
                         <Button 
                           variant="ghost" 
                           size="sm"
@@ -276,7 +278,7 @@ export function DirectoratePage() {
                         >
                           {t('_rtl') === 'rtl' ? '←' : '→'}
                         </Button>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}
@@ -286,7 +288,7 @@ export function DirectoratePage() {
         </Card>
 
         {/* Upstream/Downstream Profile Chart (USWL vs DSWL Histogram) */}
-        <DirectorateWLChart branchName={localizedBranchName} data={profileChartData} />
+        <DirectorateWLChart branchName={localizedBranchName} data={finalProfileData} />
 
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
@@ -363,6 +365,7 @@ export function DirectoratePage() {
         onExport={handleExport}
         showCalculations={false}
         showLatestOption={true}
+        showExport={false}
       />
 
       {/* Error Message */}

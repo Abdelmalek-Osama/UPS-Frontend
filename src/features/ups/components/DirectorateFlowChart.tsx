@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { useTranslation } from "react-i18next";
 
@@ -28,7 +28,7 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
       <CardContent>
         <div style={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
@@ -47,16 +47,12 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
               />
               <Tooltip />
               <Legend />
-              <Line 
-                type="monotone" 
+              <Bar 
                 dataKey="calculatedFlow" 
-                stroke="#06b6d4" 
-                strokeWidth={2}
+                fill="#06b6d4" 
                 name={t("ups.directorate.calculatedFlow", { branch: "" }).replace(" ()", "")}
-                dot={{ fill: "#06b6d4", r: 4 }}
-                activeDot={{ r: 6 }}
               />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
