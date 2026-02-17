@@ -106,16 +106,29 @@ export function DirectoratePage() {
     const getSiteName = (site: SiteSummary) => 
       t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName;
     
-    // Transform site data for water level chart (USWL vs DSWL)
-    const profileChartData = sortedSites.map(site => ({
-      id: site.siteId,
-      name: getSiteName(site),
-      uswl: site.upstream,
-      dswl: site.downstream
-    }));
-
     // Get main regulator IDs for this branch
     const mainRegulatorIds = MAIN_REGULATORS[branchName as keyof typeof MAIN_REGULATORS] || [];
+    
+    // Filter and sort water level data to only include main regulators in specified order
+    const profileChartData = mainRegulatorIds
+      .map(id => sites.find(site => site.siteId === id))
+      .filter((site): site is SiteSummary => site !== undefined)
+      .map(site => ({
+        id: site.siteId,
+        name: getSiteName(site),
+        uswl: site.upstream,
+        dswl: site.downstream
+      }));
+    
+    // If no main regulators found, show all sites in position order as fallback
+    const finalProfileData = profileChartData.length > 0 
+      ? profileChartData 
+      : sortedSites.map(site => ({
+          id: site.siteId,
+          name: getSiteName(site),
+          uswl: site.upstream,
+          dswl: site.downstream
+        }));
     
     // Filter and sort flow data to only include main regulators in specified order
     const calculatedFlowData = mainRegulatorIds
@@ -286,7 +299,7 @@ export function DirectoratePage() {
         </Card>
 
         {/* Upstream/Downstream Profile Chart (USWL vs DSWL Histogram) */}
-        <DirectorateWLChart branchName={localizedBranchName} data={profileChartData} />
+        <DirectorateWLChart branchName={localizedBranchName} data={finalProfileData} />
 
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
