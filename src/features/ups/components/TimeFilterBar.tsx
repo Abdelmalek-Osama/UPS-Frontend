@@ -67,6 +67,7 @@ export function TimeFilterBar({
             </SelectTrigger>
             <SelectContent>
               {showLatestOption && <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>}
+              <SelectItem value="24h">{t("ups.filters.last24h")}</SelectItem>
               <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem>
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
@@ -125,6 +126,7 @@ export function TimeFilterBar({
           {value !== "custom" && value !== "specific" && (
             <Badge variant="secondary" className="text-xs">
               {value === "latest" && t("ups.filters.latestReading")}
+              {value === "24h" && t("ups.filters.last24h")}
               {value === "week" && t("ups.filters.last7Days")}
               {value === "month" && t("ups.filters.last30Days")}
             </Badge>

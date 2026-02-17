@@ -62,7 +62,7 @@ export function SitePage() {
   const params = useParams();
   const { t, i18n } = useTranslation();
   const siteId = Number(params.siteId || 1);
-  const [filter, setFilter] = useState<TimeFilter>("week");
+  const [filter, setFilter] = useState<TimeFilter>("24h");
   const [range, setRange] = useState<DateRange>({});
   const { data, loading } = useSiteDetails(siteId, filter, range);
 

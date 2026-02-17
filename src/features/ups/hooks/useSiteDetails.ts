@@ -6,6 +6,16 @@ import type { DateRange, SiteDetails, TimeFilter } from "../types";
 // Helper function to convert TimeFilter to API parameters
 const getDateRangeFromFilter = (filter: TimeFilter, range?: DateRange) => {
   switch (filter) {
+    case "24h": {
+      const endDate = new Date();
+      const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
+      return {
+        startDate,
+        endDate,
+        isLast7Days: false,
+        isLast30Days: false,
+      };
+    }
     case "specific":
       return {
         startDate: range?.targetDate,
