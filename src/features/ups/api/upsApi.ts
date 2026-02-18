@@ -154,7 +154,7 @@ export interface SiteReadingsResponse {
 export interface LookupItem {
   id: string | number;
   name: string;
-  nameArabic?: string;
+  arabicName?: string;
 }
 
 export interface LookupResponse<T> {
@@ -282,6 +282,11 @@ export const createScheduledReport = async (
 // Lookup API Functions
 export const getDirectorates = async (): Promise<LookupItem[]> => {
   const response = await get<LookupItem[]>('/v1/Lookups/Lookup/Directorates');
+  return response;
+};
+
+export const getSites = async (): Promise<LookupItem[]> => {
+  const response = await get<LookupItem[]>('/v1/Lookups/Lookup/Sites');
   return response;
 };
 

@@ -44,6 +44,7 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
                   position: isRTL ? 'insideRight' : 'insideLeft'
                 }} 
                 orientation={isRTL ? 'right' : 'left'}
+                domain={[0, 'auto']}
               />
               <Tooltip />
               <Legend />

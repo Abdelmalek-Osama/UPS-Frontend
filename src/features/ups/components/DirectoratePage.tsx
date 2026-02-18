@@ -5,22 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
-import { ArrowLeft, Search, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
+import { Checkbox } from "../../../components/ui/checkbox";
+import { ArrowLeft, Search, Info, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
 import { DirectorateWLChart } from "./DirectorateWLChart";
 import { DirectorateFlowChart } from "./DirectorateFlowChart";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
+import { useSitesList } from "../hooks/useSitesList";
 import { exportReport } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
@@ -34,7 +30,8 @@ const MAIN_REGULATORS = {
 export function DirectoratePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [directorateId, setDirectorateId] = useState<string>("");
+  const [selectedDirectorateIds, setSelectedDirectorateIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const [filter, setFilter] = useState<TimeFilter>("week");
   const [range, setRange] = useState<DateRange>({});
   const [calculations, setCalculations] = useState<CalculationOptions>({
@@ -45,12 +42,29 @@ export function DirectoratePage() {
   const [selectedPumpStation, setSelectedPumpStation] = useState<SiteSummary | null>(null);
 
   const { directorates, loading: directoratesLoading } = useDirectoratesList();
-  const { data, error } = useGovernorateOverview(directorateId, filter, range);
+  const { sites, loading: sitesLoading } = useSitesList();
+  // Use first selected directorate for API call, or empty string if none selected
+  const apiDirectorateId = selectedDirectorateIds.length > 0 ? selectedDirectorateIds[0] : "";
+  const { data, error } = useGovernorateOverview(apiDirectorateId, filter, range);
+
+  // Get directorate name based on language
+  const getDirectorateName = (directorateId: string) => {
+    const directorate = directorates.find(d => String(d.id) === directorateId);
+    if (!directorate) return "";
+    return t('_rtl') === 'rtl' ? (directorate.arabicName || directorate.name) : directorate.name;
+  };
+
+  // Get site name based on language
+  const getSiteNameById = (siteId: string) => {
+    const site = sites.find(s => String(s.id) === siteId);
+    if (!site) return "";
+    return t('_rtl') === 'rtl' ? (site.arabicName || site.name) : site.name;
+  };
 
   // Handle export functionality
   const handleExport = async (format: "pdf" | "excel") => {
     try {
-      await exportReport("governorate", format, filter, range, undefined, directorateId);
+      await exportReport("governorate", format, filter, range, undefined, apiDirectorateId);
     } catch (error) {
       console.error("Export failed:", error);
     }
@@ -75,9 +89,9 @@ export function DirectoratePage() {
     return true; // latest, week, month don't require time selection
   }, [filter, range.start, range.end, range.targetDate, range.targetTime]);
 
-  const handleSiteClick = (siteId: string) => {
-    navigate(`/sites/${siteId}`);
-  };
+  // const handleSiteClick = (siteId: string) => {
+  //   navigate(`/sites/${siteId}`);
+  // };
 
   const filterSites = (sites: SiteSummary[]) => {
     if (!searchTerm) return sites;
@@ -92,14 +106,20 @@ export function DirectoratePage() {
 
 
   const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
-    // Filter sites by directorate if a directorate is selected
+    // Filter sites by directorate if directorates are selected
     let filteredByDirectorate = sites;
-    if (directorateId && directorateId !== "" && directorateId !== "all") {
-      const selectedDirId = parseInt(directorateId);
-      filteredByDirectorate = sites.filter(site => site.directorateId === selectedDirId);
+    if (selectedDirectorateIds.length > 0) {
+      const selectedDirIds = selectedDirectorateIds.map(id => parseInt(id));
+      filteredByDirectorate = sites.filter(site => site.directorateId !== undefined && selectedDirIds.includes(site.directorateId));
     }
     
-    const sortedSites = filteredByDirectorate.sort((a, b) => a.position - b.position);
+    // Filter by selected sites if sites are selected
+    let filteredBySite = filteredByDirectorate;
+    if (selectedSiteIds.length > 0) {
+      filteredBySite = filteredByDirectorate.filter(site => selectedSiteIds.includes(site.siteId));
+    }
+    
+    const sortedSites = filteredBySite.sort((a, b) => a.position - b.position);
     const filteredSites = filterSites(sortedSites);
     
     // Get site name based on language
@@ -131,11 +151,21 @@ export function DirectoratePage() {
         }));
     
     // Include all sites in position order for flow data
-    const finalFlowData = sortedSites.map(site => ({
-      id: site.siteId,
-      name: getSiteName(site),
-      calculatedFlow: site.flowRate
-    }));
+    const finalFlowData = sortedSites.map(site => {
+      const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+      let flowValue = site.flowRate;
+      
+      // If site has pumps, use total pump flow instead of calculated flow
+      if (numPumps > 0 && (site as any).pumpData?.flows) {
+        flowValue = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
+      }
+      
+      return {
+        id: site.siteId,
+        name: getSiteName(site),
+        calculatedFlow: flowValue
+      };
+    });
 
     // Check if this is Bahr Youssef (has pump stations)
     const isPumpBranch = branchName === "Bahr Youssef";
@@ -324,34 +354,148 @@ export function DirectoratePage() {
               {t("ups.pages.canalViewDescription", { branches: orderedBranches.map(b => b.name).join(' & ') })}
             </p>
           </div>
-          <div className="w-64">
-            <label htmlFor="directorate-select" className="block text-sm font-medium text-gray-700 mb-2">
-              {t("common.selectDirectorate") || "Filter by Directorate"}
-            </label>
-            <Select 
-              defaultValue="all"
-              value={directorateId === "" ? "all" : directorateId}
-              onValueChange={(value) => {
-                if (value === "all") {
-                  setDirectorateId("");
-                } else {
-                  setDirectorateId(value);
-                }
-              }}
-              disabled={directoratesLoading}
-            >
-              <SelectTrigger id="directorate-select">
-                <SelectValue placeholder={t("ups.directorate.allDirectorates")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("ups.directorate.allDirectorates")}</SelectItem>
-                {directorates.map((directorate) => (
-                  <SelectItem key={directorate.id} value={String(directorate.id)}>
-                    {directorate.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex gap-3">
+            {/* Directorate Filter */}
+            <div className="w-80">
+              <label htmlFor="directorate-select" className="block text-sm font-medium text-gray-700 mb-2">
+                {t("common.selectDirectorate") || "Filter by Directorate"}
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-10"
+                    disabled={directoratesLoading}
+                  >
+                    <span className="truncate">
+                      {selectedDirectorateIds.length === 0
+                        ? t("ups.directorate.allDirectorates")
+                        : selectedDirectorateIds.length === 1
+                        ? getDirectorateName(selectedDirectorateIds[0])
+                        : `${selectedDirectorateIds.length} ${t("ups.directorate.directoratesSelected") || "directorates selected"}`}
+                    </span>
+                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-2 border-b">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {t("ups.directorate.selectDirectorates") || "Select Directorates"}
+                      </span>
+                      {selectedDirectorateIds.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedDirectorateIds([])}
+                          className="h-6 px-2 text-xs"
+                        >
+                          {t("common.clearAll") || "Clear All"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto p-2">
+                    {directorates.map((directorate) => {
+                      const isSelected = selectedDirectorateIds.includes(String(directorate.id));
+                      return (
+                        <div
+                          key={directorate.id}
+                          className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                          onClick={() => {
+                            const id = String(directorate.id);
+                            if (isSelected) {
+                              setSelectedDirectorateIds(prev => prev.filter(d => d !== id));
+                            } else {
+                              setSelectedDirectorateIds(prev => [...prev, id]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+
+                          />
+                          <label className="flex-1 text-sm cursor-pointer">
+                            {t('_rtl') === 'rtl' ? (directorate.arabicName || directorate.name) : directorate.name}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Site Filter */}
+            <div className="w-80">
+              <label htmlFor="site-select" className="block text-sm font-medium text-gray-700 mb-2">
+                {t("ups.directorate.filterBySite") || "Filter by Site"}
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-10"
+                    disabled={sitesLoading}
+                  >
+                    <span className="truncate">
+                      {selectedSiteIds.length === 0
+                        ? t("ups.directorate.allSites") || "All Sites"
+                        : selectedSiteIds.length === 1
+                        ? getSiteNameById(selectedSiteIds[0])
+                        : `${selectedSiteIds.length} ${t("ups.directorate.sitesSelected") || "sites selected"}`}
+                    </span>
+                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-2 border-b">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {t("ups.directorate.selectSites") || "Select Sites"}
+                      </span>
+                      {selectedSiteIds.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedSiteIds([])}
+                          className="h-6 px-2 text-xs"
+                        >
+                          {t("common.clearAll") || "Clear All"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto p-2">
+                    {sites.map((site) => {
+                      const isSelected = selectedSiteIds.includes(String(site.id));
+                      return (
+                        <div
+                          key={site.id}
+                          className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                          onClick={() => {
+                            const id = String(site.id);
+                            if (isSelected) {
+                              setSelectedSiteIds(prev => prev.filter(s => s !== id));
+                            } else {
+                              setSelectedSiteIds(prev => [...prev, id]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+
+                          />
+                          <label className="flex-1 text-sm cursor-pointer">
+                            {t('_rtl') === 'rtl' ? (site.arabicName || site.name) : site.name}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
       </div>      {/* Time Filter and Export Controls */}
