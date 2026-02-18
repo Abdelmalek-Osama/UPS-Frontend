@@ -60,6 +60,7 @@
     "step": "خطوة",
     "filters": "التصفيات",
     "clearFilters": "مسح التصفيات",
+    "clearAll": "مسح الكل",
     "overview": "نظرة عامة",
     "details": "التفاصيل",
     "selectDirectorate": "تصفية حسب المديرية",
@@ -981,7 +982,13 @@
       "totalFlow": "إجمالي التدفق",
       "noPumpData": "لا توجد بيانات مضخات متاحة",
       "selectTime": "الرجاء اختيار وقت لجلب البيانات.",
-      "allDirectorates": "جميع المديريات"
+      "allDirectorates": "جميع المديريات",
+      "directoratesSelected": "مديريات محددة",
+      "selectDirectorates": "اختر المديريات",
+      "filterBySite": "تصفية حسب الموقع",
+      "allSites": "جميع المواقع",
+      "sitesSelected": "مواقع محددة",
+      "selectSites": "اختر المواقع"
     },
     "master": {
       "title": "العرض العام للمشروع",
