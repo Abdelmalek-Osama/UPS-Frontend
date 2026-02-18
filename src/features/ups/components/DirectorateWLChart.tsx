@@ -45,6 +45,7 @@ export function DirectorateWLChart({ branchName, data }: DirectorateWLChartProps
                   position: isRTL ? 'insideRight' : 'insideLeft'
                 }} 
                 orientation={isRTL ? 'right' : 'left'}
+                domain={[0, 'auto']}
               />
               <Tooltip />
               <Legend />

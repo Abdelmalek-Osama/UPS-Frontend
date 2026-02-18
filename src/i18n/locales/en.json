@@ -60,6 +60,7 @@
     "step": "Step",
     "filters": "Filters",
     "clearFilters": "Clear Filters",
+    "clearAll": "Clear All",
     "overview": "Overview",
     "details": "Details",
     "selectDirectorate": "Filter by Directorate",
@@ -985,7 +986,13 @@
       "totalFlow": "Total Flow",
       "noPumpData": "No pump data available",
       "selectTime": "Please select a time to fetch the data.",
-      "allDirectorates": "All Directorates"
+      "allDirectorates": "All Directorates",
+      "directoratesSelected": "directorates selected",
+      "selectDirectorates": "Select Directorates",
+      "filterBySite": "Filter by Site",
+      "allSites": "All Sites",
+      "sitesSelected": "sites selected",
+      "selectSites": "Select Sites"
     },
     "master": {
       "title": "Master General View",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Command,
@@ -92,12 +92,6 @@ export function SiteSelector({ selectedSiteId, onSiteChange, className }: SiteSe
                     }}
                     className="cursor-pointer"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4 flex-shrink-0",
-                        selectedSiteId === site.siteId ? "opacity-100" : "opacity-0"
-                      )}
-                    />
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="font-medium truncate">{siteName}</span>
                       <span className="text-xs text-gray-500 truncate">{directorateName}</span>
