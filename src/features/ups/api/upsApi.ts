@@ -170,23 +170,23 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   const params: Record<string, string> = {
     timeFilter: filter,
   };
-  
+
   if (range?.start) {
     params.startDate = range.start.toISOString();
   }
-  
+
   if (range?.end) {
     params.endDate = range.end.toISOString();
   }
-  
+
   if (range?.targetDate) {
     params.targetDate = range.targetDate.toISOString();
   }
-  
+
   if (range?.targetTime) {
     params.targetTime = range.targetTime;
   }
-  
+
   return params;
 };
 
@@ -262,14 +262,19 @@ export const getSiteReadingsByCanals = async (
   targetDateTime: string,
   startDate: string,
   endDate: string,
-): Promise<SiteReadingsResponse> =>
-  post<SiteReadingsResponse>('/v1/site-readings/by-canals', {
-    selectedCanals,
-    mode,
-    targetDateTime,
-    startDate,
-    endDate,
+): Promise<SiteReadingsResponse> => {
+  const params: Record<string, string | number | boolean> = {
+    SelectedCanals: selectedCanals.length > 0 ? selectedCanals[0] : 0,
+    Mode: mode,
+    TargetDateTime: targetDateTime,
+    StartDate: startDate,
+    EndDate: endDate,
+  };
+
+  return get<SiteReadingsResponse>('/api/v1/site-readings/by-canals', {
+    params,
   });
+};
 
 export const getScheduledReports = async (): Promise<UpsApiResponse<ScheduledReport[]>> =>
   get<UpsApiResponse<ScheduledReport[]>>(`${UPS_VIEWER_BASE}/reports/schedules`);
@@ -303,7 +308,7 @@ export const exportReport = async (
     format,
     timeFilter: filter,
   });
-  
+
   if (range?.start) {
     params.append("startDate", range.start.toISOString());
   }
@@ -338,7 +343,7 @@ export const exportFullData = async (
     format,
     timeFilter: filter,
   });
-  
+
   if (range?.start) {
     params.append("startDate", range.start.toISOString());
   }
@@ -410,15 +415,15 @@ export const getAlarmEventsBySiteAndDateRange = async (
       `/v1/alarm-events/site/${siteId}/date-range`,
       { params }
     );
-    
+
     console.log('Alarm events API response:', response);
-    
+
     // Check if response.data is an array
     if (!Array.isArray(response.data)) {
       console.error('Expected array but got:', response.data);
       return [];
     }
-    
+
     // Transform API response to Event type with Date objects
     return response.data.map(event => ({
       id: event.id.toString(),
@@ -443,15 +448,15 @@ export const getRecentAlarmEvents = async (): Promise<Event[]> => {
     const response = await get<UpsApiResponse<AlarmEventDto[]>>(
       '/v1/alarm-events/recent'
     );
-    
+
     console.log('Recent alarm events API response:', response);
-    
+
     // Check if response.data is an array
     if (!Array.isArray(response.data)) {
       console.error('Expected array but got:', response.data);
       return [];
     }
-    
+
     // Transform API response to Event type with Date objects
     return response.data.map(event => ({
       id: event.id.toString(),
