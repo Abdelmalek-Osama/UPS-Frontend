@@ -6,7 +6,7 @@ import { LineChart, Line, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip,
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { SiteMetricsCards } from "./SiteMetricsCards";
+import { WaterLevelMetricsCards } from "./WaterLevelMetricsCards";
 import { SiteReadingsTable } from "./SiteReadingsTable";
 import { TimeFilterBar } from "./TimeFilterBar";
 import { PumpOperatingHoursTable } from "./PumpOperatingHoursTable";
@@ -19,13 +19,17 @@ import { SiteSelector } from "./SiteSelector";
 import { useSiteDetails } from "../hooks/useSiteDetails";
 import { exportReport, getAlarmEventsBySiteAndDateRange } from "../api/upsApi";
 import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
-import { aggregateTimeSeriesPoints, getPeriodType } from "../utils/calculations";
 import type { DateRange, TimeFilter, Event } from "../types";
 
 // Custom Tooltip Components
 interface CustomTooltipProps extends TooltipProps<number, string> {
   t: (key: string) => string;
 }
+
+// Helper function to format numbers in Western numerals (0-9) regardless of locale
+const formatNumberWestern = (value: number): string => {
+  return value.toLocaleString('en-US', { useGrouping: false });
+};
 
 const WaterLevelsTooltip = ({ active, payload, label, t }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
@@ -151,9 +155,18 @@ export function SitePage() {
     // Transform API pump details to chart format
     const transformed = data.pumpFlowTimeSeries.map(detail => {
       const date = new Date(detail.timestamp);
+            // Format date as YYYY/MM/DD HH:mm
+      const formattedTime = date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
       return {
         timestamp: detail.timestamp,
-        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: formattedTime,
         pump1: detail.p1Flow,
         pump2: detail.p2Flow,
         pump3: detail.p3Flow,
@@ -198,57 +211,30 @@ export function SitePage() {
     }
   };
 
-  // Process chart data with calculations
+  // Use API data directly without calculations
   const chartSeries = useMemo(() => {
-    // Use actual API data from data.series
-    const apiData = data.series.map(point => ({
-      timestamp: point.timestamp,
-      upstream: point.upstream,
-      downstream: point.downstream,
-      batteryVoltage: point.batteryVoltage,
-      flowRate: point.flowRate,
-      label: new Date(point.timestamp).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    }));
-    
-    // Apply default calculations for aggregation
-    if (apiData.length > 0) {
-      const periodType = getPeriodType(filter);
-      const defaultCalculations = { levels: "average" as const, flow: "sum" as const };
-      const aggregated = aggregateTimeSeriesPoints(apiData, defaultCalculations, periodType);
-      return aggregated.map(point => ({
-        ...point,
-        label: new Date(point.timestamp).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })
-      }));
-    }
-    
-    return apiData;
-  }, [data.series, filter]);
-
-  // For pump stations, create a separate chart series using pump total flow
-  const pumpTotalFlowSeries = useMemo(() => {
-
-    if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) {
-     
-      return [];
-    }
-    
-    const series = data.pumpFlowTimeSeries.map(point => {
+    return data.series.map(point => {
       const date = new Date(point.timestamp);
+      // Format date as YYYY/MM/DD HH:mm
+    const formattedTime = date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+      
       return {
         timestamp: point.timestamp,
-        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        flowRate: point.totalFlow,
+        upstream: point.upstream,
+        downstream: point.downstream,
+        batteryVoltage: point.batteryVoltage,
+        flowRate: point.flowRate,
+        label: formattedTime
       };
     });
-
-    return series;
-  }, [data.pumpFlowTimeSeries]);
+  }, [data.series]);
 
   const tableRows = useMemo(() => {
     return data.hourlyReadings;
@@ -322,10 +308,12 @@ export function SitePage() {
         showExport={false}
       /> 
 
-      {/* 1. Metrics Cards */}
-      <SiteMetricsCards site={data.site} />
 
-      {/* 2. Charts Section */}
+
+      {/* 2. Water Level Metrics Cards */}
+      {data.metrics && <WaterLevelMetricsCards metrics={data.metrics} />}
+
+      {/* 3. Charts Section */}
       {/* Water Levels Chart */}
       <Card>
         <CardHeader>
@@ -338,12 +326,25 @@ export function SitePage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div id="water-levels-chart" className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={chartSeries} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <div id="water-levels-chart" className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartSeries} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 11, direction: 'ltr' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={Math.max(0, Math.floor(chartSeries.length / 5) - 1)}
+                  tickMargin={10}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11 }} 
+                  tickFormatter={formatNumberWestern}
+                  width={60}
+                  tickMargin={15}
+                />
                 <Tooltip content={<WaterLevelsTooltip t={t} />} />
                 <Line 
                   type="monotone" 
@@ -371,7 +372,7 @@ export function SitePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{t("ups.charts.totalFlow")} {isPumpStation && pumpTotalFlowSeries.length > 0 ? `(${t("ups.pumpStation")})` : `(${t("ups.waterLevel")})`}</CardTitle>
+            <CardTitle>{t("ups.charts.totalFlow")} ({t("ups.waterLevel")})</CardTitle>
             <ExportDropdown
               onExportPNG={() => exportChartAsPNG('flow-rate-chart', 'flow-rate-chart')}
               onExportSVG={() => exportChartAsSVG('flow-rate-chart', 'flow-rate-chart')}
@@ -381,7 +382,8 @@ export function SitePage() {
         <CardContent>
           <div id="flow-rate-chart">
           {(() => {
-            const chartData = isPumpStation && pumpTotalFlowSeries.length > 0 ? pumpTotalFlowSeries : chartSeries;
+            // Always use water level flow data for Total Flow chart
+            const chartData = chartSeries;
             
             if (!chartData || chartData.length === 0) {
               return (
@@ -403,22 +405,30 @@ export function SitePage() {
             return (
               <>
                 <div className="text-sm text-gray-600 mb-2">
-                  {t("ups.dataPoints")}: {chartData.length} | {t("ups.using")}: {isPumpStation && pumpTotalFlowSeries.length > 0 ? t("ups.pumpData") : t("ups.waterLevelData")}
+                  {t("ups.dataPoints")}: {chartData.length} | {t("ups.using")}: {t("ups.waterLevelData")}
                 </div>
-                <div style={{ width: '100%', height: '300px' }}>
+                <div style={{ width: '100%', height: '350px' }}>
                   <ResponsiveContainer>
                     <AreaChart 
                       data={chartData} 
-                      margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                      margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="label" 
-                        tick={{ fontSize: 11 }}
+                        tick={{ fontSize: 11, direction: 'ltr' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        interval={Math.max(0, Math.floor(chartData.length / 5) - 1)}
+                        tickMargin={10}
                       />
                       <YAxis 
                         tick={{ fontSize: 11 }}
                         domain={yDomain}
+                        tickFormatter={formatNumberWestern}
+                        width={60}
+                        tickMargin={15}
                       />
                       <Tooltip content={<FlowRateTooltip t={t} />} />
                       <Area 
@@ -453,10 +463,12 @@ export function SitePage() {
         </CardContent>
       </Card>
 
-      {/* Pump Station Details - Only show for pump station sites */}
+      {/* Pump Station Details - Only show for pump station sites with time series data */}
       {(() => {
-
-        return isPumpStation ? (
+        // Only show pump charts if we have at least 2 data points for time series
+        const hasPumpTimeSeries = isPumpStation && data.pumpFlowTimeSeries && data.pumpFlowTimeSeries.length >= 1;
+        
+        return hasPumpTimeSeries ? (
           <>
             {/* Pump Charts - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -22,16 +22,17 @@ const PUMP_COLORS = [
 
 export function PumpOperatingHoursChart({ data, numPumps }: PumpOperatingHoursChartProps) {
   const { t } = useTranslation();
-
   // Transform data to include pump operating hours
   const chartData = data.map((point) => {
-    const formattedTime = new Date(point.timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    const date = new Date(point.timestamp);
+const formattedTime = date.toLocaleString('en-US', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true
+});
 
     const dataPoint: any = {
       timestamp: formattedTime,
@@ -125,17 +126,21 @@ export function PumpOperatingHoursChart({ data, numPumps }: PumpOperatingHoursCh
                 angle={-45}
                 textAnchor="end"
                 height={80}
+                tick={{ fontSize: 11, direction: 'ltr' }}
+         
               />
               <YAxis
-                stroke="#6b7280"
-                style={{ fontSize: '12px' }}
+                 tick={{ fontSize: 11 }}
+                        domain={yDomain}
+                        width={60}
+                        tickMargin={20}
                 label={{
                   value: t("ups.fields.operatingHours"),
                   angle: -90,
                   position: 'insideLeft',
                   style: { textAnchor: 'middle' }
                 }}
-                domain={yDomain}
+            
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend

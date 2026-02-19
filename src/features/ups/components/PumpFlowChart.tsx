@@ -129,9 +129,16 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
           <ResponsiveContainer>
             <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+              <XAxis                dataKey="label" 
+                  tick={{ fontSize: 11, direction: 'ltr' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  tickMargin={10} />
               <YAxis 
-                tick={{ fontSize: 11 }} 
+                 tick={{ fontSize: 11 }} 
+                  width={60}
+                  tickMargin={20}
                 label={{ value: 'm³/s', angle: -90, position: 'insideLeft' }}
                 domain={yDomain}
               />

@@ -42,7 +42,6 @@ export interface LatestReadingDto {
 
 // Site Dashboard Data Response (from /api/v1/Sites/Dashborad/Data)
 export interface SiteDashboardDataDto {
-  siteId: number;
   siteNameEn: string;
   siteNameAr: string;
   directorateEn: string;
@@ -56,13 +55,15 @@ export interface WaterLevelDataDto {
   uswl: number[]; // Upstream water level array
   dswl: number[]; // Downstream water level array
   flow: number[]; // Flow rate array
-  metrics: {
-    maxFlow: number;
-    minFlow: number;
-    avgFlow: number;
-    maxUSWL: number;
-    maxDSWL: number;
-  };
+  metrics: WaterLevelMetricsDto;
+}
+
+export interface WaterLevelMetricsDto {
+  maxFlow: number;
+  minFlow: number;
+  avgFlow: number;
+  maxUSWL: number;
+  maxDSWL: number;
 }
 
 export interface PumpStationDataDto {
@@ -224,6 +225,8 @@ export const getSiteDashboardData = async (
   const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
     params,
   });
+   console.log("API data for /v1/Sites/Dashborad/Data:", params, response.data);
+
   return response.data;
 };
 
@@ -410,8 +413,6 @@ export const getAlarmEventsBySiteAndDateRange = async (
       `/v1/alarm-events/site/${siteId}/date-range`,
       { params }
     );
-    
-    console.log('Alarm events API response:', response);
     
     // Check if response.data is an array
     if (!Array.isArray(response.data)) {

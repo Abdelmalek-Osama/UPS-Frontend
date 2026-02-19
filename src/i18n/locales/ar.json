@@ -931,6 +931,13 @@
       "totalFlow": "إجمالي التدفق",
       "latestReading": "آخر قراءة"
     },
+    "metrics": {
+      "maxFlow": "أقصى تدفق",
+      "minFlow": "أدنى تدفق",
+      "avgFlow": "متوسط التدفق",
+      "maxUSWL": "أقصى منسوب علوي",
+      "maxDSWL": "أقصى منسوب سفلي"
+    },
     "tables": {
       "readings": "جدول القراءات",
       "eventLog": "سجل الأحداث",
