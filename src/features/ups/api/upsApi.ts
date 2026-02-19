@@ -271,7 +271,7 @@ export const getSiteReadingsByCanals = async (
     EndDate: endDate,
   };
 
-  return get<SiteReadingsResponse>('/v1/site-readings/by-canals', {
+  return get<SiteReadingsResponse>('v1/site-readings/by-canals', {
     params,
   });
 };
