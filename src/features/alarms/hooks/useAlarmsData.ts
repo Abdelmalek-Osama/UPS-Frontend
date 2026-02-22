@@ -221,6 +221,7 @@ export function useAlarmsData() {
 
   const createSensorStatusAlarm = async (alarmData: CreateSensorStatusAlarmRequest) => {
     try {
+      console.log('POST /v1/alarm/sensor-status - Parameters:', alarmData);
       const response = await apiService.post<any, CreateSensorStatusAlarmRequest>('/v1/alarm/sensor-status', alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
