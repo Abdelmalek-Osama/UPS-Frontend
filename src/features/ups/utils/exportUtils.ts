@@ -1,5 +1,5 @@
 /**
- * Export table data to CSV format
+ * Export table data to CSV format with UTF-8 BOM for proper Arabic text display
  */
 export const exportTableToCSV = (
   data: any[],
@@ -24,8 +24,12 @@ export const exportTableToCSV = (
   // Combine header and rows
   const csv = [headers, ...rows].join('\n');
   
+  // Add UTF-8 BOM (Byte Order Mark) to ensure Excel recognizes UTF-8 encoding
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csv;
+  
   // Create blob and download
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   
@@ -38,20 +42,46 @@ export const exportTableToCSV = (
 };
 
 /**
- * Export table data to Excel format using simple HTML table method
+ * Export table data to Excel format with proper UTF-8 encoding for Arabic text
  */
 export const exportTableToExcel = (
   data: any[],
   columns: { key: string; header: string }[],
   filename: string
 ) => {
-  // Create HTML table
-  let html = '<table>';
+  // Create HTML table with proper meta tags for UTF-8 encoding
+  let html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Sheet1</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+    <table>`;
   
   // Add header
   html += '<thead><tr>';
   columns.forEach(col => {
-    html += `<th>${col.header}</th>`;
+    html += `<th>${escapeHtml(col.header)}</th>`;
   });
   html += '</tr></thead>';
   
@@ -61,14 +91,18 @@ export const exportTableToExcel = (
     html += '<tr>';
     columns.forEach(col => {
       const value = row[col.key] ?? '';
-      html += `<td>${value}</td>`;
+      html += `<td>${escapeHtml(String(value))}</td>`;
     });
     html += '</tr>';
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></body></html>';
+  
+  // Add UTF-8 BOM (Byte Order Mark) to ensure Excel recognizes UTF-8 encoding
+  const BOM = '\uFEFF';
+  const htmlWithBOM = BOM + html;
   
   // Create blob and download
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const blob = new Blob([htmlWithBOM], { type: 'application/vnd.ms-excel;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   
@@ -78,6 +112,20 @@ export const exportTableToExcel = (
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+/**
+ * Helper function to escape HTML special characters
+ */
+const escapeHtml = (text: string): string => {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 };
 
 /**

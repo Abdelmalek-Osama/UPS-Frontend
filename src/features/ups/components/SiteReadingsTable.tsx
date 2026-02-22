@@ -9,9 +9,10 @@ import type { ReadingRow } from "../types";
 
 interface SiteReadingsTableProps {
   rows: ReadingRow[];
+  siteName?: string;
 }
 
-export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
+export function SiteReadingsTable({ rows, siteName }: SiteReadingsTableProps) {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -31,6 +32,9 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
     const hoursStr = String(hours).padStart(2, '0');
     return `${hoursStr}:${minutes} ${ampm}`;
   };
+
+  // Sanitize site name for filename
+  const sanitizedSiteName = siteName ? siteName.replace(/[/\\?%*:|"<>]/g, '-') : 'site';
 
   // Calculate pagination
   const totalPages = Math.ceil(rows.length / rowsPerPage);
@@ -63,7 +67,7 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
       flowRate: row.flowRate.toFixed(2),
     }));
 
-    exportTableToCSV(data, columns, 'site-readings');
+    exportTableToCSV(data, columns, `${sanitizedSiteName}-recent-readings`);
   };
 
   const handleExportExcel = () => {
@@ -83,7 +87,7 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
       flowRate: row.flowRate.toFixed(2),
     }));
 
-    exportTableToExcel(data, columns, 'site-readings');
+    exportTableToExcel(data, columns, `${sanitizedSiteName}-recent-readings`);
   };
 
   return (
