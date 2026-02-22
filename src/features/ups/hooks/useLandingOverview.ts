@@ -29,30 +29,27 @@ export const useLandingOverview = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      console.log('useLandingOverview - Starting load, isAuthenticated:', isAuthenticated);
+      
       setLoading(true);
       setError(null);
 
       try {
         if (!isAuthenticated) {
-          console.log('useLandingOverview - User not authenticated');
+
           if (active) {
             setData(emptyLandingOverview);
             setError('Please log in to view data');
           }
         } else {
-          console.log('useLandingOverview - User authenticated, fetching data');
+         
           try {
             // Try to fetch from the new dashboard sites API first
-            console.log('useLandingOverview - Calling getDashboardSites()');
+          
             const dashboardSites = await getDashboardSites();
-            console.log('useLandingOverview - getDashboardSites response:', dashboardSites);
-            console.log('useLandingOverview - Response type:', typeof dashboardSites);
-            console.log('useLandingOverview - Is array?', Array.isArray(dashboardSites));
-            console.log('useLandingOverview - Response keys:', dashboardSites ? Object.keys(dashboardSites) : 'null');
+            
             
             if (active && dashboardSites && dashboardSites.length > 0) {
-              console.log('useLandingOverview - Transforming', dashboardSites.length, 'sites');
+            
               // Transform dashboard sites to SiteSummary format
               const transformedSites: SiteSummary[] = dashboardSites.map((site) => {
                 // Determine site status
@@ -91,7 +88,7 @@ export const useLandingOverview = () => {
                 } as any;
               });
 
-              console.log('useLandingOverview - Transformed sites:', transformedSites);
+           
 
               // Calculate KPIs from transformed sites
               const sitesForKPI = transformedSites.map(site => ({
@@ -110,26 +107,25 @@ export const useLandingOverview = () => {
                 sites: transformedSites,
                 recentEvents: [],
               };
-              
-              console.log('useLandingOverview - Setting data with', transformedSites.length, 'sites');
+         
               if (active) {
                 setData(apiData);
               }
             } else {
-              console.log('useLandingOverview - No sites from dashboard API, trying legacy API');
+              
               // Fallback to legacy landing overview API
               const response = await getLandingOverview();
-              console.log('useLandingOverview - Legacy API response:', response);
+              
               if (active && response?.isSuccess && response.data) {
                 setData(response.data);
               } else if (active) {
-                console.log('useLandingOverview - Legacy API failed, setting empty data');
+                
                 setData(emptyLandingOverview);
                 setError('Failed to load data from API');
               }
             }
           } catch (apiError) {
-            console.error('useLandingOverview - API Error:', apiError);
+            
             if (active) {
               setData(emptyLandingOverview);
               setError('Failed to load data from API');
@@ -137,7 +133,7 @@ export const useLandingOverview = () => {
           }
         }
       } catch (error) {
-        console.error('useLandingOverview - Unexpected error:', error);
+
         if (active) {
           setError(error instanceof Error ? error.message : 'Failed to load data');
           setData(emptyLandingOverview);
@@ -145,7 +141,7 @@ export const useLandingOverview = () => {
       } finally {
         if (active) {
           setLoading(false);
-          console.log('useLandingOverview - Load complete');
+         
         }
       }
     };

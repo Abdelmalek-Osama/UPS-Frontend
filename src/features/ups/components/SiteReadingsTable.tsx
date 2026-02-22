@@ -23,7 +23,13 @@ export function SiteReadingsTable({ rows }: SiteReadingsTableProps) {
 
   const formatTime = (value: string) => {
     const date = new Date(value);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const hoursStr = String(hours).padStart(2, '0');
+    return `${hoursStr}:${minutes} ${ampm}`;
   };
 
   // Calculate pagination

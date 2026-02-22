@@ -929,7 +929,15 @@
       "flowRateValue": "معدل التدفق (م³/ث)",
       "percentage": "% من الإجمالي",
       "totalFlow": "إجمالي التدفق",
-      "latestReading": "آخر قراءة"
+      "latestReading": "آخر قراءة",
+      "timestamp": "الطابع الزمني"
+    },
+    "metrics": {
+      "maxFlow": "أقصى تدفق",
+      "minFlow": "أدنى تدفق",
+      "avgFlow": "متوسط التدفق",
+      "maxUSWL": "أقصى منسوب علوي",
+      "maxDSWL": "أقصى منسوب سفلي"
     },
     "tables": {
       "readings": "جدول القراءات",

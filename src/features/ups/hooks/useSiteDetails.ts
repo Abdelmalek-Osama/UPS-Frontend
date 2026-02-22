@@ -2,45 +2,33 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import { getSiteDashboardData } from "../api/upsApi";
 import type { DateRange, SiteDetails, TimeFilter } from "../types";
+import type { WaterLevelMetricsDto } from "../api/upsApi";
 
 // Helper function to convert TimeFilter to API parameters
 const getDateRangeFromFilter = (filter: TimeFilter, range?: DateRange) => {
   switch (filter) {
-    case "24h": {
-      const endDate = new Date();
-      const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
-      return {
-        startDate,
-        endDate,
-        isLast7Days: false,
-        isLast30Days: false,
-      };
-    }
-    case "specific":
-      return {
-        startDate: range?.targetDate,
-        endDate: range?.targetDate,
-        isLast7Days: false,
-        isLast30Days: false,
-      };
+    case "24h":
+      // For last 24 hours, don't send any params (API default)
+      return { isLast7Days: undefined, isLast30Days: undefined, startDate: undefined, endDate: undefined };
     case "week":
-      return { isLast7Days: true, isLast30Days: false };
+      return { isLast7Days: true, isLast30Days: undefined, startDate: undefined, endDate: undefined };
     case "month":
-      return { isLast30Days: true, isLast7Days: false };
+      return { isLast30Days: true, isLast7Days: undefined, startDate: undefined, endDate: undefined };
     case "custom":
       return {
         startDate: range?.start,
         endDate: range?.end,
-        isLast7Days: false,
-        isLast30Days: false,
+        isLast7Days: undefined,
+        isLast30Days: undefined,
       };
     default:
-      return { isLast7Days: true, isLast30Days: false };
+      // Default to no params (last 24 hours)
+      return { isLast7Days: undefined, isLast30Days: undefined, startDate: undefined, endDate: undefined };
   }
 };
 
 // Create empty site details for initial state
-const createEmptySiteDetails = (siteId: number): SiteDetails => ({
+const createEmptySiteDetails = (siteId: number): SiteDetails & { metrics?: WaterLevelMetricsDto } => ({
   site: {
     siteId: siteId.toString(),
     siteName: "",
@@ -59,11 +47,12 @@ const createEmptySiteDetails = (siteId: number): SiteDetails => ({
   hourlyReadings: [],
   dailyReadings: [],
   events: [],
+  metrics: undefined,
 });
 
 export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateRange) => {
   const { isAuthenticated } = useAuth();
-  const [data, setData] = useState<SiteDetails>(() => createEmptySiteDetails(siteId));
+  const [data, setData] = useState<SiteDetails & { metrics?: WaterLevelMetricsDto }>(() => createEmptySiteDetails(siteId));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,26 +77,11 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
         return;
       }
 
-      // For specific filter, wait until date is selected
-      if (filter === "specific" && !range?.targetDate) {
-        if (active) {
-          setLoading(false);
-          setError("Please select a date and time");
-        }
-        return;
-      }
-
       setLoading(true);
       setError(null);
       
       try {
         const dateParams = getDateRangeFromFilter(filter, range);
-        
-        console.log('Calling API with params:', {
-          siteId,
-          filter,
-          dateParams
-        });
         
         const apiData = await getSiteDashboardData(
           siteId,
@@ -117,17 +91,14 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
           dateParams.endDate
         );
 
-        console.log('API response received:', apiData);
-
         if (active) {
-          // Transform API data to SiteDetails format
-          // Combine timestamps with water level and flow data
+          // Use API data directly without calculations
           const timestamps = apiData.waterLevel.timestamps;
           const uswl = apiData.waterLevel.uswl;
           const dswl = apiData.waterLevel.dswl;
           const flow = apiData.waterLevel.flow;
 
-          // Create time series data
+          // Create time series data directly from API
           const series = timestamps.map((timestamp, index) => ({
             timestamp,
             upstream: uswl[index] || 0,
@@ -135,7 +106,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
             batteryVoltage: 12.5, // Not provided by API
             flowRate: flow[index] || 0,
           }));
-
+          
           // Get latest reading (last item in arrays)
           const lastIndex = timestamps.length - 1;
           const latestUpstream = lastIndex >= 0 ? (uswl[lastIndex] || 0) : 0;
@@ -147,26 +118,28 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
           let pumpStationDetails = undefined;
           let pumpFlowTimeSeries = undefined;
           
-          console.log('useSiteDetails - Pump station data check:', {
-            hasPumpStation: !!apiData.pumpStation,
-            numPumps: apiData.pumpStation?.numPumps,
-            pumpDetailsLength: apiData.pumpStation?.pumpDetails?.length,
-            pumpDetails: apiData.pumpStation?.pumpDetails
-          });
-          
           if (apiData.pumpStation && apiData.pumpStation.pumpDetails.length > 0) {
             // Get the latest pump details (last entry)
             const latestPumpData = apiData.pumpStation.pumpDetails[apiData.pumpStation.pumpDetails.length - 1];
             
-            // Create pump metrics for each pump
+            // Detect all pumps that have data (p1-p6)
+            // Check which pumps exist in the API response
             const pumps = [];
-            for (let i = 1; i <= apiData.pumpStation.numPumps; i++) {
-              const pumpKey = `p${i}` as 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6';
-              pumps.push({
-                pumpNumber: i,
-                operatingHours: latestPumpData[`${pumpKey}Time` as keyof typeof latestPumpData] as number || 0,
-                totalFlow: latestPumpData[`${pumpKey}Flow` as keyof typeof latestPumpData] as number || 0,
-              });
+            const pumpKeys = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'] as const;
+            
+            for (let i = 0; i < pumpKeys.length; i++) {
+              const pumpKey = pumpKeys[i];
+              const timeKey = `${pumpKey}Time` as keyof typeof latestPumpData;
+              const flowKey = `${pumpKey}Flow` as keyof typeof latestPumpData;
+              
+              // Only include pump if it has data in the response
+              if (latestPumpData[timeKey] !== undefined || latestPumpData[flowKey] !== undefined) {
+                pumps.push({
+                  pumpNumber: i + 1,
+                  operatingHours: (latestPumpData[timeKey] as number) || 0,
+                  totalFlow: (latestPumpData[flowKey] as number) || 0,
+                });
+              }
             }
 
             pumpStationDetails = { pumps };
@@ -188,36 +161,32 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
               p6Flow: detail.p6Flow,
               p6Time: detail.p6Time,
             }));
-            
-            console.log('useSiteDetails - Transformed pump data:', {
-              pumpStationDetails,
-              pumpFlowTimeSeries
-            });
           }
 
-          const transformedData: SiteDetails = {
+          const transformedData: SiteDetails & { metrics?: WaterLevelMetricsDto } = {
             site: {
               siteId: siteId.toString(),
               siteName: apiData.siteNameEn,
               siteArabicName: apiData.siteNameAr,
-              position: 0, // Not provided by API
+              position: 0,
               upstream: latestUpstream,
               downstream: latestDownstream,
-              batteryVoltage: 12.5, // Not provided by API
+              batteryVoltage: 12.5,
               flowRate: latestFlow,
-              status: "active", // API doesn't provide alarm events in this response
+              status: "active",
               lastReading: lastReadingTime,
-              coordinates: [0, 0], // Not provided by API
+              coordinates: [0, 0],
               governorate: apiData.directorateEn,
               governorateArabicName: apiData.directorateAr,
-              branch: "Ibrahimiya", // Not provided by API
+              branch: "Ibrahimiya",
             },
             series,
             hourlyReadings: series,
             dailyReadings: series,
-            events: [], // API doesn't provide alarm events in this response
+            events: [],
             pumpStationDetails,
             pumpFlowTimeSeries,
+            metrics: apiData.waterLevel.metrics, // Add metrics from API
           };
 
           setData(transformedData);
@@ -240,7 +209,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
     return () => {
       active = false;
     };
-  }, [filter, isAuthenticated, range?.end, range?.start, range?.targetDate, siteId]);
+  }, [filter, isAuthenticated, range?.end, range?.start, siteId]);
 
   return { data, loading, error };
 };

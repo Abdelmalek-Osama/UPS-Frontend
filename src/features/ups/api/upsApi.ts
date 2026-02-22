@@ -42,7 +42,6 @@ export interface LatestReadingDto {
 
 // Site Dashboard Data Response (from /api/v1/Sites/Dashborad/Data)
 export interface SiteDashboardDataDto {
-  siteId: number;
   siteNameEn: string;
   siteNameAr: string;
   directorateEn: string;
@@ -56,13 +55,15 @@ export interface WaterLevelDataDto {
   uswl: number[]; // Upstream water level array
   dswl: number[]; // Downstream water level array
   flow: number[]; // Flow rate array
-  metrics: {
-    maxFlow: number;
-    minFlow: number;
-    avgFlow: number;
-    maxUSWL: number;
-    maxDSWL: number;
-  };
+  metrics: WaterLevelMetricsDto;
+}
+
+export interface WaterLevelMetricsDto {
+  maxFlow: number;
+  minFlow: number;
+  avgFlow: number;
+  maxUSWL: number;
+  maxDSWL: number;
 }
 
 export interface PumpStationDataDto {
@@ -91,6 +92,7 @@ export interface PumpDetailDto {
 export interface SiteReadingDto {
   siteId: number;
   canalId: number;
+  canalOrder: number; // Order within the canal for bar chart display
   siteType: number; // 0 = normal, 1 = pump station
   siteNameEn: string;
   siteNameAr: string;
@@ -224,6 +226,8 @@ export const getSiteDashboardData = async (
   const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
     params,
   });
+   console.log("API data for /v1/Sites/Dashborad/Data:", params, response.data);
+
   return response.data;
 };
 
@@ -257,24 +261,21 @@ export const getMasterOverview = async (
   });
 
 export const getSiteReadingsByCanals = async (
-  selectedCanals: number[],
+  selectedCanals: number,
   mode: "Average" | "Exact",
   targetDateTime: string,
   startDate: string,
   endDate: string,
-): Promise<SiteReadingsResponse> => {
-  const params: Record<string, string | number | boolean> = {
-    SelectedCanals: selectedCanals.length > 0 ? selectedCanals[0] : 0,
-    Mode: mode,
-    TargetDateTime: targetDateTime,
-    StartDate: startDate,
-    EndDate: endDate,
-  };
-
-  return get<SiteReadingsResponse>('v1/site-readings/by-canals', {
-    params,
+): Promise<SiteReadingsResponse> =>
+  get<SiteReadingsResponse>('/v1/site-readings/by-canals', {
+    params: {
+      selectedCanals,
+      mode,
+      targetDateTime,
+      startDate,
+      endDate,
+    }
   });
-};
 
 export const getScheduledReports = async (): Promise<UpsApiResponse<ScheduledReport[]>> =>
   get<UpsApiResponse<ScheduledReport[]>>(`${UPS_VIEWER_BASE}/reports/schedules`);
@@ -415,9 +416,7 @@ export const getAlarmEventsBySiteAndDateRange = async (
       `/v1/alarm-events/site/${siteId}/date-range`,
       { params }
     );
-
-    console.log('Alarm events API response:', response);
-
+    
     // Check if response.data is an array
     if (!Array.isArray(response.data)) {
       console.error('Expected array but got:', response.data);

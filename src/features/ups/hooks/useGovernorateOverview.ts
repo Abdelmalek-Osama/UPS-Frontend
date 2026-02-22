@@ -112,14 +112,18 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         const startDateStr = buildDateTime(startDate, startTime);
         const endDateStr = buildDateTime(endDate, endTime);
 
-        // Fetch data for both canals
-        const response = await getSiteReadingsByCanals(
-          [0, 1], // Both Ibrahimiya and Bahr Youssef
-          mode,
-          targetDateTime,
-          startDateStr,
-          endDateStr
-        );
+        // Fetch data for both canals separately
+        const [response0, response1] = await Promise.all([
+          getSiteReadingsByCanals(0, mode, targetDateTime, startDateStr, endDateStr),
+          getSiteReadingsByCanals(1, mode, targetDateTime, startDateStr, endDateStr)
+        ]);
+
+        // Combine responses from both canals
+        const response = {
+          isSuccess: response0.isSuccess && response1.isSuccess,
+          message: response0.isSuccess && response1.isSuccess ? 'Success' : 'One or more requests failed',
+          data: [...(response0.data || []), ...(response1.data || [])]
+        };
 
         if (active && response.isSuccess && response.data) {
           
@@ -187,6 +191,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                   siteName: site.siteNameEn,
                   siteArabicName: site.siteNameAr,
                   position: site.siteId, // Use siteId as position, could be customized
+                  canalOrder: site.canalOrder, // Order within the canal for bar chart display
                   upstream: hasData ? upstream : 0,
                   downstream: hasData ? downstream : 0,
                   batteryVoltage: 0, // Not provided by API

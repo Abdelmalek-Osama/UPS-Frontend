@@ -928,7 +928,15 @@
       "flowRateValue": "Flow Rate (m³/s)",
       "percentage": "% of Total",
       "totalFlow": "Total Flow",
-      "latestReading": "Latest reading"
+      "latestReading": "Latest reading",
+      "timestamp": "Timestamp"
+    },
+    "metrics": {
+      "maxFlow": "Max Flow",
+      "minFlow": "Min Flow",
+      "avgFlow": "Avg Flow",
+      "maxUSWL": "Max Upstream",
+      "maxDSWL": "Max Downstream"
     },
     "severity": {
       "critical": "Critical",
