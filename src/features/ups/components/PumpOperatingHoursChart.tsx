@@ -127,13 +127,13 @@ const formattedTime = date.toLocaleString('en-US', {
                 textAnchor="end"
                 height={80}
                 tick={{ fontSize: 11, direction: 'ltr' }}
-         
+                tickMargin={0}
               />
               <YAxis
                  tick={{ fontSize: 11 }}
                         domain={yDomain}
                         width={60}
-                        tickMargin={20}
+                        tickMargin={35}
                 label={{
                   value: t("ups.fields.operatingHours"),
                   angle: -90,

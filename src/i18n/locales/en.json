@@ -928,7 +928,8 @@
       "flowRateValue": "Flow Rate (m³/s)",
       "percentage": "% of Total",
       "totalFlow": "Total Flow",
-      "latestReading": "Latest reading"
+      "latestReading": "Latest reading",
+      "timestamp": "Timestamp"
     },
     "metrics": {
       "maxFlow": "Max Flow",

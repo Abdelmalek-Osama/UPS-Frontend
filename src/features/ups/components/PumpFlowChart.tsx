@@ -134,11 +134,11 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
                   angle={-45}
                   textAnchor="end"
                   height={100}
-                  tickMargin={10} />
+                  tickMargin={0} />
               <YAxis 
                  tick={{ fontSize: 11 }} 
                   width={60}
-                  tickMargin={20}
+                  tickMargin={35}
                 label={{ value: 'm³/s', angle: -90, position: 'insideLeft' }}
                 domain={yDomain}
               />

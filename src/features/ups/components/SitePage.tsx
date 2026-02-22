@@ -117,34 +117,44 @@ export function SitePage() {
   // Determine if this is a pump station site from API data
   const isPumpStation = !!data.pumpStationDetails && data.pumpStationDetails.pumps.length > 0;
   
-  // Transform pump data from API
-  const pumpOperatingHours = useMemo(() => {
-    if (!data.pumpStationDetails) return [];
+  // Transform pump data from API - now includes time series with timestamps
+  const pumpOperatingHoursTimeSeries = useMemo(() => {
+    if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) return [];
     
-    return data.pumpStationDetails.pumps.map(pump => ({
-      pumpNumber: pump.pumpNumber,
-      operatingHours: pump.operatingHours,
-      status: pump.operatingHours > 0 ? "running" as const : "stopped" as const,
+    return data.pumpFlowTimeSeries.map(detail => ({
+      timestamp: detail.timestamp,
+      pumps: [
+        { pumpNumber: 1, operatingHours: detail.p1Time || 0, status: (detail.p1Time || 0) > 0 ? "running" as const : "stopped" as const },
+        { pumpNumber: 2, operatingHours: detail.p2Time || 0, status: (detail.p2Time || 0) > 0 ? "running" as const : "stopped" as const },
+        { pumpNumber: 3, operatingHours: detail.p3Time || 0, status: (detail.p3Time || 0) > 0 ? "running" as const : "stopped" as const },
+        { pumpNumber: 4, operatingHours: detail.p4Time || 0, status: (detail.p4Time || 0) > 0 ? "running" as const : "stopped" as const },
+        { pumpNumber: 5, operatingHours: detail.p5Time || 0, status: (detail.p5Time || 0) > 0 ? "running" as const : "stopped" as const },
+        { pumpNumber: 6, operatingHours: detail.p6Time || 0, status: (detail.p6Time || 0) > 0 ? "running" as const : "stopped" as const },
+      ]
     }));
-  }, [data.pumpStationDetails]);
+  }, [data.pumpFlowTimeSeries]);
 
-  const pumpFlows = useMemo(() => {
-    if (!data.pumpStationDetails) return [];
+  const pumpFlowsTimeSeries = useMemo(() => {
+    if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) return [];
     
-    const totalFlow = data.pumpStationDetails.pumps.reduce((sum, pump) => sum + pump.totalFlow, 0);
-    
-    return data.pumpStationDetails.pumps.map(pump => ({
-      pumpNumber: pump.pumpNumber,
-      flowRate: pump.totalFlow,
-      percentage: totalFlow > 0 ? (pump.totalFlow / totalFlow) * 100 : 0,
-    }));
-  }, [data.pumpStationDetails]);
+    return data.pumpFlowTimeSeries.map(detail => {
+      const totalFlow = (detail.p1Flow || 0) + (detail.p2Flow || 0) + (detail.p3Flow || 0) + (detail.p4Flow || 0) + (detail.p5Flow || 0) + (detail.p6Flow || 0);
+      return {
+        timestamp: detail.timestamp,
+        totalFlow,
+        pumps: [
+          { pumpNumber: 1, flowRate: detail.p1Flow || 0, percentage: totalFlow > 0 ? ((detail.p1Flow || 0) / totalFlow) * 100 : 0 },
+          { pumpNumber: 2, flowRate: detail.p2Flow || 0, percentage: totalFlow > 0 ? ((detail.p2Flow || 0) / totalFlow) * 100 : 0 },
+          { pumpNumber: 3, flowRate: detail.p3Flow || 0, percentage: totalFlow > 0 ? ((detail.p3Flow || 0) / totalFlow) * 100 : 0 },
+          { pumpNumber: 4, flowRate: detail.p4Flow || 0, percentage: totalFlow > 0 ? ((detail.p4Flow || 0) / totalFlow) * 100 : 0 },
+          { pumpNumber: 5, flowRate: detail.p5Flow || 0, percentage: totalFlow > 0 ? ((detail.p5Flow || 0) / totalFlow) * 100 : 0 },
+          { pumpNumber: 6, flowRate: detail.p6Flow || 0, percentage: totalFlow > 0 ? ((detail.p6Flow || 0) / totalFlow) * 100 : 0 },
+        ]
+      };
+    });
+  }, [data.pumpFlowTimeSeries]);
 
-  const totalPumpFlow = useMemo(() => {
-    return pumpFlows.reduce((sum, pump) => sum + pump.flowRate, 0);
-  }, [pumpFlows]);
-
-  // Transform pump flow time series data from API
+  // Transform pump flow time series data for charts
   const pumpFlowSeries = useMemo(() => {
    
       if (!data.pumpFlowTimeSeries || data.pumpFlowTimeSeries.length === 0) {
@@ -337,13 +347,13 @@ export function SitePage() {
                   textAnchor="end"
                   height={100}
                   interval={Math.max(0, Math.floor(chartSeries.length / 5) - 1)}
-                  tickMargin={10}
+                  tickMargin={5}
                 />
                 <YAxis 
                   tick={{ fontSize: 11 }} 
                   tickFormatter={formatNumberWestern}
                   width={60}
-                  tickMargin={15}
+                  tickMargin={35}
                 />
                 <Tooltip content={<WaterLevelsTooltip t={t} />} />
                 <Line 
@@ -421,14 +431,14 @@ export function SitePage() {
                         textAnchor="end"
                         height={100}
                         interval={Math.max(0, Math.floor(chartData.length / 5) - 1)}
-                        tickMargin={10}
+                        tickMargin={5}
                       />
                       <YAxis 
                         tick={{ fontSize: 11 }}
                         domain={yDomain}
                         tickFormatter={formatNumberWestern}
                         width={60}
-                        tickMargin={15}
+                        tickMargin={35}
                       />
                       <Tooltip content={<FlowRateTooltip t={t} />} />
                       <Area 
@@ -481,9 +491,8 @@ export function SitePage() {
 
             {/* Pump Tables - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PumpFlowTable data={pumpFlows} totalFlow={totalPumpFlow} />
-              <PumpOperatingHoursTable data={pumpOperatingHours} />
-              
+              <PumpFlowTable data={pumpFlowsTimeSeries} />
+              <PumpOperatingHoursTable data={pumpOperatingHoursTimeSeries} />
             </div>
           </>
         ) : null;

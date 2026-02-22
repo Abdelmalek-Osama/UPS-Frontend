@@ -49,6 +49,17 @@ export function AlarmEventsTable({
     }
   };
 
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const hoursStr = String(hours).padStart(2, '0');
+    return `${hoursStr}:${minutes} ${ampm}`;
+  };
+
   const handleExportCSV = () => {
     const columns = [
       { key: 'date', header: t("common.date") },
@@ -61,7 +72,7 @@ export function AlarmEventsTable({
 
     const data = events.map(event => ({
       date: new Date(event.timestamp).toLocaleDateString(),
-      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      time: formatTime(event.timestamp),
       type: event.type?.toUpperCase() || 'N/A',
       severity: event.severity?.toUpperCase() || 'N/A',
       message: event.message || '-',
@@ -83,7 +94,7 @@ export function AlarmEventsTable({
 
     const data = events.map(event => ({
       date: new Date(event.timestamp).toLocaleDateString(),
-      time: new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      time: formatTime(event.timestamp),
       type: event.type?.toUpperCase() || 'N/A',
       severity: event.severity?.toUpperCase() || 'N/A',
       message: event.message || '-',
@@ -157,7 +168,7 @@ export function AlarmEventsTable({
                       {new Date(event.timestamp).toLocaleDateString()}
                     </td>
                     <td className="py-2 px-4 text-gray-900 text-center">
-                      {new Date(event.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      {formatTime(event.timestamp)}
                     </td>
                     <td className="py-2 px-4 text-center">
                       <span
