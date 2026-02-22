@@ -92,6 +92,7 @@ export interface PumpDetailDto {
 export interface SiteReadingDto {
   siteId: number;
   canalId: number;
+  canalOrder: number; // Order within the canal for bar chart display
   siteType: number; // 0 = normal, 1 = pump station
   siteNameEn: string;
   siteNameAr: string;
@@ -260,18 +261,20 @@ export const getMasterOverview = async (
   });
 
 export const getSiteReadingsByCanals = async (
-  selectedCanals: number[],
+  selectedCanals: number,
   mode: "Average" | "Exact",
   targetDateTime: string,
   startDate: string,
   endDate: string,
 ): Promise<SiteReadingsResponse> =>
-  post<SiteReadingsResponse>('/v1/site-readings/by-canals', {
-    selectedCanals,
-    mode,
-    targetDateTime,
-    startDate,
-    endDate,
+  get<SiteReadingsResponse>('/v1/site-readings/by-canals', {
+    params: {
+      selectedCanals,
+      mode,
+      targetDateTime,
+      startDate,
+      endDate,
+    }
   });
 
 export const getScheduledReports = async (): Promise<UpsApiResponse<ScheduledReport[]>> =>
