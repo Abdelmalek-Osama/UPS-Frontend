@@ -686,7 +686,23 @@
     "fullNameRequired": "Full name is required",
     "fullNameMaxLength": "Full name must not exceed 100 characters",
     "fullNameFormat": "Full name must contain at least 2 parts (first and last name) with at least 2 letters each, separated by space or hyphen",
-    "fullNameFormatEdit": "Full name must contain at least 2 parts (first and last name) with at least 2 letters each, separated by space or hyphen"
+    "fullNameFormatEdit": "Full name must contain at least 2 parts (first and last name) with at least 2 letters each, separated by space or hyphen",
+    "usernameRequired": "Username is required",
+    "usernameTrimmed": "Username cannot have leading or trailing spaces",
+    "usernameNoSpaces": "Username cannot contain spaces",
+    "usernameMinLength": "Username must be at least 2 characters",
+    "usernameLettersOnly": "Username must contain only letters",
+    "usernameNotEmail": "Username cannot be an email address",
+    "emailRequired": "Email is required",
+    "emailTrimmed": "Email cannot have leading or trailing spaces",
+    "emailNoSpaces": "Email cannot contain spaces",
+    "emailInvalid": "Please enter a valid email address",
+    "emailDomainNotSupported": "Email domain not supported. Please use a common email provider (Gmail, Outlook, Yahoo, etc.)",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "roleRequired": "Role is required",
+    "siteAssignmentRequired": "At least one site must be assigned for Operator role"
   },
   "alarmReports": {
     "title": "Alarm Reports Configuration",
@@ -721,8 +737,6 @@
     "atLeastOneRecipientRequired": "At least one recipient is required",
     "selectedFields": "Selected Fields",
     "selectedFieldsDescription": "Choose which fields to include in the email report",
-    "selectAll": "Select All",
-    "clearAll": "Clear All",
     "atLeastOneFieldRequired": "At least one field must be selected",
     "selectedFieldsSummary": "Selected Fields",
     "fieldId": "ID",
@@ -760,6 +774,9 @@
     "columnSchedule": "Schedule",
     "columnRecipients": "Recipients",
     "columnFields": "Fields",
-    "columnCreated": "Created At"
-  }
-}
+    "columnCreated": "Created At",
+    "configurationNameRequired": "Configuration name is required",
+    "atLeastOneSiteRequired": "At least one site must be selected",
+    "selectAll": "Select All",
+  "clearAll": "Clear All"
+  }}

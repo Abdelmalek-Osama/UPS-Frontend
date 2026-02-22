@@ -12,7 +12,7 @@ import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { PumpStatusPSAlarmForm, Site, AddPumpStatusPSAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
@@ -54,11 +54,9 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
         }
     };
 
-    
-
     return (
         <>
-            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" style={{ minWidth: '500px' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
                     <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.addPumpStatusPSAlarm')}</DialogTitle>
                     <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -70,7 +68,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <SiteSingleSelectDropdown
+                        <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}
                             selectedSiteId={form.siteId}
@@ -159,7 +157,7 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                             </Button>
                         </div>
                         {submissionError && (
-                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
+                            <p className={`text-red-600 text-sm flex-1 break-words ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                     </div>
                 </DialogFooter>

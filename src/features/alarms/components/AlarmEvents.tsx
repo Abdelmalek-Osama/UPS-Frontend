@@ -276,19 +276,24 @@ const params: Record<string, string | number | boolean> = {
 
       const result = getEventsPayload(response);
 
-      const mappedEvents: AlarmEvent[] = result.events.map((event) => ({
-        id: event.id,
-   alarmName: event.alarmName,
-        siteId: event.siteId,
-        siteName: event.siteName,
-        fieldName: event.fieldName,
-        value: event.actualValue ?? undefined,
-        thresholdValue: event.thresholdValue ?? undefined,
-        severity: severityMap[event.severity ?? ''] ?? 'info',
-        colorCode: event.colorCode ?? '#d1d5db',
-        triggeredAt: event.triggeredAt,
-        message: event.message,
-      }));
+const mappedEvents: AlarmEvent[] = result.events.map((event) => {
+        const isCommunicationLoss = event.fieldName.toLowerCase().replace(/[_\s]/g, '').includes('communicationloss');
+        const baseSeverity = severityMap[event.severity ?? ''] ?? 'info';
+        
+        return {
+          id: event.id,
+          alarmName: event.alarmName,
+          siteId: event.siteId,
+          siteName: event.siteName,
+          fieldName: event.fieldName,
+          value: event.actualValue ?? undefined,
+          thresholdValue: event.thresholdValue ?? undefined,
+          severity: isCommunicationLoss ? 'info' : baseSeverity,
+          colorCode: event.colorCode ?? '#d1d5db',
+          triggeredAt: event.triggeredAt,
+          message: event.message,
+        };
+      });
 
 setAlarmEvents(mappedEvents);
       
@@ -391,7 +396,7 @@ setAlarmEvents(mappedEvents);
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 {/* Site Filter */}
   <div className="space-y-2">
-              <Label>{t('readings.site')}</Label>
+              {/* <Label>{t('readings.site')}</Label> */}
               <SiteSingleSelectDropdown 
    sites={sites}
         sitesLoading={sitesLoading}
@@ -406,7 +411,7 @@ setAlarmEvents(mappedEvents);
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
    {/* Date From */}
               <div className="space-y-2 flex-1">
-           <Label>{t('readings.fromDate')}</Label>
+           {/* <Label>{t('readings.fromDate')}</Label> */}
 
 
     <Popover>
@@ -436,7 +441,7 @@ setAlarmEvents(mappedEvents);
 
               {/* Date To */}
     <div className="space-y-2 flex-1">
-         <Label>{t('readings.toDate')}</Label>
+         {/* <Label>{t('readings.toDate')}</Label> */}
 
          <Popover>
   <PopoverTrigger asChild>

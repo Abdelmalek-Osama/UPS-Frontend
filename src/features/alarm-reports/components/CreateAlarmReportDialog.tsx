@@ -24,7 +24,6 @@ import { FieldSelector } from './FieldSelector';
 import type { AlarmReportConfiguration, CreateAlarmReportPayload } from '../types';
 import { DAYS_OF_WEEK } from '../types';
 import { useSitesData } from '../../sites/hooks/useSitesData';
-import { SiteMultiSelectDropdown } from '../../sites/components/SiteMultiSelectDropdown';
 import {
   Select,
   SelectContent,
@@ -94,15 +93,19 @@ export function CreateAlarmReportDialog({
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = t('validation.required');
+      newErrors.name = t('alarmReports.configurationNameRequired') || 'Configuration name is required';
+    }
+
+    if (siteIds.length === 0) {
+      newErrors.siteIds = t('alarmReports.atLeastOneSiteRequired') || 'At least one site must be selected';
     }
 
     if (recipients.length === 0) {
-      newErrors.recipients = t('alarmReports.atLeastOneRecipientRequired');
+      newErrors.recipients = t('alarmReports.atLeastOneRecipientRequired') || 'At least one recipient is required';
     }
 
     if (selectedFields.length === 0) {
-      newErrors.selectedFields = t('alarmReports.atLeastOneFieldRequired');
+      newErrors.selectedFields = t('alarmReports.atLeastOneFieldRequired') || 'At least one field must be selected';
     }
 
     setErrors(newErrors);
@@ -215,7 +218,11 @@ export function CreateAlarmReportDialog({
   };
 
   const footerStyle: React.CSSProperties = {
-    marginTop: 0
+    marginTop: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    width: '100%'
   };
 
   const footerButtonsContainerStyle: React.CSSProperties = {
@@ -263,15 +270,109 @@ export function CreateAlarmReportDialog({
             {/* Site Selection */}
             <div className="space-y-2">
               <Label htmlFor="site" className="font-medium">
-                {t('sites.title')}
+                {t('sites.title')} {siteIds.length === 0 && <span className="text-red-500">*</span>}
               </Label>
-              <SiteMultiSelectDropdown
-                sites={sites}
-                sitesLoading={sitesLoading}
-                selectedSiteIds={siteIds}
-                onSiteToggle={handleSiteToggle}
-                placeholder={t('sites.selectSite')}
-              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setSiteIds(sites?.map(s => s.id) || [])}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    padding: '0.625rem 1rem',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    fontWeight: '600',
+                    borderRadius: '0.375rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    border: 'none',
+                    cursor: sitesLoading || !sites || sites.length === 0 ? 'not-allowed' : 'pointer',
+                    opacity: sitesLoading || !sites || sites.length === 0 ? 0.5 : 1,
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!(sitesLoading || !sites || sites.length === 0)) {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                  }}
+                  disabled={sitesLoading || !sites || sites.length === 0}
+                >
+                  {t('alarmReports.selectAll') || 'Select All'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSiteIds([])}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    padding: '0.625rem 1rem',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    fontWeight: '600',
+                    borderRadius: '0.375rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    border: 'none',
+                    cursor: sitesLoading || siteIds.length === 0 ? 'not-allowed' : 'pointer',
+                    opacity: sitesLoading || siteIds.length === 0 ? 0.5 : 1,
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!(sitesLoading || siteIds.length === 0)) {
+                      e.currentTarget.style.backgroundColor = '#4b5563';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#6b7280';
+                  }}
+                  disabled={sitesLoading || siteIds.length === 0}
+                >
+                  {t('alarmReports.clearAll') || 'Clear All'}
+                </button>
+              </div>
+              <Select>
+                <SelectTrigger
+                  id="site"
+                  className={`w-full ${errors.siteIds ? 'border-red-500' : ''}`}
+                >
+                  <SelectValue placeholder={t('sites.selectSite')} />
+                </SelectTrigger>
+                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} className="max-h-48 overflow-y-auto">
+                  {sitesLoading ? (
+                    <div className="p-2 text-sm text-gray-500">{t('common.loadingData')}</div>
+                  ) : sites && sites.length > 0 ? (
+                    sites.map((site) => (
+                      <div key={site.id} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm" onClick={(e) => {
+                        e.preventDefault();
+                        handleSiteToggle(site.id);
+                      }}>
+                        <Checkbox
+                          checked={siteIds.includes(site.id)}
+                          onCheckedChange={() => handleSiteToggle(site.id)}
+                        />
+                        <span>{t('_rtl') === 'rtl' ? site.arabicName || site.name : site.name}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-gray-500">{t('sites.noSitesToShow')}</div>
+                  )}
+                </SelectContent>
+              </Select>
+              {siteIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto p-1 bg-blue-50 rounded border border-blue-200">
+                  {siteIds.map((id) => {
+                    const site = sites?.find(s => s.id === id);
+                    return site ? (
+                      <div key={id} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs flex items-center gap-1 whitespace-nowrap">
+                        <span>{t('_rtl') === 'rtl' ? site.arabicName || site.name : site.name}</span>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              )}
+              {errors.siteIds && <p className="text-xs text-red-500">{errors.siteIds}</p>}
             </div>
 
             {/* Enabled Toggle */}
@@ -343,7 +444,7 @@ export function CreateAlarmReportDialog({
             {/* Email Recipients */}
             <div className="space-y-2">
               <EmailRecipientInput recipients={recipients} setRecipients={setRecipients} />
-              {errors.recipients && <p className="text-xs text-red-500">{errors.recipients}</p>}
+              {errors.recipients && <p className="text-xs text-red-600">{errors.recipients}</p>}
             </div>
 
             {/* Selected Fields */}
@@ -356,6 +457,21 @@ export function CreateAlarmReportDialog({
 
         <div style={footerContainerStyle}>
           <DialogFooter style={footerStyle}>
+            {/* Validation Error Messages Card */}
+            {Object.keys(errors).length > 0 && (
+              <div className="w-full p-3 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm font-medium text-red-700 mb-2">{t('alarmReports.pleaseFixErrors')}</p>
+                <ul className="space-y-1">
+                  {Object.entries(errors).map(([key, message]) => (
+                    <li key={key} className="text-xs text-red-600 flex items-start gap-2">
+                      <span className="text-red-500 mt-0.5">•</span>
+                      <span>{message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div style={footerButtonsContainerStyle}>
               <Button variant="outline" onClick={handleClose} disabled={isLoading}>
                 {t('common.cancel')}

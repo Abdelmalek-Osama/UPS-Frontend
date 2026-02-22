@@ -6,6 +6,7 @@ import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Plus, Mail, Phone } from 'lucide-react';
+import { validateEmail } from '../../../shared/utils/emailValidator';
 
 interface RecipientInputProps {
     type: 'email' | 'phone';
@@ -25,23 +26,35 @@ export function RecipientInput({
     const { t } = useTranslation();
     const isEmail = type === 'email';
     const [inputValue, setInputValue] = useState('');
+    const [error, setError] = useState<string>('');
 
     const handleAdd = (newRecipient: string) => {
         if (newRecipient.trim() === '') return;
 
-        const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
         const phoneRegex = /^\d{11}$/;
 
-        if (isEmail && !emailRegex.test(newRecipient)) {
-            toast.error(t('validation.invalidEmailFormat'));
-            return;
+        if (isEmail) {
+            if (!validateEmail(newRecipient)) {
+                // Check basic format first
+                const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+                if (!emailRegex.test(newRecipient)) {
+                    setError(t('validation.invalidEmailFormat'));
+                    toast.error(t('validation.invalidEmailFormat'));
+                } else {
+                    setError(t('validation.emailDomainNotSupported'));
+                    toast.error(t('validation.emailDomainNotSupported'));
+                }
+                return;
+            }
         } else if (!isEmail && !phoneRegex.test(newRecipient)) {
+            setError(t('validation.phone11Digits'));
             toast.error(t('validation.phone11Digits'));
             return;
         }
 
         setRecipients([...recipients, newRecipient]);
         setInputValue('');
+        setError('');
         setHasChanges(true);
     };
 
@@ -61,6 +74,7 @@ export function RecipientInput({
                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     onChange={(e) => {
                         setInputValue(e.target.value);
+                        setError(''); // Clear error when user types
                     }}
                     onKeyPress={(e) => {
                         if (e.key === 'Enter') {
@@ -74,6 +88,7 @@ export function RecipientInput({
                     <Plus className="h-4 w-4" />
                 </Button>
             </div>
+            {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
             {recipients.length > 0 && (
                 <div className="max-h-48 overflow-y-auto border rounded-md p-2 bg-gray-50">
                     <div className="flex flex-wrap gap-2">

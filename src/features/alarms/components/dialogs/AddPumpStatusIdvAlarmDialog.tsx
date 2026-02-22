@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -19,8 +19,8 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
-import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps, SiteConfiguration } from '../../types';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
+import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_PumpStatusIdv_FORM } from '../../utils/alarmConstants';
@@ -86,7 +86,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" style={{ minWidth: '500px' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
                     <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.addPumpStatusIdvAlarm')}</DialogTitle>
                     <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -115,7 +115,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                     {/* Site Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <SiteSingleSelectDropdown
+                        <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}
                             selectedSiteId={form.siteId}
@@ -208,7 +208,7 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                             </Button>
                         </div>
                         {submissionError && (
-                            <p className={`text-red-600 text-sm flex-1 ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
+                            <p className={`text-red-600 text-sm flex-1 break-words ${t('_rtl') === 'rtl' ? 'text-left' : 'text-right'}`}>{t(`errors.${submissionError}`, submissionError)}</p>
                         )}
                     </div>
                 </DialogFooter>

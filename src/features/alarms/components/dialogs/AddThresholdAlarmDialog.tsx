@@ -19,7 +19,7 @@ import {
     SelectItem
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { SiteSingleSelectDropdown } from '../../../sites/components/SiteSingleSelectDropdown';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, INITIAL_THRESHOLD_FORM, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
@@ -213,7 +213,9 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
         fontSize: '0.875rem',
         textAlign: 'center',
         width: '100%',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const footerButtonsContainerStyle: React.CSSProperties = {
@@ -237,6 +239,7 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
     className="w-[95vw] max-w-[600px] h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden sm:max-w-lg"
     style={{
         maxHeight: '80vh',
+        minWidth: '500px',
         display: 'flex',
         flexDirection: 'column',
         padding: 0,
@@ -277,18 +280,17 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                         </div>
                         <div style={fieldContainerStyle}>
     <Label>{t('alarms.site')}</Label>
-        <SiteSingleSelectDropdown
-    sites={sites}
-       sitesLoading={sitesLoading}
-       selectedSiteId={form.siteId}
-            onSiteSelect={(siteId) => setForm(prev => ({
-       ...prev,
-          siteId: siteId ? Number(siteId) : 0
-      }))}
-   placeholder={t('readings.selectSite')}
-   allowClear={false}
-         />
-          </div>
+    <AlarmSiteSelector
+     sites={sites}
+   sitesLoading={sitesLoading}
+             selectedSiteId={form.siteId}
+           onSiteSelect={(siteId) => setForm(prev => ({
+             ...prev,
+           siteId: siteId ? Number(siteId) : 0
+       }))}
+         placeholder={t('readings.selectSite')}
+  />
+    </div>
 
 
                         <div style={fieldContainerStyle}>
