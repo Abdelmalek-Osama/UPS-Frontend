@@ -172,23 +172,23 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   const params: Record<string, string> = {
     timeFilter: filter,
   };
-  
+
   if (range?.start) {
     params.startDate = range.start.toISOString();
   }
-  
+
   if (range?.end) {
     params.endDate = range.end.toISOString();
   }
-  
+
   if (range?.targetDate) {
     params.targetDate = range.targetDate.toISOString();
   }
-  
+
   if (range?.targetTime) {
     params.targetTime = range.targetTime;
   }
-  
+
   return params;
 };
 
@@ -309,7 +309,7 @@ export const exportReport = async (
     format,
     timeFilter: filter,
   });
-  
+
   if (range?.start) {
     params.append("startDate", range.start.toISOString());
   }
@@ -344,7 +344,7 @@ export const exportFullData = async (
     format,
     timeFilter: filter,
   });
-  
+
   if (range?.start) {
     params.append("startDate", range.start.toISOString());
   }
@@ -422,7 +422,7 @@ export const getAlarmEventsBySiteAndDateRange = async (
       console.error('Expected array but got:', response.data);
       return [];
     }
-    
+
     // Transform API response to Event type with Date objects
     return response.data.map(event => ({
       id: event.id.toString(),
@@ -447,15 +447,15 @@ export const getRecentAlarmEvents = async (): Promise<Event[]> => {
     const response = await get<UpsApiResponse<AlarmEventDto[]>>(
       '/v1/alarm-events/recent'
     );
-    
+
     console.log('Recent alarm events API response:', response);
-    
+
     // Check if response.data is an array
     if (!Array.isArray(response.data)) {
       console.error('Expected array but got:', response.data);
       return [];
     }
-    
+
     // Transform API response to Event type with Date objects
     return response.data.map(event => ({
       id: event.id.toString(),
