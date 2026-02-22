@@ -96,6 +96,7 @@ export interface SiteSummary {
   siteName: string;
   siteArabicName?: string;
   position: number; // South-to-north ordering
+  canalOrder?: number; // Order within the canal for bar chart display
   upstream: number;
   downstream: number;
   batteryVoltage: number;
