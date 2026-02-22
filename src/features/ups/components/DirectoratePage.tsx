@@ -21,7 +21,8 @@ import { exportReport } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
-// Main regulators for each canal (in display order)
+// Main regulators for each canal (which sites to show in USWL/DSWL chart)
+// Order is now determined by canalOrder from backend, not by array position
 const MAIN_REGULATORS = {
   "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1"],
   "Bahr Youssef": ["7", "6", "20", "5", "19", "4", "3", "2"]
@@ -126,13 +127,13 @@ export function DirectoratePage() {
     const getSiteName = (site: SiteSummary) => 
       t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName;
     
-    // Get main regulator IDs for this branch
+    // USWL/DSWL Profile Chart: Only show main regulators, ordered by canalOrder from backend
     const mainRegulatorIds = MAIN_REGULATORS[branchName as keyof typeof MAIN_REGULATORS] || [];
-    
-    // Filter and sort water level data to only include main regulators in specified order
-    const profileChartData = mainRegulatorIds
-      .map(id => sites.find(site => site.siteId === id))
-      .filter((site): site is SiteSummary => site !== undefined)
+    const mainRegulators = filteredBySite.filter(site => 
+      mainRegulatorIds.includes(site.siteId)
+    );
+    const profileChartData = mainRegulators
+      .sort((a, b) => (a.canalOrder ?? 0) - (b.canalOrder ?? 0))
       .map(site => ({
         id: site.siteId,
         name: getSiteName(site),
@@ -140,17 +141,7 @@ export function DirectoratePage() {
         dswl: site.downstream
       }));
     
-    // If no main regulators found, show all sites in position order as fallback
-    const finalProfileData = profileChartData.length > 0 
-      ? profileChartData 
-      : sortedSites.map(site => ({
-          id: site.siteId,
-          name: getSiteName(site),
-          uswl: site.upstream,
-          dswl: site.downstream
-        }));
-    
-    // Include all sites in position order for flow data
+    // Flow Chart: Include all sites in position order
     const finalFlowData = sortedSites.map(site => {
       const numPumps = (site as any).siteConfiguration?.numPumps || 0;
       let flowValue = site.flowRate;
@@ -318,7 +309,7 @@ export function DirectoratePage() {
         </Card>
 
         {/* Upstream/Downstream Profile Chart (USWL vs DSWL Histogram) */}
-        <DirectorateWLChart branchName={localizedBranchName} data={finalProfileData} />
+        <DirectorateWLChart branchName={localizedBranchName} data={profileChartData} />
 
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
