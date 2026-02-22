@@ -122,18 +122,17 @@ const formattedTime = date.toLocaleString('en-US', {
               <XAxis
                 dataKey="timestamp"
                 stroke="#6b7280"
-                style={{ fontSize: '12px' }}
                 angle={-45}
                 textAnchor="end"
                 height={80}
-                tick={{ fontSize: 11, direction: 'ltr' }}
+                tick={{ fontSize: 8, direction: 'ltr' }}
                 tickMargin={0}
               />
               <YAxis
-                 tick={{ fontSize: 11 }}
+                 tick={{ fontSize: 8, direction: 'ltr' }}
                         domain={yDomain}
                         width={60}
-                        tickMargin={35}
+                        tickMargin={10}
                 label={{
                   value: t("ups.fields.operatingHours"),
                   angle: -90,

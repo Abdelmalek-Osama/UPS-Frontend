@@ -113,6 +113,9 @@ export function SitePage() {
   const siteName = (isArabic && data.site.siteArabicName ? data.site.siteArabicName : data.site.siteName) || `Site ${siteId}`;
   const directorateName = (isArabic && data.site.governorateArabicName ? data.site.governorateArabicName : data.site.governorate) || 'Directorate';
   
+  // Create sanitized filename for exports (remove special characters that might cause issues in filenames)
+  const sanitizedSiteName = siteName.replace(/[/\\?%*:|"<>]/g, '-');
+  
 
   // Determine if this is a pump station site from API data
   const isPumpStation = !!data.pumpStationDetails && data.pumpStationDetails.pumps.length > 0;
@@ -330,8 +333,8 @@ export function SitePage() {
           <div className="flex items-center justify-between">
             <CardTitle>{t("ups.charts.waterLevels")}</CardTitle>
             <ExportDropdown
-              onExportPNG={() => exportChartAsPNG('water-levels-chart', 'water-levels-chart')}
-              onExportSVG={() => exportChartAsSVG('water-levels-chart', 'water-levels-chart')}
+              onExportPNG={() => exportChartAsPNG('water-levels-chart', `${sanitizedSiteName}-water-levels`)}
+              onExportSVG={() => exportChartAsSVG('water-levels-chart', `${sanitizedSiteName}-water-levels`)}
             />
           </div>
         </CardHeader>
@@ -353,7 +356,7 @@ export function SitePage() {
                   tick={{ fontSize: 11 }} 
                   tickFormatter={formatNumberWestern}
                   width={60}
-                  tickMargin={35}
+                  tickMargin={25}
                 />
                 <Tooltip content={<WaterLevelsTooltip t={t} />} />
                 <Line 
@@ -384,8 +387,8 @@ export function SitePage() {
           <div className="flex items-center justify-between">
             <CardTitle>{t("ups.charts.totalFlow")} ({t("ups.waterLevel")})</CardTitle>
             <ExportDropdown
-              onExportPNG={() => exportChartAsPNG('flow-rate-chart', 'flow-rate-chart')}
-              onExportSVG={() => exportChartAsSVG('flow-rate-chart', 'flow-rate-chart')}
+              onExportPNG={() => exportChartAsPNG('flow-rate-chart', `${sanitizedSiteName}-total-flow`)}
+              onExportSVG={() => exportChartAsSVG('flow-rate-chart', `${sanitizedSiteName}-total-flow`)}
             />
           </div>
         </CardHeader>
@@ -438,7 +441,7 @@ export function SitePage() {
                         domain={yDomain}
                         tickFormatter={formatNumberWestern}
                         width={60}
-                        tickMargin={35}
+                        tickMargin={25}
                       />
                       <Tooltip content={<FlowRateTooltip t={t} />} />
                       <Area 
@@ -469,7 +472,7 @@ export function SitePage() {
           <CardTitle>{t("ups.charts.recentReadings")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <SiteReadingsTable rows={tableRows} />
+          <SiteReadingsTable rows={tableRows} siteName={siteName} />
         </CardContent>
       </Card>
 
@@ -491,8 +494,8 @@ export function SitePage() {
 
             {/* Pump Tables - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PumpFlowTable data={pumpFlowsTimeSeries} />
-              <PumpOperatingHoursTable data={pumpOperatingHoursTimeSeries} />
+              <PumpFlowTable data={pumpFlowsTimeSeries} siteName={siteName} />
+              <PumpOperatingHoursTable data={pumpOperatingHoursTimeSeries} siteName={siteName} />
             </div>
           </>
         ) : null;

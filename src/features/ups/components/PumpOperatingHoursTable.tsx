@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ExportDropdown } from "./common/ExportDropdown";
 import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 
@@ -16,13 +19,19 @@ interface PumpOperatingHoursTimeSeries {
 
 interface PumpOperatingHoursTableProps {
   data: PumpOperatingHours[] | PumpOperatingHoursTimeSeries[];
+  siteName?: string;
 }
 
-export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) {
+export function PumpOperatingHoursTable({ data, siteName }: PumpOperatingHoursTableProps) {
   const { t } = useTranslation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
   
   // Check if data is time-series format
   const isTimeSeries = data.length > 0 && 'timestamp' in data[0];
+  
+  // Sanitize site name for filename
+  const sanitizedSiteName = siteName ? siteName.replace(/[/\\?%*:|"<>]/g, '-') : 'site';
   
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -66,7 +75,7 @@ export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) 
         return row;
       });
 
-      exportTableToCSV(exportData, columns, 'pump-operating-hours-timeseries');
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`);
     } else {
       const aggregatedData = data as PumpOperatingHours[];
       const columns = [
@@ -81,7 +90,7 @@ export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) 
         status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
       }));
 
-      exportTableToCSV(exportData, columns, 'pump-operating-hours');
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`);
     }
   };
 
@@ -108,7 +117,7 @@ export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) 
         return row;
       });
 
-      exportTableToExcel(exportData, columns, 'pump-operating-hours-timeseries');
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`);
     } else {
       const aggregatedData = data as PumpOperatingHours[];
       const columns = [
@@ -123,12 +132,26 @@ export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) 
         status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
       }));
 
-      exportTableToExcel(exportData, columns, 'pump-operating-hours');
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`);
     }
   };
   
   if (isTimeSeries) {
     const timeSeriesData = data as PumpOperatingHoursTimeSeries[];
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(timeSeriesData.length / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const currentData = timeSeriesData.slice(startIndex, endIndex);
+
+    const handlePreviousPage = () => {
+      setCurrentPage((prev) => Math.max(prev - 1, 1));
+    };
+
+    const handleNextPage = () => {
+      setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    };
     
     return (
       <Card>
@@ -157,23 +180,63 @@ export function PumpOperatingHoursTable({ data }: PumpOperatingHoursTableProps) 
                 </tr>
               </thead>
               <tbody>
-                {timeSeriesData.map((entry, idx) => (
-                  <tr key={idx} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-4 text-gray-900 text-center">{formatDate(entry.timestamp)}</td>
-                    <td className="py-2 px-4 text-gray-900 text-center">{formatTime(entry.timestamp)}</td>
-                    {Array.from({ length: 6 }, (_, i) => {
-                      const pump = entry.pumps.find(p => p.pumpNumber === i + 1);
-                      return (
-                        <td key={i + 1} className="py-2 px-4 text-gray-900 text-center">
-                          {pump ? `${pump.operatingHours.toFixed(1)} ${t("readings.hour")}` : '-'}
-                        </td>
-                      );
-                    })}
+                {currentData.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-500">
+                      {t("common.noData")}
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  currentData.map((entry, idx) => (
+                    <tr key={idx} className="border-b hover:bg-gray-50">
+                      <td className="py-2 px-4 text-gray-900 text-center">{formatDate(entry.timestamp)}</td>
+                      <td className="py-2 px-4 text-gray-900 text-center">{formatTime(entry.timestamp)}</td>
+                      {Array.from({ length: 6 }, (_, i) => {
+                        const pump = entry.pumps.find(p => p.pumpNumber === i + 1);
+                        return (
+                          <td key={i + 1} className="py-2 px-4 text-gray-900 text-center">
+                            {pump ? `${pump.operatingHours.toFixed(1)} ${t("readings.hour")}` : '-'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {timeSeriesData.length > rowsPerPage && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-600">
+                {t("common.showing")} {startIndex + 1} {t("common.to")} {Math.min(endIndex, timeSeriesData.length)} {t("common.of")} {timeSeriesData.length} {t("common.entries")}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {t("common.previous")}
+                </Button>
+                <div className="text-sm text-gray-600">
+                  {t("common.page")} {currentPage} {t("common.of")} {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  {t("common.next")}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

@@ -117,6 +117,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
           // Transform pump station data if available
           let pumpStationDetails = undefined;
           let pumpFlowTimeSeries = undefined;
+          let hourlyReadings = series; // Default to water level data
           
           if (apiData.pumpStation && apiData.pumpStation.pumpDetails.length > 0) {
             // Get the latest pump details (last entry)
@@ -161,6 +162,22 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
               p6Flow: detail.p6Flow,
               p6Time: detail.p6Time,
             }));
+
+            // Create a map of pump totalFlow by timestamp for quick lookup
+            const pumpFlowMap = new Map<string, number>();
+            apiData.pumpStation.pumpDetails.forEach(detail => {
+              pumpFlowMap.set(detail.timestamp, detail.totalFlow);
+            });
+
+            // Merge water level data with pump totalFlow for Recent Readings table
+            // Use pump totalFlow if available for matching timestamp, otherwise use water level flow
+            hourlyReadings = timestamps.map((timestamp, index) => ({
+              timestamp,
+              upstream: uswl[index] || 0,
+              downstream: dswl[index] || 0,
+              batteryVoltage: 12.5,
+              flowRate: pumpFlowMap.get(timestamp) ?? flow[index] ?? 0, // Use pump totalFlow if available, otherwise water level flow
+            }));
           }
 
           const transformedData: SiteDetails & { metrics?: WaterLevelMetricsDto } = {
@@ -181,7 +198,7 @@ export const useSiteDetails = (siteId: number, filter: TimeFilter, range?: DateR
               branch: "Ibrahimiya",
             },
             series,
-            hourlyReadings: series,
+            hourlyReadings,
             dailyReadings: series,
             events: [],
             pumpStationDetails,
