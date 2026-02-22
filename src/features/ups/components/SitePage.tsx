@@ -353,7 +353,7 @@ export function SitePage() {
                   tick={{ fontSize: 11 }} 
                   tickFormatter={formatNumberWestern}
                   width={60}
-                  tickMargin={35}
+                  tickMargin={25}
                 />
                 <Tooltip content={<WaterLevelsTooltip t={t} />} />
                 <Line 
@@ -438,7 +438,7 @@ export function SitePage() {
                         domain={yDomain}
                         tickFormatter={formatNumberWestern}
                         width={60}
-                        tickMargin={35}
+                        tickMargin={25}
                       />
                       <Tooltip content={<FlowRateTooltip t={t} />} />
                       <Area 
