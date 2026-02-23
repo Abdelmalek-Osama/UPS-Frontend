@@ -274,9 +274,9 @@ export function ReadingsManagement() {
       const worksheetData = waterLevelReadings.map((reading: WaterLevelReading) => ({
         [t('readings.selectSite')]: reading.site || '',
         [t('readings.dateAndTime')]: reading.timestamp ? new Date(reading.timestamp).toLocaleString() : '',
-        'USWL': reading.uswl ?? '',
-        'DSWL1': reading.dswL1 ?? '',
-        'DSWL2': reading.dswL2 ?? '',
+        [t('alarms.USWL')]: reading.uswl ?? '',
+        [t('alarms.DSWL1')]: reading.dswL1 ?? '',
+        [t('alarms.DSWL2')]: reading.dswL2 ?? '',
         [t('readings.battery')]: reading.battery ?? '',
         [t('readings.calculatedFlow')]: reading.calculatedFlow ?? '',
         [t('readings.isManual')]: reading.isManual ? t('common.yes') : t('common.no'),

@@ -644,7 +644,7 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     {selectedSiteData?.hasUS && (
                       <div className="space-y-2">
-                        <Label>USWL ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.USWL')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -684,7 +684,7 @@ export function WaterLevelTable({
                     )}
                     {(selectedSiteData?.hasDS1) && (
                       <div className="space-y-2">
-                        <Label>DSWL1 ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.DSWL1')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -723,7 +723,7 @@ export function WaterLevelTable({
                     )}
                     {(selectedSiteData?.hasDS2) && (
                       <div className="space-y-2">
-                        <Label>DSWL2 ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.DSWL2')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -886,7 +886,7 @@ export function WaterLevelTable({
                   <div className="grid grid-cols-2 gap-4">
                     {editSelectedSiteData?.hasUS && (
                       <div className="space-y-2">
-                        <Label>USWL ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.USWL')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -925,7 +925,7 @@ export function WaterLevelTable({
                     )}
                     {(editSelectedSiteData?.hasDS1) && (
                       <div className="space-y-2">
-                        <Label>DSWL1 ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.DSWL1')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -964,7 +964,7 @@ export function WaterLevelTable({
                     )}
                     {(editSelectedSiteData?.hasDS2) && (
                       <div className="space-y-2">
-                        <Label>DSWL2 ({t('readings.flowUnit')})</Label>
+                        <Label>{t('alarms.DSWL2')} ({t('readings.meter')})</Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -1096,9 +1096,9 @@ export function WaterLevelTable({
               <TableRow>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.site')}</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.dateAndTime')}</TableHead>
-                {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>USWL ({t('readings.meter')})</TableHead>}
-                {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL1 ({t('readings.meter')})</TableHead>}
-                {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>DSWL2 ({t('readings.meter')})</TableHead>}
+                {showUSWL && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.USWL')} ({t('readings.meter')})</TableHead>}
+                {showDSWL1 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.DSWL1')} ({t('readings.meter')})</TableHead>}
+                {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.DSWL2')} ({t('readings.meter')})</TableHead>}
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.battery')} (V)</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.calculatedFlow')}</TableHead>
                 <TableHead className="text-center">{t('common.actions')}</TableHead>
