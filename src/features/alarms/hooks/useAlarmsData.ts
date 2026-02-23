@@ -250,6 +250,21 @@ export function useAlarmsData() {
     }
   };
 
+  const deleteSensorStatusAlarm = async (alarmId: number) => {
+    try {
+      const response = await apiService.delete<any>(`/v1/alarm/sensor-status/${alarmId}`);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete sensor status alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
   const createPumpStatusPSAlarm = async (alarmData: CreatePumpStatusPSAlarmRequest) => {
     try {
       const response = await apiService.post<any, CreatePumpStatusPSAlarmRequest>('/v1/alarm/pump-status-operation', alarmData);
@@ -358,6 +373,7 @@ export function useAlarmsData() {
     updateCommunicationAlarm,
     createSensorStatusAlarm,
     updateSensorStatusAlarm,
+    deleteSensorStatusAlarm,
     createPumpStatusPSAlarm,
     updatePumpStatusPSAlarm,
     createPumpStatusIdvAlarm,

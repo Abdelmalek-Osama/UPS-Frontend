@@ -54,6 +54,7 @@ import { AddPumpStatusPSAlarmDialog} from './dialogs/AddPumpStatusPSAlarmDialog'
 import { EditPumpStatusPSAlarmDialog } from './dialogs/EditPumpStatusPSAlarmDialog';
 import { AddPumpStatusIdvAlarmDialog } from './dialogs/AddPumpStatusIdvAlarmDialog';
 import { EditPumpStatusIdvAlarmDialog } from './dialogs/EditPumpStatusIdvAlarmDialog';
+import { AlertDialog } from '../../../shared/components/AlertDialog';
 
 export function AlarmConfiguration() {
   const { t } = useTranslation();
@@ -81,6 +82,7 @@ export function AlarmConfiguration() {
     createCommunicationAlarm,
     createSensorStatusAlarm,
     updateSensorStatusAlarm,
+    deleteSensorStatusAlarm,
     createPumpStatusPSAlarm,
     createPumpStatusIdvAlarm,
     updateThresholdAlarm,
@@ -113,6 +115,8 @@ export function AlarmConfiguration() {
   const [isEditCommOpen, setIsEditCommOpen] = useState(false);
   const [isAddSensorStatusOpen, setIsAddSensorStatusOpen] = useState(false);
   const [isEditSensorStatusOpen, setIsEditSensorStatusOpen] = useState(false);
+  const [isDeleteSensorStatusOpen, setIsDeleteSensorStatusOpen] = useState(false);
+  const [sensorStatusAlarmToDelete, setSensorStatusAlarmToDelete] = useState<number | null>(null);
   const [currentSensorStatusAlarm, setCurrentSensorStatusAlarm] = useState<SensorStatusForm | null>(null);
   const [newSensorStatusForm, setNewSensorStatusForm] = useState<SensorStatusForm>(INITIAL_SENSOR_STATUS_FORM);
   const [isAddPumpStatusPSOpen, setIsAddPumpStatusPSOpen] = useState(false);
@@ -509,7 +513,7 @@ export function AlarmConfiguration() {
     };
 
     try {
-      const result = await updateSensorStatusAlarm(currentSensorStatusAlarm.siteId, requestBody);
+      const result = await updateSensorStatusAlarm(currentSensorStatusAlarm.alarmId || 0, requestBody);
       if (result.success) {
         toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditSensorStatusOpen(false);
@@ -740,6 +744,27 @@ export function AlarmConfiguration() {
       phones: phones,
     });
     setIsEditSensorStatusOpen(true);
+  };
+
+  const handleSensorStatusAlarmDelete = (alarmId: number) => {
+    setSensorStatusAlarmToDelete(alarmId);
+    setIsDeleteSensorStatusOpen(true);
+  };
+
+  const confirmDeleteSensorStatusAlarm = async () => {
+    if (!sensorStatusAlarmToDelete) return;
+    
+    try {
+      const result = await deleteSensorStatusAlarm(sensorStatusAlarmToDelete);
+      if (result.success) {
+        toast.success(t('alarms.deleteAlarmSuccess'));
+      } else {
+        toast.error(result.message || t('errors.deleteFailed'));
+      }
+    } catch (error: any) {
+      console.error('Error deleting sensor status alarm:', error);
+      toast.error(error.message || t('errors.deleteFailed'));
+    }
   };
 
   useEffect(() => {
@@ -1293,6 +1318,7 @@ export function AlarmConfiguration() {
                 <SensorStatusTable
                   alarms={filteredSensorStatusAlarms}
                   onEdit={handleSensorStatusAlarmEdit}
+                  onDelete={handleSensorStatusAlarmDelete}
                 />
               </CardContent>
             </Card>
@@ -1468,6 +1494,20 @@ export function AlarmConfiguration() {
         setPhones={setSensorStatusPhones}
         submissionError={sensorStatusSubmissionError}
         availableFields={sensorStatusAvailableFields}
+      />
+
+      <AlertDialog
+        open={isDeleteSensorStatusOpen}
+        onClose={() => {
+          setIsDeleteSensorStatusOpen(false);
+          setSensorStatusAlarmToDelete(null);
+        }}
+        onConfirm={confirmDeleteSensorStatusAlarm}
+        title={t('alarms.deleteSensorStatusAlarm')}
+        description={t('alarms.deleteAlarmConfirm')}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
       />
 
       <EditPumpStatusPSAlarmDialog

@@ -207,25 +207,21 @@ export function EditSensorStatusAlarmDialog({
                     <div style={contentWrapperStyle}>
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.alarmName')}</Label>
-                            {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.alarmName} disabled />
-                            ) : (
-                                <Input
-                                    type="text"
-                                    value={form.alarmName}
-                                    onChange={(e) => {
-                                        setForm(prev => ({ ...prev, alarmName: e.target.value }));
-                                        setHasChanges(true);
-                                    }}
-                                    placeholder={t('alarms.alarmName')}
-                                />
-                            )}
+                            <Input
+                                type="text"
+                                value={form.alarmName}
+                                onChange={(e) => {
+                                    setForm(prev => ({ ...prev, alarmName: e.target.value }));
+                                    setHasChanges(true);
+                                }}
+                                placeholder={t('alarms.alarmName')}
+                            />
                         </div>
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.site')}</Label>
                             {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.site} disabled />
+                                <Input type="text" value={form.site} disabled />
                             ) : (
                                 <Select
                                     onValueChange={handleSiteChange}
@@ -255,78 +251,66 @@ export function EditSensorStatusAlarmDialog({
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.field')}</Label>
-                            {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.field} disabled />
-                            ) : (
-                                <Select
-                                    onValueChange={(value) => {
-                                        setForm(prev => ({
-                                            ...prev,
-                                            field: value
-                                        }));
-                                        setHasChanges(true);
-                                    }}
-                                    value={form.field}
-                                    disabled={!form.siteId}
-                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                                >
-                                    <SelectTrigger className="rtl:flex-row-reverse">
-                                        <SelectValue placeholder={!form.siteId ? t('alarms.selectSiteFirst') : t('alarms.field')} />
-                                    </SelectTrigger>
-                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                        {availableFields.length > 0 ? (
-                                            availableFields.map(field => (
-                                                <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="0" disabled>{t('alarms.selectSiteFirst')}</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            )}
+                            <Select
+                                onValueChange={(value) => {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        field: value
+                                    }));
+                                    setHasChanges(true);
+                                }}
+                                value={form.field}
+                                disabled={!form.siteId}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            >
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={!form.siteId ? t('alarms.selectSiteFirst') : t('alarms.field')} />
+                                </SelectTrigger>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                    {availableFields.length > 0 ? (
+                                        availableFields.map(field => (
+                                            <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="0" disabled>{t('alarms.selectSiteFirst')}</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.threshold')}</Label>
-                            {currentAlarm ? (
-                                <Input type="number" value={currentAlarm.threshold} disabled />
-                            ) : (
-                                <Select
-                                    onValueChange={(value) => {
-                                        setForm(prev => ({ ...prev, threshold: parseFloat(value) }));
-                                        setHasChanges(true);
-                                    }}
-                                    value={form.threshold.toString()}
-                                    dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-                                >
-                                    <SelectTrigger className="rtl:flex-row-reverse">
-                                        <SelectValue placeholder={t('alarms.threshold')} />
-                                    </SelectTrigger>
-                                    <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                        <SelectItem value="777">777</SelectItem>
-                                        <SelectItem value="888">888</SelectItem>
-                                        <SelectItem value="999">999</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
+                            <Select
+                                onValueChange={(value) => {
+                                    setForm(prev => ({ ...prev, threshold: parseFloat(value) }));
+                                    setHasChanges(true);
+                                }}
+                                value={form.threshold.toString()}
+                                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            >
+                                <SelectTrigger className="rtl:flex-row-reverse">
+                                    <SelectValue placeholder={t('alarms.threshold')} />
+                                </SelectTrigger>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                    <SelectItem value="777">777</SelectItem>
+                                    <SelectItem value="888">888</SelectItem>
+                                    <SelectItem value="999">999</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.message')}</Label>
-                            {currentAlarm ? (
-                                <Input type="text" value={currentAlarm.message} disabled />
-                            ) : (
-                                <Textarea
-                                    className="resize-none"
-                                    value={form.message}
-                                    rows={4}
-                                    onChange={(e) => {
-                                        setForm(prev => ({ ...prev, message: e.target.value }));
-                                        setHasChanges(true);
-                                    }}
-                                    placeholder={t('alarms.message')}
-                                />
-                            )}
+                            <Textarea
+                                className="resize-none"
+                                value={form.message}
+                                rows={4}
+                                onChange={(e) => {
+                                    setForm(prev => ({ ...prev, message: e.target.value }));
+                                    setHasChanges(true);
+                                }}
+                                placeholder={t('alarms.message')}
+                            />
                         </div>
 
                         <RecipientInput
