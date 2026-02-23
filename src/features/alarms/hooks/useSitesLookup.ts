@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiService, { ApiResponse } from '../../../shared/utils/apiService';
 import { Site } from '../types';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export interface SiteDetails {
     id: number;
@@ -23,21 +24,34 @@ export const useSitesLookup = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [sitesError, setSitesError] = useState<string | null>(null);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchSites = async () => {
       try {
         setSitesLoading(true);
         const response = await apiService.get<Site[]>('/v1/Lookups/Lookup/Sites');
-        setSites(response);
+        
+        // Filter sites for operators based on their assigned sites
+        if (currentUser?.role === 'Operator' && currentUser?.sites) {
+          const assignedSiteIds = currentUser.sites.map(site => site.id);
+          const filteredSites = response.filter(site => assignedSiteIds.includes(site.id));
+          setSites(filteredSites);
+        } else {
+          // Admins see all sites
+          setSites(response);
+        }
       } catch (error) {
         setSitesError(error instanceof Error ? error.message : 'Failed to fetch sites');
       } finally {
         setSitesLoading(false);
       }
     };
-    fetchSites();
-  }, []);
+    
+    if (currentUser) {
+      fetchSites();
+    }
+  }, [currentUser]);
 
   return { sites, sitesLoading, sitesError };
 };
@@ -51,6 +65,7 @@ export const useSitesLookupWithPumpFilter = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [sitesError, setSitesError] = useState<string | null>(null);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchSitesWithPumpFilter = async () => {
@@ -75,10 +90,16 @@ export const useSitesLookupWithPumpFilter = () => {
         });
 
         // Filter lookup sites to only include those with pumps
-        const filteredSites = lookupSites.filter(site => {
+        let filteredSites = lookupSites.filter(site => {
           const numPumps = sitesPumpMap.get(site.id) || 0;
           return numPumps > 0;
         });
+
+        // Filter sites for operators based on their assigned sites
+        if (currentUser?.role === 'Operator' && currentUser?.sites) {
+          const assignedSiteIds = currentUser.sites.map(site => site.id);
+          filteredSites = filteredSites.filter(site => assignedSiteIds.includes(site.id));
+        }
 
         setSites(filteredSites);
       } catch (error) {
@@ -89,8 +110,10 @@ export const useSitesLookupWithPumpFilter = () => {
       }
     };
     
-    fetchSitesWithPumpFilter();
-  }, []);
+    if (currentUser) {
+      fetchSitesWithPumpFilter();
+    }
+  }, [currentUser]);
 
   return { sites, sitesLoading, sitesError };
 };

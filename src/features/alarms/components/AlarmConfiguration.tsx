@@ -157,6 +157,71 @@ export function AlarmConfiguration() {
   const { availableFields, isFetchingSiteDetails } = useThresholdAlarmFields(newThresholdAlarmForm.siteId);
   const { availableFields: sensorStatusAvailableFields, isFetchingSiteDetails: sensorStatusIsFetchingSiteDetails } = useSensorStatusAlarmFields(newSensorStatusForm.siteId);
 
+  // Filter alarms based on operator's assigned sites
+  const filteredThresholdAlarms = React.useMemo(() => {
+    if (currentUser.role === 'Admin') {
+      return thresholdAlarms;
+    }
+    // For operators, filter by assigned sites
+    const assignedSiteIds = currentUser.sites?.map(site => site.id) || [];
+    return thresholdAlarms.filter(alarm => assignedSiteIds.includes(alarm.siteId));
+  }, [thresholdAlarms, currentUser]);
+
+  const filteredCommunicationAlarms = React.useMemo(() => {
+    if (currentUser.role === 'Admin') {
+      return communicationAlarms;
+    }
+    
+    // Build a map of site names to IDs from available sites (already filtered for operators)
+    const siteNameToIdMap = new Map<string, number>();
+    sites.forEach(site => {
+      siteNameToIdMap.set(site.name.toLowerCase(), site.id);
+      // Also map Arabic names if available
+      if (site.arabicName) {
+        siteNameToIdMap.set(site.arabicName.toLowerCase(), site.id);
+      }
+    });
+    
+    const assignedSiteIds = currentUser.sites?.map(site => site.id) || [];
+    
+    return communicationAlarms.filter(alarm => {
+      // If siteId exists, use it directly
+      if (alarm.siteId) {
+        return assignedSiteIds.includes(alarm.siteId);
+      }
+      // Otherwise, try to match by siteName
+      if (alarm.siteName) {
+        const matchedSiteId = siteNameToIdMap.get(alarm.siteName.toLowerCase());
+        return matchedSiteId !== undefined && assignedSiteIds.includes(matchedSiteId);
+      }
+      return false;
+    });
+  }, [communicationAlarms, currentUser, sites]);
+
+  const filteredSensorStatusAlarms = React.useMemo(() => {
+    if (currentUser.role === 'Admin') {
+      return sensorStatusAlarms;
+    }
+    const assignedSiteIds = currentUser.sites?.map(site => site.id) || [];
+    return sensorStatusAlarms.filter(alarm => assignedSiteIds.includes(alarm.siteId));
+  }, [sensorStatusAlarms, currentUser]);
+
+  const filteredPumpStatusPSAlarms = React.useMemo(() => {
+    if (currentUser.role === 'Admin') {
+      return pumpStatusPSAlarms;
+    }
+    const assignedSiteIds = currentUser.sites?.map(site => site.id) || [];
+    return pumpStatusPSAlarms.filter(alarm => assignedSiteIds.includes(alarm.siteId));
+  }, [pumpStatusPSAlarms, currentUser]);
+
+  const filteredPumpStatusIdvAlarms = React.useMemo(() => {
+    if (currentUser.role === 'Admin') {
+      return pumpStatusIdvAlarms;
+    }
+    const assignedSiteIds = currentUser.sites?.map(site => site.id) || [];
+    return pumpStatusIdvAlarms.filter(alarm => assignedSiteIds.includes(alarm.siteId));
+  }, [pumpStatusIdvAlarms, currentUser]);
+
   const handleSensorStatusDialogOpenChange = useCallback((open: boolean) => {
     setIsAddSensorStatusOpen(open);
     if (!open) {
@@ -1090,7 +1155,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className={`flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right flex-1' : 'text-left flex-1'}>
-                  {t('alarms.thresholdAlarms')} ({thresholdAlarms.length})
+                  {t('alarms.thresholdAlarms')} ({filteredThresholdAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -1122,7 +1187,7 @@ export function AlarmConfiguration() {
 
               <CardContent>
                 <ThresholdAlarmTable
-                  alarms={thresholdAlarms}
+                  alarms={filteredThresholdAlarms}
                   onEdit={handleThresholdAlarmEdit}
                   error={fetchError}
                 />
@@ -1141,7 +1206,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className={`flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right flex-1' : 'text-left flex-1'}>
-                  {t('alarms.communicationAlarms')} ({communicationAlarms.length})
+                  {t('alarms.communicationAlarms')} ({filteredCommunicationAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -1172,7 +1237,7 @@ export function AlarmConfiguration() {
 
               <CardContent>
                 <CommunicationAlarmTable
-                  alarms={communicationAlarms}
+                  alarms={filteredCommunicationAlarms}
                   onEdit={handleCommunicationAlarmEdit}
                   error={fetchError}
                 />
@@ -1191,7 +1256,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className="flex justify-between items-center" dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                  {t('alarms.sensorStatus')} ({sensorStatusAlarms.length})
+                  {t('alarms.sensorStatus')} ({filteredSensorStatusAlarms.length})
 
                 </CardTitle>
 
@@ -1226,7 +1291,7 @@ export function AlarmConfiguration() {
 
               <CardContent>
                 <SensorStatusTable
-                  alarms={sensorStatusAlarms}
+                  alarms={filteredSensorStatusAlarms}
                   onEdit={handleSensorStatusAlarmEdit}
                 />
               </CardContent>
@@ -1243,7 +1308,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className={`flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right flex-1' : 'text-left flex-1'}>
-                  {t('alarms.PumpStatusPSAlarms')} ({pumpStatusPSAlarms.length})
+                  {t('alarms.PumpStatusPSAlarms')} ({filteredPumpStatusPSAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -1276,7 +1341,7 @@ export function AlarmConfiguration() {
 
               <CardContent>
                 <PumpStatusPSTable
-                  alarms={pumpStatusPSAlarms} 
+                  alarms={filteredPumpStatusPSAlarms} 
                 onEdit={handlePumpStatusPSAlarmEdit}
                 error={fetchError}
                 />
@@ -1294,7 +1359,7 @@ export function AlarmConfiguration() {
             <Card>
               <CardHeader className={`flex items-center gap-4 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <CardTitle className={t('_rtl') === 'rtl' ? 'text-right flex-1' : 'text-left flex-1'}>
-                  {t('alarms.PumpStatusIdvAlarms')} ({pumpStatusIdvAlarms.length})
+                  {t('alarms.PumpStatusIdvAlarms')} ({filteredPumpStatusIdvAlarms.length})
                 </CardTitle>
 
                 {currentUser.role === 'Admin' && (
@@ -1330,7 +1395,7 @@ export function AlarmConfiguration() {
 
               <CardContent>
                 <PumpStatusIdvTable 
-                alarms={pumpStatusIdvAlarms} 
+                alarms={filteredPumpStatusIdvAlarms} 
                 onEdit={handlePumpStatusIdvAlarmEdit}
                 onDelete={handlePumpStatusIdvAlarmDelete}
                 error={fetchError}

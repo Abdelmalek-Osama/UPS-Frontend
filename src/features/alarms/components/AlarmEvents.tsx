@@ -44,6 +44,7 @@ import apiService from '../../../shared/utils/apiService';
 import Loader from '../../../components/ui/Loader';
 import { useSitesLookup } from '../hooks/useSitesLookup';
 import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 type SeverityOption = 'warning' | 'critical' | 'info';
 
@@ -104,6 +105,7 @@ interface AlarmEvent {
 export function AlarmEvents() {
   const { t, i18n } = useTranslation();
   const { sites, sitesLoading } = useSitesLookup();
+  const { currentUser } = useAuth();
 
   const translateFieldName = (fieldName: string) => {
     const normalized = fieldName.toLowerCase().replace(/_/g, ' ');
@@ -295,7 +297,16 @@ const mappedEvents: AlarmEvent[] = result.events.map((event) => {
         };
       });
 
-setAlarmEvents(mappedEvents);
+      // Filter events for operators based on their assigned sites
+      let filteredEvents = mappedEvents;
+      if (currentUser?.role === 'Operator' && currentUser?.sites) {
+        const assignedSiteIds = currentUser.sites.map(site => site.id);
+        filteredEvents = mappedEvents.filter(event => 
+          event.siteId && assignedSiteIds.includes(event.siteId)
+        );
+      }
+
+      setAlarmEvents(filteredEvents);
       
       // Update pagination state
       if (result.totalPages !== undefined) {
@@ -309,7 +320,7 @@ setAlarmEvents(mappedEvents);
     } finally {
    setIsLoading(false);
     }
-  }, [pageNumber, pageSize, selectedSiteId, dateFrom, dateTo]);
+  }, [pageNumber, pageSize, selectedSiteId, dateFrom, dateTo, currentUser]);
 
   useEffect(() => {
     fetchAlarmEvents();

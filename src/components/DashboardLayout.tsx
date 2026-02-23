@@ -42,7 +42,7 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
     { id: 'reading-logs', label: t('navigation.readingLogs'), icon: FileText, path: '/reading-logs', roles: ['Admin', 'Operator'] },
     { id: 'alarms', label: t('navigation.alarms'), icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
     { id: 'alarm-events', label: t('navigation.alarmEvents'), icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
-    { id: 'alarm-reports', label: t('navigation.alarmReports'), icon: Bell, path: '/alarms/reports', roles: ['Admin', 'Operator'] },
+    { id: 'alarm-reports', label: t('navigation.alarmReports'), icon: Bell, path: '/alarms/reports', roles: ['Admin'] },
     { id: 'calculations', label: t('navigation.calculations'), icon: Calculator, path: '/calculations', roles: ['Admin', 'Operator'] },
     { id: 'users', label: t('navigation.users'), icon: Users, path: '/users', roles: ['Admin'] }, // Only Admin can see this
   ];

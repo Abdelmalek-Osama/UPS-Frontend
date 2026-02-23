@@ -557,6 +557,7 @@
     "passwordTooShort": "يجب أن تكون كلمة المرور بطول 6 أحرف على الأقل",
     "passwordsNotMatching": "كلمة المرور وتأكيدها غير متطابقين",
     "addUserSuccess": "تم إضافة المستخدم بنجاح",
+    "addUserSuccessMessage": "تمت إضافة المستخدم بنجاح",
     "updateUserSuccess": "تم تحديث المستخدم بنجاح",
     "updateUserDataSuccess": "تم تحديث بيانات المستخدم بنجاح",
     "deleteUserSuccess": "تم حذف المستخدم بنجاح",

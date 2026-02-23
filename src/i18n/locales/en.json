@@ -558,6 +558,7 @@
     "passwordTooShort": "Password must be at least 6 characters",
     "passwordsNotMatching": "Password and confirmation password do not match",
     "addUserSuccess": "User added successfully",
+    "addUserSuccessMessage": "User has been added successfully",
     "updateUserSuccess": "User updated successfully",
     "updateUserDataSuccess": "User data updated successfully",
     "deleteUserSuccess": "User deleted successfully",
