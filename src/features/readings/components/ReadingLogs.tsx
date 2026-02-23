@@ -5,7 +5,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import {
   Table,
-  TableHeader,
+  TableHeader,  
   TableRow,
   TableHead,
   TableBody,
@@ -107,12 +107,22 @@ export function ReadingLogs() {
 
       setLogs(payload);
 
-      if (paginationInfo.totalPages !== undefined) {
-        setTotalPages(paginationInfo.totalPages);
-      }
+      // Set total count first
       if (paginationInfo.totalCount !== undefined) {
         setTotalCount(paginationInfo.totalCount);
       }
+      
+      // Calculate totalPages if not provided by API
+      if (paginationInfo.totalPages !== undefined) {
+        setTotalPages(paginationInfo.totalPages);
+      } else if (paginationInfo.totalCount !== undefined && paginationInfo.pageSize !== undefined) {
+        const calculatedPages = Math.ceil(paginationInfo.totalCount / paginationInfo.pageSize);
+        setTotalPages(calculatedPages);
+      } else if (paginationInfo.totalCount !== undefined) {
+        const calculatedPages = Math.ceil(paginationInfo.totalCount / pageSize);
+        setTotalPages(calculatedPages);
+      }
+      
       if (paginationInfo.pageNumber !== undefined) {
         setPageNumber(paginationInfo.pageNumber);
       }
@@ -138,6 +148,17 @@ export function ReadingLogs() {
       setPageNumber(1);
     }
   }, [searchTerm, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPageNumber(newPage);
+    }
+  };
+
+  const handlePageSizeChange = (newSize: string) => {
+    setPageSize(Number(newSize));
+    setPageNumber(1); // Reset to first page when page size changes
+  };
 
   const handleSearch = () => {
     setSearchTerm(searchInput);
@@ -188,52 +209,29 @@ export function ReadingLogs() {
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={t('readingLogs.searchPlaceholder') || "Search by Site, Action, Type or Date..."}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="pr-10"
-                />
-              </div>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                type="date"
-                className="w-auto"
-                value={!isNaN(Date.parse(searchInput)) && searchInput.match(/^\d{4}-\d{2}-\d{2}$/) ? searchInput : ''}
+                placeholder={t('readingLogs.searchPlaceholder') || "Search by Site, Action, Type or Date..."}
+                value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="pr-10"
               />
-              <Button onClick={handleSearch}>
-                {t('common.search')}
-              </Button>
-              <Button variant="outline" onClick={handleReset} title={t('common.reset') || "Reset"}>
-                <RotateCcw className="h-4 w-4" />
-              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
-              <Select
-                value={pageSize.toString()}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setPageNumber(1);
-                }}
-                dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Input
+              type="date"
+              className="w-auto"
+              value={!isNaN(Date.parse(searchInput)) && searchInput.match(/^\d{4}-\d{2}-\d{2}$/) ? searchInput : ''}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <Button onClick={handleSearch}>
+              {t('common.search')}
+            </Button>
+            <Button variant="outline" onClick={handleReset} title={t('common.reset') || "Reset"}>
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -242,7 +240,7 @@ export function ReadingLogs() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {t('readingLogs.title')} ({totalCount})
+            {t('readingLogs.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -329,32 +327,53 @@ export function ReadingLogs() {
             </Table>
           </div>
         </CardContent>
+      </Card>
 
-        {/* Pagination Controls */}
-        {!isLoading && !error && logs.length > 0 && totalPages > 0 && (
-          <CardContent className="pt-6 border-t">
+      {/* Pagination Controls */}
+      {!isLoading && !error && logs.length > 0 && totalPages > 0 && (
+        <Card>
+          <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm whitespace-nowrap">{t('common.recordsPerPage')}</Label>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={handlePageSizeChange}
+                  dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Pagination Info */}
               <div className="text-sm text-gray-600">
                 {t('common.showing')} {((pageNumber - 1) * pageSize) + 1} - {Math.min(pageNumber * pageSize, totalCount)} {t('common.of')} {totalCount} {t('common.results')}
               </div>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setPageNumber(pageNumber - 1)}
-                    disabled={pageNumber === 1}
-                    className="h-9 w-9"
-                    aria-label={t('common.previousPage')}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(pageNumber - 1)}
+                  disabled={pageNumber === 1}
+                  className="h-9 w-9"
+                  aria-label={t('common.previousPage')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-                  {/* Page Numbers */}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum: number;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
@@ -369,9 +388,9 @@ export function ReadingLogs() {
                     return (
                       <Button
                         key={pageNum}
-                        variant={pageNum === pageNumber ? 'default' : 'outline'}
+                        variant={pageNum === pageNumber ? "default" : "outline"}
                         size="icon"
-                        onClick={() => setPageNumber(pageNum)}
+                        onClick={() => handlePageChange(pageNum)}
                         className="h-9 w-9"
                         aria-label={`${t('common.page')} ${pageNum}`}
                         aria-current={pageNum === pageNumber ? 'page' : undefined}
@@ -389,7 +408,7 @@ export function ReadingLogs() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setPageNumber(totalPages)}
+                      onClick={() => handlePageChange(totalPages)}
                       className="h-9 w-9"
                       aria-label={`${t('common.page')} ${totalPages}`}
                     >
@@ -400,7 +419,7 @@ export function ReadingLogs() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setPageNumber(pageNumber + 1)}
+                    onClick={() => handlePageChange(pageNumber + 1)}
                     disabled={pageNumber === totalPages}
                     className="h-9 w-9"
                     aria-label={t('common.nextPage')}
@@ -408,11 +427,10 @@ export function ReadingLogs() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
             </div>
           </CardContent>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
