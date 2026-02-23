@@ -51,9 +51,12 @@ const axiosRefreshInstance: AxiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config: any) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Don't add Authorization header for login endpoint
+    if (!config.url?.includes('/v1/Auth/login')) {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     // Log full request config for debugging
     if (config.url?.includes('/v1/Sites')) {
