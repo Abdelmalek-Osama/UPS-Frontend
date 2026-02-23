@@ -237,7 +237,7 @@ export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarm
 
 export interface CommunicationAlarmResponse {
   alarmId: number;
-  siteId: number;
+  siteId?: number; // Optional since backend doesn't always return it
   alarmName: string;
   siteName: string;
   severity: Severity;

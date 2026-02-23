@@ -56,7 +56,16 @@ function AuthRoutes() {
         <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
         <Route path="alarms" element={ <AlarmConfiguration />} />
         <Route path="alarms/events" element={<AlarmEvents />} />
-        <Route path="alarms/reports" element={<AlarmReportsConfiguration />} />
+        <Route 
+          path="alarms/reports" 
+          element={
+            currentUser?.role === 'Admin' ? (
+              <AlarmReportsConfiguration />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
         <Route path="reading-logs" element={<ReadingLogs />} />

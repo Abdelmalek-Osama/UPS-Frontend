@@ -42,19 +42,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isAuthenticated = !!getAccessToken() && sessionStorage.getItem('isLogged') === 'true';
 
-  const refreshCurrentUser = useCallback(() => {
+  const refreshCurrentUser = useCallback(async () => {
     const token = getAccessToken();
     if (token) {
       const decodedToken = parseJwt(token);
       if (decodedToken) {
-        setCurrentUser({
+        // First set basic user info from JWT
+        const basicUser: User = {
           id: decodedToken.sub,
           username: decodedToken.userName || decodedToken.email,
           email: decodedToken.email,
           fullName: decodedToken.FullName || decodedToken.fullName || decodedToken.unique_name || '',
           role: decodedToken.role || decodedToken.Role,
-        });
-        setUserLoaded(true);
+        };
+        
+        // If user is an Operator, fetch their assigned sites
+        if (basicUser.role === 'Operator') {
+          try {
+            // Fetch sites from /v1/Sites/all which is already filtered by backend for operators
+            const sitesResponse = await apiService.get<any>('v1/Sites/all');
+            // Handle both direct array and wrapped response formats
+            const sites = Array.isArray(sitesResponse) 
+              ? sitesResponse 
+              : (sitesResponse?.data ? sitesResponse.data : []);
+            
+            setCurrentUser({
+              ...basicUser,
+              sites: sites || [],
+            });
+            setUserLoaded(true);
+          } catch (error) {
+            console.error('Error fetching operator sites:', error);
+            // Fall back to basic user info without sites
+            setCurrentUser({
+              ...basicUser,
+              sites: [],
+            });
+            setUserLoaded(true);
+          }
+        } else {
+          // Admin users don't need sites loaded (they have access to all)
+          setCurrentUser(basicUser);
+          setUserLoaded(true);
+        }
       } else {
         setCurrentUser(null);
         setUserLoaded(false);
