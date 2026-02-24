@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -10,15 +11,9 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
 import { Input } from '../../../../components/ui/input';
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem
-} from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
-import { CommunicationAlarmForm, Site, AddCommunicationAlarmDialogProps } from '../../types';
+import { AlarmSiteSelector } from '../AlarmSiteSelector';
+import { CommunicationAlarmForm, AddCommunicationAlarmDialogProps } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_COMMUNICATION_FORM } from '../../utils/alarmConstants';
 
@@ -36,6 +31,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
     setPhones,
     submissionError
 }: AddCommunicationAlarmDialogProps, ref) => {
+    const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
 
     const handleAlarmNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,46 +56,20 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
             }
             onOpenChange(newOpen);
         }}>
-            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogContent ref={ref} className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto" style={{ minWidth: '500px' }} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                    <DialogTitle className="text-right">إضافة تنبيه فقدان اتصال</DialogTitle>
-                    <DialogDescription className="text-right">
-                        تكوين تنبيه عند انقطاع البيانات لفترة محددة
+                    <DialogTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.addCommunicationAlarm')}</DialogTitle>
+                    <DialogDescription className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                        {t('alarms.communicationAlarms')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>الموقع</Label>
-                        <Select
-                            onValueChange={(value) => setForm(prev => ({
-                                ...prev,
-                                siteId: parseInt(value)
-                            }))}
-                            value={form.siteId?.toString() || ""}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="اختر الموقع" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sitesLoading ? (
-                                    <SelectItem value="0">جاري التحميل...</SelectItem>
-                                ) : sitesError ? (
-                                    <SelectItem value="0" disabled>{sitesError}</SelectItem>
-                                ) : (
-                                    sites.map(site => (
-                                        <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>اسم التنبيه</Label>
+                        <Label>{t('alarms.alarmName')}</Label>
                         <Input
                             type="text"
-                            placeholder="اسم التنبيه"
+                            placeholder={t('alarms.alarmName')}
                             value={form.alarmName}
                             onChange={handleAlarmNameChange}
                         />
@@ -107,9 +77,22 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             <p className="text-red-600 text-sm">{alarmNameError}</p>
                         )}
                     </div>
+                    <div className="space-y-2">
+                        <Label>{t('alarms.site')}</Label>
+                        <AlarmSiteSelector
+                            sites={sites}
+                            sitesLoading={sitesLoading}
+                            selectedSiteId={form.siteId}
+                            onSiteSelect={(siteId) => setForm(prev => ({
+                                ...prev,
+                                siteId: siteId || 0
+                            }))}
+                            placeholder={t('alarms.selectSite')}
+                        />
+                    </div>
 
                     <div className="space-y-2">
-                        <Label>عدد الساعات</Label>
+                        <Label>{t('alarms.hours')}</Label>
                         <Input
                             type="number"
                             placeholder="2"
@@ -129,7 +112,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                     setForm(prev => ({
                                         ...prev,
                                         hours: Math.max(0, parsedValue),
-                                        hoursError: "لا يمكن أن تكون قيمة الحقل أقل من 0"
+                                        hoursError: t('validation.invalidNumber')
                                     }));
                                 } else {
                                     setForm(prev => ({
@@ -144,7 +127,7 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                             <p className="text-red-600 text-sm">{form.hoursError}</p>
                         )}
                         <p className="text-xs text-gray-500">
-                            سيتم إرسال تنبيه إذا لم تصل بيانات لهذا العدد من الساعات
+                            {t('alarms.noResponse')}
                         </p>
                     </div>
 
@@ -156,11 +139,12 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                 severity: value
                             }))}
                             value={form.severity}
+                            dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="rtl:flex-row-reverse">
                                 <SelectValue placeholder="اختر المستوى" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                                 <SelectItem value="Warning">تحذير</SelectItem>
                                 <SelectItem value="Critical">حرج</SelectItem>
                             </SelectContent>
@@ -186,12 +170,9 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
 
                 <DialogFooter>
                     {submissionError && (
-                        <p className="text-red-600 text-sm text-center w-full mb-4">{submissionError}</p>
+                        <p className="text-red-600 text-sm text-center w-full mb-4 break-words">{t(`errors.${submissionError}`, submissionError)}</p>
                     )}
-                    <div className="w-full flex justify-start gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            إلغاء
-                        </Button>
+                    <div className={`w-full flex gap-2 ${t('_rtl') === 'rtl' ? 'flex-row-reverse justify-end' : 'flex-row justify-start'}`}>
                         <Button
                             onClick={() => {
                                 if (!form.hoursError && !alarmNameError) {
@@ -199,10 +180,13 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                                 }
                             }}
                             disabled={isSubmitting || !form.siteId || !form.alarmName || !!form.hoursError || !!alarmNameError || (form.emails.length === 0 && form.phones.length === 0)}
-                            loadingText="جاري الإضافة..."
+                            loadingText={t('alarms.addingAlarm')}
                             isLoading={isSubmitting}
                         >
-                            إضافة التنبيه
+                            {t('alarms.addCommunicationAlarm')}
+                        </Button>
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </DialogFooter>

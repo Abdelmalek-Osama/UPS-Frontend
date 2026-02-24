@@ -33,6 +33,11 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+.vs/
+<<<<<<< HEAD
+
+=======
+>>>>>>> 6bda69353161899acff0f81e1e2b233a3c972e0d
 
 # Temporary files
 *.tmp

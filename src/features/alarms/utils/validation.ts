@@ -1,17 +1,21 @@
+import i18n from '../../../i18n';
+
 export const validateAlarmName = (name: string): string | undefined => {
+    const t = i18n.t;
+    
     if (!name.trim()) {
-        return "اسم التنبيه لا يمكن أن يكون فارغًا";
+        return t('alarms.validation.alarmNameEmpty');
     }
     if (name.trim().length < 3) {
-        return "اسم التنبيه يجب أن يتكون من 3 أحرف على الأقل";
+        return t('alarms.validation.alarmNameMinLength');
     }
     // Regex to allow English and Arabic letters, numbers, and middle spaces
     const regex = /^[a-zA-Z0-9\s\u0600-\u06FF]+$/;
     if (!regex.test(name)) {
-        return "يجب أن يحتوي اسم التنبيه على أحرف إنجليزية أو عربية وأرقام ومسافات فقط";
+        return t('alarms.validation.alarmNameInvalidCharacters');
     }
     if (name.startsWith(' ') || name.endsWith(' ')) {
-        return "لا يمكن أن يحتوي اسم التنبيه على مسافات بادئة أو لاحقة";
+        return t('alarms.validation.alarmNameWhitespace');
     }
     return undefined;
 };

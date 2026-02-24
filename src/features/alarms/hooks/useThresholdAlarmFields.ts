@@ -19,7 +19,12 @@ export const useThresholdAlarmFields = (siteId: number | null) => {
         const response = await apiService.get<ApiResponse<SiteDetails>>(`/v1/Sites/${siteId}`);
         if (response.isSuccess && response.data) {
           const site = response.data;
-          const newFields = ['Calculated_flow', 'Total_uptime', 'Total_flow', 'Battery'];
+          const newFields = ['Calculated_flow', 'Battery'];
+
+          // Only add Total_uptime and Total_flow if site has pumps
+          if (site.numPumps > 0) {
+            newFields.push('Total_uptime', 'Total_flow');
+          }
 
           if (site.hasUS) newFields.push('USWL');
           if (site.hasDS1) newFields.push('DSWL1');

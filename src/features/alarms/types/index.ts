@@ -13,9 +13,60 @@ export interface AddCommunicationAlarmDialogProps {
   submissionError: string | null;
 }
 
+export interface AddSensorStatusAlarmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  form: SensorStatusForm;
+  setForm: React.Dispatch<React.SetStateAction<SensorStatusForm>>;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  alarmId: number | null;
+  setSiteId: (siteId: number | null) => void;
+  setSite: (site: string) => void;
+  setEmails: (emails: string[]) => void;
+  setPhones: (phones: string[]) => void;
+  submissionError: string | null;
+}
+export interface AddPumpStatusPSAlarmDialogProps {
+  onOpenChange: (open: boolean) => void;
+  form: PumpStatusPSAlarmForm;
+  setForm: React.Dispatch<React.SetStateAction<PumpStatusPSAlarmForm>>;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  setSiteId: (siteId: number | null) => void;
+  setSite: (site: string) => void;
+  setEmails: (emails: string[]) => void;
+  setPhones: (phones: string[]) => void;
+  submissionError: string | null;
+}
+
+export interface AddPumpStatusIdvAlarmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  form: PumpStatusIdvAlarmForm;
+  setForm: React.Dispatch<React.SetStateAction<PumpStatusIdvAlarmForm>>;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  setSite: (site: string) => void;
+  setEmails: (emails: string[]) => void;
+  setPhones: (phones: string[]) => void;
+  setIdvPump: (IdvPump: string) => void;
+  submissionError: string | null;
+}
+
 export interface Site {
   id: number;
   name: string;
+  arabicName: string;
+  directorateName: string;
+  directorateArabicName: string;
+}
+
+export interface SiteConfiguration {
+  hasUS: boolean;
+  hasDS1: boolean;
+  hasDS2: boolean;
+  numPumps: number;
 }
 
 export interface ThresholdAlarmForm {
@@ -24,11 +75,16 @@ export interface ThresholdAlarmForm {
   alarmName: string;
   site: string;
   field: string;
-  operator: string;
-  threshold: number;
-  thresholdError?: string; // Add this line
-  color: string;
-  colorError?: string; // Re-add this line
+  criticalOperator: string;
+  criticalThresholdValue: number;
+  criticalColorCode: string;
+  criticalThresholdError?: string;
+  criticalColorError?: string;
+  crisisOperator: string;
+  crisisThresholdValue: number;
+  crisisColorCode: string;
+  crisisThresholdError?: string;
+  crisisColorError?: string;
   severity: 'Warning' | 'Critical';
   emails: string[];
   phones: string[];
@@ -44,6 +100,40 @@ export interface CommunicationAlarmForm {
   hoursError?: string; // Add this line
   emails: string[];
   phones: string[];
+}
+
+export interface SensorStatusForm {
+  alarmId: number | null;
+  alarmName: string;
+  method: number;
+  siteId: number | null;
+  site: string;
+  message: string;
+  threshold: number;
+  field: string;
+  emails: string[];
+  phones: string[];
+}
+
+export interface PumpStatusPSAlarmForm {
+  id: number;
+  siteId: number | null;
+  alarmName: string;
+  site: string;
+  emails: string[];
+  phones: string[];
+  monitoringHours: number;
+}
+
+export interface PumpStatusIdvAlarmForm {
+  alarmId?: number;
+  alarmName: string;
+  siteId: number | null;
+  site: string;
+  emails: string[];
+  phones: string[];
+  pumpNumber: number;
+  monitoringHours: number;
 }
 
 export interface SiteDetails {
@@ -67,8 +157,8 @@ export enum AlarmMethod {
 }
 
 export enum Severity {
-  Warning = 0,
-  Critical = 1,
+  Critical = 0,
+  Crisis = 1,
 }
 
 export interface CreateThresholdAlarmRequest {
@@ -80,10 +170,12 @@ export interface CreateThresholdAlarmRequest {
   method: AlarmMethod;
   valueThreshold: {
     fieldName: number;
-    operator: number;
-    thresholdValue: number;
-    colorCode: string;
-    severity: number;
+    criticalOperator: number;
+    criticalThresholdValue: number;
+    criticalColorCode: string;
+    crisisOperator: number;
+    crisisThresholdValue: number;
+    crisisColorCode: string;
   };
 }
 
@@ -100,6 +192,43 @@ export interface CreateCommunicationAlarmRequest {
   };
 }
 
+export interface CreateSensorStatusAlarmRequest {
+  id: number;
+  siteId: number;
+  alarmName: string;
+  emails: string;
+  phones: string;
+  method: number;
+  fieldName: number;
+  operator: number;
+  thresholdValue: number;
+  savingType: number;
+  customMessage: string;
+}
+
+export interface CreatePumpStatusPSAlarmRequest {
+  id: number;
+  siteId: number;
+  alarmName: string;
+  emails: string;
+  phones: string;
+  method: number;
+  pumpStatusOperation: {
+    monitoringHours: number;
+  };
+}
+
+export interface CreatePumpStatusIdvAlarmRequest {
+  id?: number;
+  alarmName: string;
+  siteId: number;
+  pumpNumber: number;
+  monitoringHours: number;
+  emails: string;
+  phones: string;
+  method: string;
+}
+
 export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarmDialogProps {
   currentAlarm: CommunicationAlarmForm | null;
   hasChanges: boolean;
@@ -108,7 +237,7 @@ export interface EditCommunicationAlarmDialogProps extends AddCommunicationAlarm
 
 export interface CommunicationAlarmResponse {
   alarmId: number;
-  siteId: number;
+  siteId?: number; // Optional since backend doesn't always return it
   alarmName: string;
   siteName: string;
   severity: Severity;
@@ -123,9 +252,65 @@ export interface ValueThresholdAlarm {
   alarmName: string;
   site: string;
   field: number;
-  operator: number;
-  threshold: number;
-  color: string;
-  severity: string; // Assuming it's a string like 'Warning' or 'Critical'
-  recipients: string[]; // Assuming recipients can be an array of strings
+  criticalOperator?: number;
+  criticalThresholdValue?: number;
+  criticalColorCode?: string;
+  crisisOperator?: number;
+  crisisThresholdValue?: number;
+  crisisColorCode?: string;
+  // Legacy fields for backward compatibility
+  operator?: number;
+  threshold?: number;
+  color?: string;
+  severity: string;
+  recipients: string[];
+}
+
+export interface SensorStatusResponse {
+  alarmId: number;
+  alarmName: string;
+  siteId: number;
+  site?: string;
+  siteName?: string;
+  arabicName?: string;
+  message?: string;
+  customMessage?: string;
+  threshold?: number;
+  thresholdValue?: number;
+  field?: string;
+  fieldName?: string;
+  operator?: number;
+  method?: number;
+  savingType?: number;
+  emails?: string;
+  phones?: string;
+  recipients?: string[]; // Optional, in case it's also returned as an array
+}
+
+export interface PumpStatusPSResponse {
+  alarmId: number;
+  siteId: number;
+  siteName: string;
+  alarmName: string;
+  alarmType: number;
+  emails: string;
+  phones: string;
+  method: number;
+  pumpStatusOperationId: number;
+  monitoringHours: number;
+}
+
+export interface PumpStatusIdvResponse {
+  id: number;
+  alarmName: string;
+  siteId: number;
+  siteName: string;
+  directorateId: number;
+  pumpNumber: number;
+  monitoringHours: number;
+  emails: string;
+  phones: string;
+  method: string;
+  alarmType: string;
+  createdAt: string;
 }

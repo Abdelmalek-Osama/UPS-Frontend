@@ -1,18 +1,51 @@
+export enum DataLoggerType {
+  CR350 = 'CR350',
+  CR310 = 'CR310',
+  CR1000x = 'CR1000x',
+}
+
+export interface DataMapping {
+  tableName: string;
+  folder: string;
+  filename: string;
+  columnMapping: string;
+  headerRowsToSkip?: number;
+  priority?: number;
+  isActive?: boolean;
+}
+
+export interface FlowCalculation {
+  formulaConstants: string;
+  equationId: number;
+}
+
 export interface Site {
   id: number;
+  code?: string;
   name: string;
+  arabicName: string;
   siteType: 'WaterLevel' | 'Pumps';
-  directorateName: string;
+  canal?: string;
   latitude: number;
   longitude: number;
-  status: 'online' | 'offline';
-  flowCalcMethod?: 'Formula' | 'HQCurve';
-  code?: string;
-  canal?: string;
+  longitudeDirection?: 'E' | 'W';
+  latitudeDirection?: 'N' | 'S';
+  directorateName: string;
+  directorateArabicName: string;
   hasUS?: boolean;
   hasDS1?: boolean;
   hasDS2?: boolean;
   numPumps?: number;
+  simCardIP?: string;
+  simId?: string;
+  dataLoggerType?: DataLoggerType;
+  siteDataMappings?: DataMapping[];
+  directorateId?: number;
+  status?: 'online' | 'offline';
+  flowCalcMethod?: 'Formula' | 'HQCurve';
+  location?: string;
+  dataMappings?: DataMapping[];
+  flowCalculation?: FlowCalculation;
 }
 
 export interface SiteFilters {
