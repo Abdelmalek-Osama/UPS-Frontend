@@ -35,7 +35,11 @@ export function SensorStatusTable({ alarms, onEdit, onDelete, error }: SensorSta
             headerClassName: 'text-center',
             render: (alarm: SensorStatusResponse) => (
                 <div className="flex gap-2 justify-center">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
+                    <Button variant="ghost" size="sm" onClick={() => {
+                        console.log('Edit button clicked, alarm object:', alarm);
+                        console.log('alarm.alarmId:', alarm.alarmId);
+                        onEdit(alarm);
+                    }}>
                         <Edit className="h-4 w-4" />
                     </Button>
                     {onDelete && (
