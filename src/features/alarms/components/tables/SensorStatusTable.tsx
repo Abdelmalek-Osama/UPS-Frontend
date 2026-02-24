@@ -10,17 +10,18 @@ import {
 } from '../../../../components/ui/table';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
-import { Edit, Mail, Phone } from 'lucide-react';
+import { Edit, Mail, Phone, Trash2 } from 'lucide-react';
 import { SensorStatusResponse } from '../../types';
 import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers';
 
 interface SensorStatusResponseTableProps {
     alarms: SensorStatusResponse[];
     onEdit: (alarm: any) => void;
+    onDelete?: (alarmId: number) => void;
     error?: boolean;
 }
 
-export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusResponseTableProps) {
+export function SensorStatusTable({ alarms, onEdit, onDelete, error }: SensorStatusResponseTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -28,17 +29,28 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
 
    // Define columns in logical order (English/LTR)
     const columns = [
-        // {
-        //     key: 'actions',
-        //     header: t('common.actions'),
-        //     render: (alarm: SensorStatusResponse) => (
-        //         <div className={textAlignClass}>
-        //             <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
-        //                 <Edit className="h-4 w-4" />
-        //             </Button>
-        //         </div>
-        //     )
-        // },
+        {
+            key: 'actions',
+            header: t('common.actions'),
+            headerClassName: 'text-center',
+            render: (alarm: SensorStatusResponse) => (
+                <div className="flex gap-2 justify-center">
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    {onDelete && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onDelete(alarm.alarmId)}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+            )
+        },
         {
             key: 'emailRecipients',
             header: t('alarms.recipients'),
@@ -139,7 +151,10 @@ export function SensorStatusTable({ alarms, onEdit, error }: SensorStatusRespons
             <TableHeader>
                 <TableRow>
                     {displayColumns.map((column) => (
-                        <TableHead key={column.key} className={textAlignClass}>
+                        <TableHead 
+                            key={column.key} 
+                            className={(column as any).headerClassName || textAlignClass}
+                        >
                             {column.header}
                         </TableHead>
                     ))}

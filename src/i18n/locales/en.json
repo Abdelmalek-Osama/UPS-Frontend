@@ -398,6 +398,7 @@
     "addSensorStatusAlarm": "Add Sensor Status Alarm",
     "editSensorStatusAlarm": "Edit Sensor Status Alarm",
     "editSensorStatusAlarmDescription": "Edit the current sensor status alarm configuration",
+    "deleteSensorStatusAlarm": "Delete Sensor Status Alarm",
     "addPumpStatusPSAlarm": "Add Pump Status(PS) Alarm",
     "editPumpStatusPSAlarm": "Edit Pump Status(PS) Alarm",
     "addPumpStatusIdvAlarm": "Add Individual Pump Status Alarm",
