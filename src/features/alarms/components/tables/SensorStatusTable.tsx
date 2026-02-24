@@ -46,7 +46,16 @@ export function SensorStatusTable({ alarms, onEdit, onDelete, error }: SensorSta
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => onDelete(alarm.alarmId)}
+                            onClick={() => {
+                                console.log('Delete button clicked, alarm:', alarm);
+                                console.log('alarm.alarmId:', alarm.alarmId, 'alarm.id:', (alarm as any).id);
+                                const alarmId = alarm.alarmId || (alarm as any).id;
+                                if (alarmId) {
+                                    onDelete(alarmId);
+                                } else {
+                                    console.error('No alarm ID found for deletion');
+                                }
+                            }}
                             className="text-red-500 hover:text-red-700"
                         >
                             <Trash2 className="h-4 w-4" />
