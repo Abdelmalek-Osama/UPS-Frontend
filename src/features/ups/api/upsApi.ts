@@ -262,7 +262,7 @@ export const getMasterOverview = async (
 
 export const getSiteReadingsByCanals = async (
   selectedCanals: number,
-  mode: "Average" | "Exact",
+  mode: "Average" | "Exact" | "Latest",
   targetDateTime: string,
   startDate: string,
   endDate: string,
