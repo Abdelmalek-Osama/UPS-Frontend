@@ -88,7 +88,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         const { startDate, endDate } = getDateRange(filter, range);
         
         // Build date/time strings for API
-        const mode = (filter === "latest" || filter === "specific") ? "Exact" : "Average";
+        const mode = filter === "latest" ? "Latest" : (filter === "specific" ? "Exact" : "Average");
         
         // Time selection based on filter type
         let startTime: string | undefined;
@@ -126,49 +126,54 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         };
 
         if (active && response.isSuccess && response.data) {
-          
-          // Log pump stations specifically
-          const pumpStations = response.data.filter((s: any) => s.siteType === 1);
-          if (pumpStations.length > 0) {
-            console.log('=== Pump Stations Data ===');
-            pumpStations.forEach((ps: any) => {
-              console.log(`${ps.siteNameEn}:`, {
-                siteId: ps.siteId,
-                siteType: ps.siteType,
-                pumpExact: ps.pumpExact,
-                pumpAverage: ps.pumpAverage
-              });
-            });
-          }
-          
+          // For "Latest" mode, group readings by siteId to handle multiple readings per site
+          const processedData = mode === "Latest" 
+            ? (() => {
+                // Group readings by siteId
+                const grouped = (response.data || []).reduce((acc: Record<string, any[]>, site: any) => {
+                  const key = site.siteId.toString();
+                  if (!acc[key]) acc[key] = [];
+                  acc[key].push(site);
+                  return acc;
+                }, {});
+                
+                // For each site, pick the reading with the latest readingTime from waterExact
+                return Object.values(grouped).map((readings: any[]) => {
+                  if (readings.length === 1) return readings[0];
+                  
+                  // Sort by readingTime (latest first) and filter out readings without waterExact
+                  const validReadings = readings
+                    .filter(r => r.waterExact?.readingTime)
+                    .sort((a, b) => {
+                      const timeA = new Date(a.waterExact.readingTime).getTime();
+                      const timeB = new Date(b.waterExact.readingTime).getTime();
+                      return timeB - timeA; // Latest first
+                    });
+                  
+                  // Return the latest reading if available, otherwise the second to last
+                  return validReadings.length > 0 ? validReadings[0] : readings[0];
+                });
+              })()
+            : response.data;
+
           // Transform API response to GovernorateOverview structure
           const branches = [0, 1].map(canalId => {
-            const canalSites = (response.data || [])
+            const canalSites = (processedData || [])
               .filter((site: any) => {
                 const matches = site.canalId === canalId;
                 return matches;
               })
               .map((site): SiteSummary => {
                 // Get water data based on mode
-                const waterData = mode === "Exact" ? site.waterExact : site.waterAverage;
-                
-                // Log pump station data for debugging
-                if (site.siteType === 1) {
-                  console.log(`Pump Station ${site.siteNameEn}:`, {
-                    siteType: site.siteType,
-                    pumpExact: site.pumpExact,
-                    pumpAverage: site.pumpAverage,
-                    mode: mode
-                  });
-                }
+                const waterData = (mode === "Exact" || mode === "Latest") ? site.waterExact : site.waterAverage;
                 
                 // Extract values with proper field names based on mode
                 let upstream = 0;
                 let downstream = 0;
                 let flowRate = 0;
                 
-                if (mode === "Exact") {
-                  // Exact mode uses direct field names
+                if (mode === "Exact" || mode === "Latest") {
+                  // Exact and Latest modes use direct field names
                   upstream = (waterData as any)?.uswl ?? 0;
                   downstream = (waterData as any)?.dswL1 ?? 0;
                   flowRate = (waterData as any)?.calculatedFlow ?? 0;
@@ -206,7 +211,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                   siteConfiguration: site.siteConfiguration,
                   // Store pump data if available - check both exact and average modes
                   pumpData: (() => {
-                    if (mode === "Exact" && site.pumpExact) {
+                    if ((mode === "Exact" || mode === "Latest") && site.pumpExact) {
                       return {
                         readingTime: site.pumpExact.readingTime,
                         flows: [
