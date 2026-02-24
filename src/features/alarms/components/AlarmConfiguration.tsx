@@ -766,12 +766,17 @@ export function AlarmConfiguration() {
       const result = await deleteSensorStatusAlarm(sensorStatusAlarmToDelete);
       if (result.success) {
         toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeleteSensorStatusOpen(false);
+        setSensorStatusAlarmToDelete(null);
       } else {
         toast.error(result.message || t('errors.deleteFailed'));
       }
     } catch (error: any) {
       console.error('Error deleting sensor status alarm:', error);
       toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeleteSensorStatusOpen(false);
+      setSensorStatusAlarmToDelete(null);
     }
   };
 
