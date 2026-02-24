@@ -63,7 +63,7 @@ export interface DashboardStats {
   connectedSites: number;
   activeAlarms: number;
   criticalAlarms: number;
-  warningAlarms: number;
+  crisisAlarms: number;
   totalFlow: number;
   flowChange: number;
   activeStations: number;

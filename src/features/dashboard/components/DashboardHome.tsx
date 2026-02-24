@@ -100,7 +100,13 @@ export function DashboardHome() {
           <CardContent>
             <div className="text-2xl">{stats.activeAlarms}</div>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="text-red-600">{stats.criticalAlarms} {t('dashboard.critical')}</span> • <span className="text-yellow-600">{stats.warningAlarms} {t('dashboard.warnings')}</span>
+              <span className="text-red-600">
+                {stats.crisisAlarms} {t('alarms.crisis')}
+              </span>{' '}
+              •{' '}
+              <span className="text-yellow-600">
+                {stats.criticalAlarms} {t('alarms.critical')}
+              </span>
             </p>
           </CardContent>
         </Card>

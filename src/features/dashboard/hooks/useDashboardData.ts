@@ -32,7 +32,7 @@ export function useDashboardData() {
     connectedSites: 45,
     activeAlarms: 12,
     criticalAlarms: 3,
-    warningAlarms: 9,
+    crisisAlarms: 9,
     totalFlow: 1245,
     flowChange: 8.5,
     activeStations: 38,
@@ -269,6 +269,8 @@ export function useDashboardData() {
         totalUsers: number;
         activeAlarmEvents: number;
         sitesPerDirectorate: DirectorateStat[];
+        unresolvedCriticalAlarms: number;
+        unresolvedCrisisAlarms: number;
       }
 
       const response = await get<StatisticsResponse>('/v1/LandingPage/statistics');
@@ -286,7 +288,9 @@ export function useDashboardData() {
           totalSites: response.totalSites,
           totalDirectorates: response.totalDirectorates,
           totalUsers: response.totalUsers,
-          activeAlarms: response.activeAlarmEvents,
+          activeAlarms: response.activeAlarmEvents ??  prev.activeAlarms,
+          criticalAlarms: response.unresolvedCriticalAlarms ?? prev.criticalAlarms,
+          crisisAlarms: response.unresolvedCrisisAlarms ?? prev.crisisAlarms,
           activeStations: activeSitesCount,
           totalStations: response.totalSites,
           connectedSites: activeSitesCount,
@@ -322,7 +326,7 @@ export function useDashboardData() {
         connectedSites: 0,
         activeAlarms: 0,
         criticalAlarms: 0,
-        warningAlarms: 0,
+        crisisAlarms: 0,
         totalFlow: 0,
         flowChange: 0,
         activeStations: 0,
