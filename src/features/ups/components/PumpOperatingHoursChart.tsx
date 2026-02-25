@@ -22,20 +22,22 @@ const PUMP_COLORS = [
 
 export function PumpOperatingHoursChart({ data, numPumps }: PumpOperatingHoursChartProps) {
   const { t } = useTranslation();
+  
+  // Helper function to format date without timezone shifts
+  const formatDateTimeLabel = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  };
+  
   // Transform data to include pump operating hours
   const chartData = data.map((point) => {
-    const date = new Date(point.timestamp);
-const formattedTime = date.toLocaleString('en-US', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true
-});
-
     const dataPoint: any = {
-      timestamp: formattedTime,
+      timestamp: formatDateTimeLabel(point.timestamp),
       fullTimestamp: point.timestamp,
     };
 
@@ -125,6 +127,7 @@ const formattedTime = date.toLocaleString('en-US', {
                 angle={-45}
                 textAnchor="end"
                 height={80}
+                interval={0}
                 tick={{ fontSize: 8, direction: 'ltr' }}
                 tickMargin={0}
               />

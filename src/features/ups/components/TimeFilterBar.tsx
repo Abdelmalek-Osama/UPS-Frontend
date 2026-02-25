@@ -68,7 +68,7 @@ export function TimeFilterBar({
             <SelectContent>
               {showLatestOption && <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>}
               <SelectItem value="24h">{t("ups.filters.last24h")}</SelectItem>
-              <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem>
+              {/* <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem> */}
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
