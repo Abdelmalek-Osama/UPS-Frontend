@@ -134,6 +134,7 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
                   angle={-45}
                   textAnchor="end"
                   height={100}
+                  interval={0}
                   tickMargin={0} />
               <YAxis 
                  tick={{ fontSize: 8, direction: 'ltr' }} 

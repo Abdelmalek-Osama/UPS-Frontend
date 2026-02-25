@@ -31,6 +31,17 @@ const formatNumberWestern = (value: number): string => {
   return value.toLocaleString('en-US', { useGrouping: false });
 };
 
+// Helper function to format date without timezone shifts
+const formatDateTimeLabel = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}/${month}/${day} ${hours}:${minutes}`;
+};
+
 const WaterLevelsTooltip = ({ active, payload, label, t }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
@@ -167,19 +178,9 @@ export function SitePage() {
     
     // Transform API pump details to chart format
     const transformed = data.pumpFlowTimeSeries.map(detail => {
-      const date = new Date(detail.timestamp);
-            // Format date as YYYY/MM/DD HH:mm
-      const formattedTime = date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
       return {
         timestamp: detail.timestamp,
-        label: formattedTime,
+        label: formatDateTimeLabel(detail.timestamp),
         pump1: detail.p1Flow,
         pump2: detail.p2Flow,
         pump3: detail.p3Flow,
@@ -227,24 +228,13 @@ export function SitePage() {
   // Use API data directly without calculations
   const chartSeries = useMemo(() => {
     return data.series.map(point => {
-      const date = new Date(point.timestamp);
-      // Format date as YYYY/MM/DD HH:mm
-    const formattedTime = date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-      
       return {
         timestamp: point.timestamp,
         upstream: point.upstream,
         downstream: point.downstream,
         batteryVoltage: point.batteryVoltage,
         flowRate: point.flowRate,
-        label: formattedTime
+        label: formatDateTimeLabel(point.timestamp)
       };
     });
   }, [data.series]);
@@ -349,7 +339,7 @@ export function SitePage() {
                   angle={-45}
                   textAnchor="end"
                   height={100}
-                  interval={Math.max(0, Math.floor(chartSeries.length / 5) - 1)}
+                  interval={0}
                   tickMargin={5}
                 />
                 <YAxis 
@@ -433,7 +423,7 @@ export function SitePage() {
                         angle={-45}
                         textAnchor="end"
                         height={100}
-                        interval={Math.max(0, Math.floor(chartData.length / 5) - 1)}
+                        interval={0}
                         tickMargin={5}
                       />
                       <YAxis 
