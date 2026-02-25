@@ -105,7 +105,7 @@
     "totalUsers": "Total Users",
     "systemUsers": "System Users",
     "allregions": "All Regions Active",
-    "activeAlarms": "Active Alarms",
+    "activeAlarms": "Active Alarms (Last 24 Hours)",
     "totalFlow": "Total Flow",
     "activeStations": "Active Stations",
     "flowInLast24Hours": "Flow in Last 24 Hours",

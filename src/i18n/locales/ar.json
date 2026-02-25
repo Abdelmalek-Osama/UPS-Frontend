@@ -105,7 +105,7 @@
     "totalUsers": "إجمالي المستخدمين",
     "systemUsers": "مستخدمو النظام",
     "allregions": "جميع المناطق نشطة",
-    "activeAlarms": "التنبيهات النشطة",
+    "activeAlarms": "التنبيهات النشطة (آخر 24 ساعة)",
     "totalFlow": "إجمالي ",
     "activeStations": "المحطات النشطة",
     "flowInLast24Hours": "التدفق خلال 24 ساعة",
