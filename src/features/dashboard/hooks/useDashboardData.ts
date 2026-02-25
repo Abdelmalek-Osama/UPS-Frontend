@@ -222,16 +222,21 @@ export function useDashboardData() {
         if (response.isSuccess && response.data) {
           // Transform API data to chart format
           const transformedData = response.data.map((item: WaterflowDataPoint) => {
-            // Parse timestamp and format to HH:mm
+            // Parse timestamp and format to show date and time
             const date = new Date(item.timestamp);
-            const time = date.toLocaleTimeString('ar-EG', {
+            const dateStr = date.toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit'
+            });
+            const timeStr = date.toLocaleTimeString('en-US', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
             });
+            const dateTime = `${dateStr} ${timeStr}`;
 
             return {
-              time,
+              time: dateTime,
               flow: item.value
             };
           });

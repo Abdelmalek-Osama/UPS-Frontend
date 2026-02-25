@@ -153,17 +153,23 @@ export function DashboardHome() {
               allowClear={false}
             />
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
+          <CardContent className="pb-16 overflow-visible">
+            <ResponsiveContainer width="98%" height={250}>
+              <LineChart data={flowData} margin={{ top: 5, bottom: 5, left: 10, right: 50 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
+                <XAxis 
+                  dataKey="time" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  tick={{ fontSize: 11, dy: 40 }}
+                  interval="preserveStartEnd"
+                />
                 <YAxis
                   label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy: -20 }}
                   tick={{ dx: -25 }}
                 />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                 <Line type="monotone" dataKey="flow" stroke="#2563eb" name={t('readings.totalFlow')} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
