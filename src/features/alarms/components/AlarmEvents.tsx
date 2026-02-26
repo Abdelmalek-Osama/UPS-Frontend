@@ -279,7 +279,6 @@ const params: Record<string, string | number | boolean> = {
       const result = getEventsPayload(response);
 
 const mappedEvents: AlarmEvent[] = result.events.map((event) => {
-        const isCommunicationLoss = event.fieldName.toLowerCase().replace(/[_\s]/g, '').includes('communicationloss');
         const baseSeverity = severityMap[event.severity ?? ''] ?? 'info';
         
         return {
@@ -290,7 +289,7 @@ const mappedEvents: AlarmEvent[] = result.events.map((event) => {
           fieldName: event.fieldName,
           value: event.actualValue ?? undefined,
           thresholdValue: event.thresholdValue ?? undefined,
-          severity: isCommunicationLoss ? 'info' : baseSeverity,
+          severity: baseSeverity,
           colorCode: event.colorCode ?? '#d1d5db',
           triggeredAt: event.triggeredAt,
           message: event.message,
