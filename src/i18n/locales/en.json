@@ -699,7 +699,7 @@
     "emailTrimmed": "Email cannot have leading or trailing spaces",
     "emailNoSpaces": "Email cannot contain spaces",
     "emailInvalid": "Please enter a valid email address",
-    "emailDomainNotSupported": "Email domain not supported. Please use a common email provider (Gmail, Outlook, Yahoo, etc.)",
+    "emailDomainNotSupported": "Email domain not supported. Please use a common email provider (Gmail, Outlook, Yahoo, etc.) or UPS domain",
     "passwordRequired": "Password is required",
     "passwordMinLength": "Password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match",
