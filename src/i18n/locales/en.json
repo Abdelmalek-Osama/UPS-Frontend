@@ -65,7 +65,8 @@
     "details": "Details",
     "selectDirectorate": "Filter by Directorate",
     "message": "Message",
-    "serverError": "No response from server. Please check your internet connection."
+    "serverError": "No response from server. Please check your internet connection.",
+    "hours": "hrs"
   },
   "buttons": {
     "save": "Save",
@@ -1000,7 +1001,9 @@
       "filterBySite": "Filter by Site",
       "allSites": "All Sites",
       "sitesSelected": "sites selected",
-      "selectSites": "Select Sites"
+      "selectSites": "Select Sites",
+      "monthlyPumpTimes": "Monthly Pump Operating Times (Hours)",
+      "monthlyPumpFlows": "Monthly Average Pump Flows (m³/s)"
     },
     "master": {
       "title": "Master General View",
