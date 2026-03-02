@@ -1002,8 +1002,8 @@
       "allSites": "All Sites",
       "sitesSelected": "sites selected",
       "selectSites": "Select Sites",
-      "monthlyPumpTimes": "Monthly Pump Operating Times (Hours)",
-      "monthlyPumpFlows": "Monthly Average Pump Flows (m³/s)"
+      "monthlyPumpTimes": "Pump Operating Times Sum (Hours)",
+      "monthlyPumpFlows": "Pump Flows Sum (m³/s)"
     },
     "master": {
       "title": "Master General View",

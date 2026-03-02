@@ -998,8 +998,8 @@
       "allSites": "جميع المواقع",
       "sitesSelected": "مواقع محددة",
       "selectSites": "اختر المواقع",
-      "monthlyPumpTimes": "ساعات تشغيل المضخات الشهرية",
-      "monthlyPumpFlows": "متوسط تدفقات المضخات الشهرية (م³/ث)"
+      "monthlyPumpTimes": "مجموع ساعات تشغيل المضخات",
+      "monthlyPumpFlows": "مجموع تدفقات المضخات (م³/ث)"
     },
     "master": {
       "title": "العرض العام للمشروع",
