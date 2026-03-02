@@ -319,6 +319,32 @@ export function DirectoratePage() {
     );
   };
 
+  // Get all pump sites for the summary tables
+  // NOTE: This includes ALL sites with pumps from both branches, not just MAIN_REGULATORS
+  // The MAIN_REGULATORS constant is only used for the USWL/DSWL chart, not these tables
+  const getPumpSites = () => {
+    let allSites: SiteSummary[] = [];
+    
+    // Collect ALL sites from all branches (not limited to MAIN_REGULATORS)
+    orderedBranches.forEach(branch => {
+      allSites = allSites.concat(branch.sites);
+    });
+
+    // Filter by directorate if selected
+    if (selectedDirectorateIds.length > 0) {
+      const selectedDirIds = selectedDirectorateIds.map(id => parseInt(id));
+      allSites = allSites.filter(site => site.directorateId !== undefined && selectedDirIds.includes(site.directorateId));
+    }
+
+    // Filter by selected sites if sites are selected
+    if (selectedSiteIds.length > 0) {
+      allSites = allSites.filter(site => selectedSiteIds.includes(site.siteId));
+    }
+
+    // Only include sites with pumps (this gets ALL pump sites, not just the main ones)
+    return allSites.filter(site => (site as any).siteConfiguration?.numPumps > 0);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Breadcrumb */}
@@ -532,9 +558,144 @@ export function DirectoratePage() {
           {orderedBranches.map((branch) => {
             // Map branch names to tab values
             const tabValue = branch.name === "Ibrahimiya" ? "ibrahimia" : "bahr-youssef";
+            const isBahrYoussef = branch.name === "Bahr Youssef";
+            
             return (
               <TabsContent key={branch.name} value={tabValue} className="space-y-6 mt-6">
                 {renderBranchSection(branch.name, branch.sites)}
+                
+                {/* Pump Monthly Average Tables - Only for Bahr Youssef */}
+                {isBahrYoussef && (
+                  <>
+                    {/* Pump Operating Times Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                          {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Sum (Hours)"}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="text-center font-semibold">
+                                  {t("ups.directorate.siteName") || "Site Name"}
+                                </TableHead>
+                                {[1, 2, 3, 4, 5, 6].map(pumpNum => (
+                                  <TableHead key={pumpNum} className="text-center font-semibold min-w-[100px]">
+                                    {t("ups.directorate.pump")} {pumpNum}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {getPumpSites().map((site: SiteSummary) => {
+                                const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                                const pumpTimes = (site as any).pumpData?.operatingTimes || [];
+                                return (
+                                  <TableRow key={site.siteId}>
+                                    <TableCell className="font-medium text-center">
+                                      {t('_rtl') === 'rtl' 
+                                        ? (site.siteArabicName || site.siteName)
+                                        : site.siteName
+                                      }
+                                    </TableCell>
+                                    {[1, 2, 3, 4, 5, 6].map(pumpNum => {
+                                      const pumpExists = pumpNum <= numPumps;
+                                      const timeValue = pumpTimes[pumpNum - 1];
+                                      const hasData = timeValue !== undefined && timeValue !== null;
+                                      
+                                      return (
+                                        <TableCell key={pumpNum} className="text-center">
+                                          {!pumpExists ? (
+                                            <span className="text-gray-400">
+                                              {t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'}
+                                            </span>
+                                          ) : hasData ? (
+                                            <span className="text-blue-600 font-medium">
+                                              {timeValue.toFixed(0)} {t("common.hours") || "hrs"}
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400">-</span>
+                                          )}
+                                        </TableCell>
+                                      );
+                                    })}
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Pump Flow Rates Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                          {t("ups.directorate.monthlyPumpFlows") || "Pump Flows Sum (m³/s)"}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="text-center font-semibold">
+                                  {t("ups.directorate.siteName") || "Site Name"}
+                                </TableHead>
+                                {[1, 2, 3, 4, 5, 6].map(pumpNum => (
+                                  <TableHead key={pumpNum} className="text-center font-semibold min-w-[100px]">
+                                    {t("ups.directorate.pump")} {pumpNum}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {getPumpSites().map((site: SiteSummary) => {
+                                const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                                const pumpFlows = (site as any).pumpData?.flows || [];
+                                return (
+                                  <TableRow key={site.siteId}>
+                                    <TableCell className="font-medium text-center">
+                                      {t('_rtl') === 'rtl' 
+                                        ? (site.siteArabicName || site.siteName)
+                                        : site.siteName
+                                      }
+                                    </TableCell>
+                                    {[1, 2, 3, 4, 5, 6].map(pumpNum => {
+                                      const pumpExists = pumpNum <= numPumps;
+                                      const flowValue = pumpFlows[pumpNum - 1];
+                                      const hasData = flowValue !== undefined && flowValue !== null;
+                                      
+                                      return (
+                                        <TableCell key={pumpNum} className="text-center">
+                                          {!pumpExists ? (
+                                            <span className="text-gray-400">
+                                              {t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'}
+                                            </span>
+                                          ) : hasData ? (
+                                            <span className="text-blue-600 font-medium">
+                                              {flowValue.toFixed(2)}
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400">-</span>
+                                          )}
+                                        </TableCell>
+                                      );
+                                    })}
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </TabsContent>
             );
           })}
