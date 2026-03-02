@@ -68,7 +68,7 @@ export function TimeFilterBar({
             <SelectContent>
               {showLatestOption && <SelectItem value="latest">{t("ups.filters.latest")}</SelectItem>}
               <SelectItem value="24h">{t("ups.filters.last24h")}</SelectItem>
-              {/* <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem> */}
+              <SelectItem value="specific">{t("ups.filters.specific")}</SelectItem>
               <SelectItem value="week">{t("ups.filters.week")}</SelectItem>
               <SelectItem value="month">{t("ups.filters.month")}</SelectItem>
               <SelectItem value="custom">{t("ups.filters.custom")}</SelectItem>
@@ -82,13 +82,21 @@ export function TimeFilterBar({
                 value={range.targetDate}
                 onChange={(date) => onRangeChange({ ...range, targetDate: date })}
               />
-              <Input
-                type="time"
+              <Select
                 value={range.targetTime || ""}
-                onChange={(e) => onRangeChange({ ...range, targetTime: e.target.value })}
-                className="w-32"
-                required
-              />
+                onValueChange={(hour) => onRangeChange({ ...range, targetTime: hour })}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder={t("ups.filters.selectHour")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <SelectItem key={i} value={String(i).padStart(2, '0') + ':00'}>
+                      {String(i).padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
