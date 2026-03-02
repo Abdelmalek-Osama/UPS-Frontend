@@ -900,6 +900,7 @@
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
       "selectDate": "اختر التاريخ",
+      "selectHour": "اختر الساعة",
       "hourlyData": "بيانات ساعية",
       "dailyAverages": "متوسطات يومية",
       "latestReading": "آخر قراءة"
@@ -998,8 +999,8 @@
       "allSites": "جميع المواقع",
       "sitesSelected": "مواقع محددة",
       "selectSites": "اختر المواقع",
-      "monthlyPumpTimes": "مجموع ساعات تشغيل المضخات",
-      "monthlyPumpFlows": "مجموع تدفقات المضخات (م³/ث)"
+      "monthlyPumpTimes": "متوسط ساعات تشغيل المضخات",
+      "monthlyPumpFlows": "متوسط تدفقات المضخات (م³/ث)"
     },
     "master": {
       "title": "العرض العام للمشروع",

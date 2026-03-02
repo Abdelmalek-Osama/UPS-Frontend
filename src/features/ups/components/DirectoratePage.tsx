@@ -24,7 +24,7 @@ import type { CalculationOptions } from "./TimeFilterBar";
 // Main regulators for each canal (which sites to show in USWL/DSWL chart)
 // Order is now determined by canalOrder from backend, not by array position
 const MAIN_REGULATORS = {
-  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1"],
+  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1", "58"],
   "Bahr Youssef": ["7", "6", "20", "5", "19", "4", "3", "2"]
 };
 
@@ -33,7 +33,7 @@ export function DirectoratePage() {
   const navigate = useNavigate();
   const [selectedDirectorateIds, setSelectedDirectorateIds] = useState<string[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  const [filter, setFilter] = useState<TimeFilter>("week");
+  const [filter, setFilter] = useState<TimeFilter>("latest");
   const [range, setRange] = useState<DateRange>({});
   const [calculations, setCalculations] = useState<CalculationOptions>({
     levels: "average",
@@ -571,7 +571,7 @@ export function DirectoratePage() {
                     <Card>
                       <CardHeader>
                         <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                          {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Sum (Hours)"}
+                          {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -635,7 +635,7 @@ export function DirectoratePage() {
                     <Card>
                       <CardHeader>
                         <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                          {t("ups.directorate.monthlyPumpFlows") || "Pump Flows Sum (m³/s)"}
+                          {t("ups.directorate.monthlyPumpFlows") || "Pump Flows Avg (m³/s)"}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
