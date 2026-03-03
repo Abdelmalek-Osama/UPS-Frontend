@@ -97,10 +97,10 @@ export interface SiteSummary {
   siteArabicName?: string;
   position: number; // South-to-north ordering
   canalOrder?: number; // Order within the canal for bar chart display
-  upstream: number;
-  downstream: number;
+  upstream: number | null;
+  downstream: number | null;
   batteryVoltage: number;
-  flowRate: number;
+  flowRate: number | null;
   status: SiteStatus;
   lastReading: Date | null;
   coordinates: [number, number];

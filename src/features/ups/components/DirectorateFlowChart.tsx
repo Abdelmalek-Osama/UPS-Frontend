@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 interface FlowChartDataPoint {
   id: string;
   name: string;
-  calculatedFlow: number;
+  calculatedFlow: number | null;
 }
 
 interface DirectorateFlowChartProps {

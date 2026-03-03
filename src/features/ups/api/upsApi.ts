@@ -1,4 +1,5 @@
 import { downloadFile, get, post } from "../../../shared/utils/apiService";
+import { formatDateForApi, formatDateOnlyForApi } from "../../../lib/utils";
 import type {
   DateRange,
   LandingOverview,
@@ -174,15 +175,15 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   };
 
   if (range?.start) {
-    params.startDate = range.start.toISOString();
+    params.startDate = formatDateForApi(range.start);
   }
 
   if (range?.end) {
-    params.endDate = range.end.toISOString();
+    params.endDate = formatDateForApi(range.end);
   }
 
   if (range?.targetDate) {
-    params.targetDate = range.targetDate.toISOString();
+    params.targetDate = formatDateForApi(range.targetDate);
   }
 
   if (range?.targetTime) {
@@ -217,10 +218,10 @@ export const getSiteDashboardData = async (
     params.IsLast30Days = isLast30Days.toString();
   }
   if (startDate) {
-    params.StartDate = startDate.toISOString().split('T')[0]; // Format as date only
+    params.StartDate = formatDateOnlyForApi(startDate);
   }
   if (endDate) {
-    params.EndDate = endDate.toISOString().split('T')[0]; // Format as date only
+    params.EndDate = formatDateOnlyForApi(endDate);
   }
 
   const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
@@ -311,13 +312,13 @@ export const exportReport = async (
   });
 
   if (range?.start) {
-    params.append("startDate", range.start.toISOString());
+    params.append("startDate", formatDateForApi(range.start));
   }
   if (range?.end) {
-    params.append("endDate", range.end.toISOString());
+    params.append("endDate", formatDateForApi(range.end));
   }
   if (range?.targetDate) {
-    params.append("targetDate", range.targetDate.toISOString());
+    params.append("targetDate", formatDateForApi(range.targetDate));
   }
   if (range?.targetTime) {
     params.append("targetTime", range.targetTime);
@@ -329,7 +330,9 @@ export const exportReport = async (
     params.append("governorateId", governorateId);
   }
 
-  const filename = `ups-${view}-report-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const filename = `ups-${view}-report-${dateStr}.${format === "pdf" ? "pdf" : "xlsx"}`;
   await downloadFile(`${UPS_VIEWER_BASE}/reports/export?${params.toString()}`, filename);
 };
 
@@ -346,13 +349,13 @@ export const exportFullData = async (
   });
 
   if (range?.start) {
-    params.append("startDate", range.start.toISOString());
+    params.append("startDate", formatDateForApi(range.start));
   }
   if (range?.end) {
-    params.append("endDate", range.end.toISOString());
+    params.append("endDate", formatDateForApi(range.end));
   }
   if (range?.targetDate) {
-    params.append("targetDate", range.targetDate.toISOString());
+    params.append("targetDate", formatDateForApi(range.targetDate));
   }
   if (range?.targetTime) {
     params.append("targetTime", range.targetTime);
@@ -361,7 +364,9 @@ export const exportFullData = async (
     params.append("siteIds", siteIds.join(","));
   }
 
-  const filename = `ups-full-data-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const filename = `ups-full-data-${dateStr}.${format === "pdf" ? "pdf" : "xlsx"}`;
   await downloadFile(`${UPS_VIEWER_BASE}/reports/export-full?${params.toString()}`, filename);
 };
 
@@ -405,10 +410,10 @@ export const getAlarmEventsBySiteAndDateRange = async (
   const params: Record<string, string> = {};
 
   if (startDate) {
-    params.startDate = startDate.toISOString().split('T')[0]; // Format as date only
+    params.startDate = formatDateOnlyForApi(startDate);
   }
   if (endDate) {
-    params.endDate = endDate.toISOString().split('T')[0]; // Format as date only
+    params.endDate = formatDateOnlyForApi(endDate);
   }
 
   try {

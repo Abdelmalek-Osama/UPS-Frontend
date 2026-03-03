@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 interface ChartDataPoint {
   id: string;
   name: string;
-  uswl: number;
-  dswl: number;
+  uswl: number | null;
+  dswl: number | null;
 }
 
 interface DirectorateWLChartProps {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../../shared/contexts/AuthContext";
 import { getSiteReadingsByCanals } from "../api/upsApi";
+import { formatDateForApi } from "../../../lib/utils";
 import type { DateRange, GovernorateOverview, TimeFilter, SiteSummary } from "../types";
 
 const toGovernorateName = (value: string) => {
@@ -51,13 +52,14 @@ const getDateRange = (filter: TimeFilter, range?: DateRange): { startDate: Date;
 };
 
 const buildDateTime = (date: Date, time?: string): string => {
-  // Use local date components to avoid timezone conversion issues
+  // Use local date components to build date string without timezone indicator
+  // This ensures "today" means today in the user's local timezone
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const dateStr = `${year}-${month}-${day}`;
   const timeStr = time || "00:00";
-  return `${dateStr}T${timeStr}:00.000Z`;
+  return `${dateStr}T${timeStr}:00`;
 };
 
 export const useGovernorateOverview = (governorateId: string, filter: TimeFilter, range?: DateRange) => {
@@ -94,7 +96,14 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
         let startTime: string | undefined;
         let endTime: string | undefined;
         
-        if (filter === "specific") {
+        if (filter === "latest") {
+          // For latest mode, use current time
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          startTime = `${hours}:${minutes}`;
+          endTime = `${hours}:${minutes}`;
+        } else if (filter === "specific") {
           // Use the specific date and time selected by the user
           startTime = range?.targetTime || "00:00";
           endTime = range?.targetTime || "00:00";
@@ -103,7 +112,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
           startTime = range?.startTime || "00:00";
           endTime = range?.endTime || "23:59";
         } else {
-          // For latest, week, month
+          // For week, month
           startTime = "00:00";
           endTime = "23:59";
         }
@@ -184,8 +193,14 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                   flowRate = (waterData as any)?.avgCalculatedFlow ?? 0;
                 }
 
-                // For average mode, check if data exists
-                const hasData = mode === "Average" ? (waterData as any)?.count > 0 : true;
+                // Check if data exists based on mode
+                let hasData = false;
+                if (mode === "Average") {
+                  hasData = (waterData as any)?.count > 0;
+                } else {
+                  // For Latest/Exact modes, check if waterData exists and has valid reading
+                  hasData = waterData != null && (waterData as any)?.readingTime != null;
+                }
                 
                 // Get last reading time from waterData
                 const readingTimeStr = (waterData as any)?.readingTime;
@@ -197,10 +212,10 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                   siteArabicName: site.siteNameAr,
                   position: site.siteId, // Use siteId as position, could be customized
                   canalOrder: site.canalOrder, // Order within the canal for bar chart display
-                  upstream: hasData ? upstream : 0,
-                  downstream: hasData ? downstream : 0,
+                  upstream: hasData ? upstream : null,
+                  downstream: hasData ? downstream : null,
                   batteryVoltage: 0, // Not provided by API
-                  flowRate: hasData ? flowRate : 0,
+                  flowRate: hasData ? flowRate : null,
                   status: site.status.toLowerCase() === "active" ? "active" : "inactive",
                   lastReading: lastReadingTime,
                   coordinates: [0, 0], // Not provided by API
@@ -226,6 +241,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                           site.pumpExact.p9_Flow,
                           site.pumpExact.p10_Flow,
                         ].filter(f => f !== null && f !== undefined && f > 0),
+                        totalFlow: site.pumpExact.totalFlow,
                       };
                     } else if (mode === "Average" && site.pumpAverage) {
                       // Handle average mode pump data if available
@@ -243,8 +259,9 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
                         pumpAvg.avgP10_Flow,
                       ].filter(f => f !== null && f !== undefined && f > 0);
                       return flows.length > 0 ? {
-                        readingTime: new Date().toISOString(),
-                        flows
+                        readingTime: formatDateForApi(new Date()),
+                        flows,
+                        totalFlow: pumpAvg.avgTotalFlow,
                       } : undefined;
                     }
                     return undefined;
