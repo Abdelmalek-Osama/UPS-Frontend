@@ -54,7 +54,8 @@
     "filters": "Filters",
     "clearFilters": "Clear Filters",
     "message": "Message",
-    "serverError": "No response from server. Please check your internet connection."
+    "serverError": "No response from server. Please check your internet connection.",
+    "optional": "Optional"
   },
   "buttons": {
     "save": "Save",

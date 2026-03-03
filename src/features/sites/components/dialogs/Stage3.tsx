@@ -190,18 +190,12 @@ export default function Stage3({ data, onChange, onValidationChange }: TabProps)
       return;
     }
 
-    // Filter out any timestamp mappings and check if all remaining column mappings are filled
+    // Filter out timestamp mappings and empty values (optional fields)
     const filteredMappings = Object.entries(columnMappings)
-      .filter(([key]) => !key.toLowerCase().includes('timestamp'))
+      .filter(([key, value]) => !key.toLowerCase().includes('timestamp') && value.trim() !== '')
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {} as Record<string, string>);
-    
-    const allFilled = Object.values(filteredMappings).every((val: string) => val.trim() !== '');
-    if (!allFilled) {
-      alert('Please fill in all column mappings');
-      return;
-    }
 
-    // Convert columnMappings to "key1:value1,key2:value2" format
+    // Convert columnMappings to "key1:value1,key2:value2" format (only non-empty fields)
     const columnMappingString = Object.entries(filteredMappings)
       .map(([key, value]) => `${key}:${value}`)
       .join(',');
@@ -227,24 +221,15 @@ export default function Stage3({ data, onChange, onValidationChange }: TabProps)
     onChange('dataMappings', updatedMappings);
   };
 
-  // Check if assignment form is complete (all required fields filled)
+  // Check if assignment form is complete (required fields: table, folder, filename)
+  // Column mappings are completely optional
   const isAssignmentFormComplete = useMemo(() => {
     const hasSelectedTable = selectedTableForForm !== '';
     const hasFolder = mappingForm.folder && mappingForm.folder.trim() !== '';
     const hasFilename = mappingForm.filename && mappingForm.filename.trim() !== '';
-    
-    // Check if all column mappings are filled
-    let allColumnsFilled = true;
-    if (selectedTableForForm && currentTableColumns.length > 0) {
-      const filteredMappings = Object.entries(columnMappings)
-        .filter(([key]) => !key.toLowerCase().includes('timestamp'))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {} as Record<string, string>);
-      
-      allColumnsFilled = Object.values(filteredMappings).every((val: string) => val.trim() !== '');
-    }
 
-    return hasSelectedTable && hasFolder && hasFilename && allColumnsFilled;
-  }, [selectedTableForForm, mappingForm.folder, mappingForm.filename, columnMappings, currentTableColumns]);
+    return hasSelectedTable && hasFolder && hasFilename;
+  }, [selectedTableForForm, mappingForm.folder, mappingForm.filename]);
 
   // Check if max mappings reached - can add more if there are available table options
   const canAddMore = availableTableOptions.length > 0;
@@ -328,7 +313,7 @@ export default function Stage3({ data, onChange, onValidationChange }: TabProps)
                     </span>
                     <div className="flex-1 space-y-1">
                       <Label className="text-xs text-gray-600">
-                        {t('sites.stage3.userFieldLabel', 'Name from File')}
+                        {t('sites.stage3.userFieldLabel', 'Name from File')} <span className="text-gray-400">({t('common.optional', 'Optional')})</span>
                       </Label>
                       <Input
                         placeholder={t('sites.stage3.userFieldPlaceholder', 'Enter field name')}
