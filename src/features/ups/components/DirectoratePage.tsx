@@ -147,8 +147,11 @@ export function DirectoratePage() {
       let flowValue = site.flowRate;
       
       // If site has pumps, use total pump flow instead of calculated flow
-      if (numPumps > 0 && (site as any).pumpData?.flows) {
-        flowValue = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
+      if (numPumps > 0 && (site as any).pumpData) {
+        // Use totalFlow from API if available, otherwise sum the flows
+        flowValue = (site as any).pumpData.totalFlow != null
+          ? (site as any).pumpData.totalFlow
+          : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
       }
       
       return {
@@ -248,32 +251,35 @@ export function DirectoratePage() {
                           {site.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">{site.upstream > 0 ? site.upstream.toFixed(2) : "-"}</TableCell>
-                      <TableCell className="text-center">{site.downstream > 0 ? site.downstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-center">{site.upstream != null ? site.upstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-center">{site.downstream != null ? site.downstream.toFixed(2) : "-"}</TableCell>
                       <TableCell className="text-blue-600 font-medium text-center">
                         {(() => {
                           const numPumps = (site as any).siteConfiguration?.numPumps || 0;
-                          if (numPumps > 0 && (site as any).pumpData?.flows) {
-                            const totalFlow = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
-                            return totalFlow > 0 ? totalFlow.toFixed(1) : "-";
+                          if (numPumps > 0 && (site as any).pumpData) {
+                            // Use totalFlow from API if available, otherwise sum the flows
+                            const totalFlow = (site as any).pumpData.totalFlow != null
+                              ? (site as any).pumpData.totalFlow
+                              : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                            return totalFlow != null ? totalFlow.toFixed(1) : "-";
                           }
-                          return site.flowRate > 0 ? site.flowRate.toFixed(1) : "-";
+                          return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
                         })()}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
                         {site.lastReading ? (() => {
                           const date = new Date(site.lastReading);
-                          const year = date.getUTCFullYear();
-                          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                          const day = String(date.getUTCDate()).padStart(2, '0');
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
                           return `${year}-${month}-${day}`;
                         })() : "-"}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
                         {site.lastReading ? (() => {
                           const date = new Date(site.lastReading);
-                          const hours = String(date.getUTCHours()).padStart(2, '0');
-                          const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                          const hours = String(date.getHours()).padStart(2, '0');
+                          const minutes = String(date.getMinutes()).padStart(2, '0');
                           return `${hours}:${minutes}`;
                         })() : "-"}
                       </TableCell>
@@ -726,11 +732,11 @@ export function DirectoratePage() {
                         const readingTime = (selectedPumpStation as any).pumpData.readingTime;
                         if (!readingTime) return "-";
                         const date = new Date(readingTime);
-                        const year = date.getUTCFullYear();
-                        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                        const day = String(date.getUTCDate()).padStart(2, '0');
-                        const hours = String(date.getUTCHours()).padStart(2, '0');
-                        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${year}-${month}-${day} ${hours}:${minutes}`;
                       })()}
                     </p>
@@ -741,7 +747,7 @@ export function DirectoratePage() {
                       {t("ups.directorate.pumpFlows")}
                     </h4>
                     <div className="space-y-2">
-                      {(selectedPumpStation as any).pumpData.flows.map((flow: number, index: number) => (
+                      {(selectedPumpStation as any).pumpData.flows.slice(0, 6).map((flow: number, index: number) => (
                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                           <span className="text-gray-600">{t("ups.directorate.pump")} {index + 1}:</span>
                           <span className="font-semibold text-blue-600">{flow.toFixed(2)} m³/s</span>
@@ -754,7 +760,10 @@ export function DirectoratePage() {
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                       <span className="text-gray-700 font-medium">{t("ups.directorate.totalFlow")}:</span>
                       <span className="text-lg font-bold text-blue-600">
-                        {(selectedPumpStation as any).pumpData.flows.reduce((sum: number, f: number) => sum + f, 0).toFixed(2)} m³/s
+                        {((selectedPumpStation as any).pumpData.totalFlow != null 
+                          ? (selectedPumpStation as any).pumpData.totalFlow.toFixed(2)
+                          : (selectedPumpStation as any).pumpData.flows.reduce((sum: number, f: number) => sum + f, 0).toFixed(2)
+                        )} m³/s
                       </span>
                     </div>
                   </div>
