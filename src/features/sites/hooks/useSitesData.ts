@@ -77,8 +77,10 @@ export function useFilteredSites(sites: Site[], filters: SiteFilters) {
   return sites.filter(site => {
     const matchesSearch = (
       site.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      (site.arabicName && site.arabicName.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
       (site.code && site.code.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
       (site.directorateName && site.directorateName.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+      (site.directorateArabicName && site.directorateArabicName.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
       (site.canal && site.canal.toLowerCase().includes(filters.searchTerm.toLowerCase()))
     );
     const matchesType = filters.type === 'all' || site.siteType === filters.type;
