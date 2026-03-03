@@ -357,6 +357,7 @@
     "p10Flow": "معدل تدفق طلمبة 10",
     "enterValidNumber": "يرجى إدخال رقم صحيح",
     "mustBePositive": "يجب أن يكون رقماً موجباً",
+    "batteryMustBeGreaterThanZero": "يجب أن تكون البطارية أكبر من الصفر",
     "fillAllFields": "الرجاء تعبئة جميع الحقول المطلوبة",
     "recordNumberPositive": "رقم السجل يجب أن يكون رقماً موجباً وأكبر من صفر",
     "fillAllPumpFields": "الرجاء تعبئة جميع حقول الطلمبات",
