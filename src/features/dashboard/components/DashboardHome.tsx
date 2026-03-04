@@ -43,8 +43,8 @@ export function DashboardHome() {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { label: string; className: string }> = {
+      crisis: { label: t('alarms.crisis'), className: 'bg-orange-100 text-orange-700' },
       critical: { label: t('alarms.critical'), className: 'bg-red-100 text-red-700' },
-      warning: { label: t('alarms.warning'), className: 'bg-yellow-100 text-yellow-700' },
       info: { label: t('alarms.info'), className: 'bg-blue-100 text-blue-700' },
     };
     const config = severityMap[severity.toLowerCase()] || severityMap['info'];
@@ -219,9 +219,9 @@ export function DashboardHome() {
               <div className="space-y-3">
                 {recentAlarmEvents.map((alarm) => (
                   <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
-                    <div className={`p-2 rounded-lg flex-shrink-0 ${alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${alarm.severity === 'crisis' ? 'bg-orange-100' : alarm.severity === 'critical' ? 'bg-red-100' : 'bg-blue-100'
                       }`}>
-                      <AlertTriangle className={`h-4 w-4 ${alarm.severity === 'critical' ? 'text-red-700' : alarm.severity === 'warning' ? 'text-yellow-700' : 'text-blue-700'
+                      <AlertTriangle className={`h-4 w-4 ${alarm.severity === 'crisis' ? 'text-orange-700' : alarm.severity === 'critical' ? 'text-red-700' : 'text-blue-700'
                         }`} />
                     </div>
                     <div className="flex-1 min-w-0">

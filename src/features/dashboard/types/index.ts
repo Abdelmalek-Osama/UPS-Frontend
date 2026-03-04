@@ -25,7 +25,7 @@ export interface RecentAlarmEvent {
   fieldName: string;
   actualValue?: number;
   thresholdValue?: number;
-  severity: 'warning' | 'critical' | 'info';
+  severity: 'crisis' | 'critical' | 'info';
   colorCode?: string;
   triggeredAt: string;
   message: string;
