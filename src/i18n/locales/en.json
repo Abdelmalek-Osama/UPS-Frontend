@@ -357,6 +357,7 @@
     "p10Flow": "P10 Flow",
     "enterValidNumber": "Please enter a valid number",
     "mustBePositive": "Must be a positive number",
+    "batteryMustBeGreaterThanZero": "Battery must be greater than zero",
     "fillAllFields": "Please fill all required fields",
     "recordNumberPositive": "Record number must be a positive number greater than zero",
     "fillAllPumpFields": "Please fill all pump fields",

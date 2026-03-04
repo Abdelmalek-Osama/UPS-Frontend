@@ -43,18 +43,18 @@ export function useDashboardData() {
   const { isAuthenticated } = useAuth();
 
   // Map severity number to string
-  const mapSeverityNumber = (severity: any): 'critical' | 'warning' | 'info' => {
+  const mapSeverityNumber = (severity: any): 'crisis' | 'critical' | 'info' => {
     if (typeof severity === 'string') {
-      return severity.toLowerCase() as 'critical' | 'warning' | 'info';
+      return severity.toLowerCase() as 'crisis' | 'critical' | 'info';
     }
-    // Assuming: 0 = info, 1 = warning, 2 = critical
+    // Mapping: 0 = crisis, 1 = critical, 2 = info
     switch (severity) {
       case 0:
-        return 'info';
+        return 'crisis';
       case 1:
-        return 'warning';
-      case 2:
         return 'critical';
+      case 2:
+        return 'info';
       default:
         return 'info';
     }
