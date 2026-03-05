@@ -377,19 +377,14 @@ export function useReadingsData(selectedSiteId: string) {
 
           setWaterLevelReadings(payload.map(mapReading));
           
-          // Update pagination state
+          // Update pagination state (only output values, not input values)
           if (paginationInfo.totalPages !== undefined) {
             setWaterLevelTotalPages(paginationInfo.totalPages);
           }
           if (paginationInfo.totalCount !== undefined) {
             setWaterLevelTotalCount(paginationInfo.totalCount);
           }
-          if (paginationInfo.pageNumber !== undefined) {
-            setWaterLevelPageNumber(paginationInfo.pageNumber);
-          }
-          if (paginationInfo.pageSize !== undefined) {
-            setWaterLevelPageSize(paginationInfo.pageSize);
-          }
+          // Do NOT update pageNumber and pageSize from API response - these are input params that would cause infinite loop
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -546,19 +541,14 @@ export function useReadingsData(selectedSiteId: string) {
             alarms: reading.alarms, // Include alarms in mapping
           })));
           
-          // Update pagination state
+          // Update pagination state (only output values, not input values)
           if (paginationInfo.totalPages !== undefined) {
             setPumpStationTotalPages(paginationInfo.totalPages);
           }
           if (paginationInfo.totalCount !== undefined) {
             setPumpStationTotalCount(paginationInfo.totalCount);
           }
-          if (paginationInfo.pageNumber !== undefined) {
-            setPumpStationPageNumber(paginationInfo.pageNumber);
-          }
-          if (paginationInfo.pageSize !== undefined) {
-            setPumpStationPageSize(paginationInfo.pageSize);
-          }
+          // Do NOT update pageNumber and pageSize from API response - these are input params that would cause infinite loop
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {

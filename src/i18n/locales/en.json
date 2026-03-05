@@ -119,7 +119,7 @@
     "crisis": "Crisis",
     "sensorStatus": "Sensor Status",
     "warnings": "Warnings",
-    "flowPerHour": "m³/h",
+    "flowPerHour": "m³/s",
     "flowChange": "% from previous hour",
     "uptimePercentage": "Uptime Rate",
     "viewAll": "View All",
@@ -276,7 +276,11 @@
       "linearFlow": "Linear Flow",
       "quadraticFlow": "Quadratic Flow",
       "powerFlow": "Power Flow",
-      "enterValueFor": "Enter value for"
+      "enterValueFor": "Enter value for",
+      "noEquation": "Site has no equation",
+      "noEquationHint": "Check this if the site does not use a flow equation",
+      "validationSelectOrNoEquation": "Please either select an equation or check \"Site has no equation\"",
+      "validationNotBoth": "You cannot select an equation and check \"Site has no equation\" at the same time"
     }
   },
   "readings": {

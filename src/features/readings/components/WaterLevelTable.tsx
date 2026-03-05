@@ -1134,13 +1134,13 @@ export function WaterLevelTable({
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{getSiteName(reading.siteId, reading.site)}</TableCell>
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {showUSWL && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswlDisplay ?? (reading.uswl?.toFixed(2) ?? '')}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'USWL').colorCode, fontWeight: hasAlarmForField(reading, 'USWL') ? 'bold' : 'normal' }}>{reading.uswlDisplay ? parseFloat(reading.uswlDisplay).toFixed(2) : (reading.uswl?.toFixed(2) ?? '')}</TableCell>
                   )}
                   {showDSWL1 && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1Display ?? (reading.dswL1?.toFixed(2))}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL1').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL1') ? 'bold' : 'normal' }}>{reading.dswL1Display ? parseFloat(reading.dswL1Display).toFixed(2) : (reading.dswL1?.toFixed(2))}</TableCell>
                   )}
                   {showDSWL2 && (
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2Display ?? (reading.dswL2?.toFixed(2))}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'DSWL2').colorCode, fontWeight: hasAlarmForField(reading, 'DSWL2') ? 'bold' : 'normal' }}>{reading.dswL2Display ? parseFloat(reading.dswL2Display).toFixed(2) : (reading.dswL2?.toFixed(2))}</TableCell>
                   )}
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmStatus(reading, 'Battery').colorCode, fontWeight: hasAlarmForField(reading, 'Battery') ? 'bold' : 'normal' }}>
                     {reading.battery?.toFixed(2) ?? ''}

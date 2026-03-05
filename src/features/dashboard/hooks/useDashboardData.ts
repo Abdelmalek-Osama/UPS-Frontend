@@ -138,7 +138,7 @@ export function useDashboardData() {
         const mappedLogs = logs.map((log: any) => ({
           id: log.id,
           site: log.siteName || '',
-          type: log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation',
+          type: (log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation') as 'WaterLevel' | 'PumpStation',
           timestamp: log.actionDate || log.timeStamp || new Date().toISOString(),
           actionType: log.actionType || '',
           uswl: undefined,

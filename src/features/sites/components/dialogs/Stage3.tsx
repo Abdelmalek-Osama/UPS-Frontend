@@ -32,15 +32,15 @@ const TABLE_OPTIONS = {
 
 // Map UI table keys to API table names
 const TABLE_NAME_MAP: Record<string, string> = {
-  'waterLevel': 'WaterLevelReadings',
-  'pumpStation': 'PumpStationReadings',
+  'waterLevel': 'WaterLevelReading',
+  'pumpStation': 'PumpStationReading',
   'pumpStatus': 'PumpStatusReading',
 };
 
 // Reverse map: API table names to translation keys for display
 const TABLE_NAME_DISPLAY_MAP: Record<string, string> = {
-  'WaterLevelReadings': 'sites.stage3.tableWaterLevel',
-  'PumpStationReadings': 'sites.stage3.tablePumpStation',
+  'WaterLevelReading': 'sites.stage3.tableWaterLevel',
+  'PumpStationReading': 'sites.stage3.tablePumpStation',
   'PumpStatusReading': 'sites.stage3.tablePumpStatus',
 };
 
