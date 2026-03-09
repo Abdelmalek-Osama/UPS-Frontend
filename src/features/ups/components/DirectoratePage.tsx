@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -9,22 +9,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../compo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { ArrowLeft, Search, Info, ChevronDown } from "lucide-react";
+import { ArrowLeft, Search, Info, ChevronDown, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
+import { DatePicker } from "../../../components/ui/datepicker";
 import { DirectorateWLChart } from "./DirectorateWLChart";
 import { DirectorateFlowChart } from "./DirectorateFlowChart";
+import { PumpOperatingTimesChart } from "./PumpOperatingTimesChart";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
-import { exportReport } from "../api/upsApi";
-import type { DateRange, TimeFilter, SiteSummary } from "../types";
+import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
+import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
 // Main regulators for each canal (which sites to show in USWL/DSWL chart)
 // Order is now determined by canalOrder from backend, not by array position
 const MAIN_REGULATORS = {
-  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1", "58"],
+  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1", "44","58"],
   "Bahr Youssef": ["7", "6", "20", "5", "19", "4", "3", "2"]
 };
 
@@ -39,14 +41,46 @@ export function DirectoratePage() {
     levels: "average",
     flow: "sum"
   });
+  const [pumpDate, setPumpDate] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPumpStation, setSelectedPumpStation] = useState<SiteSummary | null>(null);
+  const [recentAlarms, setRecentAlarms] = useState<Event[]>([]);
+  const [alarmsLoading, setAlarmsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAlarms = async () => {
+      setAlarmsLoading(true);
+      try {
+        const events = await getRecentAlarmEvents();
+        setRecentAlarms(events);
+      } catch (error) {
+        console.error('Failed to fetch recent alarms:', error);
+        setRecentAlarms([]);
+      } finally {
+        setAlarmsLoading(false);
+      }
+    };
+    fetchAlarms();
+  }, []);
+
+  const getTimeAgo = (timestamp: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
+    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}` + t("ups.landing.min") });
+    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}` + t("ups.landing.hours") });
+    return t("ups.landing.timeAgo", { time: `${diffDays} days` });
+  };
 
   const { directorates, loading: directoratesLoading } = useDirectoratesList();
   const { sites, loading: sitesLoading } = useSitesList();
   // Use first selected directorate for API call, or empty string if none selected
   const apiDirectorateId = selectedDirectorateIds.length > 0 ? selectedDirectorateIds[0] : "";
   const { data, error } = useGovernorateOverview(apiDirectorateId, filter, range);
+  const { data: pumpTableData } = useGovernorateOverview(apiDirectorateId, pumpDate ? "specific" : "latest", { targetDate: pumpDate });
 
   // Get directorate name based on language
   const getDirectorateName = (directorateId: string) => {
@@ -167,6 +201,10 @@ export function DirectoratePage() {
     // Get localized branch name
     const branchKey = branchName === "Ibrahimiya" ? "ups.branches.ibrahimia" : "ups.branches.bahrYoussef";
     const localizedBranchName = t(branchKey);
+
+    // Filter alarms to this branch's sites (post directorate/site filter)
+    const branchSiteIdSet = new Set(filteredSites.map(s => s.siteId));
+    const branchAlarms = recentAlarms.filter(a => branchSiteIdSet.has(a.siteId));
 
     return (
       <div key={branchName} className="space-y-6">
@@ -320,34 +358,91 @@ export function DirectoratePage() {
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
 
+        {/* Recent Alerts */}
+        <Card>
+          <CardHeader>
+            <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+              {t("ups.landing.recentAlerts")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {alarmsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : branchAlarms.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">{t("alarms.noEventsYet")}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {branchAlarms.map((alarm) => (
+                  <div
+                    key={alarm.id}
+                    className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                      alarm.severity === 'critical'
+                        ? 'bg-red-50 border-red-200'
+                        : alarm.severity === 'high'
+                        ? 'bg-orange-50 border-orange-200'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className={`p-1 rounded ${
+                      alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                    }`}>
+                      <AlertTriangle className={`w-4 h-4 ${
+                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                      <p className={`text-xs font-medium mt-1 ${
+                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                      }`}>
+                        {t(`alarms.severity.${alarm.severity}`)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         
       </div>
     );
   };
 
-  // Get all pump sites for the summary tables
-  // NOTE: This includes ALL sites with pumps from both branches, not just MAIN_REGULATORS
-  // The MAIN_REGULATORS constant is only used for the USWL/DSWL chart, not these tables
-  const getPumpSites = () => {
+  // Get pump sites using the independent pump table filter
+  const getPumpSitesForTable = () => {
+    const branchOrder = ["Ibrahimiya", "Bahr Youssef"];
+    const orderedPumpBranches = [...pumpTableData.branches].sort((a, b) => {
+      const indexA = branchOrder.indexOf(a.name);
+      const indexB = branchOrder.indexOf(b.name);
+      if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
     let allSites: SiteSummary[] = [];
-    
-    // Collect ALL sites from all branches (not limited to MAIN_REGULATORS)
-    orderedBranches.forEach(branch => {
+    orderedPumpBranches.forEach(branch => {
       allSites = allSites.concat(branch.sites);
     });
-
-    // Filter by directorate if selected
     if (selectedDirectorateIds.length > 0) {
       const selectedDirIds = selectedDirectorateIds.map(id => parseInt(id));
       allSites = allSites.filter(site => site.directorateId !== undefined && selectedDirIds.includes(site.directorateId));
     }
-
-    // Filter by selected sites if sites are selected
     if (selectedSiteIds.length > 0) {
       allSites = allSites.filter(site => selectedSiteIds.includes(site.siteId));
     }
-
-    // Only include sites with pumps (this gets ALL pump sites, not just the main ones)
     return allSites.filter(site => (site as any).siteConfiguration?.numPumps > 0);
   };
 
@@ -532,7 +627,7 @@ export function DirectoratePage() {
         onExport={handleExport}
         showCalculations={false}
         showLatestOption={true}
-        showExport={false}
+        showExport={true}
       />
 
       {/* Error Message */}
@@ -580,7 +675,22 @@ export function DirectoratePage() {
                           {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-4">
+                        <div className={`flex items-center gap-3 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                          <DatePicker
+                            placeholder={t("ups.filters.selectDate") || "Select date"}
+                            value={pumpDate}
+                            onChange={setPumpDate}
+                          />
+                          {pumpDate && (
+                            <button
+                              onClick={() => setPumpDate(undefined)}
+                              className="text-xs text-gray-400 hover:text-gray-600 underline"
+                            >
+                              {t("common.clearDate") || "Clear"}
+                            </button>
+                          )}
+                        </div>
                         <div className="overflow-x-auto">
                           <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                             <TableHeader>
@@ -593,10 +703,13 @@ export function DirectoratePage() {
                                     {t("ups.directorate.pump")} {pumpNum}
                                   </TableHead>
                                 ))}
+                                <TableHead className="text-center font-semibold min-w-[110px]">
+                                  {t("ups.directorate.totalFlow") || "Total Flow (m³/s)"}
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {getPumpSites().map((site: SiteSummary) => {
+                              {getPumpSitesForTable().map((site: SiteSummary) => {
                                 const numPumps = (site as any).siteConfiguration?.numPumps || 0;
                                 const pumpTimes = (site as any).pumpData?.operatingTimes || [];
                                 return (
@@ -628,6 +741,22 @@ export function DirectoratePage() {
                                         </TableCell>
                                       );
                                     })}
+                                    <TableCell className="text-center">
+                                      {(() => {
+                                        const pumpFlows: (number | null | undefined)[] = (site as any).pumpData?.flows || [];
+                                        const total = pumpFlows
+                                          .slice(0, numPumps)
+                                          .reduce((sum: number, v) => sum + (v != null ? v : 0), 0);
+                                        const hasFlowData = pumpFlows.slice(0, numPumps).some(v => v != null);
+                                        return hasFlowData ? (
+                                          <span className="text-green-600 font-semibold">
+                                            {total.toFixed(2)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-400">-</span>
+                                        );
+                                      })()}
+                                    </TableCell>
                                   </TableRow>
                                 );
                               })}
@@ -637,7 +766,9 @@ export function DirectoratePage() {
                       </CardContent>
                     </Card>
 
-                    {/* Pump Flow Rates Table */}
+                    <PumpOperatingTimesChart sites={getPumpSitesForTable()} />
+
+                    {/* Pump Flow Rates Table
                     <Card>
                       <CardHeader>
                         <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -699,7 +830,7 @@ export function DirectoratePage() {
                           </Table>
                         </div>
                       </CardContent>
-                    </Card>
+                    </Card> */}
                   </>
                 )}
               </TabsContent>
