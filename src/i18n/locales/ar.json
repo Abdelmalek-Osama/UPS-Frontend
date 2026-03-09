@@ -119,7 +119,7 @@
     "critical": "حرجة",
     "sensorStatus": "حالة الإستشعار",
     "warnings": "تحذيرات",
-    "flowPerHour": "م³/س",
+    "flowPerHour": "م³/ث",
     "flowChange": "% عن الساعة السابقة",
     "uptimePercentage": "معدل التشغيل",
     "viewAll": "عرض الكل",
@@ -276,7 +276,11 @@
       "linearFlow": "التدفق الخطي",
       "quadraticFlow": "التدفق الرباعي",
       "powerFlow": "التدفق الأسي",
-      "enterValueFor": "أدخل قيمة ل_"
+      "enterValueFor": "أدخل قيمة ل_",
+      "noEquation": "الموقع لا يحتوي على معادلة",
+      "noEquationHint": "اختر هذا إذا كان الموقع لا يستخدم معادلة تدفق",
+      "validationSelectOrNoEquation": "يرجى اختيار معادلة أو تحديد \"الموقع لا يحتوي على معادلة\"",
+      "validationNotBoth": "لا يمكنك اختيار معادلة وتحديد \"الموقع لا يحتوي على معادلة\" في نفس الوقت"
     }
   },
   "readings": {

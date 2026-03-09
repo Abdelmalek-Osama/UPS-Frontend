@@ -45,7 +45,7 @@ interface CreateSitePayload {
   info: SiteInfoPayload;
   config: SiteConfigPayload;
   dataMappings: DataMapping[];
-  flowCalculation: FlowCalculation;
+  flowCalculation: FlowCalculation | null;
 }
 
 interface UseCreateSiteResult {
@@ -111,10 +111,7 @@ export function useSiteCreation(): UseCreateSiteResult {
             numPumps: siteData.numPumps || 0,
           },
           dataMappings: dataMappingsWithDefaults,
-          flowCalculation: siteData.flowCalculation || {
-            equationId: 0,
-            formulaConstants: '',
-          },
+          flowCalculation: siteData.flowCalculation ?? null,
         };
 
         const response = await apiService.post<any>('/v1/Sites', payload);

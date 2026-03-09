@@ -69,6 +69,8 @@ export function DashboardHome() {
     );
   };
 
+  const isRTL = t('_rtl') === 'rtl';
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -155,18 +157,19 @@ export function DashboardHome() {
           </CardHeader>
           <CardContent className="pb-16 overflow-visible">
             <ResponsiveContainer width="98%" height={250}>
-              <LineChart data={flowData} margin={{ top: 5, bottom: 5, left: 10, right: 50 }}>
+              <LineChart data={flowData} margin={{ top: 5, bottom: 5, left: isRTL ? 10 : 40, right: 50 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="time" 
                   angle={-45} 
                   textAnchor="end" 
-                  tick={{ fontSize: 11, dy: 40 }}
+                  tick={{ fontSize: 11, dy: isRTL ? 40 : 8 }}
+                  height={isRTL ? 60 : 75}
                   interval="preserveStartEnd"
                 />
                 <YAxis
                   label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy: -20 }}
-                  tick={{ dx: -25 }}
+                  tick={{ dx: isRTL ? -25 : 0 }}
                 />
                 <Tooltip />
                 <Legend wrapperStyle={{ paddingTop: '20px' }} />

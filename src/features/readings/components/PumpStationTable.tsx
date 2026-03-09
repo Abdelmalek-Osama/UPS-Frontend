@@ -1116,11 +1116,11 @@ export function PumpStationTable({
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{fontWeight: 'normal'}}>{getSiteName(reading.siteId, reading.site)}</TableCell>
                   <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{formatTimestamp(reading.timestamp)}</TableCell>
                   {/* Removed US, DS1, DS2 table cells */}
-                  {/* {selectedSite?.hasUS && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.usLevel?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  {/* {selectedSite?.hasDS1 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds1Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  {/* {selectedSite?.hasDS2 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds2Level?.toFixed(1) || 'N/A'}</TableCell>} */}
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'TotalUptime'), fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(1)} {t('readings.hour')}</TableCell>
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'Total_flow'), fontWeight: getAlarmColor(reading, 'Total_flow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(1)} {t('readings.flowUnit')}</TableCell>
+                  {/* {selectedSite?.hasUS && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.usLevel?.toFixed(2) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS1 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds1Level?.toFixed(2) || 'N/A'}</TableCell>} */}
+                  {/* {selectedSite?.hasDS2 && <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{reading.ds2Level?.toFixed(2) || 'N/A'}</TableCell>} */}
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'TotalUptime'), fontWeight: getAlarmColor(reading, 'TotalUptime') ? 'bold' : 'normal' }}>{reading.totalUptime.toFixed(2)} {t('readings.hour')}</TableCell>
+                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: getAlarmColor(reading, 'Total_flow'), fontWeight: getAlarmColor(reading, 'Total_flow') ? 'bold' : 'normal' }}>{reading.totalFlow.toFixed(2)} {t('readings.flowUnit')}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Button 
@@ -1285,8 +1285,8 @@ export function PumpStationTable({
                   return (
                     <TableRow key={index}>
                       <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {index + 1}</TableCell>
-                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time ?? 'N/A'}</TableCell>
-                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow ?? 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpTimeAlarmStatus.colorCode, fontWeight: pumpTimeAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.time !== null && pump.time !== undefined ? pump.time.toFixed(2) : 'N/A'}</TableCell>
+                      <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'} style={{ color: pumpFlowAlarmStatus.colorCode, fontWeight: pumpFlowAlarmStatus.hasAlarm ? 'bold' : 'normal' }}>{pump.flow !== null && pump.flow !== undefined ? pump.flow.toFixed(2) : 'N/A'}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -1296,11 +1296,11 @@ export function PumpStationTable({
               <div className="grid grid-cols-2 gap-4">
                 <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                   <p className="text-sm text-gray-600">{t('readings.totalUptime')}</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} {t('readings.hour')}</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(2)} {t('readings.hour')}</p>
                 </div>
                 <div className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                   <p className="text-sm text-gray-600">{t('readings.totalFlow')}</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} {t('readings.flowUnit')}</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(2)} {t('readings.flowUnit')}</p>
                 </div>
               </div>
             </div>

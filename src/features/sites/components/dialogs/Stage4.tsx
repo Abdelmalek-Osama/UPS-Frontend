@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../components/ui/select';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import { Checkbox } from '../../../../components/ui/checkbox';
 import apiService from '../../../../shared/utils/apiService';
 import type { Site } from '../../types';
 
@@ -50,18 +51,18 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
   const [constants, setConstants] = useState<{ [key: string]: string }>({});
   const [selectedEquation, setSelectedEquation] = useState<Equation | null>(null);
   const [hasLoadedFlowCalc, setHasLoadedFlowCalc] = useState(false);
+  const [noEquation, setNoEquation] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   // Calculate validation state
-  const { isValid } = useMemo(() => {
-    // Stage 4 is valid if:
-    // 1. An equation is selected
-    // 2. All variable fields are filled
+  const { isValid, validationError } = useMemo(() => {
+    if (noEquation) return { isValid: true, validationError: null };
     const hasEquationSelected = selectedEquationId !== null && selectedEquationId !== undefined;
     const allFieldsFilled = hasEquationSelected && 
       Object.values(constants).every(val => val !== null && val !== undefined && val.toString().trim() !== '');
-    
-    return { isValid: hasEquationSelected && allFieldsFilled };
-  }, [selectedEquationId, constants]);
+    const valid = hasEquationSelected && allFieldsFilled;
+    return { isValid: valid, validationError: !valid && touched ? 'sites.stage4.validationSelectOrNoEquation' : null };
+  }, [selectedEquationId, constants, noEquation, touched]);
 
   // Call the validation change callback whenever validation state changes
   useEffect(() => {
@@ -77,6 +78,8 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
       setSelectedEquationId(null);
       setConstants({});
       setSelectedEquation(null);
+      setNoEquation(false);
+      setTouched(false);
     }
   }, [isOpen]);
 
@@ -94,6 +97,13 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
           console.log('Fetched flow calculation:', flowCalcData);
           
           if (flowCalcData) {
+            // Check if equationId is 0 or missing → mark as no equation
+            if (!flowCalcData.equationId || flowCalcData.equationId === 0) {
+              setNoEquation(true);
+              onChange('flowCalculation', null);
+              setHasLoadedFlowCalc(true);
+              return;
+            }
             // Try to match by equationId first (most reliable)
             if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined) {
               const equation = equations.find(eq => eq.id === flowCalcData.equationId);
@@ -318,10 +328,25 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     }
   }, [selectedEquationId, equations, hasLoadedFlowCalc]);
 
+  const handleNoEquationChange = (checked: boolean | 'indeterminate') => {
+    const isChecked = checked === true;
+    setNoEquation(isChecked);
+    setTouched(true);
+    if (isChecked) {
+      setSelectedEquationId(null);
+      setConstants({});
+      setSelectedEquation(null);
+      setHasLoadedFlowCalc(false);
+      onChange('flowCalculation', null);
+    }
+  };
+
   const handleEquationChange = (equationId: string) => {
     const id = parseInt(equationId);
     const equation = equations.find(eq => eq.id === id);
     setSelectedEquationId(id);
+    setNoEquation(false);
+    setTouched(true);
     setHasLoadedFlowCalc(false); // Clear the flag when manually changing equation
     
     // Update parent form with equation ID and empty formula constants as comma-separated
@@ -339,6 +364,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
   const handleConstantChange = (constantName: string, value: string) => {
     const updated = { ...constants, [constantName]: value };
     setConstants(updated);
+    setTouched(true);
     
     // Update parent form with updated formula constants as comma-separated values
     if (selectedEquationId) {
@@ -418,7 +444,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
           value={selectedEquationId?.toString() || ''} 
           onValueChange={handleEquationChange} 
           dir={dir} 
-          disabled={loadingEquations || loadingFlowCalc}
+          disabled={loadingEquations || loadingFlowCalc || noEquation}
         >
           <SelectTrigger>
             <SelectValue placeholder={loadingEquations || loadingFlowCalc ? t('common.loading') : t('sites.stage4.selectEquationPlaceholder')} />
@@ -431,6 +457,33 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
             ))}
           </SelectContent>
         </Select>
+
+        {/* No-equation checkbox */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <Checkbox
+            id="noEquation"
+            checked={noEquation}
+            onCheckedChange={handleNoEquationChange}
+            disabled={selectedEquationId !== null}
+          />
+          <label
+            htmlFor="noEquation"
+            style={{
+              fontSize: '0.875rem',
+              cursor: selectedEquationId !== null ? 'not-allowed' : 'pointer',
+              color: selectedEquationId !== null ? 'hsl(var(--muted-foreground))' : 'inherit',
+              userSelect: 'none'
+            }}
+          >
+            {t('sites.stage4.noEquation')}
+          </label>
+        </div>
+
+        {validationError && (
+          <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>
+            {t(validationError)}
+          </p>
+        )}
       </div>
 
       {selectedEquation && (
