@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../compo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { ArrowLeft, Search, Info, ChevronDown } from "lucide-react";
+import { ArrowLeft, Search, Info, ChevronDown, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
 import { DatePicker } from "../../../components/ui/datepicker";
@@ -19,8 +19,8 @@ import { PumpOperatingTimesChart } from "./PumpOperatingTimesChart";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
-import { exportReport } from "../api/upsApi";
-import type { DateRange, TimeFilter, SiteSummary } from "../types";
+import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
+import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
 // Main regulators for each canal (which sites to show in USWL/DSWL chart)
@@ -44,6 +44,36 @@ export function DirectoratePage() {
   const [pumpDate, setPumpDate] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPumpStation, setSelectedPumpStation] = useState<SiteSummary | null>(null);
+  const [recentAlarms, setRecentAlarms] = useState<Event[]>([]);
+  const [alarmsLoading, setAlarmsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAlarms = async () => {
+      setAlarmsLoading(true);
+      try {
+        const events = await getRecentAlarmEvents();
+        setRecentAlarms(events);
+      } catch (error) {
+        console.error('Failed to fetch recent alarms:', error);
+        setRecentAlarms([]);
+      } finally {
+        setAlarmsLoading(false);
+      }
+    };
+    fetchAlarms();
+  }, []);
+
+  const getTimeAgo = (timestamp: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
+    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}` + t("ups.landing.min") });
+    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}` + t("ups.landing.hours") });
+    return t("ups.landing.timeAgo", { time: `${diffDays} days` });
+  };
 
   const { directorates, loading: directoratesLoading } = useDirectoratesList();
   const { sites, loading: sitesLoading } = useSitesList();
@@ -171,6 +201,10 @@ export function DirectoratePage() {
     // Get localized branch name
     const branchKey = branchName === "Ibrahimiya" ? "ups.branches.ibrahimia" : "ups.branches.bahrYoussef";
     const localizedBranchName = t(branchKey);
+
+    // Filter alarms to this branch's sites (post directorate/site filter)
+    const branchSiteIdSet = new Set(filteredSites.map(s => s.siteId));
+    const branchAlarms = recentAlarms.filter(a => branchSiteIdSet.has(a.siteId));
 
     return (
       <div key={branchName} className="space-y-6">
@@ -323,6 +357,64 @@ export function DirectoratePage() {
 
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
+
+        {/* Recent Alerts */}
+        <Card>
+          <CardHeader>
+            <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+              {t("ups.landing.recentAlerts")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {alarmsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : branchAlarms.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">{t("alarms.noEventsYet")}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {branchAlarms.map((alarm) => (
+                  <div
+                    key={alarm.id}
+                    className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                      alarm.severity === 'critical'
+                        ? 'bg-red-50 border-red-200'
+                        : alarm.severity === 'high'
+                        ? 'bg-orange-50 border-orange-200'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className={`p-1 rounded ${
+                      alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                    }`}>
+                      <AlertTriangle className={`w-4 h-4 ${
+                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                      <p className={`text-xs font-medium mt-1 ${
+                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                      }`}>
+                        {t(`alarms.severity.${alarm.severity}`)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         
       </div>
