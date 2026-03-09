@@ -302,7 +302,7 @@ export const useGovernorateOverview = (governorateId: string, filter: TimeFilter
     return () => {
       active = false;
     };
-  }, [governorateId, isAuthenticated, filter, range]);
+  }, [governorateId, isAuthenticated, filter, JSON.stringify(range)]);
 
   return { data, loading, error, governorateName };
 };
