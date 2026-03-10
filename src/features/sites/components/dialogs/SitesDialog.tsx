@@ -322,7 +322,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           break;
       }
 
-      await apiService.put(endpoint, payload);
+      await apiService.post(endpoint, payload);
       setErrorMessage(null);
       toast.success(t('notifications.saved'));
       return true;

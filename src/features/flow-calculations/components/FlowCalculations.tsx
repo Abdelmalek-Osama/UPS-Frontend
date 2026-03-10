@@ -107,7 +107,7 @@ export function FlowCalculations() {
 
     try {
       const payload = JSON.stringify(formulaConstants.join(','));
-  await apiService.put<ApiResponse<FlowCalculationDto>, string>(
+  await apiService.post<ApiResponse<FlowCalculationDto>, string>(
         `/v1/FlowCalculation/${selectedSite}`,
         payload
       );
