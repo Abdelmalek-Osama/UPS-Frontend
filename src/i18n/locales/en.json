@@ -510,6 +510,7 @@
       "info": "Info"
     },
     "message": "Message",
+    "total": "total",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
     "viewAlarmConfiguration": "View Alarm Configuration",
