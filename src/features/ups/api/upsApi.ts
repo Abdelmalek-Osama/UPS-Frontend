@@ -510,35 +510,75 @@ export const getAllPumpSitesDailySummary = async (
   return response.data ?? [];
 };
 
-// New API: Get recent alarm events for landing page
-export const getRecentAlarmEvents = async (): Promise<Event[]> => {
+// Request type for recent alarm events
+// timeRangeMode: 0 = Latest (2h), 1 = Last 24h, 2 = Last week, 3 = Last month, 4 = Custom range
+export interface RecentAlarmEventsRequest {
+  timeRangeMode: 0 | 1 | 2 | 3 | 4;
+  startDate?: string; // ISO date-time string, required when timeRangeMode = 4
+  endDate?: string;   // ISO date-time string, required when timeRangeMode = 4
+  pageNumber?: number;
+  pageSize?: number;
+  // Optional filters
+  //canalId?: number;  // Single canal filter: 0 = Ibrahimiya, 1 = Bahr Youssef
+  canalIds?: number[];
+  siteIds?: number[];
+  unresolvedOnly?: boolean;
+  severity?: number; // 0 = Crisis, 1 = Critical, 2 = Info
+  wordFilter?: string;
+}
+
+export interface AlarmEventsPagedResponse {
+  data: AlarmEventDto[];
+  totalCount: number;
+  totalPages: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
+const mapAlarmEventDto = (event: AlarmEventDto): Event => ({
+  id: event.id.toString(),
+  siteId: event.siteId.toString(),
+  timestamp: new Date(event.triggeredAt),
+  type: 'alarm' as EventType,
+  severity: mapSeverity(event.severity),
+  message: event.message,
+  acknowledged: event.isResolved,
+  acknowledgedBy: undefined,
+  acknowledgedAt: undefined,
+});
+
+// New API: Get filtered alarm events (paged)
+export const getRecentAlarmEvents = async (
+  request: RecentAlarmEventsRequest = { timeRangeMode: 0, pageNumber: 1, pageSize: 100 }
+): Promise<Event[]> => {
   try {
-    const response = await get<UpsApiResponse<AlarmEventDto[]>>(
-      '/v1/alarm-events/recent'
+    const response = await post<UpsApiResponse<AlarmEventsPagedResponse | AlarmEventDto[]>>(
+      '/v1/alarm-events/filtered',
+      request
     );
 
-    console.log('Recent alarm events API response:', response);
+    const unwrapped: unknown =
+      response && typeof response === 'object' && 'isSuccess' in response
+        ? (response as UpsApiResponse<unknown>).data
+        : response;
 
-    // Check if response.data is an array
-    if (!Array.isArray(response.data)) {
-      console.error('Expected array but got:', response.data);
-      return [];
+    if (!unwrapped) return [];
+
+    // Paged response: { data: [...], totalCount: N, ... }
+    if (typeof unwrapped === 'object' && !Array.isArray(unwrapped) && 'data' in (unwrapped as object)) {
+      const items = (unwrapped as AlarmEventsPagedResponse).data;
+      return (items ?? []).map(mapAlarmEventDto);
     }
 
-    // Transform API response to Event type with Date objects
-    return response.data.map(event => ({
-      id: event.id.toString(),
-      siteId: event.siteId.toString(),
-      timestamp: new Date(event.triggeredAt),
-      type: 'alarm' as EventType,
-      severity: mapSeverity(event.severity),
-      message: event.message,
-      acknowledged: event.isResolved,
-      acknowledgedBy: undefined,
-      acknowledgedAt: undefined,
-    }));
+    // Plain array response
+    if (Array.isArray(unwrapped)) {
+      return (unwrapped as AlarmEventDto[]).map(mapAlarmEventDto);
+    }
+
+    console.error('[alarmEvents] unexpected shape:', unwrapped);
+    return [];
   } catch (error) {
-    console.error('Failed to fetch recent alarm events:', error);
+    console.error('[alarmEvents] fetch error:', error);
     return [];
   }
 };

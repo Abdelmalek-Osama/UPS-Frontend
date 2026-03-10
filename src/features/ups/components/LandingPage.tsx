@@ -19,7 +19,7 @@ export function LandingPage() {
   useEffect(() => {
     const fetchRecentAlarms = async () => {
       try {
-        const events = await getRecentAlarmEvents();
+        const events = await getRecentAlarmEvents({ timeRangeMode: 0, pageNumber: 1, pageSize: 100 });
         setRecentAlarms(events);
       } catch (error) {
         console.error('Failed to fetch recent alarms:', error);
