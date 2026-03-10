@@ -84,12 +84,9 @@ export function DirectoratePage() {
 
   // Derive timeRangeMode from pumpDate: 4 = Custom (specific day), 0 = Latest (2h)
   const pumpTimeRangeMode: 0 | 4 = pumpDate ? 4 : 0;
-  const pumpStartDate = pumpDate ? new Date(pumpDate.getFullYear(), pumpDate.getMonth(), pumpDate.getDate(), 0, 0, 0) : undefined;
-  const pumpEndDate = pumpDate ? new Date(pumpDate.getFullYear(), pumpDate.getMonth(), pumpDate.getDate(), 23, 59, 59) : undefined;
   const { data: allPumpsSummary, loading: pumpSummaryLoading } = useAllPumpSitesDailySummary({
     timeRangeMode: pumpTimeRangeMode,
-    startDate: pumpStartDate,
-    endDate: pumpEndDate,
+    date: pumpDate,
   });
 
   // Get directorate name based on language
@@ -440,17 +437,22 @@ export function DirectoratePage() {
       items = items.filter(item => selectedSiteIds.includes(String(item.siteId)));
     }
 
-    // Infer numPumps from non-null pump times when API doesn't return it
-    const inferNumPumps = (item: typeof items[0]) => {
-      if (item.numPumps != null) return item.numPumps;
-      const times = [
-        item.p1_Time, item.p2_Time, item.p3_Time, item.p4_Time,
-        item.p5_Time, item.p6_Time, item.p7_Time, item.p8_Time,
-        item.p9_Time, item.p10_Time,
-      ];
-      for (let i = times.length - 1; i >= 0; i--) {
-        if (times[i] != null) return i + 1;
+    // Build a lookup of numPumps from by-canals API data (siteConfiguration.numPumps)
+    const numPumpsFromConfig = new Map<number, number>();
+    for (const branch of data.branches) {
+      for (const site of branch.sites) {
+        const cfg = (site as any).siteConfiguration;
+        if (cfg?.numPumps != null) {
+          numPumpsFromConfig.set(Number(site.siteId), Number(cfg.numPumps));
+        }
       }
+    }
+
+    // Resolve numPumps: prefer siteConfiguration from by-canals, fall back to daily-summary field
+    const resolveNumPumps = (item: typeof items[0]) => {
+      const fromConfig = numPumpsFromConfig.get(item.siteId);
+      if (fromConfig != null) return fromConfig;
+      if (item.numPumps != null) return item.numPumps;
       return 0;
     };
 
@@ -458,21 +460,19 @@ export function DirectoratePage() {
       siteId: String(item.siteId),
       siteName: item.siteName,
       siteArabicName: item.siteArabicName,
-      siteConfiguration: { numPumps: inferNumPumps(item) },
+      siteConfiguration: { numPumps: resolveNumPumps(item) },
       pumpData: {
         operatingTimes: [
-          item.p1_Time ?? null, item.p2_Time ?? null, item.p3_Time ?? null,
-          item.p4_Time ?? null, item.p5_Time ?? null, item.p6_Time ?? null,
-          item.p7_Time ?? null, item.p8_Time ?? null, item.p9_Time ?? null,
-          item.p10_Time ?? null,
+          item.p1_TimeSum ?? null, item.p2_TimeSum ?? null, item.p3_TimeSum ?? null,
+          item.p4_TimeSum ?? null, item.p5_TimeSum ?? null, item.p6_TimeSum ?? null,
+          item.p7_TimeSum ?? null, item.p8_TimeSum ?? null, item.p9_TimeSum ?? null,
+          item.p10_TimeSum ?? null,
         ],
         flows: [
-          item.p1_Flow ?? null, item.p2_Flow ?? null, item.p3_Flow ?? null,
-          item.p4_Flow ?? null, item.p5_Flow ?? null, item.p6_Flow ?? null,
-          item.p7_Flow ?? null, item.p8_Flow ?? null, item.p9_Flow ?? null,
-          item.p10_Flow ?? null,
+          null, null, null, null, null,
+          null, null, null, null, null,
         ],
-        totalFlow: item.totalFlow ?? null,
+        totalFlow: item.totalFlowSum ?? null,
       },
     }));
   };
@@ -734,7 +734,7 @@ export function DirectoratePage() {
                                 </TableHead>
                                 {[1, 2, 3, 4, 5, 6].map(pumpNum => (
                                   <TableHead key={pumpNum} className="text-center font-semibold min-w-[100px]">
-                                    {t("ups.directorate.pump")} {pumpNum}
+                                    {t("ups.directorate.pump")} {pumpNum} ({t("common.hours") || "hrs"})
                                   </TableHead>
                                 ))}
                                 <TableHead className="text-center font-semibold min-w-[110px]">
@@ -773,7 +773,7 @@ export function DirectoratePage() {
                                             </span>
                                           ) : hasData ? (
                                             <span className="text-blue-600 font-medium">
-                                              {(timeValue as number).toFixed(0)} {t("common.hours") || "hrs"}
+                                              {(timeValue as number).toFixed(0)}
                                             </span>
                                           ) : (
                                             <span className="text-gray-400">-</span>
@@ -782,20 +782,13 @@ export function DirectoratePage() {
                                       );
                                     })}
                                     <TableCell className="text-center">
-                                      {(() => {
-                                        const pumpFlows: (number | null | undefined)[] = site.pumpData?.flows || [];
-                                        const total = pumpFlows
-                                          .slice(0, numPumps)
-                                          .reduce((sum: number, v) => sum + (v != null ? v : 0), 0);
-                                        const hasFlowData = pumpFlows.slice(0, numPumps).some(v => v != null);
-                                        return hasFlowData ? (
-                                          <span className="text-green-600 font-semibold">
-                                            {total.toFixed(2)}
-                                          </span>
-                                        ) : (
-                                          <span className="text-gray-400">-</span>
-                                        );
-                                      })()}
+                                      {site.pumpData?.totalFlow != null ? (
+                                        <span className="text-green-600 font-semibold">
+                                          {(site.pumpData.totalFlow as number).toFixed(2)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">-</span>
+                                      )}
                                     </TableCell>
                                   </TableRow>
                                 );

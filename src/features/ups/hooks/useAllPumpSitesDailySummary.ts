@@ -5,11 +5,11 @@ import {
   type AllPumpSitesDailySummaryRequest,
   type PumpSiteDailySummaryItem,
 } from "../api/upsApi";
+import { formatDateOnlyForApi } from "../../../lib/utils";
 
 interface UseAllPumpSitesDailySummaryParams {
   timeRangeMode: 0 | 1 | 2 | 3 | 4;
-  startDate?: Date;
-  endDate?: Date;
+  date?: Date;
   pageNumber?: number;
   pageSize?: number;
   canalIds?: number[];
@@ -42,11 +42,8 @@ export const useAllPumpSitesDailySummary = (params: UseAllPumpSitesDailySummaryP
           pageSize: params.pageSize ?? 100,
         };
 
-        if (params.startDate) {
-          request.startDate = params.startDate.toISOString();
-        }
-        if (params.endDate) {
-          request.endDate = params.endDate.toISOString();
+        if (params.date) {
+          request.date = formatDateOnlyForApi(params.date);
         }
         if (params.canalIds?.length) {
           request.canalIds = params.canalIds;
@@ -75,8 +72,7 @@ export const useAllPumpSitesDailySummary = (params: UseAllPumpSitesDailySummaryP
   }, [
     isAuthenticated,
     params.timeRangeMode,
-    params.startDate?.getTime(),
-    params.endDate?.getTime(),
+    params.date?.getTime(),
     params.pageNumber,
     params.pageSize,
     canalIdsKey,

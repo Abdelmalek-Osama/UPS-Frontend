@@ -450,8 +450,7 @@ export const getAlarmEventsBySiteAndDateRange = async (
 // timeRangeMode: 0 = Latest (2h), 1 = Last 24h, 2 = Last week, 3 = Last month, 4 = Custom range
 export interface AllPumpSitesDailySummaryRequest {
   timeRangeMode: 0 | 1 | 2 | 3 | 4;
-  startDate?: string;
-  endDate?: string;
+  date?: string;
   pageNumber?: number;
   pageSize?: number;
   canalIds?: number[];
@@ -467,18 +466,18 @@ export interface PumpSiteDailySummaryItem {
   siteArabicName?: string;
   numPumps?: number;
   date?: string;
-  p1_Time?: number | null;  p1_Flow?: number | null;
-  p2_Time?: number | null;  p2_Flow?: number | null;
-  p3_Time?: number | null;  p3_Flow?: number | null;
-  p4_Time?: number | null;  p4_Flow?: number | null;
-  p5_Time?: number | null;  p5_Flow?: number | null;
-  p6_Time?: number | null;  p6_Flow?: number | null;
-  p7_Time?: number | null;  p7_Flow?: number | null;
-  p8_Time?: number | null;  p8_Flow?: number | null;
-  p9_Time?: number | null;  p9_Flow?: number | null;
-  p10_Time?: number | null; p10_Flow?: number | null;
-  totalUptime?: number | null;
-  totalFlow?: number | null;
+  p1_TimeSum?: number | null;
+  p2_TimeSum?: number | null;
+  p3_TimeSum?: number | null;
+  p4_TimeSum?: number | null;
+  p5_TimeSum?: number | null;
+  p6_TimeSum?: number | null;
+  p7_TimeSum?: number | null;
+  p8_TimeSum?: number | null;
+  p9_TimeSum?: number | null;
+  p10_TimeSum?: number | null;
+  totalFlowSum?: number | null;
+  readingCount?: number | null;
 }
 
 export interface PumpSiteDailySummaryPagedResponse {
@@ -497,19 +496,18 @@ export const getAllPumpSitesDailySummary = async (
     pageSize: request.pageSize ?? 100,
   };
 
-  if (request.startDate) params.startDate = request.startDate;
-  if (request.endDate) params.endDate = request.endDate;
+  if (request.date) params.date = request.date;
   if (request.canalIds?.length) params.canalIds = request.canalIds.join(',');
   if (request.siteIds?.length) params.siteIds = request.siteIds.join(',');
   if (request.unresolvedOnly !== undefined) params.unresolvedOnly = request.unresolvedOnly;
   if (request.severity !== undefined) params.severity = request.severity;
   if (request.wordFilter) params.wordFilter = request.wordFilter;
 
-  const response = await get<UpsApiResponse<PumpSiteDailySummaryPagedResponse>>(
+  const response = await get<UpsApiResponse<PumpSiteDailySummaryItem[]>>(
     '/v1/readings/pump-station/all-pump-sites/daily-summary',
     { params }
   );
-  return response.data?.items ?? [];
+  return response.data ?? [];
 };
 
 // New API: Get recent alarm events for landing page
