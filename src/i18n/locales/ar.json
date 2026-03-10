@@ -876,9 +876,13 @@
       "criticalLevel": "مستوى حرج",
       "viewAllAlerts": "عرض جميع التنبيهات",
       "lastUpdated": "آخر تحديث",
-      "justNow":" الآن",
-      "min":" دقيقة",
-      "hours":" ساعة"
+      "justNow": " الآن",
+      "min": " دقيقة",
+      "hours": " ساعة",
+      "days": " أيام",
+      "flowRateUnit": "م³/يوم",
+      "loadingFlowRate": "جاري تحميل معدل التدفق...",
+      "flowRateError": "تعذر تحميل بيانات معدل التدفق"
     },
     "kpis": {
       "totalSites": "إجمالي المواقع",

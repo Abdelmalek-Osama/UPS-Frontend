@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { AlertTriangle, Droplets, Activity, TrendingUp } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { AlertTriangle, Droplets, Activity } from "lucide-react";
 import { Card, CardContent } from "../../../components/ui/card";
 import { MapPanel } from "./MapPanel";
 import { useLandingOverview } from "../hooks/useLandingOverview";
-import { getRecentAlarmEvents, getSiteDashboardData } from "../api/upsApi";
+import { useWaterLevelReadings } from "../hooks/useWaterLevelReadings";
+import { calculateTotalFlowRate } from "../utils/flowRateCalculations";
+import { getRecentAlarmEvents } from "../api/upsApi";
 import type { Event } from "../types";
 
 export function LandingPage() {
@@ -14,7 +16,17 @@ export function LandingPage() {
   const { data, loading } = useLandingOverview();
   const [recentAlarms, setRecentAlarms] = useState<Event[]>([]);
   const [alarmsLoading, setAlarmsLoading] = useState(true);
-  const [yesterdayFlowRate, setYesterdayFlowRate] = useState<number | null>(null);
+
+  // Fetch water level readings for Ibrahimiya Head Regulator (site 1)
+  const { readings, loading: flowLoading, error: flowError } = useWaterLevelReadings(1);
+
+  // Calculate total flow rate from readings
+  const flowRateResult = useMemo(() => {
+    if (readings.length === 0) {
+      return { totalFlowRate: 0, readingsCount: 0 };
+    }
+    return calculateTotalFlowRate(readings);
+  }, [readings]);
 
   // Fetch recent alarm events
   useEffect(() => {
@@ -34,87 +46,6 @@ export function LandingPage() {
     fetchRecentAlarms();
   }, []);
 
-  // Fetch yesterday's flow data for comparison
-  useEffect(() => {
-    const fetchYesterdayFlow = async () => {
-      try {
-        // Use the sites we already have from data.sites
-        if (!data.sites || data.sites.length === 0) {
-          console.log('No sites available yet, setting default');
-          setYesterdayFlowRate(0);
-          return;
-        }
-        
-        console.log(`Fetching yesterday's flow data for ${data.sites.length} sites`);
-        
-        // Get yesterday's date range
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStart = new Date(yesterday);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterdayEnd = new Date(yesterday);
-        yesterdayEnd.setHours(23, 59, 59, 999);
-        
-        // Calculate yesterday's total flow by fetching each site's data
-        // Use Promise.allSettled to handle failures gracefully
-        const flowPromises = data.sites.map(async (site) => {
-          try {
-            const siteId = typeof site.siteId === 'string' ? parseInt(site.siteId) : site.siteId;
-            
-            // Fetch site data for yesterday using custom date range
-            const siteData = await getSiteDashboardData(
-              siteId,
-              false, // isLast7Days
-              false, // isLast30Days
-              yesterdayStart,
-              yesterdayEnd
-            );
-            
-            // Calculate average flow from yesterday's data
-            const flows = siteData.waterLevel.flow.filter(f => f !== null && f !== undefined);
-            
-            if (flows.length > 0) {
-              const avgFlow = flows.reduce((sum, flow) => sum + flow, 0) / flows.length;
-              console.log(`Site ${siteId} yesterday avg flow:`, avgFlow);
-              return avgFlow;
-            }
-            
-            return 0;
-          } catch (error) {
-            console.error(`Failed to fetch yesterday's data for site ${site.siteId}:`, error);
-            return 0;
-          }
-        });
-        
-        const results = await Promise.allSettled(flowPromises);
-        
-        // Sum up all successful results
-        const totalYesterdayFlow = results.reduce((sum, result) => {
-          if (result.status === 'fulfilled') {
-            return sum + result.value;
-          }
-          return sum;
-        }, 0);
-        
-        console.log('Total yesterday flow:', totalYesterdayFlow);
-        setYesterdayFlowRate(totalYesterdayFlow);
-      } catch (error) {
-        console.error('Failed to fetch yesterday flow data:', error);
-        // Set a fallback value to show something instead of infinite loading
-        setYesterdayFlowRate(0);
-      }
-    };
-
-    if (data.sites && data.sites.length > 0) {
-      fetchYesterdayFlow();
-    } else if (!loading) {
-      // If not loading and no sites, set to 0 to prevent infinite loading
-      setYesterdayFlowRate(0);
-    }
-  }, [data.sites, loading]);
-
-  // Debug logging
-
   const handleSiteClick = (siteId: number) => {
     navigate(`/sites/${siteId}`);
   };
@@ -130,11 +61,11 @@ export function LandingPage() {
     if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
     if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}`+ t("ups.landing.min") });
     if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}`+ t("ups.landing.hours") });
-    return t("ups.landing.timeAgo", { time: `${diffDays} days` });
+    return t("ups.landing.timeAgo", { time: `${diffDays}`+ t("ups.landing.days") });
   };
 
   // Calculate system overview metrics
-  const totalFlowRate = data.sites?.reduce((sum, site) => sum + (site.flowRate || 0), 0) || 0;
+  const totalFlowRate = flowRateResult.totalFlowRate;
   const activeSites = data.sites?.filter(site => site.status === 'active').length || 0;
   const totalSites = data.sites?.length || 0;
   
@@ -143,32 +74,6 @@ export function LandingPage() {
   const urgentAlarms = recentAlarms.filter(
     alarm => !alarm.acknowledged && (alarm.severity === 'critical' || alarm.severity === 'high')
   ).length;
-
-  // Calculate flow rate change percentage vs yesterday
-  const calculateFlowChange = (): { change: number; isPositive: boolean } | null => {
-    // If yesterday's data is still loading or not available
-    if (yesterdayFlowRate === null) {
-      return null;
-    }
-    
-    // If yesterday's flow was 0, we can't calculate percentage
-    if (yesterdayFlowRate === 0) {
-      // If today also has flow, show it as 100% increase
-      if (totalFlowRate > 0) {
-        return { change: 100, isPositive: true };
-      }
-      // Both are 0, no change
-      return { change: 0, isPositive: true };
-    }
-    
-    const change = ((totalFlowRate - yesterdayFlowRate) / yesterdayFlowRate) * 100;
-    return {
-      change: Math.abs(change),
-      isPositive: change >= 0
-    };
-  };
-
-  const flowChange = calculateFlowChange();
 
   return (
     <div className="space-y-6">
@@ -190,22 +95,12 @@ export function LandingPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{t("ups.landing.totalFlowRate")}</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalFlowRate.toFixed(0)} m³/s</p>
-                  {flowChange ? (
-                    <p className={`text-xs flex items-center mt-1 ${
-                      flowChange.isPositive ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      <TrendingUp className={`w-3 h-3 mr-1 ${
-                        flowChange.isPositive ? '' : 'rotate-180'
-                      }`} />
-                      {t("ups.landing.vsYesterday", { 
-                        change: `${flowChange.isPositive ? '+' : '-'}${flowChange.change.toFixed(1)}%` 
-                      })}
-                    </p>
+                  {flowLoading ? (
+                    <p className="text-2xl font-bold text-gray-900">{t("common.loading")}</p>
+                  ) : flowError ? (
+                    <p className="text-sm text-red-600">{t("ups.landing.flowRateError")}</p>
                   ) : (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {t("common.loading")}
-                    </p>
+                    <p className="text-2xl font-bold text-gray-900">{totalFlowRate.toFixed(0)} {t("ups.landing.flowRateUnit")}</p>
                   )}
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
