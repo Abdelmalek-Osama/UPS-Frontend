@@ -71,41 +71,41 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     }
   }, [isValid, onValidationChange]);
 
-  // Reset state when dialog closes
+  // Reset state when dialog closes or when a different site is loaded
   useEffect(() => {
-    if (!isOpen) {
-      setHasLoadedFlowCalc(false);
-      setSelectedEquationId(null);
-      setConstants({});
-      setSelectedEquation(null);
-      setNoEquation(false);
-      setTouched(false);
-    }
-  }, [isOpen]);
+    setHasLoadedFlowCalc(false);
+    setSelectedEquationId(null);
+    setConstants({});
+    setSelectedEquation(null);
+    setNoEquation(false);
+    setTouched(false);
+  }, [isOpen, data.id]);
 
   // Fetch flow calculation when editing
   useEffect(() => {
     // Only fetch if we have equations loaded and haven't already loaded flow calc
     if (mode === 'edit' && data.id && isOpen && !hasLoadedFlowCalc && !loadingEquations && equations.length > 0) {
+      let cancelled = false;
       const fetchFlowCalculation = async () => {
         try {
           setLoadingFlowCalc(true);
           const response = await apiService.get<any>(`/v1/FlowCalculation/${data.id}`);
+          if (cancelled) return;
           // apiService.get already returns response.data, so handle accordingly
           const flowCalcData = response?.data || response;
           
           console.log('Fetched flow calculation:', flowCalcData);
           
           if (flowCalcData) {
-            // Check if equationId is 0 or missing → mark as no equation
-            if (!flowCalcData.equationId || flowCalcData.equationId === 0) {
+            // Check if equationId is 0 or missing AND no equation formula string → mark as no equation
+            if ((!flowCalcData.equationId || flowCalcData.equationId === 0) && !flowCalcData.equation) {
               setNoEquation(true);
               onChange('flowCalculation', null);
               setHasLoadedFlowCalc(true);
               return;
             }
             // Try to match by equationId first (most reliable)
-            if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined) {
+            if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined && flowCalcData.equationId !== 0) {
               const equation = equations.find(eq => eq.id === flowCalcData.equationId);
               if (equation) {
                 console.log('Found equation by ID:', equation);
@@ -228,14 +228,17 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
           
           setHasLoadedFlowCalc(true);
         } catch (error: any) {
-          console.error('Error fetching flow calculation:', error);
-          setHasLoadedFlowCalc(true);
+          if (!cancelled) {
+            console.error('Error fetching flow calculation:', error);
+            setHasLoadedFlowCalc(true);
+          }
         } finally {
-          setLoadingFlowCalc(false);
+          if (!cancelled) setLoadingFlowCalc(false);
         }
       };
       
       fetchFlowCalculation();
+      return () => { cancelled = true; };
     }
   }, [mode, data.id, isOpen, onChange, hasLoadedFlowCalc, equations, loadingEquations]);
 
@@ -295,7 +298,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
         }
       }
     }
-  }, [isOpen, loadingEquations, equations, data.flowCalculation, selectedEquationId, constants]);
+  }, [isOpen, loadingEquations, equations, data.flowCalculation, selectedEquationId]);
 
   // Handle equation selection and extract constants
   useEffect(() => {

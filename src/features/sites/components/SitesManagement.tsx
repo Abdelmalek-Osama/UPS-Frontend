@@ -183,6 +183,7 @@ export function SitesManagement() {
 
               {/* Edit Dialog */}
               <SitesDialog
+                key={editingSite?.id}
                 mode="edit"
                 siteData={editingSite || {}}
                 isOpen={isEditDialogOpen}
