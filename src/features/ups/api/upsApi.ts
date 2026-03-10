@@ -1,4 +1,5 @@
 import { downloadFile, get, post } from "../../../shared/utils/apiService";
+import { formatDateForApi, formatDateOnlyForApi } from "../../../lib/utils";
 import type {
   DateRange,
   LandingOverview,
@@ -174,15 +175,15 @@ const buildTimeParams = (filter: TimeFilter, range?: DateRange) => {
   };
 
   if (range?.start) {
-    params.startDate = range.start.toISOString();
+    params.startDate = formatDateForApi(range.start);
   }
 
   if (range?.end) {
-    params.endDate = range.end.toISOString();
+    params.endDate = formatDateForApi(range.end);
   }
 
   if (range?.targetDate) {
-    params.targetDate = range.targetDate.toISOString();
+    params.targetDate = formatDateForApi(range.targetDate);
   }
 
   if (range?.targetTime) {
@@ -217,10 +218,10 @@ export const getSiteDashboardData = async (
     params.IsLast30Days = isLast30Days.toString();
   }
   if (startDate) {
-    params.StartDate = startDate.toISOString().split('T')[0]; // Format as date only
+    params.StartDate = formatDateOnlyForApi(startDate);
   }
   if (endDate) {
-    params.EndDate = endDate.toISOString().split('T')[0]; // Format as date only
+    params.EndDate = formatDateOnlyForApi(endDate);
   }
 
   const response = await get<UpsApiResponse<SiteDashboardDataDto>>('/v1/Sites/Dashborad/Data', {
@@ -311,13 +312,13 @@ export const exportReport = async (
   });
 
   if (range?.start) {
-    params.append("startDate", range.start.toISOString());
+    params.append("startDate", formatDateForApi(range.start));
   }
   if (range?.end) {
-    params.append("endDate", range.end.toISOString());
+    params.append("endDate", formatDateForApi(range.end));
   }
   if (range?.targetDate) {
-    params.append("targetDate", range.targetDate.toISOString());
+    params.append("targetDate", formatDateForApi(range.targetDate));
   }
   if (range?.targetTime) {
     params.append("targetTime", range.targetTime);
@@ -329,7 +330,9 @@ export const exportReport = async (
     params.append("governorateId", governorateId);
   }
 
-  const filename = `ups-${view}-report-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const filename = `ups-${view}-report-${dateStr}.${format === "pdf" ? "pdf" : "xlsx"}`;
   await downloadFile(`${UPS_VIEWER_BASE}/reports/export?${params.toString()}`, filename);
 };
 
@@ -346,13 +349,13 @@ export const exportFullData = async (
   });
 
   if (range?.start) {
-    params.append("startDate", range.start.toISOString());
+    params.append("startDate", formatDateForApi(range.start));
   }
   if (range?.end) {
-    params.append("endDate", range.end.toISOString());
+    params.append("endDate", formatDateForApi(range.end));
   }
   if (range?.targetDate) {
-    params.append("targetDate", range.targetDate.toISOString());
+    params.append("targetDate", formatDateForApi(range.targetDate));
   }
   if (range?.targetTime) {
     params.append("targetTime", range.targetTime);
@@ -361,7 +364,9 @@ export const exportFullData = async (
     params.append("siteIds", siteIds.join(","));
   }
 
-  const filename = `ups-full-data-${new Date().toISOString().split('T')[0]}.${format === "pdf" ? "pdf" : "xlsx"}`;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const filename = `ups-full-data-${dateStr}.${format === "pdf" ? "pdf" : "xlsx"}`;
   await downloadFile(`${UPS_VIEWER_BASE}/reports/export-full?${params.toString()}`, filename);
 };
 
@@ -405,10 +410,10 @@ export const getAlarmEventsBySiteAndDateRange = async (
   const params: Record<string, string> = {};
 
   if (startDate) {
-    params.startDate = startDate.toISOString().split('T')[0]; // Format as date only
+    params.startDate = formatDateOnlyForApi(startDate);
   }
   if (endDate) {
-    params.endDate = endDate.toISOString().split('T')[0]; // Format as date only
+    params.endDate = formatDateOnlyForApi(endDate);
   }
 
   try {
@@ -441,35 +446,139 @@ export const getAlarmEventsBySiteAndDateRange = async (
   }
 };
 
-// New API: Get recent alarm events for landing page
-export const getRecentAlarmEvents = async (): Promise<Event[]> => {
+// All pump sites daily summary types + API
+// timeRangeMode: 0 = Latest (2h), 1 = Last 24h, 2 = Last week, 3 = Last month, 4 = Custom range
+export interface AllPumpSitesDailySummaryRequest {
+  timeRangeMode: 0 | 1 | 2 | 3 | 4;
+  date?: string;
+  pageNumber?: number;
+  pageSize?: number;
+  canalIds?: number[];
+  siteIds?: number[];
+  unresolvedOnly?: boolean;
+  severity?: number;
+  wordFilter?: string;
+}
+
+export interface PumpSiteDailySummaryItem {
+  siteId: number;
+  siteName: string;
+  siteArabicName?: string;
+  numPumps?: number;
+  date?: string;
+  p1_TimeSum?: number | null;
+  p2_TimeSum?: number | null;
+  p3_TimeSum?: number | null;
+  p4_TimeSum?: number | null;
+  p5_TimeSum?: number | null;
+  p6_TimeSum?: number | null;
+  p7_TimeSum?: number | null;
+  p8_TimeSum?: number | null;
+  p9_TimeSum?: number | null;
+  p10_TimeSum?: number | null;
+  totalFlowSum?: number | null;
+  readingCount?: number | null;
+}
+
+export interface PumpSiteDailySummaryPagedResponse {
+  items: PumpSiteDailySummaryItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export const getAllPumpSitesDailySummary = async (
+  request: AllPumpSitesDailySummaryRequest
+): Promise<PumpSiteDailySummaryItem[]> => {
+  const params: Record<string, string | number | boolean> = {
+    timeRangeMode: request.timeRangeMode,
+    pageNumber: request.pageNumber ?? 1,
+    pageSize: request.pageSize ?? 100,
+  };
+
+  if (request.date) params.date = request.date;
+  if (request.canalIds?.length) params.canalIds = request.canalIds.join(',');
+  if (request.siteIds?.length) params.siteIds = request.siteIds.join(',');
+  if (request.unresolvedOnly !== undefined) params.unresolvedOnly = request.unresolvedOnly;
+  if (request.severity !== undefined) params.severity = request.severity;
+  if (request.wordFilter) params.wordFilter = request.wordFilter;
+
+  const response = await get<UpsApiResponse<PumpSiteDailySummaryItem[]>>(
+    '/v1/readings/pump-station/all-pump-sites/daily-summary',
+    { params }
+  );
+  return response.data ?? [];
+};
+
+// Request type for recent alarm events
+// timeRangeMode: 0 = Latest (2h), 1 = Last 24h, 2 = Last week, 3 = Last month, 4 = Custom range
+export interface RecentAlarmEventsRequest {
+  timeRangeMode: 0 | 1 | 2 | 3 | 4;
+  startDate?: string; // ISO date-time string, required when timeRangeMode = 4
+  endDate?: string;   // ISO date-time string, required when timeRangeMode = 4
+  pageNumber?: number;
+  pageSize?: number;
+  // Optional filters
+  //canalId?: number;  // Single canal filter: 0 = Ibrahimiya, 1 = Bahr Youssef
+  canalIds?: number[];
+  siteIds?: number[];
+  unresolvedOnly?: boolean;
+  severity?: number; // 0 = Crisis, 1 = Critical, 2 = Info
+  wordFilter?: string;
+}
+
+export interface AlarmEventsPagedResponse {
+  data: AlarmEventDto[];
+  totalCount: number;
+  totalPages: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
+const mapAlarmEventDto = (event: AlarmEventDto): Event => ({
+  id: event.id.toString(),
+  siteId: event.siteId.toString(),
+  timestamp: new Date(event.triggeredAt),
+  type: 'alarm' as EventType,
+  severity: mapSeverity(event.severity),
+  message: event.message,
+  acknowledged: event.isResolved,
+  acknowledgedBy: undefined,
+  acknowledgedAt: undefined,
+});
+
+// New API: Get filtered alarm events (paged)
+export const getRecentAlarmEvents = async (
+  request: RecentAlarmEventsRequest = { timeRangeMode: 0, pageNumber: 1, pageSize: 100 }
+): Promise<Event[]> => {
   try {
-    const response = await get<UpsApiResponse<AlarmEventDto[]>>(
-      '/v1/alarm-events/recent'
+    const response = await post<UpsApiResponse<AlarmEventsPagedResponse | AlarmEventDto[]>>(
+      '/v1/alarm-events/filtered',
+      request
     );
 
-    console.log('Recent alarm events API response:', response);
+    const unwrapped: unknown =
+      response && typeof response === 'object' && 'isSuccess' in response
+        ? (response as UpsApiResponse<unknown>).data
+        : response;
 
-    // Check if response.data is an array
-    if (!Array.isArray(response.data)) {
-      console.error('Expected array but got:', response.data);
-      return [];
+    if (!unwrapped) return [];
+
+    // Paged response: { data: [...], totalCount: N, ... }
+    if (typeof unwrapped === 'object' && !Array.isArray(unwrapped) && 'data' in (unwrapped as object)) {
+      const items = (unwrapped as AlarmEventsPagedResponse).data;
+      return (items ?? []).map(mapAlarmEventDto);
     }
 
-    // Transform API response to Event type with Date objects
-    return response.data.map(event => ({
-      id: event.id.toString(),
-      siteId: event.siteId.toString(),
-      timestamp: new Date(event.triggeredAt),
-      type: 'alarm' as EventType,
-      severity: mapSeverity(event.severity),
-      message: event.message,
-      acknowledged: event.isResolved,
-      acknowledgedBy: undefined,
-      acknowledgedAt: undefined,
-    }));
+    // Plain array response
+    if (Array.isArray(unwrapped)) {
+      return (unwrapped as AlarmEventDto[]).map(mapAlarmEventDto);
+    }
+
+    console.error('[alarmEvents] unexpected shape:', unwrapped);
+    return [];
   } catch (error) {
-    console.error('Failed to fetch recent alarm events:', error);
+    console.error('[alarmEvents] fetch error:', error);
     return [];
   }
 };

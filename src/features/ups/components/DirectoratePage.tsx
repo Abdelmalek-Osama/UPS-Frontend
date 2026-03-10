@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -9,22 +9,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../compo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { ArrowLeft, Search, Info, ChevronDown } from "lucide-react";
+import { ArrowLeft, Search, Info, ChevronDown, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
+import { DatePicker } from "../../../components/ui/datepicker";
 import { DirectorateWLChart } from "./DirectorateWLChart";
 import { DirectorateFlowChart } from "./DirectorateFlowChart";
+import { PumpOperatingTimesChart } from "./PumpOperatingTimesChart";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
-import { exportReport } from "../api/upsApi";
-import type { DateRange, TimeFilter, SiteSummary } from "../types";
+import { useAllPumpSitesDailySummary } from "../hooks/useAllPumpSitesDailySummary";
+import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
+import type { RecentAlarmEventsRequest } from "../api/upsApi";
+import { formatDateForApi } from "../../../lib/utils";
+import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
 // Main regulators for each canal (which sites to show in USWL/DSWL chart)
 // Order is now determined by canalOrder from backend, not by array position
 const MAIN_REGULATORS = {
-  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1", "58"],
+  "Ibrahimiya": ["13", "12", "11", "32", "10", "9", "8", "1", "44","58"],
   "Bahr Youssef": ["7", "6", "20", "5", "19", "4", "3", "2"]
 };
 
@@ -39,14 +44,91 @@ export function DirectoratePage() {
     levels: "average",
     flow: "sum"
   });
+  const [pumpDate, setPumpDate] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPumpStation, setSelectedPumpStation] = useState<SiteSummary | null>(null);
+  // Alarms keyed by canalId: 0 = Ibrahimiya, 1 = Bahr Youssef
+  const [alarmsByCanal, setAlarmsByCanal] = useState<Record<number, Event[]>>({ 0: [], 1: [] });
+  const [alarmsLoading, setAlarmsLoading] = useState(true);
+  const [bahrYoussefAlarmsPage, setBahrYoussefAlarmsPage] = useState(1);
+  const [ibrahimiyaAlarmsPage, setIbrahimiyaAlarmsPage] = useState(1);
+  const ALARMS_PAGE_SIZE = 6;
+
+  useEffect(() => {
+    const buildAlarmRequest = (canalId: number): RecentAlarmEventsRequest => {
+      const base = { pageNumber: 1, pageSize: 100, canalIds: [canalId] };
+      switch (filter) {
+        case "latest": return { ...base, timeRangeMode: 0 };
+        case "24h":    return { ...base, timeRangeMode: 1 };
+        case "week":   return { ...base, timeRangeMode: 2 };
+        case "month":  return { ...base, timeRangeMode: 3 };
+        case "custom":
+          return {
+            ...base,
+            timeRangeMode: 4,
+            startDate: range.start ? formatDateForApi(range.start) : undefined,
+            endDate:   range.end   ? formatDateForApi(range.end)   : undefined,
+          };
+        case "specific": {
+          const d = range.targetDate ?? new Date();
+          const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+          const dayEnd   = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+          return {
+            ...base,
+            timeRangeMode: 4,
+            startDate: formatDateForApi(dayStart),
+            endDate:   formatDateForApi(dayEnd),
+          };
+        }
+        default: return { ...base, timeRangeMode: 0 };
+      }
+    };
+
+    const fetchAlarms = async () => {
+      setAlarmsLoading(true);
+      try {
+        const [canal0Events, canal1Events] = await Promise.all([
+          getRecentAlarmEvents(buildAlarmRequest(0)),
+          getRecentAlarmEvents(buildAlarmRequest(1)),
+        ]);
+        setAlarmsByCanal({ 0: canal0Events, 1: canal1Events });
+        setIbrahimiyaAlarmsPage(1);
+        setBahrYoussefAlarmsPage(1);
+      } catch (error) {
+        console.error('Failed to fetch recent alarms:', error);
+        setAlarmsByCanal({ 0: [], 1: [] });
+      } finally {
+        setAlarmsLoading(false);
+      }
+    };
+    fetchAlarms();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, range.start, range.end, range.targetDate, range.targetTime]);
+
+  const getTimeAgo = (timestamp: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
+    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}` + t("ups.landing.min") });
+    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}` + t("ups.landing.hours") });
+    return t("ups.landing.timeAgo", { time: `${diffDays} days` });
+  };
 
   const { directorates, loading: directoratesLoading } = useDirectoratesList();
   const { sites, loading: sitesLoading } = useSitesList();
   // Use first selected directorate for API call, or empty string if none selected
   const apiDirectorateId = selectedDirectorateIds.length > 0 ? selectedDirectorateIds[0] : "";
   const { data, error } = useGovernorateOverview(apiDirectorateId, filter, range);
+
+  // Derive timeRangeMode from pumpDate: 4 = Custom (specific day), 0 = Latest (2h)
+  const pumpTimeRangeMode: 0 | 4 = pumpDate ? 4 : 0;
+  const { data: allPumpsSummary, loading: pumpSummaryLoading } = useAllPumpSitesDailySummary({
+    timeRangeMode: pumpTimeRangeMode,
+    date: pumpDate,
+  });
 
   // Get directorate name based on language
   const getDirectorateName = (directorateId: string) => {
@@ -106,7 +188,7 @@ export function DirectoratePage() {
 
 
 
-  const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
+  const renderBranchSection = (branchName: string, sites: SiteSummary[], showAlerts = true) => {
     // Filter sites by directorate if directorates are selected
     let filteredByDirectorate = sites;
     if (selectedDirectorateIds.length > 0) {
@@ -147,8 +229,11 @@ export function DirectoratePage() {
       let flowValue = site.flowRate;
       
       // If site has pumps, use total pump flow instead of calculated flow
-      if (numPumps > 0 && (site as any).pumpData?.flows) {
-        flowValue = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
+      if (numPumps > 0 && (site as any).pumpData) {
+        // Use totalFlow from API if available, otherwise sum the flows
+        flowValue = (site as any).pumpData.totalFlow != null
+          ? (site as any).pumpData.totalFlow
+          : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
       }
       
       return {
@@ -164,6 +249,10 @@ export function DirectoratePage() {
     // Get localized branch name
     const branchKey = branchName === "Ibrahimiya" ? "ups.branches.ibrahimia" : "ups.branches.bahrYoussef";
     const localizedBranchName = t(branchKey);
+
+    // Get alarms for this canal directly from the per-canal fetch
+    const canalId = branchName === "Ibrahimiya" ? 0 : 1;
+    const branchAlarms = alarmsByCanal[canalId] ?? [];
 
     return (
       <div key={branchName} className="space-y-6">
@@ -248,32 +337,35 @@ export function DirectoratePage() {
                           {site.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">{site.upstream > 0 ? site.upstream.toFixed(2) : "-"}</TableCell>
-                      <TableCell className="text-center">{site.downstream > 0 ? site.downstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-center">{site.upstream != null ? site.upstream.toFixed(2) : "-"}</TableCell>
+                      <TableCell className="text-center">{site.downstream != null ? site.downstream.toFixed(2) : "-"}</TableCell>
                       <TableCell className="text-blue-600 font-medium text-center">
                         {(() => {
                           const numPumps = (site as any).siteConfiguration?.numPumps || 0;
-                          if (numPumps > 0 && (site as any).pumpData?.flows) {
-                            const totalFlow = (site as any).pumpData.flows.reduce((sum: number, flow: number) => sum + flow, 0);
-                            return totalFlow > 0 ? totalFlow.toFixed(1) : "-";
+                          if (numPumps > 0 && (site as any).pumpData) {
+                            // Use totalFlow from API if available, otherwise sum the flows
+                            const totalFlow = (site as any).pumpData.totalFlow != null
+                              ? (site as any).pumpData.totalFlow
+                              : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                            return totalFlow != null ? totalFlow.toFixed(1) : "-";
                           }
-                          return site.flowRate > 0 ? site.flowRate.toFixed(1) : "-";
+                          return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
                         })()}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
                         {site.lastReading ? (() => {
                           const date = new Date(site.lastReading);
-                          const year = date.getUTCFullYear();
-                          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                          const day = String(date.getUTCDate()).padStart(2, '0');
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
                           return `${year}-${month}-${day}`;
                         })() : "-"}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 text-center">
                         {site.lastReading ? (() => {
                           const date = new Date(site.lastReading);
-                          const hours = String(date.getUTCHours()).padStart(2, '0');
-                          const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                          const hours = String(date.getHours()).padStart(2, '0');
+                          const minutes = String(date.getMinutes()).padStart(2, '0');
                           return `${hours}:${minutes}`;
                         })() : "-"}
                       </TableCell>
@@ -314,35 +406,169 @@ export function DirectoratePage() {
         {/* Calculated Flow Chart (Line Graph) */}
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
 
-        
+        {/* Recent Alerts */}
+        {showAlerts && (() => {
+          const currentPage = ibrahimiyaAlarmsPage;
+          const setPage = setIbrahimiyaAlarmsPage;
+          const totalPages = Math.max(1, Math.ceil(branchAlarms.length / ALARMS_PAGE_SIZE));
+          const safePage = Math.min(currentPage, totalPages);
+          const paginatedAlarms = branchAlarms.slice((safePage - 1) * ALARMS_PAGE_SIZE, safePage * ALARMS_PAGE_SIZE);
+          return (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  {t('_rtl') === 'rtl' ? (
+                    <>
+                      {/* Arabic: count on left, title on right */}
+                      {branchAlarms.length > 0 && (
+                        <span className="text-sm text-gray-500">
+                          {branchAlarms.length} {t("alarms.total")}
+                        </span>
+                      )}
+                      <CardTitle className="text-right">{t("ups.landing.recentAlerts")}</CardTitle>
+                    </>
+                  ) : (
+                    <>
+                      {/* English: title on left, count on right */}
+                      <CardTitle className="text-left">{t("ups.landing.recentAlerts")}</CardTitle>
+                      {branchAlarms.length > 0 && (
+                        <span className="text-sm text-gray-500">
+                          {branchAlarms.length} {t("alarms.total")}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {alarmsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                        <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                        <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : branchAlarms.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">{t("alarms.noEventsYet")}</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {paginatedAlarms.map((alarm) => (
+                        <div
+                          key={alarm.id}
+                          className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                            alarm.severity === 'critical'
+                              ? 'bg-red-50 border-red-200'
+                              : alarm.severity === 'high'
+                              ? 'bg-orange-50 border-orange-200'
+                              : 'bg-blue-50 border-blue-200'
+                          }`}
+                        >
+                          <div className={`p-1 rounded ${
+                            alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                          }`}>
+                            <AlertTriangle className={`w-4 h-4 ${
+                              alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                            }`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                            <p className={`text-xs font-medium mt-1 ${
+                              alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                            }`}>
+                              {t(`alarms.severity.${alarm.severity}`)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          disabled={safePage <= 1}
+                        >
+                          {t('_rtl') === 'rtl' ? '›' : '‹'}
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          {safePage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                          disabled={safePage >= totalPages}
+                        >
+                          {t('_rtl') === 'rtl' ? '‹' : '›'}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
+
       </div>
     );
   };
 
-  // Get all pump sites for the summary tables
-  // NOTE: This includes ALL sites with pumps from both branches, not just MAIN_REGULATORS
-  // The MAIN_REGULATORS constant is only used for the USWL/DSWL chart, not these tables
-  const getPumpSites = () => {
-    let allSites: SiteSummary[] = [];
-    
-    // Collect ALL sites from all branches (not limited to MAIN_REGULATORS)
-    orderedBranches.forEach(branch => {
-      allSites = allSites.concat(branch.sites);
-    });
+  // Build pump sites for the operating hours table/chart from the daily-summary API
+  const getPumpSitesForTable = () => {
+    let items = allPumpsSummary;
 
-    // Filter by directorate if selected
-    if (selectedDirectorateIds.length > 0) {
-      const selectedDirIds = selectedDirectorateIds.map(id => parseInt(id));
-      allSites = allSites.filter(site => site.directorateId !== undefined && selectedDirIds.includes(site.directorateId));
-    }
-
-    // Filter by selected sites if sites are selected
+    // Filter by selected sites if any
     if (selectedSiteIds.length > 0) {
-      allSites = allSites.filter(site => selectedSiteIds.includes(site.siteId));
+      items = items.filter(item => selectedSiteIds.includes(String(item.siteId)));
     }
 
-    // Only include sites with pumps (this gets ALL pump sites, not just the main ones)
-    return allSites.filter(site => (site as any).siteConfiguration?.numPumps > 0);
+    // Build a lookup of numPumps from by-canals API data (siteConfiguration.numPumps)
+    const numPumpsFromConfig = new Map<number, number>();
+    for (const branch of data.branches) {
+      for (const site of branch.sites) {
+        const cfg = (site as any).siteConfiguration;
+        if (cfg?.numPumps != null) {
+          numPumpsFromConfig.set(Number(site.siteId), Number(cfg.numPumps));
+        }
+      }
+    }
+
+    // Resolve numPumps: prefer siteConfiguration from by-canals, fall back to daily-summary field
+    const resolveNumPumps = (item: typeof items[0]) => {
+      const fromConfig = numPumpsFromConfig.get(item.siteId);
+      if (fromConfig != null) return fromConfig;
+      if (item.numPumps != null) return item.numPumps;
+      return 0;
+    };
+
+    return items.map(item => ({
+      siteId: String(item.siteId),
+      siteName: item.siteName,
+      siteArabicName: item.siteArabicName,
+      siteConfiguration: { numPumps: resolveNumPumps(item) },
+      pumpData: {
+        operatingTimes: [
+          item.p1_TimeSum ?? null, item.p2_TimeSum ?? null, item.p3_TimeSum ?? null,
+          item.p4_TimeSum ?? null, item.p5_TimeSum ?? null, item.p6_TimeSum ?? null,
+          item.p7_TimeSum ?? null, item.p8_TimeSum ?? null, item.p9_TimeSum ?? null,
+          item.p10_TimeSum ?? null,
+        ],
+        flows: [
+          null, null, null, null, null,
+          null, null, null, null, null,
+        ],
+        totalFlow: item.totalFlowSum ?? null,
+      },
+    }));
   };
 
   return (
@@ -526,7 +752,7 @@ export function DirectoratePage() {
         onExport={handleExport}
         showCalculations={false}
         showLatestOption={true}
-        showExport={false}
+        showExport={true}
       />
 
       {/* Error Message */}
@@ -562,7 +788,7 @@ export function DirectoratePage() {
             
             return (
               <TabsContent key={branch.name} value={tabValue} className="space-y-6 mt-6">
-                {renderBranchSection(branch.name, branch.sites)}
+                {renderBranchSection(branch.name, branch.sites, !isBahrYoussef)}
                 
                 {/* Pump Monthly Average Tables - Only for Bahr Youssef */}
                 {isBahrYoussef && (
@@ -574,8 +800,26 @@ export function DirectoratePage() {
                           {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-4">
+                        <div className={`flex items-center gap-3 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                          <DatePicker
+                            placeholder={t("ups.filters.selectDate") || "Select date"}
+                            value={pumpDate}
+                            onChange={setPumpDate}
+                          />
+                          {pumpDate && (
+                            <button
+                              onClick={() => setPumpDate(undefined)}
+                              className="text-xs text-gray-400 hover:text-gray-600 underline"
+                            >
+                              {t("common.clearDate") || "Clear"}
+                            </button>
+                          )}
+                        </div>
                         <div className="overflow-x-auto">
+                          {pumpSummaryLoading ? (
+                            <div className="py-8 text-center text-gray-400 text-sm">{t("common.loading") || "Loading..."}</div>
+                          ) : (
                           <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                             <TableHeader>
                               <TableRow>
@@ -584,19 +828,28 @@ export function DirectoratePage() {
                                 </TableHead>
                                 {[1, 2, 3, 4, 5, 6].map(pumpNum => (
                                   <TableHead key={pumpNum} className="text-center font-semibold min-w-[100px]">
-                                    {t("ups.directorate.pump")} {pumpNum}
+                                    {t("ups.directorate.pump")} {pumpNum} ({t("common.hours") || "hrs"})
                                   </TableHead>
                                 ))}
+                                <TableHead className="text-center font-semibold min-w-[110px]">
+                                  {t("ups.directorate.totalFlow") || "Total Flow (m³/s)"}
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {getPumpSites().map((site: SiteSummary) => {
-                                const numPumps = (site as any).siteConfiguration?.numPumps || 0;
-                                const pumpTimes = (site as any).pumpData?.operatingTimes || [];
+                              {getPumpSitesForTable().length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={8} className="text-center text-gray-500 py-6">
+                                    {t("common.noData")}
+                                  </TableCell>
+                                </TableRow>
+                              ) : getPumpSitesForTable().map((site) => {
+                                const numPumps = site.siteConfiguration?.numPumps || 0;
+                                const pumpTimes = site.pumpData?.operatingTimes || [];
                                 return (
                                   <TableRow key={site.siteId}>
                                     <TableCell className="font-medium text-center">
-                                      {t('_rtl') === 'rtl' 
+                                      {t('_rtl') === 'rtl'
                                         ? (site.siteArabicName || site.siteName)
                                         : site.siteName
                                       }
@@ -605,7 +858,7 @@ export function DirectoratePage() {
                                       const pumpExists = pumpNum <= numPumps;
                                       const timeValue = pumpTimes[pumpNum - 1];
                                       const hasData = timeValue !== undefined && timeValue !== null;
-                                      
+
                                       return (
                                         <TableCell key={pumpNum} className="text-center">
                                           {!pumpExists ? (
@@ -614,7 +867,7 @@ export function DirectoratePage() {
                                             </span>
                                           ) : hasData ? (
                                             <span className="text-blue-600 font-medium">
-                                              {timeValue.toFixed(0)} {t("common.hours") || "hrs"}
+                                              {(timeValue as number).toFixed(0)}
                                             </span>
                                           ) : (
                                             <span className="text-gray-400">-</span>
@@ -622,16 +875,126 @@ export function DirectoratePage() {
                                         </TableCell>
                                       );
                                     })}
+                                    <TableCell className="text-center">
+                                      {site.pumpData?.totalFlow != null ? (
+                                        <span className="text-green-600 font-semibold">
+                                          {(site.pumpData.totalFlow as number).toFixed(2)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">-</span>
+                                      )}
+                                    </TableCell>
                                   </TableRow>
                                 );
                               })}
                             </TableBody>
                           </Table>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
 
-                    {/* Pump Flow Rates Table */}
+                    <PumpOperatingTimesChart sites={getPumpSitesForTable()} />
+
+                    {/* Recent Alerts - Bahr Youssef (paginated) */}
+                    {(() => {
+                      const allAlarms = alarmsByCanal[1] ?? [];
+                      const totalPages = Math.max(1, Math.ceil(allAlarms.length / ALARMS_PAGE_SIZE));
+                      const safePage = Math.min(bahrYoussefAlarmsPage, totalPages);
+                      const paginatedAlarms = allAlarms.slice((safePage - 1) * ALARMS_PAGE_SIZE, safePage * ALARMS_PAGE_SIZE);
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                                {t("ups.landing.recentAlerts")}
+                              </CardTitle>
+                              {allAlarms.length > 0 && (
+                                <span className="text-sm text-gray-500">
+                                  {allAlarms.length} {t("alarms.total") || "total"}
+                                </span>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 space-y-4">
+                            {alarmsLoading ? (
+                              <div className="space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                  <div key={i} className="space-y-2">
+                                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                                    <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                                  </div>
+                                ))}
+                              </div>
+                            ) : allAlarms.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500">
+                                <p className="text-sm">{t("alarms.noEventsYet")}</p>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                  {paginatedAlarms.map((alarm) => (
+                                    <div
+                                      key={alarm.id}
+                                      className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                                        alarm.severity === 'critical'
+                                          ? 'bg-red-50 border-red-200'
+                                          : alarm.severity === 'high'
+                                          ? 'bg-orange-50 border-orange-200'
+                                          : 'bg-blue-50 border-blue-200'
+                                      }`}
+                                    >
+                                      <div className={`p-1 rounded ${
+                                        alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                                      }`}>
+                                        <AlertTriangle className={`w-4 h-4 ${
+                                          alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                                        }`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                                        <p className={`text-xs font-medium mt-1 ${
+                                          alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                                        }`}>
+                                          {t(`alarms.severity.${alarm.severity}`)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {totalPages > 1 && (
+                                  <div className="flex items-center justify-center gap-2 pt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setBahrYoussefAlarmsPage(p => Math.max(1, p - 1))}
+                                      disabled={safePage <= 1}
+                                    >
+                                      {t('_rtl') === 'rtl' ? '›' : '‹'}
+                                    </Button>
+                                    <span className="text-sm text-gray-600">
+                                      {safePage} / {totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setBahrYoussefAlarmsPage(p => Math.min(totalPages, p + 1))}
+                                      disabled={safePage >= totalPages}
+                                    >
+                                      {t('_rtl') === 'rtl' ? '‹' : '›'}
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
+
+                    {/* Pump Flow Rates Table
                     <Card>
                       <CardHeader>
                         <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
@@ -693,7 +1056,7 @@ export function DirectoratePage() {
                           </Table>
                         </div>
                       </CardContent>
-                    </Card>
+                    </Card> */}
                   </>
                 )}
               </TabsContent>
@@ -726,11 +1089,11 @@ export function DirectoratePage() {
                         const readingTime = (selectedPumpStation as any).pumpData.readingTime;
                         if (!readingTime) return "-";
                         const date = new Date(readingTime);
-                        const year = date.getUTCFullYear();
-                        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                        const day = String(date.getUTCDate()).padStart(2, '0');
-                        const hours = String(date.getUTCHours()).padStart(2, '0');
-                        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${year}-${month}-${day} ${hours}:${minutes}`;
                       })()}
                     </p>
@@ -741,7 +1104,7 @@ export function DirectoratePage() {
                       {t("ups.directorate.pumpFlows")}
                     </h4>
                     <div className="space-y-2">
-                      {(selectedPumpStation as any).pumpData.flows.map((flow: number, index: number) => (
+                      {(selectedPumpStation as any).pumpData.flows.slice(0, 6).map((flow: number, index: number) => (
                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                           <span className="text-gray-600">{t("ups.directorate.pump")} {index + 1}:</span>
                           <span className="font-semibold text-blue-600">{flow.toFixed(2)} m³/s</span>
@@ -754,7 +1117,10 @@ export function DirectoratePage() {
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                       <span className="text-gray-700 font-medium">{t("ups.directorate.totalFlow")}:</span>
                       <span className="text-lg font-bold text-blue-600">
-                        {(selectedPumpStation as any).pumpData.flows.reduce((sum: number, f: number) => sum + f, 0).toFixed(2)} m³/s
+                        {((selectedPumpStation as any).pumpData.totalFlow != null 
+                          ? (selectedPumpStation as any).pumpData.totalFlow.toFixed(2)
+                          : (selectedPumpStation as any).pumpData.flows.reduce((sum: number, f: number) => sum + f, 0).toFixed(2)
+                        )} m³/s
                       </span>
                     </div>
                   </div>

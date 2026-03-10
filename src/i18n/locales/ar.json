@@ -61,7 +61,7 @@
     "filters": "التصفيات",
     "clearFilters": "مسح التصفيات",
     "clearAll": "مسح الكل",
-    "overview": "نظرة عامة",
+    "clearDate": "مسح",
     "details": "التفاصيل",
     "selectDirectorate": "تصفية حسب المديرية",
     "message": "الرسالة",
@@ -508,6 +508,7 @@
       "info": "معلومات"
     },
     "message": "الرسالة",
+    "total": "إجمالي",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",
     "viewAlarmConfiguration": "عرض تكوين التنبيه",
@@ -1003,8 +1004,10 @@
       "allSites": "جميع المواقع",
       "sitesSelected": "مواقع محددة",
       "selectSites": "اختر المواقع",
-      "monthlyPumpTimes": "متوسط ساعات تشغيل المضخات",
-      "monthlyPumpFlows": "متوسط تدفقات المضخات (م³/ث)"
+      "monthlyPumpTimes": "مجموع ساعات تشغيل المضخات — جدول",
+      "monthlyPumpFlows": "مجموع تدفقات المضخات (م³/ث)",
+      "pumpTimesChart": "مجموع ساعات تشغيل المضخات — رسم بياني",
+      "selectDateForPumpData": "اختر تاريخاً لعرض بيانات تشغيل المضخات"
     },
     "master": {
       "title": "العرض العام للمشروع",

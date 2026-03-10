@@ -61,6 +61,7 @@
     "filters": "Filters",
     "clearFilters": "Clear Filters",
     "clearAll": "Clear All",
+    "clearDate": "Clear",
     "overview": "Overview",
     "details": "Details",
     "selectDirectorate": "Filter by Directorate",
@@ -509,6 +510,7 @@
       "info": "Info"
     },
     "message": "Message",
+    "total": "total",
     "actualValue": "Actual Value",
     "viewFullReading": "View Full Reading",
     "viewAlarmConfiguration": "View Alarm Configuration",
@@ -1007,8 +1009,10 @@
       "allSites": "All Sites",
       "sitesSelected": "sites selected",
       "selectSites": "Select Sites",
-      "monthlyPumpTimes": "Pump Operating Times Avg (Hours)",
-      "monthlyPumpFlows": "Pump Flows Avg (m³/s)"
+      "monthlyPumpTimes": "Sum of Pump Operating Hours — Table",
+      "monthlyPumpFlows": "Sum of Pump Flows (m³/s)",
+      "pumpTimesChart": "Sum of Pump Operating Hours — Chart",
+      "selectDateForPumpData": "Select a date to view pump operating data"
     },
     "master": {
       "title": "Master General View",

@@ -15,7 +15,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const { data, loading } = useLandingOverview();
   const [recentAlarms, setRecentAlarms] = useState<Event[]>([]);
-  const [alarmsLoading, setAlarmsLoading] = useState(true);
+  
 
   // Fetch water level readings for Ibrahimiya Head Regulator (site 1)
   const { readings, loading: flowLoading, error: flowError } = useWaterLevelReadings(1);
@@ -28,41 +28,26 @@ export function LandingPage() {
     return calculateTotalFlowRate(readings);
   }, [readings]);
 
-  // Fetch recent alarm events
+
+  // Fetch recent alarm events for urgent alarms count
   useEffect(() => {
     const fetchRecentAlarms = async () => {
-      setAlarmsLoading(true);
       try {
-        const events = await getRecentAlarmEvents();
-        setRecentAlarms(events.slice(0, 5)); // Show only first 5
+        const events = await getRecentAlarmEvents({ timeRangeMode: 0, pageNumber: 1, pageSize: 100 });
+        setRecentAlarms(events);
       } catch (error) {
         console.error('Failed to fetch recent alarms:', error);
-        setRecentAlarms([]);
-      } finally {
-        setAlarmsLoading(false);
       }
     };
 
     fetchRecentAlarms();
-  }, []);
+  }, [])
 
   const handleSiteClick = (siteId: number) => {
     navigate(`/sites/${siteId}`);
   };
 
-  // Format time ago
-  const getTimeAgo = (timestamp: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - timestamp.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return t("ups.landing.timeAgo", { time: t("ups.landing.justNow") });
-    if (diffMins < 60) return t("ups.landing.timeAgo", { time: `${diffMins}`+ t("ups.landing.min") });
-    if (diffHours < 24) return t("ups.landing.timeAgo", { time: `${diffHours}`+ t("ups.landing.hours") });
-    return t("ups.landing.timeAgo", { time: `${diffDays}`+ t("ups.landing.days") });
-  };
 
   // Calculate system overview metrics
   const totalFlowRate = flowRateResult.totalFlowRate;
@@ -146,92 +131,19 @@ export function LandingPage() {
 
         </div>
 
-        {/* Main Content Grid - Map and Recent Alerts */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Geographic Status Map */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{t("ups.landing.geographicMap")}</h3>
-              <p className="text-sm text-gray-500">{t("ups.landing.mapDirection")}</p>
-            </div>
-            {/* Map without card wrapper to match screenshot */}
-            <div className="rounded-lg overflow-hidden border border-gray-200 h-[400px]">
-              <MapPanel
-                pins={data.sites}
-                onPinClick={handleSiteClick}
-                isLoading={loading}
-                error={null} // Don't show error on map if we have demo data
-              />
-            </div>
+        {/* Geographic Status Map */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">{t("ups.landing.geographicMap")}</h3>
+            <p className="text-sm text-gray-500">{t("ups.landing.mapDirection")}</p>
           </div>
-
-          {/* Recent Alerts */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("ups.landing.recentAlerts")}</h3>
-            <Card>
-              <CardContent className="p-4">
-                {alarmsLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="space-y-2">
-                        <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                        <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
-                        <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
-                      </div>
-                    ))}
-                  </div>
-                ) : recentAlarms.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">{t("alarms.noEventsYet")}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentAlarms.map((alarm) => (
-                      <div 
-                        key={alarm.id} 
-                        className={`flex items-start space-x-3 p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${
-                          alarm.severity === 'critical' 
-                            ? 'bg-red-50 border-red-200' 
-                            : alarm.severity === 'high'
-                            ? 'bg-orange-50 border-orange-200'
-                            : 'bg-blue-50 border-blue-200'
-                        }`}
-                        onClick={() => handleSiteClick(Number(alarm.siteId))}
-                      >
-                        <div className={`p-1 rounded ${
-                          alarm.severity === 'critical' 
-                            ? 'bg-red-100' 
-                            : alarm.severity === 'high'
-                            ? 'bg-orange-100'
-                            : 'bg-blue-100'
-                        }`}>
-                          <AlertTriangle className={`w-4 h-4 ${
-                            alarm.severity === 'critical' 
-                              ? 'text-red-600' 
-                              : alarm.severity === 'high'
-                              ? 'text-orange-600'
-                              : 'text-blue-600'
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
-                          <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
-                          <p className={`text-xs font-medium mt-1 ${
-                            alarm.severity === 'critical' 
-                              ? 'text-red-600' 
-                              : alarm.severity === 'high'
-                              ? 'text-orange-600'
-                              : 'text-blue-600'
-                          }`}>
-                            {t(`alarms.severity.${alarm.severity}`)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="rounded-lg overflow-hidden border border-gray-200 h-[400px]">
+            <MapPanel
+              pins={data.sites}
+              onPinClick={handleSiteClick}
+              isLoading={loading}
+              error={null}
+            />
           </div>
         </div>
 
