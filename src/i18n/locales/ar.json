@@ -508,6 +508,7 @@
       "info": "معلومات"
     },
     "message": "الرسالة",
+    "total": "إجمالي",
     "actualValue": "القيمة الفعلية",
     "viewFullReading": "عرض القراءة الكاملة",
     "viewAlarmConfiguration": "عرض تكوين التنبيه",

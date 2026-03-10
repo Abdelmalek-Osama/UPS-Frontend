@@ -21,6 +21,8 @@ import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
 import { useAllPumpSitesDailySummary } from "../hooks/useAllPumpSitesDailySummary";
 import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
+import type { RecentAlarmEventsRequest } from "../api/upsApi";
+import { formatDateForApi } from "../../../lib/utils";
 import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
 
@@ -45,24 +47,63 @@ export function DirectoratePage() {
   const [pumpDate, setPumpDate] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPumpStation, setSelectedPumpStation] = useState<SiteSummary | null>(null);
-  const [recentAlarms, setRecentAlarms] = useState<Event[]>([]);
+  // Alarms keyed by canalId: 0 = Ibrahimiya, 1 = Bahr Youssef
+  const [alarmsByCanal, setAlarmsByCanal] = useState<Record<number, Event[]>>({ 0: [], 1: [] });
   const [alarmsLoading, setAlarmsLoading] = useState(true);
+  const [bahrYoussefAlarmsPage, setBahrYoussefAlarmsPage] = useState(1);
+  const [ibrahimiyaAlarmsPage, setIbrahimiyaAlarmsPage] = useState(1);
+  const ALARMS_PAGE_SIZE = 6;
 
   useEffect(() => {
+    const buildAlarmRequest = (canalId: number): RecentAlarmEventsRequest => {
+      const base = { pageNumber: 1, pageSize: 100, canalIds: [canalId] };
+      switch (filter) {
+        case "latest": return { ...base, timeRangeMode: 0 };
+        case "24h":    return { ...base, timeRangeMode: 1 };
+        case "week":   return { ...base, timeRangeMode: 2 };
+        case "month":  return { ...base, timeRangeMode: 3 };
+        case "custom":
+          return {
+            ...base,
+            timeRangeMode: 4,
+            startDate: range.start ? formatDateForApi(range.start) : undefined,
+            endDate:   range.end   ? formatDateForApi(range.end)   : undefined,
+          };
+        case "specific": {
+          const d = range.targetDate ?? new Date();
+          const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+          const dayEnd   = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+          return {
+            ...base,
+            timeRangeMode: 4,
+            startDate: formatDateForApi(dayStart),
+            endDate:   formatDateForApi(dayEnd),
+          };
+        }
+        default: return { ...base, timeRangeMode: 0 };
+      }
+    };
+
     const fetchAlarms = async () => {
       setAlarmsLoading(true);
       try {
-        const events = await getRecentAlarmEvents();
-        setRecentAlarms(events);
+        const [canal0Events, canal1Events] = await Promise.all([
+          getRecentAlarmEvents(buildAlarmRequest(0)),
+          getRecentAlarmEvents(buildAlarmRequest(1)),
+        ]);
+        setAlarmsByCanal({ 0: canal0Events, 1: canal1Events });
+        setIbrahimiyaAlarmsPage(1);
+        setBahrYoussefAlarmsPage(1);
       } catch (error) {
         console.error('Failed to fetch recent alarms:', error);
-        setRecentAlarms([]);
+        setAlarmsByCanal({ 0: [], 1: [] });
       } finally {
         setAlarmsLoading(false);
       }
     };
     fetchAlarms();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, range.start, range.end, range.targetDate, range.targetTime]);
 
   const getTimeAgo = (timestamp: Date) => {
     const now = new Date();
@@ -147,7 +188,7 @@ export function DirectoratePage() {
 
 
 
-  const renderBranchSection = (branchName: string, sites: SiteSummary[]) => {
+  const renderBranchSection = (branchName: string, sites: SiteSummary[], showAlerts = true) => {
     // Filter sites by directorate if directorates are selected
     let filteredByDirectorate = sites;
     if (selectedDirectorateIds.length > 0) {
@@ -209,9 +250,9 @@ export function DirectoratePage() {
     const branchKey = branchName === "Ibrahimiya" ? "ups.branches.ibrahimia" : "ups.branches.bahrYoussef";
     const localizedBranchName = t(branchKey);
 
-    // Filter alarms to this branch's sites (post directorate/site filter)
-    const branchSiteIdSet = new Set(filteredSites.map(s => s.siteId));
-    const branchAlarms = recentAlarms.filter(a => branchSiteIdSet.has(a.siteId));
+    // Get alarms for this canal directly from the per-canal fetch
+    const canalId = branchName === "Ibrahimiya" ? 0 : 1;
+    const branchAlarms = alarmsByCanal[canalId] ?? [];
 
     return (
       <div key={branchName} className="space-y-6">
@@ -366,64 +407,117 @@ export function DirectoratePage() {
         <DirectorateFlowChart branchName={localizedBranchName} data={finalFlowData} />
 
         {/* Recent Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-              {t("ups.landing.recentAlerts")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {alarmsLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
-                    <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+        {showAlerts && (() => {
+          const currentPage = ibrahimiyaAlarmsPage;
+          const setPage = setIbrahimiyaAlarmsPage;
+          const totalPages = Math.max(1, Math.ceil(branchAlarms.length / ALARMS_PAGE_SIZE));
+          const safePage = Math.min(currentPage, totalPages);
+          const paginatedAlarms = branchAlarms.slice((safePage - 1) * ALARMS_PAGE_SIZE, safePage * ALARMS_PAGE_SIZE);
+          return (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  {t('_rtl') === 'rtl' ? (
+                    <>
+                      {/* Arabic: count on left, title on right */}
+                      {branchAlarms.length > 0 && (
+                        <span className="text-sm text-gray-500">
+                          {branchAlarms.length} {t("alarms.total")}
+                        </span>
+                      )}
+                      <CardTitle className="text-right">{t("ups.landing.recentAlerts")}</CardTitle>
+                    </>
+                  ) : (
+                    <>
+                      {/* English: title on left, count on right */}
+                      <CardTitle className="text-left">{t("ups.landing.recentAlerts")}</CardTitle>
+                      {branchAlarms.length > 0 && (
+                        <span className="text-sm text-gray-500">
+                          {branchAlarms.length} {t("alarms.total")}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {alarmsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                        <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                        <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : branchAlarms.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">{t("alarms.noEventsYet")}</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {branchAlarms.map((alarm) => (
-                  <div
-                    key={alarm.id}
-                    className={`flex items-start space-x-3 p-3 rounded-lg border ${
-                      alarm.severity === 'critical'
-                        ? 'bg-red-50 border-red-200'
-                        : alarm.severity === 'high'
-                        ? 'bg-orange-50 border-orange-200'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}
-                  >
-                    <div className={`p-1 rounded ${
-                      alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
-                    }`}>
-                      <AlertTriangle className={`w-4 h-4 ${
-                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
-                      <p className={`text-xs font-medium mt-1 ${
-                        alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
-                      }`}>
-                        {t(`alarms.severity.${alarm.severity}`)}
-                      </p>
-                    </div>
+                ) : branchAlarms.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">{t("alarms.noEventsYet")}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {paginatedAlarms.map((alarm) => (
+                        <div
+                          key={alarm.id}
+                          className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                            alarm.severity === 'critical'
+                              ? 'bg-red-50 border-red-200'
+                              : alarm.severity === 'high'
+                              ? 'bg-orange-50 border-orange-200'
+                              : 'bg-blue-50 border-blue-200'
+                          }`}
+                        >
+                          <div className={`p-1 rounded ${
+                            alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                          }`}>
+                            <AlertTriangle className={`w-4 h-4 ${
+                              alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                            }`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                            <p className={`text-xs font-medium mt-1 ${
+                              alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                            }`}>
+                              {t(`alarms.severity.${alarm.severity}`)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          disabled={safePage <= 1}
+                        >
+                          {t('_rtl') === 'rtl' ? '›' : '‹'}
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          {safePage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                          disabled={safePage >= totalPages}
+                        >
+                          {t('_rtl') === 'rtl' ? '‹' : '›'}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
-        
       </div>
     );
   };
@@ -694,7 +788,7 @@ export function DirectoratePage() {
             
             return (
               <TabsContent key={branch.name} value={tabValue} className="space-y-6 mt-6">
-                {renderBranchSection(branch.name, branch.sites)}
+                {renderBranchSection(branch.name, branch.sites, !isBahrYoussef)}
                 
                 {/* Pump Monthly Average Tables - Only for Bahr Youssef */}
                 {isBahrYoussef && (
@@ -801,6 +895,104 @@ export function DirectoratePage() {
                     </Card>
 
                     <PumpOperatingTimesChart sites={getPumpSitesForTable()} />
+
+                    {/* Recent Alerts - Bahr Youssef (paginated) */}
+                    {(() => {
+                      const allAlarms = alarmsByCanal[1] ?? [];
+                      const totalPages = Math.max(1, Math.ceil(allAlarms.length / ALARMS_PAGE_SIZE));
+                      const safePage = Math.min(bahrYoussefAlarmsPage, totalPages);
+                      const paginatedAlarms = allAlarms.slice((safePage - 1) * ALARMS_PAGE_SIZE, safePage * ALARMS_PAGE_SIZE);
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                                {t("ups.landing.recentAlerts")}
+                              </CardTitle>
+                              {allAlarms.length > 0 && (
+                                <span className="text-sm text-gray-500">
+                                  {allAlarms.length} {t("alarms.total") || "total"}
+                                </span>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 space-y-4">
+                            {alarmsLoading ? (
+                              <div className="space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                  <div key={i} className="space-y-2">
+                                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                                    <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                                  </div>
+                                ))}
+                              </div>
+                            ) : allAlarms.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500">
+                                <p className="text-sm">{t("alarms.noEventsYet")}</p>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                  {paginatedAlarms.map((alarm) => (
+                                    <div
+                                      key={alarm.id}
+                                      className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                                        alarm.severity === 'critical'
+                                          ? 'bg-red-50 border-red-200'
+                                          : alarm.severity === 'high'
+                                          ? 'bg-orange-50 border-orange-200'
+                                          : 'bg-blue-50 border-blue-200'
+                                      }`}
+                                    >
+                                      <div className={`p-1 rounded ${
+                                        alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                                      }`}>
+                                        <AlertTriangle className={`w-4 h-4 ${
+                                          alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                                        }`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">{alarm.message}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{getTimeAgo(alarm.timestamp)}</p>
+                                        <p className={`text-xs font-medium mt-1 ${
+                                          alarm.severity === 'critical' ? 'text-red-600' : alarm.severity === 'high' ? 'text-orange-600' : 'text-blue-600'
+                                        }`}>
+                                          {t(`alarms.severity.${alarm.severity}`)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {totalPages > 1 && (
+                                  <div className="flex items-center justify-center gap-2 pt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setBahrYoussefAlarmsPage(p => Math.max(1, p - 1))}
+                                      disabled={safePage <= 1}
+                                    >
+                                      {t('_rtl') === 'rtl' ? '›' : '‹'}
+                                    </Button>
+                                    <span className="text-sm text-gray-600">
+                                      {safePage} / {totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setBahrYoussefAlarmsPage(p => Math.min(totalPages, p + 1))}
+                                      disabled={safePage >= totalPages}
+                                    >
+                                      {t('_rtl') === 'rtl' ? '‹' : '›'}
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
 
                     {/* Pump Flow Rates Table
                     <Card>
