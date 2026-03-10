@@ -446,6 +446,70 @@ export const getAlarmEventsBySiteAndDateRange = async (
   }
 };
 
+// All pump sites daily summary types + API
+// timeRangeMode: 0 = Latest (2h), 1 = Last 24h, 2 = Last week, 3 = Last month, 4 = Custom range
+export interface AllPumpSitesDailySummaryRequest {
+  timeRangeMode: 0 | 1 | 2 | 3 | 4;
+  date?: string;
+  pageNumber?: number;
+  pageSize?: number;
+  canalIds?: number[];
+  siteIds?: number[];
+  unresolvedOnly?: boolean;
+  severity?: number;
+  wordFilter?: string;
+}
+
+export interface PumpSiteDailySummaryItem {
+  siteId: number;
+  siteName: string;
+  siteArabicName?: string;
+  numPumps?: number;
+  date?: string;
+  p1_TimeSum?: number | null;
+  p2_TimeSum?: number | null;
+  p3_TimeSum?: number | null;
+  p4_TimeSum?: number | null;
+  p5_TimeSum?: number | null;
+  p6_TimeSum?: number | null;
+  p7_TimeSum?: number | null;
+  p8_TimeSum?: number | null;
+  p9_TimeSum?: number | null;
+  p10_TimeSum?: number | null;
+  totalFlowSum?: number | null;
+  readingCount?: number | null;
+}
+
+export interface PumpSiteDailySummaryPagedResponse {
+  items: PumpSiteDailySummaryItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export const getAllPumpSitesDailySummary = async (
+  request: AllPumpSitesDailySummaryRequest
+): Promise<PumpSiteDailySummaryItem[]> => {
+  const params: Record<string, string | number | boolean> = {
+    timeRangeMode: request.timeRangeMode,
+    pageNumber: request.pageNumber ?? 1,
+    pageSize: request.pageSize ?? 100,
+  };
+
+  if (request.date) params.date = request.date;
+  if (request.canalIds?.length) params.canalIds = request.canalIds.join(',');
+  if (request.siteIds?.length) params.siteIds = request.siteIds.join(',');
+  if (request.unresolvedOnly !== undefined) params.unresolvedOnly = request.unresolvedOnly;
+  if (request.severity !== undefined) params.severity = request.severity;
+  if (request.wordFilter) params.wordFilter = request.wordFilter;
+
+  const response = await get<UpsApiResponse<PumpSiteDailySummaryItem[]>>(
+    '/v1/readings/pump-station/all-pump-sites/daily-summary',
+    { params }
+  );
+  return response.data ?? [];
+};
+
 // New API: Get recent alarm events for landing page
 export const getRecentAlarmEvents = async (): Promise<Event[]> => {
   try {

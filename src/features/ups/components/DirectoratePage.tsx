@@ -19,6 +19,7 @@ import { PumpOperatingTimesChart } from "./PumpOperatingTimesChart";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
+import { useAllPumpSitesDailySummary } from "../hooks/useAllPumpSitesDailySummary";
 import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
 import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
 import type { CalculationOptions } from "./TimeFilterBar";
@@ -80,7 +81,13 @@ export function DirectoratePage() {
   // Use first selected directorate for API call, or empty string if none selected
   const apiDirectorateId = selectedDirectorateIds.length > 0 ? selectedDirectorateIds[0] : "";
   const { data, error } = useGovernorateOverview(apiDirectorateId, filter, range);
-  const { data: pumpTableData } = useGovernorateOverview(apiDirectorateId, pumpDate ? "specific" : "latest", { targetDate: pumpDate });
+
+  // Derive timeRangeMode from pumpDate: 4 = Custom (specific day), 0 = Latest (2h)
+  const pumpTimeRangeMode: 0 | 4 = pumpDate ? 4 : 0;
+  const { data: allPumpsSummary, loading: pumpSummaryLoading } = useAllPumpSitesDailySummary({
+    timeRangeMode: pumpTimeRangeMode,
+    date: pumpDate,
+  });
 
   // Get directorate name based on language
   const getDirectorateName = (directorateId: string) => {
@@ -421,29 +428,53 @@ export function DirectoratePage() {
     );
   };
 
-  // Get pump sites using the independent pump table filter
+  // Build pump sites for the operating hours table/chart from the daily-summary API
   const getPumpSitesForTable = () => {
-    const branchOrder = ["Ibrahimiya", "Bahr Youssef"];
-    const orderedPumpBranches = [...pumpTableData.branches].sort((a, b) => {
-      const indexA = branchOrder.indexOf(a.name);
-      const indexB = branchOrder.indexOf(b.name);
-      if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-    let allSites: SiteSummary[] = [];
-    orderedPumpBranches.forEach(branch => {
-      allSites = allSites.concat(branch.sites);
-    });
-    if (selectedDirectorateIds.length > 0) {
-      const selectedDirIds = selectedDirectorateIds.map(id => parseInt(id));
-      allSites = allSites.filter(site => site.directorateId !== undefined && selectedDirIds.includes(site.directorateId));
-    }
+    let items = allPumpsSummary;
+
+    // Filter by selected sites if any
     if (selectedSiteIds.length > 0) {
-      allSites = allSites.filter(site => selectedSiteIds.includes(site.siteId));
+      items = items.filter(item => selectedSiteIds.includes(String(item.siteId)));
     }
-    return allSites.filter(site => (site as any).siteConfiguration?.numPumps > 0);
+
+    // Build a lookup of numPumps from by-canals API data (siteConfiguration.numPumps)
+    const numPumpsFromConfig = new Map<number, number>();
+    for (const branch of data.branches) {
+      for (const site of branch.sites) {
+        const cfg = (site as any).siteConfiguration;
+        if (cfg?.numPumps != null) {
+          numPumpsFromConfig.set(Number(site.siteId), Number(cfg.numPumps));
+        }
+      }
+    }
+
+    // Resolve numPumps: prefer siteConfiguration from by-canals, fall back to daily-summary field
+    const resolveNumPumps = (item: typeof items[0]) => {
+      const fromConfig = numPumpsFromConfig.get(item.siteId);
+      if (fromConfig != null) return fromConfig;
+      if (item.numPumps != null) return item.numPumps;
+      return 0;
+    };
+
+    return items.map(item => ({
+      siteId: String(item.siteId),
+      siteName: item.siteName,
+      siteArabicName: item.siteArabicName,
+      siteConfiguration: { numPumps: resolveNumPumps(item) },
+      pumpData: {
+        operatingTimes: [
+          item.p1_TimeSum ?? null, item.p2_TimeSum ?? null, item.p3_TimeSum ?? null,
+          item.p4_TimeSum ?? null, item.p5_TimeSum ?? null, item.p6_TimeSum ?? null,
+          item.p7_TimeSum ?? null, item.p8_TimeSum ?? null, item.p9_TimeSum ?? null,
+          item.p10_TimeSum ?? null,
+        ],
+        flows: [
+          null, null, null, null, null,
+          null, null, null, null, null,
+        ],
+        totalFlow: item.totalFlowSum ?? null,
+      },
+    }));
   };
 
   return (
@@ -692,6 +723,9 @@ export function DirectoratePage() {
                           )}
                         </div>
                         <div className="overflow-x-auto">
+                          {pumpSummaryLoading ? (
+                            <div className="py-8 text-center text-gray-400 text-sm">{t("common.loading") || "Loading..."}</div>
+                          ) : (
                           <Table dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
                             <TableHeader>
                               <TableRow>
@@ -700,7 +734,7 @@ export function DirectoratePage() {
                                 </TableHead>
                                 {[1, 2, 3, 4, 5, 6].map(pumpNum => (
                                   <TableHead key={pumpNum} className="text-center font-semibold min-w-[100px]">
-                                    {t("ups.directorate.pump")} {pumpNum}
+                                    {t("ups.directorate.pump")} {pumpNum} ({t("common.hours") || "hrs"})
                                   </TableHead>
                                 ))}
                                 <TableHead className="text-center font-semibold min-w-[110px]">
@@ -709,13 +743,19 @@ export function DirectoratePage() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {getPumpSitesForTable().map((site: SiteSummary) => {
-                                const numPumps = (site as any).siteConfiguration?.numPumps || 0;
-                                const pumpTimes = (site as any).pumpData?.operatingTimes || [];
+                              {getPumpSitesForTable().length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={8} className="text-center text-gray-500 py-6">
+                                    {t("common.noData")}
+                                  </TableCell>
+                                </TableRow>
+                              ) : getPumpSitesForTable().map((site) => {
+                                const numPumps = site.siteConfiguration?.numPumps || 0;
+                                const pumpTimes = site.pumpData?.operatingTimes || [];
                                 return (
                                   <TableRow key={site.siteId}>
                                     <TableCell className="font-medium text-center">
-                                      {t('_rtl') === 'rtl' 
+                                      {t('_rtl') === 'rtl'
                                         ? (site.siteArabicName || site.siteName)
                                         : site.siteName
                                       }
@@ -724,7 +764,7 @@ export function DirectoratePage() {
                                       const pumpExists = pumpNum <= numPumps;
                                       const timeValue = pumpTimes[pumpNum - 1];
                                       const hasData = timeValue !== undefined && timeValue !== null;
-                                      
+
                                       return (
                                         <TableCell key={pumpNum} className="text-center">
                                           {!pumpExists ? (
@@ -733,7 +773,7 @@ export function DirectoratePage() {
                                             </span>
                                           ) : hasData ? (
                                             <span className="text-blue-600 font-medium">
-                                              {timeValue.toFixed(0)} {t("common.hours") || "hrs"}
+                                              {(timeValue as number).toFixed(0)}
                                             </span>
                                           ) : (
                                             <span className="text-gray-400">-</span>
@@ -742,26 +782,20 @@ export function DirectoratePage() {
                                       );
                                     })}
                                     <TableCell className="text-center">
-                                      {(() => {
-                                        const pumpFlows: (number | null | undefined)[] = (site as any).pumpData?.flows || [];
-                                        const total = pumpFlows
-                                          .slice(0, numPumps)
-                                          .reduce((sum: number, v) => sum + (v != null ? v : 0), 0);
-                                        const hasFlowData = pumpFlows.slice(0, numPumps).some(v => v != null);
-                                        return hasFlowData ? (
-                                          <span className="text-green-600 font-semibold">
-                                            {total.toFixed(2)}
-                                          </span>
-                                        ) : (
-                                          <span className="text-gray-400">-</span>
-                                        );
-                                      })()}
+                                      {site.pumpData?.totalFlow != null ? (
+                                        <span className="text-green-600 font-semibold">
+                                          {(site.pumpData.totalFlow as number).toFixed(2)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">-</span>
+                                      )}
                                     </TableCell>
                                   </TableRow>
                                 );
                               })}
                             </TableBody>
                           </Table>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

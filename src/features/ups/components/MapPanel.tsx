@@ -68,7 +68,7 @@ const getStatusColor = (status: SiteSummary["status"] | Site["status"]): string 
     case "active":
       return "#2563eb"; // blue-600 (matches screenshot)
     case "inactive":
-      return "#9ca3af"; // gray-400
+      return "#dc2626"; // gray-400
     case "maintenance":
       return "#f59e0b"; // amber-500
     case "alarm":
@@ -328,7 +328,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                   letterSpacing: '0.05em',
                   backgroundColor: hoveredPin.status === 'active' ? '#3b82f6' : 
                                  hoveredPin.status === 'alarm' ? '#ef4444' :
-                                 hoveredPin.status === 'maintenance' ? '#f59e0b' : '#6b7280',
+                                 hoveredPin.status === 'maintenance' ? '#f59e0b' : '#dc2626',
                   color: 'white',
                   textTransform: 'uppercase'
                 }}>
@@ -390,7 +390,7 @@ export function MapPanel({ pins, onPinClick, isLoading = false, error = null }: 
                 width: '12px', 
                 height: '12px', 
                 borderRadius: '50%', 
-                backgroundColor: '#9ca3af',
+                backgroundColor: '#dc2626',
                 flexShrink: 0
               }}></div>
               <span style={{ fontSize: '14px', color: '#374151' }}>{t("ups.map.inactiveOffline")}</span>
