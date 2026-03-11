@@ -67,7 +67,9 @@
     "selectDirectorate": "Filter by Directorate",
     "message": "Message",
     "serverError": "No response from server. Please check your internet connection.",
-    "hours": "hrs"
+    "hours": "hrs",
+     "exporting": "Exporting..." ,
+    "exportAsImage": "Export Page As Image"
   },
   "buttons": {
     "save": "Save",
@@ -877,9 +879,13 @@
       "criticalLevel": "CRITICAL LEVEL",
       "viewAllAlerts": "View All Alerts",
       "lastUpdated": "Last Updated",
-      "justNow":" Just Now",
-      "min":" Minute",
-      "hours":" Hours"
+      "justNow": " Just Now",
+      "min": " Minute",
+      "hours": " Hours",
+      "days": " Days",
+      "flowRateUnit": "m³/day",
+      "loadingFlowRate": "Loading flow rate...",
+      "flowRateError": "Unable to load flow rate data"
     },
     "kpis": {
       "totalSites": "Total Sites",

@@ -1,3 +1,5 @@
+import html2canvas from 'html2canvas';
+
 /**
  * Export table data to CSV format with UTF-8 BOM for proper Arabic text display
  */
@@ -129,6 +131,47 @@ const escapeHtml = (text: string): string => {
 };
 
 /**
+ * Inject CSS overrides to replace oklch colors with hex equivalents
+ */
+const injectColorOverrides = (): HTMLStyleElement => {
+  const style = document.createElement('style');
+  style.id = 'export-color-overrides';
+  style.textContent = `
+    * {
+      --color-primary: #3b82f6 !important;
+      --color-secondary: #ef4444 !important;
+      --color-success: #10b981 !important;
+      --color-warning: #f59e0b !important;
+      --color-error: #ef4444 !important;
+      --color-info: #3b82f6 !important;
+      --color-neutral: #6b7280 !important;
+      --color-background: #ffffff !important;
+      --color-foreground: #000000 !important;
+      --color-border: #e5e7eb !important;
+      background-color: var(--color-background) !important;
+      color: var(--color-foreground) !important;
+      border-color: var(--color-border) !important;
+    }
+    
+    body, html {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+  `;
+  document.head.appendChild(style);
+  return style;
+};
+
+/**
+ * Remove the injected color overrides
+ */
+const removeColorOverrides = (styleEl: HTMLStyleElement): void => {
+  if (styleEl && styleEl.parentNode) {
+    styleEl.parentNode.removeChild(styleEl);
+  }
+};
+
+/**
  * Export chart/graph as PNG image
  * Note: Requires html2canvas library. Install with: npm install html2canvas
  */
@@ -143,37 +186,65 @@ export const exportChartAsPNG = async (
     return;
   }
   
+  // Inject color overrides
+  const styleOverride = injectColorOverrides();
+  
   try {
-    // Check if html2canvas is available
-    if (typeof window !== 'undefined' && (window as any).html2canvas) {
-      const html2canvas = (window as any).html2canvas;
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-        logging: false,
-      });
-      
-      // Convert canvas to blob
-      canvas.toBlob((blob: Blob | null) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.setAttribute('href', url);
-          link.setAttribute('download', `${filename}.png`);
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+    // Clone the element to avoid modifying the original
+    const clone = element.cloneNode(true) as HTMLElement;
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    tempContainer.appendChild(clone);
+    document.body.appendChild(tempContainer);
+    
+    // Wait for images to load
+    const images = clone.querySelectorAll('img');
+    await Promise.all(Array.from(images).map(img => {
+      return new Promise((resolve) => {
+        if (img.complete) resolve(null);
+        else {
+          img.onload = () => resolve(null);
+          img.onerror = () => resolve(null);
         }
       });
-    } else {
-      // Fallback to SVG export if html2canvas is not available
-      console.warn('html2canvas not available, falling back to SVG export');
-      exportChartAsSVG(elementId, filename);
-    }
+    }));
+    
+    const canvas = await html2canvas(clone, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      allowTaint: true,
+      useCORS: true,
+      imageTimeout: 5000,
+      width: clone.offsetWidth,
+      height: clone.offsetHeight,
+    });
+    
+    // Clean up
+    document.body.removeChild(tempContainer);
+    removeColorOverrides(styleOverride);
+    
+    // Convert canvas to blob
+    canvas.toBlob((blob: Blob | null) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}.png`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    });
   } catch (error) {
     console.error('Error exporting chart:', error);
+    removeColorOverrides(styleOverride);
+    // Fallback to SVG export if html2canvas fails
+    exportChartAsSVG(elementId, filename);
   }
 };
 
@@ -223,4 +294,88 @@ export const exportChartAsSVG = (
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+/**
+ * Export the entire page/element as PNG image (full page screenshot)
+ * Note: Requires html2canvas library. Install with: npm install html2canvas
+ */
+export const exportPageAsPNG = async (
+  filename: string = "page-export",
+  elementId?: string
+): Promise<void> => {
+  // Inject color overrides
+  const styleOverride = injectColorOverrides();
+  
+  try {
+    // Get the element to export
+    const sourceElement = elementId ? document.getElementById(elementId) : document.documentElement;
+    
+    if (!sourceElement) {
+      console.error(`Element not found for export`);
+      removeColorOverrides(styleOverride);
+      return;
+    }
+
+    // Clone the element to avoid modifying the original
+    const clone = sourceElement.cloneNode(true) as HTMLElement;
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.width = sourceElement.offsetWidth + 'px';
+    tempContainer.appendChild(clone);
+    document.body.appendChild(tempContainer);
+    
+    // Hide export buttons in the clone
+    const exportButtons = clone.querySelectorAll('[class*="export"]');
+    exportButtons.forEach(btn => {
+      (btn as HTMLElement).style.display = 'none';
+    });
+    
+    // Wait for images to load
+    const images = clone.querySelectorAll('img');
+    await Promise.all(Array.from(images).map(img => {
+      return new Promise((resolve) => {
+        if (img.complete) resolve(null);
+        else {
+          img.onload = () => resolve(null);
+          img.onerror = () => resolve(null);
+        }
+      });
+    }));
+    
+    const canvas = await html2canvas(clone, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      allowTaint: true,
+      useCORS: true,
+      imageTimeout: 5000,
+      width: clone.offsetWidth,
+      height: clone.offsetHeight,
+    });
+    
+    // Clean up
+    document.body.removeChild(tempContainer);
+    removeColorOverrides(styleOverride);
+    
+    // Convert canvas to blob and download
+    canvas.toBlob((blob: Blob | null) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}.png`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    });
+  } catch (error) {
+    console.error('Error exporting page:', error);
+    removeColorOverrides(styleOverride);
+  }
 };

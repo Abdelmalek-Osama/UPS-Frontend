@@ -582,3 +582,49 @@ export const getRecentAlarmEvents = async (
     return [];
   }
 };
+
+// Water Level Reading interface for landing page total flow rate
+export interface WaterLevelReading {
+  id: number;
+  siteId: number;
+  timestamp: string; // ISO 8601 date-time string
+  uswl: number | null; // Upstream water level
+  dswl: number | null; // Downstream water level
+  calculatedFlow: number; // Flow rate in m³/s
+  readingTime: string; // ISO 8601 date-time string
+}
+
+// Paginated response for water level readings
+export interface PaginatedWaterLevelResponse {
+  data: WaterLevelReading[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+// New API: Get water level readings for a site with date range and pagination
+export const getWaterLevelReadings = async (
+  siteId: number
+): Promise<WaterLevelReading[]> => {
+  // Calculate date range for last 24 hours
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
+  
+  // Format dates as YYYY-MM-DD
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const startDateStr = formatDate(startDate);
+  const endDateStr = formatDate(endDate);
+
+  // Build URL with query parameters directly in the path
+  const url = `/v1/readings/water-level/site/${siteId}/date-range?startDate=${startDateStr}&endDate=${endDateStr}&PageNumber=1&PageSize=50`;
+
+  const response = await get<UpsApiResponse<PaginatedWaterLevelResponse>>(url);
+ 
+  // Extract the data array from the nested paginated response
+  // Response structure: { isSuccess, message, data: { data: [], pageNumber, pageSize, totalCount, totalPages } }
+  return response.data?.data || [];
+};

@@ -1,6 +1,8 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { useTranslation } from "react-i18next";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
 
 const PUMP_COLORS = [
   "#3b82f6", // blue
@@ -49,15 +51,23 @@ export function PumpOperatingTimesChart({ sites }: PumpOperatingTimesChartProps)
 
   if (pumpCount === 0 || sites.length === 0) return null;
 
+  const chartId = "pump-operating-times-chart";
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className={isRTL ? "text-right" : "text-left"}>
-          {t("ups.directorate.pumpTimesChart") || "Pump Operating Times (Hours)"}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className={isRTL ? "text-right" : "text-left"}>
+            {t("ups.directorate.pumpTimesChart") || "Pump Operating Times (Hours)"}
+          </CardTitle>
+          <ExportDropdown
+            onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times")}
+            onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times")}
+          />
+        </div>
       </CardHeader>
       <CardContent>
-        <div style={{ width: "100%", height: 380 }}>
+        <div id={chartId} style={{ width: "100%", height: 380 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={displayData} margin={{ top: 16, right: 24, left: 16, bottom: 64 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
