@@ -1,6 +1,8 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { useTranslation } from "react-i18next";
+import { ExportDropdown } from "./common/ExportDropdown";
+import { exportChartAsPNG, exportChartAsSVG } from "../utils/exportUtils";
 
 interface FlowChartDataPoint {
   id: string;
@@ -20,13 +22,23 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
   // For RTL, reverse the data array so sites appear right-to-left
   const chartData = isRTL ? [...data].reverse() : data;
   
+  // Create sanitized filename for exports
+  const sanitizedBranchName = branchName.replace(/[/\\?%*:|"<>]/g, '-');
+  const chartId = `flow-chart-${sanitizedBranchName}`;
+  
   return (
     <Card>
       <CardHeader>
-        <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{t("ups.directorate.calculatedFlow", { branch: branchName })}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{t("ups.directorate.calculatedFlow", { branch: branchName })}</CardTitle>
+          <ExportDropdown
+            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`)}
+            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`)}
+          />
+        </div>
       </CardHeader>
       <CardContent>
-        <div style={{ width: '100%', height: 350 }}>
+        <div id={chartId} style={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />

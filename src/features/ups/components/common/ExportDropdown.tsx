@@ -13,6 +13,7 @@ export interface ExportDropdownProps {
   onExportExcel?: () => void;
   onExportPNG?: () => void;
   onExportSVG?: () => void;
+  onExportPDF?: () => void;
   disabled?: boolean;
   size?: "sm" | "default" | "lg";
 }
@@ -22,12 +23,13 @@ export function ExportDropdown({
   onExportExcel,
   onExportPNG,
   onExportSVG,
+  onExportPDF,
   disabled = false,
   size = "sm",
 }: ExportDropdownProps) {
   const { t } = useTranslation();
 
-  const hasTableExport = onExportCSV || onExportExcel;
+  const hasTableExport = onExportCSV || onExportExcel || onExportPDF;
   const hasChartExport = onExportPNG || onExportSVG;
 
   return (
@@ -49,6 +51,11 @@ export function ExportDropdown({
             {onExportExcel && (
               <DropdownMenuItem onClick={onExportExcel}>
                 {t("common.exportExcel")}
+              </DropdownMenuItem>
+            )}
+            {onExportPDF && (
+              <DropdownMenuItem onClick={onExportPDF}>
+                {t("common.exportPDF") || "Export as PDF"}
               </DropdownMenuItem>
             )}
           </>
