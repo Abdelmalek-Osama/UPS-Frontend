@@ -118,7 +118,7 @@ export function useReadingsData(selectedSiteId: string) {
       if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
-        const response = await apiService.put<ApiResponse<any>>(
+        const response = await apiService.post<ApiResponse<any>>(
           `/v1/readings/water-level/${data.id}`,
           data
         );
@@ -183,7 +183,7 @@ export function useReadingsData(selectedSiteId: string) {
       if (!isAuthenticated) return;
       setIsLoading(true); // Start loading
       try {
-        const response = await apiService.put<ApiResponse<any>>(
+        const response = await apiService.post<ApiResponse<any>>(
           `/v1/readings/pump-station/${data.id}`,
           data
         );
