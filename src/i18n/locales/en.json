@@ -67,7 +67,9 @@
     "selectDirectorate": "Filter by Directorate",
     "message": "Message",
     "serverError": "No response from server. Please check your internet connection.",
-    "hours": "hrs"
+    "hours": "hrs",
+     "exporting": "Exporting..." ,
+    "exportAsImage": "Export Page As Image"
   },
   "buttons": {
     "save": "Save",

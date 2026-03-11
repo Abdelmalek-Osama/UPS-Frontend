@@ -128,22 +128,7 @@ export function TimeFilterBar({
           )}
         </div>
 
-        {showExport && (
-          <div className="flex items-center gap-2">
-            <Select value={format} onValueChange={(nextValue) => setFormat(nextValue as "pdf" | "excel")}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t("ups.reports.format")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pdf">{t("ups.reports.pdf")}</SelectItem>
-                <SelectItem value="excel">{t("ups.reports.excel")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={() => onExport?.(format)}>
-              {t("common.export")}
-            </Button>
-          </div>
-        )}
+ 
       </div>
 
       {/* Calculation Options for periods > 24h */}

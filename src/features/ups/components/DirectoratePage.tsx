@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../compo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { ArrowLeft, Search, Info, ChevronDown, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Search, Info, ChevronDown, AlertTriangle, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { TimeFilterBar } from "./TimeFilterBar";
 import { DatePicker } from "../../../components/ui/datepicker";
@@ -22,7 +22,7 @@ import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
 import { useAllPumpSitesDailySummary } from "../hooks/useAllPumpSitesDailySummary";
 import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
-import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
+import { exportTableToCSV, exportTableToExcel, exportPageAsPNG } from "../utils/exportUtils";
 import type { RecentAlarmEventsRequest } from "../api/upsApi";
 import { formatDateForApi } from "../../../lib/utils";
 import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
@@ -55,6 +55,7 @@ export function DirectoratePage() {
   const [bahrYoussefAlarmsPage, setBahrYoussefAlarmsPage] = useState(1);
   const [ibrahimiyaAlarmsPage, setIbrahimiyaAlarmsPage] = useState(1);
   const ALARMS_PAGE_SIZE = 6;
+  const [isExportingPage, setIsExportingPage] = useState(false);
 
   useEffect(() => {
     const buildAlarmRequest = (canalId: number): RecentAlarmEventsRequest => {
@@ -152,6 +153,21 @@ export function DirectoratePage() {
       await exportReport("governorate", format, filter, range, undefined, apiDirectorateId);
     } catch (error) {
       console.error("Export failed:", error);
+    }
+  };
+
+  // Handle full page export as PNG
+  const handleExportPageAsPNG = async () => {
+    setIsExportingPage(true);
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      const branchNames = orderedBranches.map(b => b.name).join('-');
+      const filename = `directorate-${branchNames}-${timestamp}`;
+      await exportPageAsPNG(filename, 'main');
+    } catch (error) {
+      console.error("Page export failed:", error);
+    } finally {
+      setIsExportingPage(false);
     }
   };
 
@@ -744,7 +760,7 @@ export function DirectoratePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div id="main" className="space-y-6">
       {/* Header with Breadcrumb */}
       <div className="flex items-center space-x-2">
         <Button 
@@ -913,7 +929,20 @@ export function DirectoratePage() {
             </div>
           </div>
         </div>
-      </div>      {/* Time Filter and Export Controls */}
+      </div>
+
+      {/* Export Full Page Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleExportPageAsPNG}
+          disabled={isExportingPage}
+          className="gap-2"
+          variant="outline"
+        >
+          <Download className="w-4 h-4" />
+          {isExportingPage ? t("common.exporting") || "Exporting..." : t("common.exportAsImage") || "Export as Image"}
+        </Button>
+      </div>
       <TimeFilterBar
         value={filter}
         onChange={setFilter}
