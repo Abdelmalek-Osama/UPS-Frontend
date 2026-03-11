@@ -205,6 +205,7 @@ export default function Stage3({ data, onChange, onValidationChange }: TabProps)
       folder: mappingForm.folder,
       filename: mappingForm.filename,
       columnMapping: columnMappingString,
+      isActive: true,
     };
 
     const updatedMappings = [...dataMappings, newMapping];
