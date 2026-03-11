@@ -51,7 +51,7 @@ return Array.isArray(data) ? data : [];
    * Update an existing email report configuration
    */
   async updateReportConfiguration(id: number, payload: CreateAlarmReportPayload): Promise<AlarmReportConfiguration> {
-    const response = await apiService.put<ApiResponse<AlarmReportConfiguration>>(
+    const response = await apiService.post<ApiResponse<AlarmReportConfiguration>>(
       `/v1/email-reports/${id}`,
    payload
     );
