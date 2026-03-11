@@ -16,11 +16,13 @@ import { DatePicker } from "../../../components/ui/datepicker";
 import { DirectorateWLChart } from "./DirectorateWLChart";
 import { DirectorateFlowChart } from "./DirectorateFlowChart";
 import { PumpOperatingTimesChart } from "./PumpOperatingTimesChart";
+import { ExportDropdown } from "./common/ExportDropdown";
 import { useGovernorateOverview } from "../hooks/useGovernorateOverview";
 import { useDirectoratesList } from "../hooks/useDirectoratesList";
 import { useSitesList } from "../hooks/useSitesList";
 import { useAllPumpSitesDailySummary } from "../hooks/useAllPumpSitesDailySummary";
 import { exportReport, getRecentAlarmEvents } from "../api/upsApi";
+import { exportTableToCSV, exportTableToExcel } from "../utils/exportUtils";
 import type { RecentAlarmEventsRequest } from "../api/upsApi";
 import { formatDateForApi } from "../../../lib/utils";
 import type { DateRange, TimeFilter, SiteSummary, Event } from "../types";
@@ -264,8 +266,93 @@ export function DirectoratePage() {
             <div className="flex items-center justify-between">
               {t('_rtl') === 'rtl' ? (
                 <>
-                  {/* Arabic: Search on left, Title on right */}
+                  {/* Arabic: Search and Export on left, Title on right */}
                   <div className="flex items-center gap-3">
+                    <ExportDropdown
+                      onExportCSV={() => {
+                        const columns = [
+                          { key: 'siteName', header: t("ups.directorate.siteName") },
+                          { key: 'status', header: t("common.status") },
+                          { key: 'upstream', header: t("ups.directorate.upstream") },
+                          { key: 'downstream', header: t("ups.directorate.downstream") },
+                          { key: 'flowRate', header: t("ups.directorate.flow") },
+                          { key: 'date', header: t("common.date") },
+                          { key: 'hour', header: t("common.hour") }
+                        ];
+                        const exportData = filteredSites.map(site => ({
+                          siteName: getSiteName(site),
+                          status: site.status,
+                          upstream: site.upstream != null ? site.upstream.toFixed(2) : "-",
+                          downstream: site.downstream != null ? site.downstream.toFixed(2) : "-",
+                          flowRate: (() => {
+                            const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                            if (numPumps > 0 && (site as any).pumpData) {
+                              const totalFlow = (site as any).pumpData.totalFlow != null
+                                ? (site as any).pumpData.totalFlow
+                                : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                              return totalFlow != null ? totalFlow.toFixed(1) : "-";
+                            }
+                            return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
+                          })(),
+                          date: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })() : "-",
+                          hour: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                          })() : "-"
+                        }));
+                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`);
+                      }}
+                      onExportExcel={() => {
+                        const columns = [
+                          { key: 'siteName', header: t("ups.directorate.siteName") },
+                          { key: 'status', header: t("common.status") },
+                          { key: 'upstream', header: t("ups.directorate.upstream") },
+                          { key: 'downstream', header: t("ups.directorate.downstream") },
+                          { key: 'flowRate', header: t("ups.directorate.flow") },
+                          { key: 'date', header: t("common.date") },
+                          { key: 'hour', header: t("common.hour") }
+                        ];
+                        const exportData = filteredSites.map(site => ({
+                          siteName: getSiteName(site),
+                          status: site.status,
+                          upstream: site.upstream != null ? site.upstream.toFixed(2) : "-",
+                          downstream: site.downstream != null ? site.downstream.toFixed(2) : "-",
+                          flowRate: (() => {
+                            const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                            if (numPumps > 0 && (site as any).pumpData) {
+                              const totalFlow = (site as any).pumpData.totalFlow != null
+                                ? (site as any).pumpData.totalFlow
+                                : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                              return totalFlow != null ? totalFlow.toFixed(1) : "-";
+                            }
+                            return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
+                          })(),
+                          date: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })() : "-",
+                          hour: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                          })() : "-"
+                        }));
+                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`);
+                      }}
+                      size="sm"
+                    />
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
@@ -280,9 +367,94 @@ export function DirectoratePage() {
                 </>
               ) : (
                 <>
-                  {/* English: Title on left, Search on right */}
+                  {/* English: Title on left, Search and Export on right */}
                   <CardTitle className="text-left">{t("ups.directorate.branchSites", { branch: localizedBranchName })}</CardTitle>
                   <div className="flex items-center gap-3">
+                    <ExportDropdown
+                      onExportCSV={() => {
+                        const columns = [
+                          { key: 'siteName', header: t("ups.directorate.siteName") },
+                          { key: 'status', header: t("common.status") },
+                          { key: 'upstream', header: t("ups.directorate.upstream") },
+                          { key: 'downstream', header: t("ups.directorate.downstream") },
+                          { key: 'flowRate', header: t("ups.directorate.flow") },
+                          { key: 'date', header: t("common.date") },
+                          { key: 'hour', header: t("common.hour") }
+                        ];
+                        const exportData = filteredSites.map(site => ({
+                          siteName: getSiteName(site),
+                          status: site.status,
+                          upstream: site.upstream != null ? site.upstream.toFixed(2) : "-",
+                          downstream: site.downstream != null ? site.downstream.toFixed(2) : "-",
+                          flowRate: (() => {
+                            const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                            if (numPumps > 0 && (site as any).pumpData) {
+                              const totalFlow = (site as any).pumpData.totalFlow != null
+                                ? (site as any).pumpData.totalFlow
+                                : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                              return totalFlow != null ? totalFlow.toFixed(1) : "-";
+                            }
+                            return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
+                          })(),
+                          date: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })() : "-",
+                          hour: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                          })() : "-"
+                        }));
+                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`);
+                      }}
+                      onExportExcel={() => {
+                        const columns = [
+                          { key: 'siteName', header: t("ups.directorate.siteName") },
+                          { key: 'status', header: t("common.status") },
+                          { key: 'upstream', header: t("ups.directorate.upstream") },
+                          { key: 'downstream', header: t("ups.directorate.downstream") },
+                          { key: 'flowRate', header: t("ups.directorate.flow") },
+                          { key: 'date', header: t("common.date") },
+                          { key: 'hour', header: t("common.hour") }
+                        ];
+                        const exportData = filteredSites.map(site => ({
+                          siteName: getSiteName(site),
+                          status: site.status,
+                          upstream: site.upstream != null ? site.upstream.toFixed(2) : "-",
+                          downstream: site.downstream != null ? site.downstream.toFixed(2) : "-",
+                          flowRate: (() => {
+                            const numPumps = (site as any).siteConfiguration?.numPumps || 0;
+                            if (numPumps > 0 && (site as any).pumpData) {
+                              const totalFlow = (site as any).pumpData.totalFlow != null
+                                ? (site as any).pumpData.totalFlow
+                                : (site as any).pumpData.flows?.reduce((sum: number, flow: number) => sum + flow, 0);
+                              return totalFlow != null ? totalFlow.toFixed(1) : "-";
+                            }
+                            return site.flowRate != null ? site.flowRate.toFixed(1) : "-";
+                          })(),
+                          date: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                          })() : "-",
+                          hour: site.lastReading ? (() => {
+                            const date = new Date(site.lastReading);
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            return `${hours}:${minutes}`;
+                          })() : "-"
+                        }));
+                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`);
+                      }}
+                      size="sm"
+                    />
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
@@ -796,9 +968,70 @@ export function DirectoratePage() {
                     {/* Pump Operating Times Table */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                          {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                            {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
+                          </CardTitle>
+                          <ExportDropdown
+                            onExportCSV={() => {
+                              const pumpSites = getPumpSitesForTable();
+                              const columns = [
+                                { key: 'siteName', header: t("ups.directorate.siteName") || "Site Name" },
+                                { key: 'pump1', header: `${t("ups.directorate.pump") || "Pump"} 1 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump2', header: `${t("ups.directorate.pump") || "Pump"} 2 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump3', header: `${t("ups.directorate.pump") || "Pump"} 3 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump4', header: `${t("ups.directorate.pump") || "Pump"} 4 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump5', header: `${t("ups.directorate.pump") || "Pump"} 5 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump6', header: `${t("ups.directorate.pump") || "Pump"} 6 (${t("common.hours") || "hrs"})` },
+                                { key: 'totalFlow', header: t("ups.directorate.totalFlow") || "Total Flow (m³/s)" }
+                              ];
+                              const exportData = pumpSites.map(site => {
+                                const numPumps = site.siteConfiguration?.numPumps || 0;
+                                const pumpTimes = site.pumpData?.operatingTimes || [];
+                                return {
+                                  siteName: t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName,
+                                  pump1: numPumps >= 1 && pumpTimes[0] != null ? (pumpTimes[0] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump2: numPumps >= 2 && pumpTimes[1] != null ? (pumpTimes[1] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump3: numPumps >= 3 && pumpTimes[2] != null ? (pumpTimes[2] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump4: numPumps >= 4 && pumpTimes[3] != null ? (pumpTimes[3] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump5: numPumps >= 5 && pumpTimes[4] != null ? (pumpTimes[4] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump6: numPumps >= 6 && pumpTimes[5] != null ? (pumpTimes[5] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
+                                };
+                              });
+                              exportTableToCSV(exportData, columns, "pump-operating-times");
+                            }}
+                            onExportExcel={() => {
+                              const pumpSites = getPumpSitesForTable();
+                              const columns = [
+                                { key: 'siteName', header: t("ups.directorate.siteName") || "Site Name" },
+                                { key: 'pump1', header: `${t("ups.directorate.pump") || "Pump"} 1 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump2', header: `${t("ups.directorate.pump") || "Pump"} 2 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump3', header: `${t("ups.directorate.pump") || "Pump"} 3 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump4', header: `${t("ups.directorate.pump") || "Pump"} 4 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump5', header: `${t("ups.directorate.pump") || "Pump"} 5 (${t("common.hours") || "hrs"})` },
+                                { key: 'pump6', header: `${t("ups.directorate.pump") || "Pump"} 6 (${t("common.hours") || "hrs"})` },
+                                { key: 'totalFlow', header: t("ups.directorate.totalFlow") || "Total Flow (m³/s)" }
+                              ];
+                              const exportData = pumpSites.map(site => {
+                                const numPumps = site.siteConfiguration?.numPumps || 0;
+                                const pumpTimes = site.pumpData?.operatingTimes || [];
+                                return {
+                                  siteName: t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName,
+                                  pump1: numPumps >= 1 && pumpTimes[0] != null ? (pumpTimes[0] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump2: numPumps >= 2 && pumpTimes[1] != null ? (pumpTimes[1] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump3: numPumps >= 3 && pumpTimes[2] != null ? (pumpTimes[2] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump4: numPumps >= 4 && pumpTimes[3] != null ? (pumpTimes[3] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump5: numPumps >= 5 && pumpTimes[4] != null ? (pumpTimes[4] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  pump6: numPumps >= 6 && pumpTimes[5] != null ? (pumpTimes[5] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                  totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
+                                };
+                              });
+                              exportTableToExcel(exportData, columns, "pump-operating-times");
+                            }}
+                            size="sm"
+                          />
+                        </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className={`flex items-center gap-3 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`}>
