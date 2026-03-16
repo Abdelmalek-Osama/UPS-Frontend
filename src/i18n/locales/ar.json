@@ -68,7 +68,13 @@
     "serverError": "لا يوجد استجابة من الخادم. يرجى التحقق من اتصالك بالإنترنت.",
     "hours": "ساعة",
     "exporting": "جارٍ التصدير..." ,
-    "exportAsImage": "تصدير الصفحة كصورة"
+    "exportAsImage": "تصدير الصفحة كصورة",
+    "startTime": "وقت البدء",
+    "interval": "الفترة (ساعات)",
+    "addSuccess": "تمت الإضافة بنجاح",
+    "updateSuccess": "تم التحديث بنجاح",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "confirmDelete": "هل أنت متأكد من حذف هذا العنصر؟"
   },
   "buttons": {
     "save": "حفظ",
@@ -628,6 +634,7 @@
     "directorate": "عرض المديرية",
     "master": "العرض العام",
     "reports": "التقارير",
+    "scheduler": "جدولة التقارير",
     "dashboard": "لوحة التحكم",
     "sites": "عرض المواقع",
     "readings": "القراءات",
@@ -1013,7 +1020,8 @@
     },
     "master": {
       "title": "العرض العام للمشروع",
-      "subtitle": "جميع المواقع مرتبة من الجنوب إلى الشمال"
+      "subtitle": "جميع المواقع مرتبة من الجنوب إلى الشمال",
+      "selectSites": "اختر المواقع"
     },
     "reports": {
       "title": "التقارير والتصدير",
@@ -1037,6 +1045,43 @@
       "excel": "Excel",
       "create": "إنشاء الجدولة",
       "nextRun": "التشغيل القادم"
+    },
+    "readingReportsScheduler": {
+      "title": "جدولة تقارير القراءات",
+      "subtitle": "إدارة واتمتة تقارير القراءات المجدولة",
+      "addScheduler": "إضافة جدولة",
+      "tableTitle": "مجدولات التقارير",
+      "tableSubtitle": "عرض، تعديل أو حذف التقارير الدورية",
+      "name": "الاسم",
+      "emails": "البريد الإلكتروني",
+      "frequency": "التكرار / Cron",
+      "format": "الصيغة",
+      "status": "الحالة",
+      "actions": "إجراءات",
+      "loading": "جاري التحميل...",
+      "noSchedulers": "لا يوجد مجدولات.",
+      "testRun": "اختبار التشغيل",
+      "viewLogs": "عرض السجلات",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "editTitle": "تعديل الجدولة",
+      "addTitle": "إضافة جدولة",
+      "editDescription": "تحديث تفاصيل مجدول التقارير.",
+      "addDescription": "إنشاء جدولة تقرير آلي جديد.",
+      "placeholderName": "مثال: التقرير الصباحي اليومي",
+      "placeholderEmails": "مثال: user1@example.com, user2@example.com",
+      "emailsHint": "افصل بين عناوين البريد الإلكتروني بفواصل.",
+      "placeholderFrequency": "0 8 * * *",
+      "active": "نشط",
+      "saving": "جاري الحفظ...",
+      "update": "تحديث",
+      "create": "إنشاء",
+      "logsTitle": "سجلات التشغيل: {{name}}",
+      "logsDescription": "تاريخ التشغيل الأخير لهذه الجدولة.",
+      "loadingLogs": "جاري تحميل السجلات...",
+      "noLogs": "لا توجد سجلات متاحة لهذه الجدولة.",
+      "executionTime": "وقت التشغيل",
+      "message": "الرسالة"
     }
   }
 }
