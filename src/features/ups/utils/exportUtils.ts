@@ -1,13 +1,35 @@
 import html2canvas from 'html2canvas';
 
 /**
+ * Get current timestamp in format: YYYY-MM-DD HH:mm:ss
+ */
+const getExportTimestamp = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+/**
  * Export table data to CSV format with UTF-8 BOM for proper Arabic text display
  */
 export const exportTableToCSV = (
   data: any[],
   columns: { key: string; header: string }[],
-  filename: string
+  filename: string,
+  title?: string
 ) => {
+  const timestamp = getExportTimestamp();
+  
+  // Combine title info if exists
+  const headerSection = (title && title.trim()) 
+    ? [`"${title.replace(/"/g, '""')}"`, `"Exported At: ${timestamp}"`, ''] 
+    : [];
+
   // Create CSV header
   const headers = columns.map(col => col.header).join(',');
   
@@ -23,8 +45,8 @@ export const exportTableToCSV = (
     }).join(',');
   });
   
-  // Combine header and rows
-  const csv = [headers, ...rows].join('\n');
+  // Combine everything
+  const csv = [...headerSection, headers, ...rows].join('\r\n');
   
   // Add UTF-8 BOM (Byte Order Mark) to ensure Excel recognizes UTF-8 encoding
   const BOM = '\uFEFF';
@@ -49,36 +71,49 @@ export const exportTableToCSV = (
 export const exportTableToExcel = (
   data: any[],
   columns: { key: string; header: string }[],
-  filename: string
+  filename: string,
+  title?: string
 ) => {
+  const timestamp = getExportTimestamp();
+  
   // Create HTML table with proper meta tags for UTF-8 encoding
   let html = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
       <meta charset="utf-8">
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <!--[if gte mso 9]>
-      <xml>
-        <x:ExcelWorkbook>
-          <x:ExcelWorksheets>
-            <x:ExcelWorksheet>
-              <x:Name>Sheet1</x:Name>
-              <x:WorksheetOptions>
-                <x:DisplayGridlines/>
-              </x:WorksheetOptions>
-            </x:ExcelWorksheet>
-          </x:ExcelWorksheets>
-        </x:ExcelWorkbook>
-      </xml>
-      <![endif]-->
       <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; font-weight: bold; }
+        .report-title { 
+          font-size: 16px; 
+          font-weight: bold; 
+          text-align: center; 
+          border: none;
+        }
+        .report-time { 
+          font-size: 11px; 
+          font-style: italic; 
+          text-align: center; 
+          border: none;
+        }
+        .empty-row { border: none; }
       </style>
     </head>
     <body>
     <table>`;
+  
+  const colCount = columns.length;
+  
+  // Add Header Section if title exists
+  if (title && title.trim()) {
+    html += `
+      <tr><td colspan="${colCount}" style="font-size: 16px; font-weight: bold; text-align: center; border: none;">${escapeHtml(title)}</td></tr>
+      <tr><td colspan="${colCount}" style="font-size: 11px; font-style: italic; text-align: center; border: none;">Exported At: ${escapeHtml(timestamp)}</td></tr>
+      <tr><td colspan="${colCount}" style="border: none; height: 10px;"></td></tr>
+    `;
+  }
   
   // Add header
   html += '<thead><tr>';
@@ -137,7 +172,7 @@ const injectColorOverrides = (): HTMLStyleElement => {
   const style = document.createElement('style');
   style.id = 'export-color-overrides';
   style.textContent = `
-    * {
+    .export-container-overrides {
       --color-primary: #3b82f6 !important;
       --color-secondary: #ef4444 !important;
       --color-success: #10b981 !important;
@@ -148,14 +183,15 @@ const injectColorOverrides = (): HTMLStyleElement => {
       --color-background: #ffffff !important;
       --color-foreground: #000000 !important;
       --color-border: #e5e7eb !important;
-      background-color: var(--color-background) !important;
-      color: var(--color-foreground) !important;
-      border-color: var(--color-border) !important;
     }
     
-    body, html {
+    #temp-export-container {
       background-color: #ffffff !important;
       color: #000000 !important;
+    }
+    
+    #temp-export-container * {
+      border-color: #e5e7eb !important;
     }
   `;
   document.head.appendChild(style);
@@ -177,7 +213,8 @@ const removeColorOverrides = (styleEl: HTMLStyleElement): void => {
  */
 export const exportChartAsPNG = async (
   elementId: string,
-  filename: string
+  filename: string,
+  title?: string
 ): Promise<void> => {
   const element = document.getElementById(elementId);
   
@@ -196,7 +233,43 @@ export const exportChartAsPNG = async (
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
-    tempContainer.appendChild(clone);
+    tempContainer.style.background = '#ffffff';
+    tempContainer.style.padding = '20px'; // Add some padding around the export block
+    tempContainer.style.display = 'flex';
+    tempContainer.style.flexDirection = 'column';
+    tempContainer.style.alignItems = 'center';
+    tempContainer.classList.add('export-container-overrides');
+    tempContainer.id = 'temp-export-container';
+
+    // Create a wrapper for the clone to isolate it
+    const cloneWrapper = document.createElement('div');
+    const width = element.offsetWidth || 800;
+    const height = element.offsetHeight || 400;
+    
+    cloneWrapper.style.width = width + 'px';
+    cloneWrapper.style.height = height + 'px';
+    cloneWrapper.style.position = 'relative';
+    cloneWrapper.style.backgroundColor = '#ffffff';
+    
+    // Force dimensions on all SVGs in the clone
+    const svgs = clone.querySelectorAll('svg');
+    svgs.forEach(svg => {
+      if (!svg.getAttribute('width')) svg.setAttribute('width', width.toString());
+      if (!svg.getAttribute('height')) svg.setAttribute('height', height.toString());
+    });
+    
+    cloneWrapper.appendChild(clone);
+    tempContainer.appendChild(cloneWrapper);
+    
+    // Use a container that's technically on screen but hidden by overflow
+    // to ensure browser calculates layout/sizes correctly
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '0';
+    tempContainer.style.top = '0';
+    tempContainer.style.zIndex = '-9999';
+    tempContainer.style.opacity = '0';
+    tempContainer.style.pointerEvents = 'none';
+    
     document.body.appendChild(tempContainer);
     
     // Wait for images to load
@@ -210,16 +283,60 @@ export const exportChartAsPNG = async (
         }
       });
     }));
+
+    // Re-inject the header if needed (we moved it earlier)
+    if (title) {
+      const headerDiv = document.createElement('div');
+      headerDiv.style.textAlign = 'center';
+      headerDiv.style.marginBottom = '20px';
+      headerDiv.style.width = '100%';
+      
+      const titleSpan = document.createElement('h3');
+      titleSpan.style.margin = '0 0 5px 0';
+      titleSpan.style.fontSize = '16px';
+      titleSpan.style.fontWeight = 'bold';
+      titleSpan.style.color = '#333333';
+      titleSpan.style.fontFamily = 'Arial, sans-serif';
+      titleSpan.textContent = title;
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.style.fontSize = '11px';
+      timeSpan.style.fontStyle = 'italic';
+      timeSpan.style.color = '#6b7280';
+      timeSpan.style.fontFamily = 'Arial, sans-serif';
+      timeSpan.textContent = getExportTimestamp();
+      
+      headerDiv.appendChild(titleSpan);
+      headerDiv.appendChild(timeSpan);
+      tempContainer.insertBefore(headerDiv, tempContainer.firstChild);
+    }
+
+    // Add longer delay for Recharts animations and layout stability
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const canvas = await html2canvas(clone, {
+    // Refresh computed sizes before capture
+    const captureWidth = tempContainer.scrollWidth || tempContainer.offsetWidth;
+    const captureHeight = tempContainer.scrollHeight || tempContainer.offsetHeight;
+
+    const canvas = await html2canvas(tempContainer, {
       backgroundColor: '#ffffff',
       scale: 2,
       logging: false,
       allowTaint: true,
       useCORS: true,
-      imageTimeout: 5000,
-      width: clone.offsetWidth,
-      height: clone.offsetHeight,
+      imageTimeout: 10000,
+      width: captureWidth,
+      height: captureHeight,
+      onclone: (clonedDoc) => {
+        const el = clonedDoc.getElementById('temp-export-container');
+        if (el) {
+          el.style.opacity = '1';
+          el.style.position = 'relative';
+          el.style.left = '0';
+          el.style.top = '0';
+          el.style.zIndex = '1';
+        }
+      }
     });
     
     // Clean up
@@ -253,7 +370,8 @@ export const exportChartAsPNG = async (
  */
 export const exportChartAsSVG = (
   elementId: string,
-  filename: string
+  filename: string,
+  title?: string
 ): void => {
   const element = document.getElementById(elementId);
   
@@ -277,13 +395,90 @@ export const exportChartAsSVG = (
   if (!clonedSvg.getAttribute('xmlns')) {
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   }
-  
-  // Serialize SVG to string
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(clonedSvg);
+
+  let finalSvgString = '';
+
+  if (title) {
+    // Compute dimensions and inject header directly into an SVG wrapping string or group
+    let width = svgElement.clientWidth || svgElement.getBoundingClientRect().width || 800;
+    let height = svgElement.clientHeight || svgElement.getBoundingClientRect().height || 400;
+    
+    // Scale viewBox if exists
+    let scaledWidth = width;
+    let originalHeight = height;
+    const viewBox = clonedSvg.getAttribute('viewBox');
+    if (viewBox) {
+      const viewBoxValues = viewBox.split(/\s+/).map(Number);
+      if (viewBoxValues.length === 4) {
+        scaledWidth = viewBoxValues[2];
+        originalHeight = viewBoxValues[3];
+      }
+    }
+
+    const headerHeight = 60;
+    const scaledHeaderHeight = (headerHeight / height) * originalHeight || headerHeight;
+
+    const newSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    newSvg.setAttribute('viewBox', `0 0 ${scaledWidth} ${originalHeight + scaledHeaderHeight}`);
+    newSvg.setAttribute('width', width.toString());
+    newSvg.setAttribute('height', (height + headerHeight).toString());
+    newSvg.style.backgroundColor = '#ffffff';
+
+    if (clonedSvg.className.baseVal) {
+      newSvg.setAttribute('class', clonedSvg.className.baseVal);
+    }
+
+    // Add Title and Timestamp
+    const headerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    
+    const headerBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    headerBg.setAttribute('width', scaledWidth.toString());
+    headerBg.setAttribute('height', scaledHeaderHeight.toString());
+    headerBg.setAttribute('fill', '#ffffff');
+    headerGroup.appendChild(headerBg);
+    
+    const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    titleText.setAttribute('x', (scaledWidth / 2).toString());
+    titleText.setAttribute('y', (scaledHeaderHeight * 0.4).toString());
+    titleText.setAttribute('font-size', '16');
+    titleText.setAttribute('font-weight', 'bold');
+    titleText.setAttribute('fill', '#333333');
+    titleText.setAttribute('font-family', 'Arial, sans-serif');
+    titleText.setAttribute('text-anchor', 'middle');
+    titleText.textContent = title;
+    headerGroup.appendChild(titleText);
+    
+    const timeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    timeText.setAttribute('x', (scaledWidth / 2).toString());
+    timeText.setAttribute('y', (scaledHeaderHeight * 0.8).toString());
+    timeText.setAttribute('font-size', '11');
+    timeText.setAttribute('font-style', 'italic');
+    timeText.setAttribute('fill', '#6b7280');
+    timeText.setAttribute('font-family', 'Arial, sans-serif');
+    timeText.setAttribute('text-anchor', 'middle');
+    timeText.textContent = getExportTimestamp();
+    headerGroup.appendChild(timeText);
+
+    newSvg.appendChild(headerGroup);
+
+    const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    chartGroup.setAttribute('transform', `translate(0, ${scaledHeaderHeight})`);
+    while (clonedSvg.firstChild) {
+      chartGroup.appendChild(clonedSvg.firstChild);
+    }
+    newSvg.appendChild(chartGroup);
+
+    const serializer = new XMLSerializer();
+    finalSvgString = serializer.serializeToString(newSvg);
+  } else {
+    // Serialize SVG to string directly
+    const serializer = new XMLSerializer();
+    finalSvgString = serializer.serializeToString(clonedSvg);
+  }
   
   // Create blob and download
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const blob = new Blob([finalSvgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   

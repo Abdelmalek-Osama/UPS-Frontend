@@ -79,7 +79,8 @@ export function PumpFlowTable({ data, totalFlow, siteName }: PumpFlowTableProps)
         return row;
       });
 
-      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-flows-timeseries`);
+      const title = siteName ? `${siteName} Pump Flows (Time Series)` : t("ups.charts.individualPumpFlows");
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-flows-timeseries`, title);
     } else {
       const aggregatedData = data as PumpFlow[];
       const columns = [
@@ -101,7 +102,8 @@ export function PumpFlowTable({ data, totalFlow, siteName }: PumpFlowTableProps)
         }
       ];
 
-      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-flows`);
+      const title = siteName ? `${siteName} Pump Flows` : t("ups.charts.individualPumpFlows");
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-flows`, title);
     }
   };
 
@@ -130,7 +132,8 @@ export function PumpFlowTable({ data, totalFlow, siteName }: PumpFlowTableProps)
         return row;
       });
 
-      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-flows-timeseries`);
+      const title = siteName ? `${siteName} Pump Flows (Time Series)` : t("ups.charts.individualPumpFlows");
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-flows-timeseries`, title);
     } else {
       const aggregatedData = data as PumpFlow[];
       const columns = [
@@ -152,7 +155,8 @@ export function PumpFlowTable({ data, totalFlow, siteName }: PumpFlowTableProps)
         }
       ];
 
-      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-flows`);
+      const title = siteName ? `${siteName} Pump Flows` : t("ups.charts.individualPumpFlows");
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-flows`, title);
     }
   };
   

@@ -324,7 +324,8 @@ export function DirectoratePage() {
                             return `${hours}:${minutes}`;
                           })() : "-"
                         }));
-                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`);
+                        const title = t("ups.directorate.branchSites", { branch: localizedBranchName });
+                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`, title);
                       }}
                       onExportExcel={() => {
                         const columns = [
@@ -365,7 +366,8 @@ export function DirectoratePage() {
                             return `${hours}:${minutes}`;
                           })() : "-"
                         }));
-                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`);
+                        const title = t("ups.directorate.branchSites", { branch: localizedBranchName });
+                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`, title);
                       }}
                       size="sm"
                     />
@@ -426,7 +428,8 @@ export function DirectoratePage() {
                             return `${hours}:${minutes}`;
                           })() : "-"
                         }));
-                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`);
+                        const title = t("ups.directorate.branchSites", { branch: localizedBranchName });
+                        exportTableToCSV(exportData, columns, `${localizedBranchName}-sites`, title);
                       }}
                       onExportExcel={() => {
                         const columns = [
@@ -467,7 +470,8 @@ export function DirectoratePage() {
                             return `${hours}:${minutes}`;
                           })() : "-"
                         }));
-                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`);
+                        const title = t("ups.directorate.branchSites", { branch: localizedBranchName });
+                        exportTableToExcel(exportData, columns, `${localizedBranchName}-sites`, title);
                       }}
                       size="sm"
                     />
@@ -1028,7 +1032,8 @@ export function DirectoratePage() {
                                   totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
                                 };
                               });
-                              exportTableToCSV(exportData, columns, "pump-operating-times");
+                               const title = t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)";
+                              exportTableToCSV(exportData, columns, "pump-operating-times", title);
                             }}
                             onExportExcel={() => {
                               const pumpSites = getPumpSitesForTable();
@@ -1056,7 +1061,8 @@ export function DirectoratePage() {
                                   totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
                                 };
                               });
-                              exportTableToExcel(exportData, columns, "pump-operating-times");
+                               const title = t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)";
+                              exportTableToExcel(exportData, columns, "pump-operating-times", title);
                             }}
                             size="sm"
                           />

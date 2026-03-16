@@ -75,7 +75,8 @@ export function PumpOperatingHoursTable({ data, siteName }: PumpOperatingHoursTa
         return row;
       });
 
-      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`);
+      const title = siteName ? `${siteName} Pump Operating Hours (Time Series)` : `${t("ups.charts.pumpOperatingHours")}`;
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`, title);
     } else {
       const aggregatedData = data as PumpOperatingHours[];
       const columns = [
@@ -90,13 +91,15 @@ export function PumpOperatingHoursTable({ data, siteName }: PumpOperatingHoursTa
         status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
       }));
 
-      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`);
+      const title = siteName ? `${siteName} Pump Operating Hours` : t("ups.charts.pumpOperatingHours");
+      exportTableToCSV(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`, title);
     }
   };
 
   const handleExportExcel = () => {
     if (isTimeSeries) {
       const timeSeriesData = data as PumpOperatingHoursTimeSeries[];
+      const title = siteName ? `${siteName} Pump Operating Hours (Time Series)` : `${t("ups.charts.pumpOperatingHours")}`;
       const columns = [
         { key: 'date', header: t("common.date") },
         { key: 'time', header: t("common.hour") },
@@ -117,7 +120,7 @@ export function PumpOperatingHoursTable({ data, siteName }: PumpOperatingHoursTa
         return row;
       });
 
-      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`);
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours-timeseries`, title);
     } else {
       const aggregatedData = data as PumpOperatingHours[];
       const columns = [
@@ -132,7 +135,8 @@ export function PumpOperatingHoursTable({ data, siteName }: PumpOperatingHoursTa
         status: pump.status === "running" ? t("ups.status.running") : t("ups.status.stopped"),
       }));
 
-      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`);
+      const title = siteName ? `${siteName} Pump Operating Hours` : t("ups.charts.pumpOperatingHours");
+      exportTableToExcel(exportData, columns, `${sanitizedSiteName}-pump-operating-hours`, title);
     }
   };
   
