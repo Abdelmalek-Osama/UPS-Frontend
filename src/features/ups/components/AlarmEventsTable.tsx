@@ -76,7 +76,7 @@ export function AlarmEventsTable({
       status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
     }));
 
-    exportTableToCSV(data, columns, 'alarm-events');
+    exportTableToCSV(data, columns, 'alarm-events', t("ups.charts.alarmEvents"));
   };
 
   const handleExportExcel = () => {
@@ -98,7 +98,7 @@ export function AlarmEventsTable({
       status: event.acknowledged ? t("alarms.fieldIsResolved") : t("alarms.pending"),
     }));
 
-    exportTableToExcel(data, columns, 'alarm-events');
+    exportTableToExcel(data, columns, 'alarm-events', t("ups.charts.alarmEvents"));
   };
 
   return (

@@ -26,14 +26,16 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
   const sanitizedBranchName = branchName.replace(/[/\\?%*:|"<>]/g, '-');
   const chartId = `flow-chart-${sanitizedBranchName}`;
   
+  const title = t("ups.directorate.calculatedFlow", { branch: branchName });
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{t("ups.directorate.calculatedFlow", { branch: branchName })}</CardTitle>
+          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{title}</CardTitle>
           <ExportDropdown
-            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`)}
-            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`)}
+            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
+            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
           />
         </div>
       </CardHeader>

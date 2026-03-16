@@ -81,12 +81,14 @@ export function PumpOperatingHoursChart({ data, numPumps }: PumpOperatingHoursCh
     return null;
   };
 
+  const title = t("ups.charts.pumpOperatingHours");
+
   const handleExportPNG = () => {
-    exportChartAsPNG('pump-operating-hours-chart', 'pump-operating-hours');
+    exportChartAsPNG('pump-operating-hours-chart', 'pump-operating-hours', title);
   };
 
   const handleExportSVG = () => {
-    exportChartAsSVG('pump-operating-hours-chart', 'pump-operating-hours');
+    exportChartAsSVG('pump-operating-hours-chart', 'pump-operating-hours', title);
   };
 
   if (chartData.length === 0) {

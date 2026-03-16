@@ -27,14 +27,16 @@ export function DirectorateWLChart({ branchName, data }: DirectorateWLChartProps
   const sanitizedBranchName = branchName.replace(/[/\\?%*:|"<>]/g, '-');
   const chartId = `wl-chart-${sanitizedBranchName}`;
   
+  const title = t("ups.directorate.uswlVsDswl", { branch: branchName });
+  
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{t("ups.directorate.uswlVsDswl", { branch: branchName })}</CardTitle>
+          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{title}</CardTitle>
           <ExportDropdown
-            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-water-levels`)}
-            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-water-levels`)}
+            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-water-levels`, title)}
+            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-water-levels`, title)}
           />
         </div>
       </CardHeader>

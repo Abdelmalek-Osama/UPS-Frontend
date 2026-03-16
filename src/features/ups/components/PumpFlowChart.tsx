@@ -109,14 +109,16 @@ export function PumpFlowChart({ data, activePumps }: PumpFlowChartProps) {
   
   console.log('PumpFlowChart - Y-axis domain:', { minFlow, maxFlow, yDomain, allFlowValues });
   
+  const title = t("ups.charts.individualPumpFlow");
+  
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{t("ups.charts.individualPumpFlow")}</CardTitle>
+          <CardTitle>{title}</CardTitle>
           <ExportDropdown
-            onExportPNG={() => exportChartAsPNG('pump-flow-chart', 'pump-flow-chart')}
-            onExportSVG={() => exportChartAsSVG('pump-flow-chart', 'pump-flow-chart')}
+            onExportPNG={() => exportChartAsPNG('pump-flow-chart', 'pump-flow-chart', title)}
+            onExportSVG={() => exportChartAsSVG('pump-flow-chart', 'pump-flow-chart', title)}
           />
         </div>
       </CardHeader>
