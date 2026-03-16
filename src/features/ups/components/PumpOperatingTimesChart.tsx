@@ -53,16 +53,18 @@ export function PumpOperatingTimesChart({ sites }: PumpOperatingTimesChartProps)
 
   const chartId = "pump-operating-times-chart";
 
+  const title = t("ups.directorate.pumpTimesChart") || "Pump Operating Times (Hours)";
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className={isRTL ? "text-right" : "text-left"}>
-            {t("ups.directorate.pumpTimesChart") || "Pump Operating Times (Hours)"}
+            {title}
           </CardTitle>
           <ExportDropdown
-            onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times")}
-            onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times")}
+            onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times", title)}
+            onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times", title)}
           />
         </div>
       </CardHeader>

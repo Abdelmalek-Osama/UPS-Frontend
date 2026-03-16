@@ -323,8 +323,8 @@ export function SitePage() {
           <div className="flex items-center justify-between">
             <CardTitle>{t("ups.charts.waterLevels")}</CardTitle>
             <ExportDropdown
-              onExportPNG={() => exportChartAsPNG('water-levels-chart', `${sanitizedSiteName}-water-levels`)}
-              onExportSVG={() => exportChartAsSVG('water-levels-chart', `${sanitizedSiteName}-water-levels`)}
+              onExportPNG={() => exportChartAsPNG('water-levels-chart', `${sanitizedSiteName}-water-levels`, `${siteName} - ${t("ups.charts.waterLevels")}`)}
+              onExportSVG={() => exportChartAsSVG('water-levels-chart', `${sanitizedSiteName}-water-levels`, `${siteName} - ${t("ups.charts.waterLevels")}`)}
             />
           </div>
         </CardHeader>
@@ -377,8 +377,8 @@ export function SitePage() {
           <div className="flex items-center justify-between">
             <CardTitle>{t("ups.charts.totalFlow")} ({t("ups.waterLevel")})</CardTitle>
             <ExportDropdown
-              onExportPNG={() => exportChartAsPNG('flow-rate-chart', `${sanitizedSiteName}-total-flow`)}
-              onExportSVG={() => exportChartAsSVG('flow-rate-chart', `${sanitizedSiteName}-total-flow`)}
+              onExportPNG={() => exportChartAsPNG('flow-rate-chart', `${sanitizedSiteName}-total-flow`, `${siteName} - ${t("ups.charts.totalFlow")} (${t("ups.waterLevel")})`)}
+              onExportSVG={() => exportChartAsSVG('flow-rate-chart', `${sanitizedSiteName}-total-flow`, `${siteName} - ${t("ups.charts.totalFlow")} (${t("ups.waterLevel")})`)}
             />
           </div>
         </CardHeader>

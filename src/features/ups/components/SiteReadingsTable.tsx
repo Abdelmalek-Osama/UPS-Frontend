@@ -64,7 +64,8 @@ export function SiteReadingsTable({ rows, siteName }: SiteReadingsTableProps) {
       flowRate: row.flowRate.toFixed(2),
     }));
 
-    exportTableToCSV(data, columns, `${sanitizedSiteName}-recent-readings`);
+    const title = siteName ? `${siteName} Data` : 'Recent Readings';
+    exportTableToCSV(data, columns, `${sanitizedSiteName}-recent-readings`, title);
   };
 
   const handleExportExcel = () => {
@@ -84,7 +85,8 @@ export function SiteReadingsTable({ rows, siteName }: SiteReadingsTableProps) {
       flowRate: row.flowRate.toFixed(2),
     }));
 
-    exportTableToExcel(data, columns, `${sanitizedSiteName}-recent-readings`);
+    const title = siteName ? `${siteName} Data` : 'Recent Readings';
+    exportTableToExcel(data, columns, `${sanitizedSiteName}-recent-readings`, title);
   };
 
   return (
