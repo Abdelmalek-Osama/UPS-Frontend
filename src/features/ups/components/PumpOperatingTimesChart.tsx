@@ -59,19 +59,33 @@ export function PumpOperatingTimesChart({ sites }: PumpOperatingTimesChartProps)
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className={isRTL ? "text-right" : "text-left"}>
-            {title}
-          </CardTitle>
-          <ExportDropdown
-            onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times", title)}
-            onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times", title)}
-          />
+          {isRTL ? (
+            <>
+              <ExportDropdown
+                onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times", title)}
+                onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times", title)}
+              />
+              <CardTitle className="text-right">
+                {title}
+              </CardTitle>
+            </>
+          ) : (
+            <>
+              <CardTitle className="text-left">
+                {title}
+              </CardTitle>
+              <ExportDropdown
+                onExportPNG={() => exportChartAsPNG(chartId, "pump-operating-times", title)}
+                onExportSVG={() => exportChartAsSVG(chartId, "pump-operating-times", title)}
+              />
+            </>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         <div id={chartId} style={{ width: "100%", height: 380 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={displayData} margin={{ top: 16, right: 24, left: 16, bottom: 64 }}>
+            <BarChart data={displayData} margin={{ top: 16, right: isRTL ? 90 : 24, left: isRTL ? 24 : 90, bottom: 64 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -86,8 +100,8 @@ export function PumpOperatingTimesChart({ sites }: PumpOperatingTimesChartProps)
                 label={{
                   value: t("common.hours") || "hrs",
                   angle: -90,
-                  position: isRTL ? "insideRight" : "insideLeft",
-                  offset: isRTL ? 12 : -4,
+                  position: 'center',
+                  dx: isRTL ? 60 : -60
                 }}
                 tick={{ fontSize: 11 }}
                 domain={[0, "auto"]}
