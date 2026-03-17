@@ -7,6 +7,7 @@ import {
   LogOut,
   Menu,
   Droplets,
+  CalendarClock,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -46,6 +47,7 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
     { id: 'overview', label: t('navigation.overview'), icon: LayoutDashboard, path: '/', roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
     { id: 'directorate', label: t('navigation.directorate'), icon: MapPin, path: `/governorates/${governorateSlug}`, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'] },
     { id: 'sites', label: t('navigation.sites'), icon: Globe2, path: firstSitePath, roles: ['Admin', 'Operator', 'Viewer', 'Governorate', 'SuperAdmin'], matchPrefix: '/sites/' },
+    { id: 'scheduler', label: t('navigation.scheduler', 'Reports Scheduler'), icon: CalendarClock, path: '/reading-reports-scheduler', roles: ['Admin', 'SuperAdmin'] },
   ];
 
   // Filter menu items based on user role

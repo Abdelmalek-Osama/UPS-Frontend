@@ -69,7 +69,13 @@
     "serverError": "No response from server. Please check your internet connection.",
     "hours": "hrs",
      "exporting": "Exporting..." ,
-    "exportAsImage": "Export Page As Image"
+    "exportAsImage": "Export Page As Image",
+    "startTime": "Start Time",
+    "interval": "Interval (Hours)",
+    "addSuccess": "Added successfully",
+    "updateSuccess": "Updated successfully",
+    "deleteSuccess": "Deleted successfully",
+    "confirmDelete": "Are you sure you want to delete this item?"
   },
   "buttons": {
     "save": "Save",
@@ -631,6 +637,7 @@
     "master": "Master View",
     "reports": "Reports",
     "dashboard": "Dashboard",
+    "scheduler": "Scheduler",
     "sites": "Sites View",
     "readings": "Readings",
     "readingLogs": "Reading logs",
@@ -1018,7 +1025,8 @@
     },
     "master": {
       "title": "Master General View",
-      "subtitle": "All sites ordered south-to-north along the canal"
+      "subtitle": "All sites ordered south-to-north along the canal",
+      "selectSites": "Select Sites"
     },
     "reports": {
       "title": "Reporting & Export",
@@ -1042,6 +1050,43 @@
       "excel": "Excel",
       "create": "Create Schedule",
       "nextRun": "Next Run"
+    },
+    "readingReportsScheduler": {
+      "title": "Readings Report Scheduler",
+      "subtitle": "Manage and automate scheduled reading reports",
+      "addScheduler": "Add Scheduler",
+      "tableTitle": "Scheduled Reports Schedulers",
+      "tableSubtitle": "View, edit or delete recurring reports",
+      "name": "Name",
+      "emails": "Emails",
+      "frequency": "Frequency/Cron",
+      "format": "Format",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading...",
+      "noSchedulers": "No schedulers found.",
+      "testRun": "Test Run",
+      "viewLogs": "View Logs",
+      "edit": "Edit",
+      "delete": "Delete",
+      "editTitle": "Edit Scheduler",
+      "addTitle": "Add Scheduler",
+      "editDescription": "Update the details for the report scheduler.",
+      "addDescription": "Create a new automated report schedule.",
+      "placeholderName": "e.g. Daily Morning Report",
+      "placeholderEmails": "e.g. user1@example.com, user2@example.com",
+      "emailsHint": "Separate multiple emails with commas.",
+      "placeholderFrequency": "0 8 * * *",
+      "active": "Active",
+      "saving": "Saving...",
+      "update": "Update",
+      "create": "Create",
+      "logsTitle": "Execution Logs: {{name}}",
+      "logsDescription": "Recent execution history for this scheduler.",
+      "loadingLogs": "Loading logs...",
+      "noLogs": "No logs available for this scheduler.",
+      "executionTime": "Execution Time",
+      "message": "Message"
     }
   }
 }

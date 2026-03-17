@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { LoginPage } from './features/auth';
 import { DashboardLayout } from './components/DashboardLayout';
 import { Routes, Route, Navigate } from "react-router-dom";
-import { LandingPage, SitePage, DirectoratePage, MasterPage, ReportsPage, UPSAuthProvider, ProtectedRoute } from './features/ups';
+import { LandingPage, SitePage, DirectoratePage, MasterPage, ReportsPage, UPSAuthProvider, ProtectedRoute, ReadingsReportScheduler } from './features/ups';
 import { AuthProvider, useAuth } from './shared/contexts/AuthContext';
 import { ApiConfig } from './features/ups/utils/apiConfig';
 
@@ -64,6 +64,11 @@ function AuthRoutes() {
                     <Route path="reports" element={
                       <ProtectedRoute requireMasterAccess={true}>
                         <ReportsPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="reading-reports-scheduler" element={
+                      <ProtectedRoute requireMasterAccess={true}>
+                        <ReadingsReportScheduler />
                       </ProtectedRoute>
                     } />
                   </Route>

@@ -5,6 +5,7 @@ export { GovernoratePage } from "./components/GovernoratePage";
 export { DirectoratePage } from "./components/DirectoratePage";
 export { MasterPage } from "./components/MasterPage";
 export { ReportsPage } from "./components/ReportsPage";
+export { ReadingsReportScheduler } from "./components/ReadingsReportScheduler";
 export { ApiModeToggle } from "./components/ApiModeToggle";
 
 // Export routing
