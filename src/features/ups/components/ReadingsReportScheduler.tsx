@@ -7,7 +7,7 @@ import { Button } from '../../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
-import { Trash2, Edit, Plus, X } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { useReadingsReportSchedulerData } from '../hooks/useReadingsReportSchedulerData';
 import { useDirectoratesList } from '../hooks/useDirectoratesList';
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useEffect } from 'react';
 import { getDashboardSites } from '../api/upsApi';
 import { SiteMultiSelectDropdown } from '../../sites/components/SiteMultiSelectDropdown';
+import { RecipientInput } from '../../alarms/components/RecipientInput';
 
 export function ReadingsReportScheduler() {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export function ReadingsReportScheduler() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [name, setName] = useState('');
-  const [recipients, setRecipients] = useState<string[]>(['']);
+  const [recipients, setRecipients] = useState<string[]>([]);
   const [directorateId, setDirectorateId] = useState<string>('');
   const [siteIds, setSiteIds] = useState<number[]>([]);
   const [startTime, setStartTime] = useState('08:00');
@@ -70,7 +71,7 @@ export function ReadingsReportScheduler() {
   const resetForm = () => {
     setEditingId(null);
     setName('');
-    setRecipients(['']);
+    setRecipients([]);
     setDirectorateId('');
     setSiteIds([]);
     setStartTime('08:00');
@@ -86,7 +87,7 @@ export function ReadingsReportScheduler() {
   const handleOpenEdit = (scheduler: ReadingsReportSchedulerResponse) => {
     setEditingId(scheduler.id);
     setName(scheduler.name || '');
-    setRecipients(scheduler.recipients && scheduler.recipients.length > 0 ? scheduler.recipients : ['']);
+    setRecipients(scheduler.recipients && scheduler.recipients.length > 0 ? scheduler.recipients : []);
     setDirectorateId(scheduler.directorateId ? scheduler.directorateId.toString() : '');
     
     setSiteIds(scheduler.siteIds || []);
@@ -126,26 +127,6 @@ export function ReadingsReportScheduler() {
       setIsDialogOpen(false);
       resetForm();
     }
-  };
-
-  const handleAddEmail = () => {
-    setRecipients(prev => [...prev, '']);
-  };
-
-  const handleRemoveEmail = (index: number) => {
-    if (recipients.length > 1) {
-      setRecipients(prev => prev.filter((_, i) => i !== index));
-    } else {
-      setRecipients(['']);
-    }
-  };
-
-  const handleEmailChange = (index: number, value: string) => {
-    setRecipients(prev => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
   };
 
   const getStatusBadge = (active: boolean) => (
@@ -249,41 +230,13 @@ export function ReadingsReportScheduler() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>{t('ups.readingReportsScheduler.emails')}</Label>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-7 px-2" 
-                  onClick={handleAddEmail}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  {t('common.add') || 'Add'}
-                </Button>
-              </div>
-              {/* Let the whole form scroll (fixed dialog height) */}
-              <div className="space-y-2">
-                {recipients.map((email, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={t('ups.readingReportsScheduler.placeholderEmails') || "Enter email"}
-                      value={email}
-                      onChange={(e) => handleEmailChange(index, e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-10 w-10 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleRemoveEmail(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <RecipientInput
+                type="email"
+                forAlarmType="threshold"
+                recipients={recipients}
+                setRecipients={(newRecipients) => setRecipients(newRecipients)}
+                setHasChanges={() => {}}
+              />
             </div>
 
             <div className="space-y-2">
@@ -353,7 +306,7 @@ export function ReadingsReportScheduler() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={isLoading || !name.trim() || recipients.every(r => !r.trim()) || !directorateId}
+              disabled={isLoading || !name.trim() || recipients.length === 0 || !directorateId}
             >
               {isLoading ? t('ups.readingReportsScheduler.saving') : editingId ? t('ups.readingReportsScheduler.update') : t('ups.readingReportsScheduler.create')}
             </Button>
