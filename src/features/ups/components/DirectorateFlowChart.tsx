@@ -32,17 +32,29 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className={isRTL ? 'text-right' : 'text-left'}>{title}</CardTitle>
-          <ExportDropdown
-            onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
-            onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
-          />
+          {isRTL ? (
+            <>
+              <ExportDropdown
+                onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
+                onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
+              />
+              <CardTitle className='text-right'>{title}</CardTitle>
+            </>
+          ) : (
+            <>
+              <CardTitle className='text-left'>{title}</CardTitle>
+              <ExportDropdown
+                onExportPNG={() => exportChartAsPNG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
+                onExportSVG={() => exportChartAsSVG(chartId, `${sanitizedBranchName}-flow-rates`, title)}
+              />
+            </>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         <div id={chartId} style={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <BarChart data={chartData} margin={{ top: 20, right: isRTL ? 90 : 30, left: isRTL ? 30 : 90, bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
@@ -54,8 +66,9 @@ export function DirectorateFlowChart({ branchName, data }: DirectorateFlowChartP
               <YAxis 
                 label={{ 
                   value: t("ups.directorate.flowRate"), 
-                  angle: -90, 
-                  position: isRTL ? 'insideRight' : 'insideLeft'
+                  angle: -90,
+                  position: 'center',
+                  dx: isRTL ? 60 : -60
                 }} 
                 orientation={isRTL ? 'right' : 'left'}
                 domain={[0, 'auto']}

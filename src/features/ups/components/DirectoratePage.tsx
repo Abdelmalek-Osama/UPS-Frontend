@@ -1002,10 +1002,9 @@ export function DirectoratePage() {
                     <Card>
                       <CardHeader>
                         <div className="flex items-center justify-between">
-                          <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                            {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
-                          </CardTitle>
-                          <ExportDropdown
+                          {t('_rtl') === 'rtl' ? (
+                            <>
+                              <ExportDropdown
                             onExportCSV={() => {
                               const pumpSites = getPumpSitesForTable();
                               const columns = [
@@ -1066,22 +1065,120 @@ export function DirectoratePage() {
                             }}
                             size="sm"
                           />
+                              <CardTitle className='text-right'>
+                                {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
+                              </CardTitle>
+                            </>
+                          ) : (
+                            <>
+                              <CardTitle className='text-left'>
+                                {t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)"}
+                              </CardTitle>
+                              <ExportDropdown
+                                onExportCSV={() => {
+                                  const pumpSites = getPumpSitesForTable();
+                                  const columns = [
+                                    { key: 'siteName', header: t("ups.directorate.siteName") || "Site Name" },
+                                    { key: 'pump1', header: `${t("ups.directorate.pump") || "Pump"} 1 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump2', header: `${t("ups.directorate.pump") || "Pump"} 2 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump3', header: `${t("ups.directorate.pump") || "Pump"} 3 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump4', header: `${t("ups.directorate.pump") || "Pump"} 4 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump5', header: `${t("ups.directorate.pump") || "Pump"} 5 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump6', header: `${t("ups.directorate.pump") || "Pump"} 6 (${t("common.hours") || "hrs"})` },
+                                    { key: 'totalFlow', header: t("ups.directorate.totalFlow") || "Total Flow (m³/s)" }
+                                  ];
+                                  const exportData = pumpSites.map(site => {
+                                    const numPumps = site.siteConfiguration?.numPumps || 0;
+                                    const pumpTimes = site.pumpData?.operatingTimes || [];
+                                    return {
+                                      siteName: t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName,
+                                      pump1: numPumps >= 1 && pumpTimes[0] != null ? (pumpTimes[0] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump2: numPumps >= 2 && pumpTimes[1] != null ? (pumpTimes[1] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump3: numPumps >= 3 && pumpTimes[2] != null ? (pumpTimes[2] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump4: numPumps >= 4 && pumpTimes[3] != null ? (pumpTimes[3] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump5: numPumps >= 5 && pumpTimes[4] != null ? (pumpTimes[4] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump6: numPumps >= 6 && pumpTimes[5] != null ? (pumpTimes[5] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
+                                    };
+                                  });
+                                   const title = t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)";
+                                  exportTableToCSV(exportData, columns, "pump-operating-times", title);
+                                }}
+                                onExportExcel={() => {
+                                  const pumpSites = getPumpSitesForTable();
+                                  const columns = [
+                                    { key: 'siteName', header: t("ups.directorate.siteName") || "Site Name" },
+                                    { key: 'pump1', header: `${t("ups.directorate.pump") || "Pump"} 1 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump2', header: `${t("ups.directorate.pump") || "Pump"} 2 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump3', header: `${t("ups.directorate.pump") || "Pump"} 3 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump4', header: `${t("ups.directorate.pump") || "Pump"} 4 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump5', header: `${t("ups.directorate.pump") || "Pump"} 5 (${t("common.hours") || "hrs"})` },
+                                    { key: 'pump6', header: `${t("ups.directorate.pump") || "Pump"} 6 (${t("common.hours") || "hrs"})` },
+                                    { key: 'totalFlow', header: t("ups.directorate.totalFlow") || "Total Flow (m³/s)" }
+                                  ];
+                                  const exportData = pumpSites.map(site => {
+                                    const numPumps = site.siteConfiguration?.numPumps || 0;
+                                    const pumpTimes = site.pumpData?.operatingTimes || [];
+                                    return {
+                                      siteName: t('_rtl') === 'rtl' ? (site.siteArabicName || site.siteName) : site.siteName,
+                                      pump1: numPumps >= 1 && pumpTimes[0] != null ? (pumpTimes[0] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump2: numPumps >= 2 && pumpTimes[1] != null ? (pumpTimes[1] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump3: numPumps >= 3 && pumpTimes[2] != null ? (pumpTimes[2] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump4: numPumps >= 4 && pumpTimes[3] != null ? (pumpTimes[3] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump5: numPumps >= 5 && pumpTimes[4] != null ? (pumpTimes[4] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      pump6: numPumps >= 6 && pumpTimes[5] != null ? (pumpTimes[5] as number).toFixed(0) : (t('_rtl') === 'rtl' ? 'غير متاح' : 'N/A'),
+                                      totalFlow: site.pumpData?.totalFlow != null ? (site.pumpData.totalFlow as number).toFixed(2) : "-"
+                                    };
+                                  });
+                                   const title = t("ups.directorate.monthlyPumpTimes") || "Pump Operating Times Avg (Hours)";
+                                  exportTableToExcel(exportData, columns, "pump-operating-times", title);
+                                }}
+                                size="sm"
+                              />
+                            </>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className={`flex items-center gap-3 ${t('_rtl') === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                          <DatePicker
-                            placeholder={t("ups.filters.selectDate") || "Select date"}
-                            value={pumpDate}
-                            onChange={setPumpDate}
-                          />
-                          {pumpDate && (
-                            <button
-                              onClick={() => setPumpDate(undefined)}
-                              className="text-xs text-gray-400 hover:text-gray-600 underline"
-                            >
-                              {t("common.clearDate") || "Clear"}
-                            </button>
+                        <div className={`flex items-center gap-3 ${t('_rtl') === 'rtl' ? 'justify-end' : 'justify-start'}`}>
+                          {t('_rtl') === 'rtl' ? (
+                            <>
+                              {/* Arabic: Clear button on left, DatePicker on right, aligned to left of page */}
+                              {pumpDate && (
+                                <Button
+                                  onClick={() => setPumpDate(undefined)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                >
+                                  {t("common.clearDate") || "Clear"}
+                                </Button>
+                              )}
+                              <DatePicker
+                                placeholder={t("ups.filters.selectDate") || "Select date"}
+                                value={pumpDate}
+                                onChange={setPumpDate}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              {/* English: DatePicker on left, Clear button on right */}
+                              <DatePicker
+                                placeholder={t("ups.filters.selectDate") || "Select date"}
+                                value={pumpDate}
+                                onChange={setPumpDate}
+                              />
+                              {pumpDate && (
+                                <Button
+                                  onClick={() => setPumpDate(undefined)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                >
+                                  {t("common.clearDate") || "Clear"}
+                                </Button>
+                              )}
+                            </>
                           )}
                         </div>
                         <div className="overflow-x-auto">
@@ -1100,7 +1197,7 @@ export function DirectoratePage() {
                                   </TableHead>
                                 ))}
                                 <TableHead className="text-center font-semibold min-w-[110px]">
-                                  {t("ups.directorate.totalFlow") || "Total Flow (m³/s)"}
+                                  {t("ups.directorate.totalFlow") || "Total Flow"} {t('_rtl') === 'rtl' ? '(م³/س)' : '(m³/h)'}
                                 </TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1174,13 +1271,28 @@ export function DirectoratePage() {
                         <Card>
                           <CardHeader>
                             <div className="flex items-center justify-between">
-                              <CardTitle className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                                {t("ups.landing.recentAlerts")}
-                              </CardTitle>
-                              {allAlarms.length > 0 && (
-                                <span className="text-sm text-gray-500">
-                                  {allAlarms.length} {t("alarms.total") || "total"}
-                                </span>
+                              {t('_rtl') === 'rtl' ? (
+                                <>
+                                  {allAlarms.length > 0 && (
+                                    <span className="text-sm text-gray-500">
+                                      {allAlarms.length} {t("alarms.total") || "total"}
+                                    </span>
+                                  )}
+                                  <CardTitle className='text-right'>
+                                    {t("ups.landing.recentAlerts")}
+                                  </CardTitle>
+                                </>
+                              ) : (
+                                <>
+                                  <CardTitle className='text-left'>
+                                    {t("ups.landing.recentAlerts")}
+                                  </CardTitle>
+                                  {allAlarms.length > 0 && (
+                                    <span className="text-sm text-gray-500">
+                                      {allAlarms.length} {t("alarms.total") || "total"}
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </div>
                           </CardHeader>
