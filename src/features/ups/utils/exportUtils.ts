@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 /**
  * Get current timestamp in format: YYYY-MM-DD HH:mm:ss
@@ -166,50 +166,22 @@ const escapeHtml = (text: string): string => {
 };
 
 /**
- * Inject CSS overrides to replace oklch colors with hex equivalents
+ * Helper function to download a blob as a file
  */
-const injectColorOverrides = (): HTMLStyleElement => {
-  const style = document.createElement('style');
-  style.id = 'export-color-overrides';
-  style.textContent = `
-    .export-container-overrides {
-      --color-primary: #3b82f6 !important;
-      --color-secondary: #ef4444 !important;
-      --color-success: #10b981 !important;
-      --color-warning: #f59e0b !important;
-      --color-error: #ef4444 !important;
-      --color-info: #3b82f6 !important;
-      --color-neutral: #6b7280 !important;
-      --color-background: #ffffff !important;
-      --color-foreground: #000000 !important;
-      --color-border: #e5e7eb !important;
-    }
-    
-    #temp-export-container {
-      background-color: #ffffff !important;
-      color: #000000 !important;
-    }
-    
-    #temp-export-container * {
-      border-color: #e5e7eb !important;
-    }
-  `;
-  document.head.appendChild(style);
-  return style;
+const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 /**
- * Remove the injected color overrides
- */
-const removeColorOverrides = (styleEl: HTMLStyleElement): void => {
-  if (styleEl && styleEl.parentNode) {
-    styleEl.parentNode.removeChild(styleEl);
-  }
-};
-
-/**
- * Export chart/graph as PNG image
- * Note: Requires html2canvas library. Install with: npm install html2canvas
+ * Export chart/graph as PNG image using html2canvas-pro (supports oklch colors)
  */
 export const exportChartAsPNG = async (
   elementId: string,
@@ -223,9 +195,6 @@ export const exportChartAsPNG = async (
     return;
   }
   
-  // Inject color overrides
-  const styleOverride = injectColorOverrides();
-  
   try {
     // Clone the element to avoid modifying the original
     const clone = element.cloneNode(true) as HTMLElement;
@@ -234,14 +203,12 @@ export const exportChartAsPNG = async (
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
     tempContainer.style.background = '#ffffff';
-    tempContainer.style.padding = '20px'; // Add some padding around the export block
+    tempContainer.style.padding = '20px';
     tempContainer.style.display = 'flex';
     tempContainer.style.flexDirection = 'column';
     tempContainer.style.alignItems = 'center';
-    tempContainer.classList.add('export-container-overrides');
-    tempContainer.id = 'temp-export-container';
 
-    // Create a wrapper for the clone to isolate it
+    // Create a wrapper for the clone
     const cloneWrapper = document.createElement('div');
     const width = element.offsetWidth || 800;
     const height = element.offsetHeight || 400;
@@ -261,15 +228,6 @@ export const exportChartAsPNG = async (
     cloneWrapper.appendChild(clone);
     tempContainer.appendChild(cloneWrapper);
     
-    // Use a container that's technically on screen but hidden by overflow
-    // to ensure browser calculates layout/sizes correctly
-    tempContainer.style.position = 'fixed';
-    tempContainer.style.left = '0';
-    tempContainer.style.top = '0';
-    tempContainer.style.zIndex = '-9999';
-    tempContainer.style.opacity = '0';
-    tempContainer.style.pointerEvents = 'none';
-    
     document.body.appendChild(tempContainer);
     
     // Wait for images to load
@@ -284,7 +242,7 @@ export const exportChartAsPNG = async (
       });
     }));
 
-    // Re-inject the header if needed (we moved it earlier)
+    // Add header if needed
     if (title) {
       const headerDiv = document.createElement('div');
       headerDiv.style.textAlign = 'center';
@@ -311,13 +269,13 @@ export const exportChartAsPNG = async (
       tempContainer.insertBefore(headerDiv, tempContainer.firstChild);
     }
 
-    // Add longer delay for Recharts animations and layout stability
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for layout stability
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Refresh computed sizes before capture
     const captureWidth = tempContainer.scrollWidth || tempContainer.offsetWidth;
     const captureHeight = tempContainer.scrollHeight || tempContainer.offsetHeight;
 
+    // Use html2canvas-pro which supports oklch colors
     const canvas = await html2canvas(tempContainer, {
       backgroundColor: '#ffffff',
       scale: 2,
@@ -327,41 +285,26 @@ export const exportChartAsPNG = async (
       imageTimeout: 10000,
       width: captureWidth,
       height: captureHeight,
-      onclone: (clonedDoc) => {
-        const el = clonedDoc.getElementById('temp-export-container');
-        if (el) {
-          el.style.opacity = '1';
-          el.style.position = 'relative';
-          el.style.left = '0';
-          el.style.top = '0';
-          el.style.zIndex = '1';
-        }
-      }
+      // html2canvas-pro specific options
+      imageSmoothing: true,
     });
     
     // Clean up
     document.body.removeChild(tempContainer);
-    removeColorOverrides(styleOverride);
     
-    // Convert canvas to blob
+    // Convert canvas to blob and download
     canvas.toBlob((blob: Blob | null) => {
       if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${filename}.png`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `${filename}.png`);
+      } else {
+        console.error('Failed to generate image blob');
       }
-    });
+    }, 'image/png', 1.0);
+    
   } catch (error) {
     console.error('Error exporting chart:', error);
-    removeColorOverrides(styleOverride);
     // Fallback to SVG export if html2canvas fails
-    exportChartAsSVG(elementId, filename);
+    exportChartAsSVG(elementId, filename, title);
   }
 };
 
@@ -491,45 +434,29 @@ export const exportChartAsSVG = (
   URL.revokeObjectURL(url);
 };
 
+// Additional export functions for compatibility
+export const exportChartCardAsPNG = exportChartAsPNG;
+export const exportChartCardAsSVG = exportChartAsSVG;
+
 /**
  * Export the entire page/element as PNG image (full page screenshot)
- * Note: Requires html2canvas library. Install with: npm install html2canvas
+ * Uses html2canvas-pro which supports modern CSS color functions including oklch()
  */
 export const exportPageAsPNG = async (
   filename: string = "page-export",
   elementId?: string
 ): Promise<void> => {
-  // Inject color overrides
-  const styleOverride = injectColorOverrides();
-  
   try {
     // Get the element to export
     const sourceElement = elementId ? document.getElementById(elementId) : document.documentElement;
     
     if (!sourceElement) {
       console.error(`Element not found for export`);
-      removeColorOverrides(styleOverride);
       return;
     }
 
-    // Clone the element to avoid modifying the original
-    const clone = sourceElement.cloneNode(true) as HTMLElement;
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.top = '-9999px';
-    tempContainer.style.width = sourceElement.offsetWidth + 'px';
-    tempContainer.appendChild(clone);
-    document.body.appendChild(tempContainer);
-    
-    // Hide export buttons in the clone
-    const exportButtons = clone.querySelectorAll('[class*="export"]');
-    exportButtons.forEach(btn => {
-      (btn as HTMLElement).style.display = 'none';
-    });
-    
-    // Wait for images to load
-    const images = clone.querySelectorAll('img');
+    // Wait for any images to load
+    const images = sourceElement.querySelectorAll('img');
     await Promise.all(Array.from(images).map(img => {
       return new Promise((resolve) => {
         if (img.complete) resolve(null);
@@ -540,37 +467,42 @@ export const exportPageAsPNG = async (
       });
     }));
     
-    const canvas = await html2canvas(clone, {
+    // Configure html2canvas-pro options for best quality and oklch support
+    const canvas = await html2canvas(sourceElement, {
       backgroundColor: '#ffffff',
-      scale: 2,
+      scale: 2, // High DPI for crisp images
       logging: false,
       allowTaint: true,
       useCORS: true,
-      imageTimeout: 5000,
-      width: clone.offsetWidth,
-      height: clone.offsetHeight,
+      imageTimeout: 10000,
+      width: sourceElement.scrollWidth,
+      height: sourceElement.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+      // html2canvas-pro specific options
+      imageSmoothing: true, // Better image quality
     });
-    
-    // Clean up
-    document.body.removeChild(tempContainer);
-    removeColorOverrides(styleOverride);
     
     // Convert canvas to blob and download
     canvas.toBlob((blob: Blob | null) => {
       if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${filename}.png`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `${filename}.png`);
+      } else {
+        console.error('Failed to generate image blob');
       }
-    });
+    }, 'image/png', 1.0);
+    
   } catch (error) {
     console.error('Error exporting page:', error);
-    removeColorOverrides(styleOverride);
+    
+    // Show user-friendly error message with alternatives
+    alert(`Page export failed: ${error instanceof Error ? error.message : 'Unknown error'}
+
+Recommended alternatives:
+• Export individual charts using the chart export buttons
+• Use browser Print (Ctrl+P) → Save as PDF
+• Use browser screenshot tools (Print Screen)
+
+If the issue persists, please try refreshing the page and trying again.`);
   }
 };
