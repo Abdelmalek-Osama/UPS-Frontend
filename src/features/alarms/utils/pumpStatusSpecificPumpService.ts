@@ -139,7 +139,7 @@ export const updatePumpStatusSpecificPumpAlarm = async (
   alarmData: CreatePumpStatusIdvAlarmRequest
 ): Promise<{ success: boolean; message: string; data?: any }> => {
   try {
-    const response = await apiService.put<any, CreatePumpStatusIdvAlarmRequest>(
+    const response = await apiService.post<any, CreatePumpStatusIdvAlarmRequest>(
       `${BASE_ENDPOINT}/${id}`,
       alarmData
     );

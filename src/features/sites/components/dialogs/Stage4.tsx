@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../components/ui/select';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import { Checkbox } from '../../../../components/ui/checkbox';
 import apiService from '../../../../shared/utils/apiService';
 import type { Site } from '../../types';
 
@@ -50,18 +51,19 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
   const [constants, setConstants] = useState<{ [key: string]: string }>({});
   const [selectedEquation, setSelectedEquation] = useState<Equation | null>(null);
   const [hasLoadedFlowCalc, setHasLoadedFlowCalc] = useState(false);
+  const [noEquation, setNoEquation] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [userHasModifiedEquation, setUserHasModifiedEquation] = useState(false);
 
   // Calculate validation state
-  const { isValid } = useMemo(() => {
-    // Stage 4 is valid if:
-    // 1. An equation is selected
-    // 2. All variable fields are filled
+  const { isValid, validationError } = useMemo(() => {
+    if (noEquation) return { isValid: true, validationError: null };
     const hasEquationSelected = selectedEquationId !== null && selectedEquationId !== undefined;
     const allFieldsFilled = hasEquationSelected && 
       Object.values(constants).every(val => val !== null && val !== undefined && val.toString().trim() !== '');
-    
-    return { isValid: hasEquationSelected && allFieldsFilled };
-  }, [selectedEquationId, constants]);
+    const valid = hasEquationSelected && allFieldsFilled;
+    return { isValid: valid, validationError: !valid && touched ? 'sites.stage4.validationSelectOrNoEquation' : null };
+  }, [selectedEquationId, constants, noEquation, touched]);
 
   // Call the validation change callback whenever validation state changes
   useEffect(() => {
@@ -70,32 +72,43 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     }
   }, [isValid, onValidationChange]);
 
-  // Reset state when dialog closes
+  // Reset state when dialog closes or when a different site is loaded
   useEffect(() => {
-    if (!isOpen) {
-      setHasLoadedFlowCalc(false);
-      setSelectedEquationId(null);
-      setConstants({});
-      setSelectedEquation(null);
-    }
-  }, [isOpen]);
+    setHasLoadedFlowCalc(false);
+    setSelectedEquationId(null);
+    setConstants({});
+    setSelectedEquation(null);
+    setNoEquation(false);
+    setTouched(false);
+    setUserHasModifiedEquation(false);
+  }, [isOpen, data.id]);
 
   // Fetch flow calculation when editing
   useEffect(() => {
     // Only fetch if we have equations loaded and haven't already loaded flow calc
-    if (mode === 'edit' && data.id && isOpen && !hasLoadedFlowCalc && !loadingEquations && equations.length > 0) {
+    // Skip if user has manually changed the equation — don't overwrite their selection
+    if (mode === 'edit' && data.id && isOpen && !hasLoadedFlowCalc && !loadingEquations && equations.length > 0 && !userHasModifiedEquation) {
+      let cancelled = false;
       const fetchFlowCalculation = async () => {
         try {
           setLoadingFlowCalc(true);
           const response = await apiService.get<any>(`/v1/FlowCalculation/${data.id}`);
+          if (cancelled) return;
           // apiService.get already returns response.data, so handle accordingly
           const flowCalcData = response?.data || response;
           
           console.log('Fetched flow calculation:', flowCalcData);
           
           if (flowCalcData) {
+            // Check if equationId is 0 or missing AND no equation formula string → mark as no equation
+            if ((!flowCalcData.equationId || flowCalcData.equationId === 0) && !flowCalcData.equation) {
+              setNoEquation(true);
+              onChange('flowCalculation', null);
+              setHasLoadedFlowCalc(true);
+              return;
+            }
             // Try to match by equationId first (most reliable)
-            if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined) {
+            if (flowCalcData.equationId !== null && flowCalcData.equationId !== undefined && flowCalcData.equationId !== 0) {
               const equation = equations.find(eq => eq.id === flowCalcData.equationId);
               if (equation) {
                 console.log('Found equation by ID:', equation);
@@ -218,21 +231,26 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
           
           setHasLoadedFlowCalc(true);
         } catch (error: any) {
-          console.error('Error fetching flow calculation:', error);
-          setHasLoadedFlowCalc(true);
+          if (!cancelled) {
+            console.error('Error fetching flow calculation:', error);
+            setHasLoadedFlowCalc(true);
+          }
         } finally {
-          setLoadingFlowCalc(false);
+          if (!cancelled) setLoadingFlowCalc(false);
         }
       };
       
       fetchFlowCalculation();
+      return () => { cancelled = true; };
     }
-  }, [mode, data.id, isOpen, onChange, hasLoadedFlowCalc, equations, loadingEquations]);
+  }, [mode, data.id, isOpen, onChange, hasLoadedFlowCalc, equations, loadingEquations, userHasModifiedEquation]);
 
   // Initialize from formData.flowCalculation when in create mode or returning to tab
   useEffect(() => {
     // Only restore if the dialog is open, equations are loaded, and we have flow calculation data
     // Check if we need to restore by seeing if our current state doesn't match formData
+    // Skip if the user has already manually changed the equation selection
+    if (userHasModifiedEquation) return;
     if (isOpen && !loadingEquations && equations.length > 0 && data.flowCalculation) {
       const flowCalc = data.flowCalculation;
       
@@ -285,7 +303,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
         }
       }
     }
-  }, [isOpen, loadingEquations, equations, data.flowCalculation, selectedEquationId, constants]);
+  }, [isOpen, loadingEquations, equations, data.flowCalculation, selectedEquationId, userHasModifiedEquation]);
 
   // Handle equation selection and extract constants
   useEffect(() => {
@@ -318,11 +336,27 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
     }
   }, [selectedEquationId, equations, hasLoadedFlowCalc]);
 
+  const handleNoEquationChange = (checked: boolean | 'indeterminate') => {
+    const isChecked = checked === true;
+    setNoEquation(isChecked);
+    setTouched(true);
+    setUserHasModifiedEquation(true);
+    if (isChecked) {
+      setSelectedEquationId(null);
+      setConstants({});
+      setSelectedEquation(null);
+      setHasLoadedFlowCalc(false);
+      onChange('flowCalculation', null);
+    }
+  };
+
   const handleEquationChange = (equationId: string) => {
     const id = parseInt(equationId);
     const equation = equations.find(eq => eq.id === id);
     setSelectedEquationId(id);
-    setHasLoadedFlowCalc(false); // Clear the flag when manually changing equation
+    setNoEquation(false);
+    setTouched(true);
+    setUserHasModifiedEquation(true);
     
     // Update parent form with equation ID and empty formula constants as comma-separated
     if (equation) {
@@ -339,6 +373,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
   const handleConstantChange = (constantName: string, value: string) => {
     const updated = { ...constants, [constantName]: value };
     setConstants(updated);
+    setTouched(true);
     
     // Update parent form with updated formula constants as comma-separated values
     if (selectedEquationId) {
@@ -418,7 +453,7 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
           value={selectedEquationId?.toString() || ''} 
           onValueChange={handleEquationChange} 
           dir={dir} 
-          disabled={loadingEquations || loadingFlowCalc}
+          disabled={loadingEquations || loadingFlowCalc || noEquation}
         >
           <SelectTrigger>
             <SelectValue placeholder={loadingEquations || loadingFlowCalc ? t('common.loading') : t('sites.stage4.selectEquationPlaceholder')} />
@@ -431,6 +466,31 @@ export default function Stage4({ data, onChange, isOpen, onClose, mode = "create
             ))}
           </SelectContent>
         </Select>
+
+        {/* No-equation checkbox */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <Checkbox
+            id="noEquation"
+            checked={noEquation}
+            onCheckedChange={handleNoEquationChange}
+          />
+          <label
+            htmlFor="noEquation"
+            style={{
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            {t('sites.stage4.noEquation')}
+          </label>
+        </div>
+
+        {validationError && (
+          <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>
+            {t(validationError)}
+          </p>
+        )}
       </div>
 
       {selectedEquation && (

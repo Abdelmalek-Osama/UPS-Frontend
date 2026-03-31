@@ -438,8 +438,7 @@ export function AlarmConfiguration() {
     const pumpNum = pumpNumber ? Number(pumpNumber) : 0;
     const monHours = monitoringHours ? Number(monitoringHours) : 0;
 
-    console.log('Form values:', { siteId, alarmName, pumpNumber, monitoringHours });
-    console.log('Converted values:', { pumpNum, monHours });
+    
 
     if (!siteId || !alarmName || pumpNum < 1 || pumpNum > 10 || monHours < 1 || monHours > 168) {
       const errors = [];
@@ -464,7 +463,7 @@ export function AlarmConfiguration() {
       method: 'Email',
     };
 
-    console.log('Request body:', requestBody);
+    
 
     try {
       const result = await createPumpStatusIdvAlarm(requestBody);
@@ -498,8 +497,10 @@ export function AlarmConfiguration() {
       return;
     }
 
+    const alarmIdToUse = currentSensorStatusAlarm.alarmId || newSensorStatusForm.alarmId || 0;
+
     const requestBody: CreateSensorStatusAlarmRequest = {
-      id: currentSensorStatusAlarm.alarmId || 0,
+      id: alarmIdToUse,
       siteId,
       alarmName,
       emails: newSensorStatusForm.emails.join(','),
@@ -511,9 +512,10 @@ export function AlarmConfiguration() {
       savingType: 0,
       customMessage: message,
     };
+    
 
     try {
-      const result = await updateSensorStatusAlarm(currentSensorStatusAlarm.alarmId || 0, requestBody);
+      const result = await updateSensorStatusAlarm(alarmIdToUse, requestBody);
       if (result.success) {
         toast.success(t('alarms.updateAlarmSuccess'));
         setIsEditSensorStatusOpen(false);
@@ -716,33 +718,39 @@ export function AlarmConfiguration() {
   };
 
   const handleSensorStatusAlarmEdit = (alarm: any) => {
-    const emails = alarm.recipients ? alarm.recipients.filter((r: string) => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(r)) : [];
-    const phones = alarm.recipients ? alarm.recipients.filter((r: string) => /^\d{11}$/.test(r)) : [];
+    
+    // Parse emails and phones from comma-separated strings
+    const emails = alarm.emails ? alarm.emails.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    const phones = alarm.phones ? alarm.phones.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    
+    // Handle both alarmId and id field names
+    const alarmId = alarm.alarmId || alarm.id || 0;
     
     setCurrentSensorStatusAlarm({
-      alarmId: alarm.alarmId,
+      alarmId: alarmId,
       alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
-      site: alarm.site,
-      message: alarm.message || '',
-      threshold: alarm.threshold || 0,
-      field: alarm.field || '',
+      site: alarm.site || alarm.siteName,
+      message: alarm.message || alarm.customMessage || '',
+      threshold: alarm.threshold || alarm.thresholdValue || 0,
+      field: alarm.field || alarm.fieldName || '',
       emails: emails,
       phones: phones,
     });
     setNewSensorStatusForm({
-      alarmId: alarm.alarmId,
+      alarmId: alarmId,
       alarmName: alarm.alarmName || '',
       method: 0,
       siteId: alarm.siteId,
-      site: alarm.site,
-      message: alarm.message || '',
-      threshold: alarm.threshold || 0,
-      field: alarm.field || '',
+      site: alarm.site || alarm.siteName,
+      message: alarm.message || alarm.customMessage || '',
+      threshold: alarm.threshold || alarm.thresholdValue || 0,
+      field: alarm.field || alarm.fieldName || '',
       emails: emails,
       phones: phones,
     });
+    setHasSensorStatusChanges(false);
     setIsEditSensorStatusOpen(true);
   };
 
@@ -758,12 +766,17 @@ export function AlarmConfiguration() {
       const result = await deleteSensorStatusAlarm(sensorStatusAlarmToDelete);
       if (result.success) {
         toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeleteSensorStatusOpen(false);
+        setSensorStatusAlarmToDelete(null);
       } else {
         toast.error(result.message || t('errors.deleteFailed'));
       }
     } catch (error: any) {
       console.error('Error deleting sensor status alarm:', error);
       toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeleteSensorStatusOpen(false);
+      setSensorStatusAlarmToDelete(null);
     }
   };
 
@@ -885,6 +898,13 @@ export function AlarmConfiguration() {
       setHasCommunicationChanges(false);
     }
   }, [isEditCommOpen]);
+
+  useEffect(() => {
+    if (!isEditSensorStatusOpen) {
+      setIsSubmittingSensorStatusEdit(false);
+      setHasSensorStatusChanges(false);
+    }
+  }, [isEditSensorStatusOpen]);
 
   // Helper functions
   const populateThresholdAlarmFormForEdit = (alarm: any) => {

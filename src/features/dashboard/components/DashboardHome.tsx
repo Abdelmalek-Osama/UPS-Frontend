@@ -43,8 +43,8 @@ export function DashboardHome() {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { label: string; className: string }> = {
-      critical: { label: t('alarms.critical'), className: 'bg-red-100 text-red-700' },
-      warning: { label: t('alarms.warning'), className: 'bg-yellow-100 text-yellow-700' },
+      crisis: { label: t('alarms.crisis'), className: 'bg-red-100 text-red-700' },
+      critical: { label: t('alarms.critical'), className: 'bg-yellow-100 text-yellow-700' },
       info: { label: t('alarms.info'), className: 'bg-blue-100 text-blue-700' },
     };
     const config = severityMap[severity.toLowerCase()] || severityMap['info'];
@@ -68,6 +68,8 @@ export function DashboardHome() {
       </Badge>
     );
   };
+
+  const isRTL = t('_rtl') === 'rtl';
 
   return (
     <div className="space-y-6">
@@ -153,17 +155,24 @@ export function DashboardHome() {
               allowClear={false}
             />
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={flowData} margin={{ top: 5, bottom: 5 }}>
+          <CardContent className="pb-16 overflow-visible">
+            <ResponsiveContainer width="98%" height={250}>
+              <LineChart data={flowData} margin={{ top: 5, bottom: 5, left: isRTL ? 10 : 40, right: 50 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
+                <XAxis 
+                  dataKey="time" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  tick={{ fontSize: 11, dy: isRTL ? 40 : 8 }}
+                  height={isRTL ? 60 : 75}
+                  interval="preserveStartEnd"
+                />
                 <YAxis
                   label={{ value: t('dashboard.flowPerHour'), angle: -90, position: 'insideLeft', dy: -20 }}
-                  tick={{ dx: -25 }}
+                  tick={{ dx: isRTL ? -25 : 0 }}
                 />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                 <Line type="monotone" dataKey="flow" stroke="#2563eb" name={t('readings.totalFlow')} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -213,9 +222,9 @@ export function DashboardHome() {
               <div className="space-y-3">
                 {recentAlarmEvents.map((alarm) => (
                   <div key={alarm.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition">
-                    <div className={`p-2 rounded-lg flex-shrink-0 ${alarm.severity === 'critical' ? 'bg-red-100' : alarm.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${alarm.severity === 'crisis' ? 'bg-red-100' : alarm.severity === 'critical' ? 'bg-yellow-100' : 'bg-blue-100'
                       }`}>
-                      <AlertTriangle className={`h-4 w-4 ${alarm.severity === 'critical' ? 'text-red-700' : alarm.severity === 'warning' ? 'text-yellow-700' : 'text-blue-700'
+                      <AlertTriangle className={`h-4 w-4 ${alarm.severity === 'crisis' ? 'text-red-700' : alarm.severity === 'critical' ? 'text-yellow-700' : 'text-blue-700'
                         }`} />
                     </div>
                     <div className="flex-1 min-w-0">

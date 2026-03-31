@@ -191,7 +191,7 @@ export function useAlarmsData() {
  
   const updateThresholdAlarm = async (alarmId: number, alarmData: CreateThresholdAlarmRequest) => {
     try {
-      const response = await apiService.put<any, CreateThresholdAlarmRequest>(`/v1/alarm/threshold/${alarmId}`, alarmData);
+      const response = await apiService.post<any, CreateThresholdAlarmRequest>(`/v1/alarm/threshold/${alarmId}`, alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
@@ -206,7 +206,7 @@ export function useAlarmsData() {
  
   const updateCommunicationAlarm = async (alarmId: number, alarmData: CreateCommunicationAlarmRequest) => {
     try {
-      const response = await apiService.put<any, CreateCommunicationAlarmRequest>(`/v1/alarm/communication/${alarmId}`, alarmData);
+      const response = await apiService.post<any, CreateCommunicationAlarmRequest>(`/v1/alarm/communication/${alarmId}`, alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
@@ -237,7 +237,7 @@ export function useAlarmsData() {
 
   const updateSensorStatusAlarm = async (alarmId: number, alarmData: CreateSensorStatusAlarmRequest) => {
     try {
-      const response = await apiService.put<any, CreateSensorStatusAlarmRequest>(`/v1/alarm/sensor-status/${alarmId}`, alarmData);
+      const response = await apiService.post<any, CreateSensorStatusAlarmRequest>(`/v1/alarm/sensor-status/${alarmId}`, alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };
@@ -282,7 +282,7 @@ export function useAlarmsData() {
 
   const updatePumpStatusPSAlarm = async (alarmId: number, alarmData: CreatePumpStatusPSAlarmRequest) => {
     try {
-      const response = await apiService.put<any, CreatePumpStatusPSAlarmRequest>(`/v1/alarm/pump-status-operation/${alarmId}`, alarmData);
+      const response = await apiService.post<any, CreatePumpStatusPSAlarmRequest>(`/v1/alarm/pump-status-operation/${alarmId}`, alarmData);
       if (response.isSuccess) {
         fetchAlarms(); // Re-fetch alarms to update the list
         return { success: true, message: response.message };

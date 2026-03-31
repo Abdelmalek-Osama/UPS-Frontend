@@ -540,8 +540,8 @@ export function ReadingsManagement() {
                 {selectedReading?.pumps.map((pump, index) => (
                   <TableRow key={index}>
                     <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.pumpNumber')} {index + 1}</TableCell>
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.time.toFixed(1)}</TableCell>
-                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.flow.toFixed(1)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.time.toFixed(2)}</TableCell>
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{pump.flow.toFixed(2)}</TableCell>
                     <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
                       <Button 
                         variant="ghost" 
@@ -559,11 +559,11 @@ export function ReadingsManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">إجمالي وقت التشغيل</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(1)} ساعة</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalUptime.toFixed(2)} ساعة</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">إجمالي التدفق</p>
-                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(1)} م³/س</p>
+                  <p className="text-xl mt-1">{selectedReading?.totalFlow.toFixed(2)} م³/س</p>
                 </div>
               </div>
             </div>

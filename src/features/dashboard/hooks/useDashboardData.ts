@@ -43,18 +43,18 @@ export function useDashboardData() {
   const { isAuthenticated } = useAuth();
 
   // Map severity number to string
-  const mapSeverityNumber = (severity: any): 'critical' | 'warning' | 'info' => {
+  const mapSeverityNumber = (severity: any): 'crisis' | 'critical' | 'info' => {
     if (typeof severity === 'string') {
-      return severity.toLowerCase() as 'critical' | 'warning' | 'info';
+      return severity.toLowerCase() as 'crisis' | 'critical' | 'info';
     }
-    // Assuming: 0 = info, 1 = warning, 2 = critical
+    // Mapping: 0 = crisis, 1 = critical, 2 = info
     switch (severity) {
       case 0:
-        return 'info';
+        return 'crisis';
       case 1:
-        return 'warning';
-      case 2:
         return 'critical';
+      case 2:
+        return 'info';
       default:
         return 'info';
     }
@@ -138,7 +138,7 @@ export function useDashboardData() {
         const mappedLogs = logs.map((log: any) => ({
           id: log.id,
           site: log.siteName || '',
-          type: log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation',
+          type: (log.readingType === 'WaterLevel' ? 'WaterLevel' : 'PumpStation') as 'WaterLevel' | 'PumpStation',
           timestamp: log.actionDate || log.timeStamp || new Date().toISOString(),
           actionType: log.actionType || '',
           uswl: undefined,
@@ -222,16 +222,21 @@ export function useDashboardData() {
         if (response.isSuccess && response.data) {
           // Transform API data to chart format
           const transformedData = response.data.map((item: WaterflowDataPoint) => {
-            // Parse timestamp and format to HH:mm
+            // Parse timestamp and format to show date and time
             const date = new Date(item.timestamp);
-            const time = date.toLocaleTimeString('ar-EG', {
+            const dateStr = date.toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit'
+            });
+            const timeStr = date.toLocaleTimeString('en-US', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
             });
+            const dateTime = `${dateStr} ${timeStr}`;
 
             return {
-              time,
+              time: dateTime,
               flow: item.value
             };
           });

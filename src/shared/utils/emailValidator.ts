@@ -15,7 +15,8 @@ const commonDomains = [
   "zoho.com",
   "me.com",
   "gmx.com",
-  "yandex.com"
+  "yandex.com",
+  "ups.com.eg"
 ];
 
 /**

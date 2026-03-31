@@ -283,7 +283,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     setIsUpdating(true);
     try {
       let endpoint = '';
-      let payload = {};
+      let payload: any = {};
 
       switch (stepIndex) {
         case 0: // Step 1: Info
@@ -318,14 +318,11 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
           break;
         case 3: // Step 4: Flow Calculation
           endpoint = `/v1/Sites/${formData.id}/flow-calculation`;
-          payload = {
-            formulaConstants: formData.flowCalculation?.formulaConstants,
-            equationId: formData.flowCalculation?.equationId
-          };
+          payload = formData.flowCalculation ?? null;
           break;
       }
 
-      await apiService.put(endpoint, payload);
+      await apiService.post(endpoint, payload);
       setErrorMessage(null);
       toast.success(t('notifications.saved'));
       return true;

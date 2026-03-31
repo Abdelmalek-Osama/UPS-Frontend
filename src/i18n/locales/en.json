@@ -54,7 +54,8 @@
     "filters": "Filters",
     "clearFilters": "Clear Filters",
     "message": "Message",
-    "serverError": "No response from server. Please check your internet connection."
+    "serverError": "No response from server. Please check your internet connection.",
+    "optional": "Optional"
   },
   "buttons": {
     "save": "Save",
@@ -105,7 +106,7 @@
     "totalUsers": "Total Users",
     "systemUsers": "System Users",
     "allregions": "All Regions Active",
-    "activeAlarms": "Active Alarms",
+    "activeAlarms": "Active Alarms (Last 24 Hours)",
     "totalFlow": "Total Flow",
     "activeStations": "Active Stations",
     "flowInLast24Hours": "Flow in Last 24 Hours",
@@ -118,7 +119,7 @@
     "crisis": "Crisis",
     "sensorStatus": "Sensor Status",
     "warnings": "Warnings",
-    "flowPerHour": "m³/h",
+    "flowPerHour": "m³/s",
     "flowChange": "% from previous hour",
     "uptimePercentage": "Uptime Rate",
     "viewAll": "View All",
@@ -275,7 +276,11 @@
       "linearFlow": "Linear Flow",
       "quadraticFlow": "Quadratic Flow",
       "powerFlow": "Power Flow",
-      "enterValueFor": "Enter value for"
+      "enterValueFor": "Enter value for",
+      "noEquation": "Site has no equation",
+      "noEquationHint": "Check this if the site does not use a flow equation",
+      "validationSelectOrNoEquation": "Please either select an equation or check \"Site has no equation\"",
+      "validationNotBoth": "You cannot select an equation and check \"Site has no equation\" at the same time"
     }
   },
   "readings": {
@@ -356,6 +361,7 @@
     "p10Flow": "P10 Flow",
     "enterValidNumber": "Please enter a valid number",
     "mustBePositive": "Must be a positive number",
+    "batteryMustBeGreaterThanZero": "Battery must be greater than zero",
     "fillAllFields": "Please fill all required fields",
     "recordNumberPositive": "Record number must be a positive number greater than zero",
     "fillAllPumpFields": "Please fill all pump fields",
@@ -699,7 +705,7 @@
     "emailTrimmed": "Email cannot have leading or trailing spaces",
     "emailNoSpaces": "Email cannot contain spaces",
     "emailInvalid": "Please enter a valid email address",
-    "emailDomainNotSupported": "Email domain not supported. Please use a common email provider (Gmail, Outlook, Yahoo, etc.)",
+    "emailDomainNotSupported": "Email domain not supported. Please use a common email provider (Gmail, Outlook, Yahoo, etc.) or UPS domain",
     "passwordRequired": "Password is required",
     "passwordMinLength": "Password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match",

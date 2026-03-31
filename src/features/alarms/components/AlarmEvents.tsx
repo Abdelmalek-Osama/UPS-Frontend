@@ -46,7 +46,7 @@ import { useSitesLookup } from '../hooks/useSitesLookup';
 import { SiteSingleSelectDropdown } from '../../sites/components/SiteSingleSelectDropdown';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 
-type SeverityOption = 'warning' | 'critical' | 'info';
+type SeverityOption = 'crisis' | 'critical' | 'info';
 
 interface AlarmEventResponseDto {
   id: number;
@@ -203,12 +203,12 @@ const params: Record<string, string | number | boolean> = {
       });
 
       const severityMap: Record<string | number, SeverityOption> = {
-        0: 'warning',
+        0: 'crisis',
         1: 'critical',
         2: 'info',
-   warning: 'warning',
-        Warning: 'warning',
-        WARN: 'warning',
+   warning: 'crisis',
+        Warning: 'crisis',
+        WARN: 'crisis',
         critical: 'critical',
         Critical: 'critical',
         CRITICAL: 'critical',
@@ -279,7 +279,6 @@ const params: Record<string, string | number | boolean> = {
       const result = getEventsPayload(response);
 
 const mappedEvents: AlarmEvent[] = result.events.map((event) => {
-        const isCommunicationLoss = event.fieldName.toLowerCase().replace(/[_\s]/g, '').includes('communicationloss');
         const baseSeverity = severityMap[event.severity ?? ''] ?? 'info';
         
         return {
@@ -290,7 +289,7 @@ const mappedEvents: AlarmEvent[] = result.events.map((event) => {
           fieldName: event.fieldName,
           value: event.actualValue ?? undefined,
           thresholdValue: event.thresholdValue ?? undefined,
-          severity: isCommunicationLoss ? 'info' : baseSeverity,
+          severity: baseSeverity,
           colorCode: event.colorCode ?? '#d1d5db',
           triggeredAt: event.triggeredAt,
           message: event.message,
@@ -353,10 +352,10 @@ const mappedEvents: AlarmEvent[] = result.events.map((event) => {
 
   const hasActiveFilters = selectedSiteId !== null || dateFrom !== undefined || dateTo !== undefined;
 
-  const getSeverityBadge = (severity: 'warning' | 'critical' | 'info') => {
+  const getSeverityBadge = (severity: 'crisis' | 'critical' | 'info') => {
   const config = {
       critical: { label: t('alarms.critical'), className: 'bg-red-100 text-red-700 border-red-300' },
-      warning: { label: t('alarms.warning'), className: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+      crisis: { label: t('alarms.crisis'), className: 'bg-orange-100 text-orange-700 border-orange-300' },
       info: { label: t('alarms.info'), className: 'bg-blue-100 text-blue-700 border-blue-300' }
     };
     return (
