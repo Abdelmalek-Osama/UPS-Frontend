@@ -14,6 +14,7 @@ interface RecipientInputProps {
     recipients: string[];
     setRecipients: (newRecipients: string[]) => void;
     setHasChanges: (hasChanges: boolean) => void;
+    disabled?: boolean;
 }
 
 export function RecipientInput({
@@ -21,7 +22,8 @@ export function RecipientInput({
     forAlarmType,
     recipients,
     setRecipients,
-    setHasChanges
+    setHasChanges,
+    disabled = false
 }: RecipientInputProps) {
     const { t } = useTranslation();
     const isEmail = type === 'email';
@@ -81,10 +83,11 @@ export function RecipientInput({
                             handleAdd(inputValue);
                         }
                     }}
+                    disabled={disabled}
                 />
                 <Button type="button" onClick={() => {
                     handleAdd(inputValue);
-                }}>
+                }} disabled={disabled}>
                     <Plus className="h-4 w-4" />
                 </Button>
             </div>
@@ -100,12 +103,14 @@ export function RecipientInput({
                                     {isEmail && <Mail className="ml-1 h-3 w-3" />}
                                     {isPhone && <Phone className="ml-1 h-3 w-3" />}
                                     {recipient}
-                                    <button
-                                        onClick={() => handleRemove(recipient)}
-                                        className="mr-1 hover:text-red-600"
-                                    >
-                                        ×
-                                    </button>
+                                    {!disabled && (
+                                        <button
+                                            onClick={() => handleRemove(recipient)}
+                                            className="mr-1 hover:text-red-600"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
                                 </Badge>
                             );
                         })}
