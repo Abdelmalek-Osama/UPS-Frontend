@@ -59,12 +59,10 @@ function AuthRoutes() {
         <Route 
           path="alarms/reports" 
           element={
-            loadingAuth || !userLoaded ? null : (
-              currentUser?.role === 'Admin' ? (
-                <AlarmReportsConfiguration />
-              ) : (
-                <Navigate to="/" replace />
-              )
+            currentUser?.role === 'Admin' ? (
+              <AlarmReportsConfiguration />
+            ) : (
+              <Navigate to="/" replace />
             )
           } 
         />
@@ -75,12 +73,10 @@ function AuthRoutes() {
         <Route 
           path="users" 
           element={
-            loadingAuth || !userLoaded ? null : (
-              currentUser?.role === 'Admin' ? (
-                <UserManagement refreshCurrentUser={refreshCurrentUser} />
-              ) : (
-                <Navigate to="/" replace />
-              )
+            currentUser?.role === 'Admin' ? (
+              <UserManagement refreshCurrentUser={refreshCurrentUser} />
+            ) : (
+              <Navigate to="/" replace />
             )
           } 
         />
