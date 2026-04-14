@@ -22,6 +22,7 @@ import { RecipientInput } from '../RecipientInput';
 import { ThresholdAlarmForm, Site } from '../../types';
 import { OPERATORS, getOperatorLabels } from '../../utils/alarmConstants';
 import { validateAlarmName } from '../../utils/validation';
+import { User } from '../../../auth/types';
 
 // Utility function to validate color input
 const isValidColor = (color: string): boolean => {
@@ -55,6 +56,7 @@ interface EditThresholdAlarmDialogProps {
     setEmails: (emails: string[]) => void;
     setPhones: (phones: string[]) => void;
     submissionError: string | null;
+    currentUser: User | null;
 }
 
 export function EditThresholdAlarmDialog({
@@ -73,10 +75,14 @@ export function EditThresholdAlarmDialog({
     setHasChanges,
     setEmails,
     setPhones,
-    submissionError
+    submissionError,
+    currentUser
 }: EditThresholdAlarmDialogProps) {
     const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+    
+    // Check if user is an operator
+    const isOperator = currentUser?.role === 'Operator';
     
     // Helper function to translate field names
     const translateFieldName = (fieldName: string): string => {
@@ -227,6 +233,7 @@ export function EditThresholdAlarmDialog({
                                 setAlarmNameError(error);
                                 setHasChanges(true);
                             }}
+                            disabled={isOperator}
                         />
                         {alarmNameError && (
                             <p style={errorTextStyle}>{alarmNameError}</p>
@@ -279,6 +286,7 @@ export function EditThresholdAlarmDialog({
                             }}
                             value={form.field}
                             dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                            disabled={isOperator}
                         >
                             <SelectTrigger className="rtl:flex-row-reverse">
                                 <SelectValue placeholder={t('alarms.field')} />
@@ -310,6 +318,7 @@ export function EditThresholdAlarmDialog({
                                     }}
                                     value={form.criticalOperator}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                    disabled={isOperator}
                                 >
                                     <SelectTrigger className="rtl:flex-row-reverse">
                                         <SelectValue placeholder={t('alarms.operator')} />
@@ -377,6 +386,7 @@ export function EditThresholdAlarmDialog({
                                         }));
                                         setHasChanges(true);
                                     }}
+                                    disabled={isOperator}
                                 />
                                 <Input
                                     type="text"
@@ -392,6 +402,7 @@ export function EditThresholdAlarmDialog({
                                         }));
                                         setHasChanges(true);
                                     }}
+                                    disabled={isOperator}
                                 />
                             </div>
                             {form.criticalColorError && (
@@ -419,6 +430,7 @@ export function EditThresholdAlarmDialog({
                                     }}
                                     value={form.crisisOperator}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                    disabled={isOperator}
                                 >
                                     <SelectTrigger className="rtl:flex-row-reverse">
                                         <SelectValue placeholder={t('alarms.operator')} />
@@ -486,6 +498,7 @@ export function EditThresholdAlarmDialog({
                                         }));
                                         setHasChanges(true);
                                     }}
+                                    disabled={isOperator}
                                 />
                                 <Input
                                     type="text"
@@ -501,6 +514,7 @@ export function EditThresholdAlarmDialog({
                                         }));
                                         setHasChanges(true);
                                     }}
+                                    disabled={isOperator}
                                 />
                             </div>
                             {form.crisisColorError && (
@@ -515,6 +529,7 @@ export function EditThresholdAlarmDialog({
                         recipients={form.emails}
                         setRecipients={setEmails}
                         setHasChanges={setHasChanges}
+                        disabled={isOperator}
                     />
 
                     <RecipientInput
@@ -523,6 +538,7 @@ export function EditThresholdAlarmDialog({
                         recipients={form.phones}
                         setRecipients={setPhones}
                         setHasChanges={setHasChanges}
+                        disabled={isOperator}
                     />
                 </div>
             </div>
