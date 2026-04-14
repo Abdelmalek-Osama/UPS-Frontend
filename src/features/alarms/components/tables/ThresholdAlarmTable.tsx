@@ -10,17 +10,18 @@ import {
 } from '../../../../components/ui/table';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
-import { Edit, Mail, Phone } from 'lucide-react';
+import { Edit, Mail, Phone, Trash2 } from 'lucide-react';
 import { ValueThresholdAlarm } from '../../types';
 import { mapNumberToField, mapNumberToOperator } from '../../utils/alarmMappers';
 
 interface ThresholdAlarmTableProps {
     alarms: ValueThresholdAlarm[];
     onEdit: (alarm: any) => void;
+    onDelete?: (alarmId: number) => void;
     error?: boolean;
 }
 
-export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTableProps) {
+export function ThresholdAlarmTable({ alarms, onEdit, onDelete, error }: ThresholdAlarmTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -60,10 +61,20 @@ export function ThresholdAlarmTable({ alarms, onEdit, error }: ThresholdAlarmTab
             key: 'actions',
             header: t('common.actions'),
             render: (alarm: ValueThresholdAlarm) => (
-                <div className={textAlignClass}>
+                <div className="flex gap-2 justify-center">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
+                    {onDelete && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onDelete(alarm.id)}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             )
         },

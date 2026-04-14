@@ -20,7 +20,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { AlarmSiteSelector } from '../AlarmSiteSelector';
-import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps } from '../../types';
+import { PumpStatusIdvAlarmForm, Site, AddPumpStatusIdvAlarmDialogProps, SiteConfiguration } from '../../types';
 
 import { validateAlarmName } from '../../utils/validation';
 import { INITIAL_PumpStatusIdv_FORM } from '../../utils/alarmConstants';
@@ -113,26 +113,23 @@ export const AddPumpStatusIdvAlarmDialog = React.forwardRef<HTMLDivElement, Exte
                     </div>
 
                     {/* Site Selection */}
-                    <div className="space-y-2">
-                        <Label htmlFor="site-select">{t('alarms.site')}</Label>
-                        <AlarmSiteSelector
-                            sites={sites}
-                            sitesLoading={sitesLoading}
-                            selectedSiteId={form.siteId}
-                            onSiteSelect={(siteId) => {
-                                const selected = sites.find(site => site.id === Number(siteId));
-                                if (selected) {
-                                    setSite(selected.name);
-                                    setForm(prev => ({ ...prev, siteId: Number(siteId), site: selected.name, pumpNumber: 1 }));
-                                }
-                            }}
-                            placeholder={t('readings.selectSite')}
-                            allowClear={false}
-                        />
-                        {siteError && (
-                            <p className="text-red-600 text-sm">{t(siteError)}</p>
-                        )}
-                    </div>
+                    <AlarmSiteSelector
+                        sites={sites}
+                        sitesLoading={sitesLoading}
+                        selectedSiteId={form.siteId}
+                        onSiteSelect={(siteId) => {
+                            const selected = sites.find(site => site.id === Number(siteId));
+                            if (selected) {
+                                setSite(selected.name);
+                                setForm(prev => ({ ...prev, siteId: Number(siteId), site: selected.name, pumpNumber: 1 }));
+                            }
+                        }}
+                        placeholder={t('readings.selectSite')}
+                        allowClear={false}
+                    />
+                    {siteError && (
+                        <p className="text-red-600 text-sm">{t(siteError)}</p>
+                    )}
 
                     {/* Pump Number Input */}
                     <div className="space-y-2">
