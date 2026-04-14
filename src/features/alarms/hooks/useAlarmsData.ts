@@ -265,6 +265,36 @@ export function useAlarmsData() {
     }
   };
 
+  const deleteThresholdAlarm = async (alarmId: number) => {
+    try {
+      const response = await apiService.delete<any>(`/v1/alarm/threshold/${alarmId}`);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete threshold alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const deleteCommunicationAlarm = async (alarmId: number) => {
+    try {
+      const response = await apiService.delete<any>(`/v1/alarm/communication/${alarmId}`);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete communication alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
   const createPumpStatusPSAlarm = async (alarmData: CreatePumpStatusPSAlarmRequest) => {
     try {
       const response = await apiService.post<any, CreatePumpStatusPSAlarmRequest>('/v1/alarm/pump-status-operation', alarmData);
@@ -291,6 +321,21 @@ export function useAlarmsData() {
       }
     } catch (error: any) {
       console.error(`Failed to update pump status PS alarm ${alarmId}:`, error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const deletePumpStatusPSAlarm = async (alarmId: number) => {
+    try {
+      const response = await apiService.delete<any>(`/v1/alarm/pump-status-operation/${alarmId}`);
+      if (response.isSuccess) {
+        fetchAlarms(); // Re-fetch alarms to update the list
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete pump status PS alarm ${alarmId}:`, error);
       return { success: false, message: error.message };
     }
   };
@@ -374,8 +419,11 @@ export function useAlarmsData() {
     createSensorStatusAlarm,
     updateSensorStatusAlarm,
     deleteSensorStatusAlarm,
+    deleteThresholdAlarm,
+    deleteCommunicationAlarm,
     createPumpStatusPSAlarm,
     updatePumpStatusPSAlarm,
+    deletePumpStatusPSAlarm,
     createPumpStatusIdvAlarm,
     updatePumpStatusIdvAlarm,
     deletePumpStatusIdvAlarm,

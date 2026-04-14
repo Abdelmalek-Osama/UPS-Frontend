@@ -56,7 +56,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete, error }: PumpStat
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
-                    {/* {onDelete && (
+                    {onDelete && (
                         <Button 
                             variant="ghost" 
                             size="sm" 
@@ -65,7 +65,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete, error }: PumpStat
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
-                    )} */}
+                    )}
                 </div>
             )
         },
