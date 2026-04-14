@@ -96,13 +96,11 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
                 <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="email"
-                  name="username"
                   type="email"
                   placeholder={t('auth.enterEmail')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pr-10"
-                  autoComplete="username"
                   required
                 />
               </div>
@@ -120,13 +118,11 @@ export function LoginPage({ /* onLogin */ }: LoginPageProps) { // Removed onLogi
                 </button>
                 <Input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder={t('auth.enterPassword')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pr-10"
-                  autoComplete="current-password"
                   required
                 />
               </div>
