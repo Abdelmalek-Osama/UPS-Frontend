@@ -120,16 +120,25 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             {user?.userName && `${t('dialogs.resetPasswordFor')}: ${user?.userName}`}
           </DialogDescription>
         </DialogHeader>
+        {/* Hidden dummy fields to prevent autofill */}
+        <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="new-password" />
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="new-password">{t('users.newPassword')}</Label>
             <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
               <Input
                 id="new-password"
+                name="reset-new-password"
                 type={showNewPassword ? "text" : "password"}
                 placeholder={t('placeholders.password')}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                readOnly
                 style={{
                   paddingRight: !isRTL ? '2.5rem' : undefined,
                   paddingLeft: isRTL ? '2.5rem' : undefined
@@ -162,10 +171,16 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
               <Input
                 id="confirm-password"
+                name="reset-confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder={t('placeholders.confirmPassword')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                readOnly
                 style={{
                   paddingRight: !isRTL ? '2.5rem' : undefined,
                   paddingLeft: isRTL ? '2.5rem' : undefined
