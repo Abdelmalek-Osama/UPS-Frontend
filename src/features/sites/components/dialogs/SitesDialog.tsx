@@ -40,8 +40,15 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
   const [equations, setEquations] = useState<any[]>([]);
   const [loadingEquations, setLoadingEquations] = useState(true);
 
-  // Fetch equations once when component mounts
+  // Fetch equations only for Admin users (Operators don't have permission)
   useEffect(() => {
+    // Only fetch equations if user is Admin
+    if (userRole !== 'Admin') {
+      setEquations([]);
+      setLoadingEquations(false);
+      return;
+    }
+
     const fetchEquations = async () => {
       try {
         setLoadingEquations(true);
@@ -57,7 +64,7 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     };
 
     fetchEquations();
-  }, []);
+  }, [userRole]);
 
   
   useEffect(() => {
