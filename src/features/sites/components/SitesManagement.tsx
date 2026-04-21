@@ -28,6 +28,7 @@ import Loader from '../../../components/ui/Loader';
 import SitesDialog from './dialogs/SitesDialog';
 import apiService from '../../../shared/utils/apiService';
 import { AlertDialog } from '../../../shared/components/AlertDialog';
+import { toast } from 'react-toastify';
 
 export function SitesManagement() {
   const { t } = useTranslation();
@@ -59,9 +60,16 @@ export function SitesManagement() {
 
   const handleConfirmDelete = async () => {
     if (siteToDelete) {
-      await apiService.delete(`/v1/Sites/${siteToDelete}`);
-      setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
-      setSiteToDelete(null);
+      try {
+        await apiService.delete(`/v1/Sites/${siteToDelete}`);
+        setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+        setDeleteDialogOpen(false);
+        setSiteToDelete(null);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete site');
+        setDeleteDialogOpen(false);
+        setSiteToDelete(null);
+      }
     }
   };
 
