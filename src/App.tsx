@@ -53,7 +53,11 @@ function AuthRoutes() {
           )
         }
       >
-        <Route index element={currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />} />
+        <Route index element={
+          loadingAuth || !userLoaded ? null : (
+            currentUser?.role === 'Admin' ? <DashboardHome /> : <Navigate to="/sites" replace />
+          )
+        } />
         <Route path="alarms" element={ <AlarmConfiguration />} />
         <Route path="alarms/events" element={<AlarmEvents />} />
         <Route 

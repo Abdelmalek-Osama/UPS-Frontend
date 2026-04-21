@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -117,6 +117,19 @@ export function EditThresholdAlarmDialog({
         };
         return translations[fieldName] || fieldName;
     };
+
+    // Ensure current field value is included in available fields to prevent Select warnings
+    const fieldsToDisplay = useMemo(() => {
+        if (!form.field) {
+            return availableFields;
+        }
+        // Include the current field value even if it's not in availableFields yet
+        const fieldsSet = new Set(availableFields);
+        if (form.field) {
+            fieldsSet.add(form.field);
+        }
+        return Array.from(fieldsSet);
+    }, [form.field, availableFields]);
     
     // Style objects - matching AddThresholdAlarmDialog
     const headerContainerStyle: React.CSSProperties = {
@@ -292,7 +305,7 @@ export function EditThresholdAlarmDialog({
                                 <SelectValue placeholder={t('alarms.field')} />
                             </SelectTrigger>
                             <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                {availableFields.map(field => (
+                                {fieldsToDisplay.map(field => (
                                     <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
                                 ))}
                             </SelectContent>

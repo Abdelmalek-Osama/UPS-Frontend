@@ -229,7 +229,6 @@ export const AddSensorStatusAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                         </div>
 
                         <div style={fieldContainerStyle}>
-                            <Label>{t('alarms.site')}</Label>
                             <AlarmSiteSelector
                                 sites={sites}
                                 sitesLoading={sitesLoading}
