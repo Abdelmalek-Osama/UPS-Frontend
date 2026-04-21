@@ -371,9 +371,18 @@ export const logoutUser = async (): Promise<ApiResponse<any>> => {
 };
 
 export const clearAllUserData = () => {
+  // Preserve language preference before clearing localStorage
+  const savedLanguage = localStorage.getItem('language');
+  
   removeAuthCookies();
   localStorage.clear();
   sessionStorage.clear();
+  
+  // Restore language preference
+  if (savedLanguage) {
+    localStorage.setItem('language', savedLanguage);
+  }
+  
   // Also explicitly set isLogged to false in session storage
   sessionStorage.setItem('isLogged', 'false');
   // Explicitly remove Authorization header from axios instance defaults
