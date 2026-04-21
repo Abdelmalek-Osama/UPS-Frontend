@@ -18,9 +18,9 @@ export const setLogoutCallback = (callback: () => void) => {
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
 //const API_BASE_URL = 'https://localhost:5001/api/';
-//const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
+const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 ////const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
-const API_BASE_URL = "https://tele-dairot.com:5050/api/";
+//const API_BASE_URL = "https://tele-dairot.com:5050/api/";
 //const API_BASE_URL = "https://tele-dairot.com/swagger/index.html";
 //const API_BASE_URL = "https://tele-dairot.com:5050/api";
 
