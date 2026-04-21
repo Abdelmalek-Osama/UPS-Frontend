@@ -17,6 +17,34 @@ export const setLogoutCallback = (callback: () => void) => {
 
 let logoutInitiated = false; // New flag to prevent multiple logout triggers
 
+// Request deduplication cache for identical simultaneous requests
+const pendingRequests = new Map<string, Promise<any>>();
+// Short-term response cache (5 seconds) for rapid successive requests
+const responseCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+
+/**
+ * Generates a cache key from endpoint and query params for request deduplication
+ * Excludes non-cacheable options like AbortSignal to properly deduplicate identical requests
+ */
+function getCacheKey(endpoint: string, options?: RequestOptions): string {
+  // Only include query params in cache key, exclude signal and other config
+  const params = options?.params ? JSON.stringify(options.params) : '';
+  return `${endpoint}:${params}`;
+}
+
+/**
+ * Clears expired cached responses
+ */
+function cleanExpiredCache(): void {
+  const now = Date.now();
+  for (const [key, value] of responseCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      responseCache.delete(key);
+    }
+  }
+}
+
 //const API_BASE_URL = 'https://localhost:5001/api/';
 const API_BASE_URL = 'https://fw3.soft-trend.com:8883/api/';
 ////const API_BASE_URL = "https://dairoot.duckdns.org:5050/api"
@@ -269,7 +297,8 @@ interface RequestOptions extends AxiosRequestConfig {
 }
 
 /**
- * GET request
+ * GET request with deduplication for identical simultaneous requests
+ * Also caches responses for 5 seconds to handle rapid successive requests
  * @param endpoint - API endpoint (e.g., '/users', '/sites/123')
  * @param options - Optional Axios request options including query params
  */
@@ -277,8 +306,38 @@ export async function get<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await axiosInstance.get<T>(endpoint, options);
-  return response.data;
+  const cacheKey = getCacheKey(endpoint, options);
+  
+  // Check if we have a pending request for this endpoint
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey)!;
+  }
+
+  // Check if we have a cached response (within TTL)
+  cleanExpiredCache();
+  const cached = responseCache.get(cacheKey);
+  if (cached) {
+    return cached.data;
+  }
+
+  // Create new request
+  const request = axiosInstance.get<T>(endpoint, options)
+    .then(response => {
+      const data = response.data;
+      // Store in response cache
+      responseCache.set(cacheKey, { data, timestamp: Date.now() });
+      pendingRequests.delete(cacheKey);
+      return data;
+    })
+    .catch(error => {
+      pendingRequests.delete(cacheKey);
+      throw error;
+    });
+
+  // Store pending request to deduplicate
+  pendingRequests.set(cacheKey, request);
+  
+  return request;
 }
 
 /**
