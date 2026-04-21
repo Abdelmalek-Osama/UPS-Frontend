@@ -34,13 +34,20 @@ const parseJwt = (token: string) => {
   }
 };
 
+const isTokenExpired = (token: string) => {
+  const decoded = parseJwt(token);
+  if (!decoded || !decoded.exp) return true;
+  return Date.now() >= decoded.exp * 1000;
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [userLoaded, setUserLoaded] = useState(false);
   const navigate = useNavigate();
 
-  const isAuthenticated = !!getAccessToken() && sessionStorage.getItem('isLogged') === 'true';
+  const token = getAccessToken();
+  const isAuthenticated = !!token && !isTokenExpired(token);
 
   const refreshCurrentUser = useCallback(async () => {
     const token = getAccessToken();
@@ -121,9 +128,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // This effect runs only once on mount to set the initial auth state.
     // Subsequent auth state changes are handled by direct calls to handleLogin/handleLogout
     // or by refreshCurrentUser.
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       if (isAuthenticated) {
-        refreshCurrentUser();
+        await refreshCurrentUser();
       } else {
         setCurrentUser(null);
         setUserLoaded(false);

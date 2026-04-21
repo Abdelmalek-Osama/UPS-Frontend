@@ -83,11 +83,14 @@ export function AlarmConfiguration() {
     createSensorStatusAlarm,
     updateSensorStatusAlarm,
     deleteSensorStatusAlarm,
+    deleteThresholdAlarm,
+    deleteCommunicationAlarm,
     createPumpStatusPSAlarm,
     createPumpStatusIdvAlarm,
     updateThresholdAlarm,
     updateCommunicationAlarm,
     updatePumpStatusPSAlarm,
+    deletePumpStatusPSAlarm,
     updatePumpStatusIdvAlarm,
     deletePumpStatusIdvAlarm,
     isLoading,
@@ -117,6 +120,14 @@ export function AlarmConfiguration() {
   const [isEditSensorStatusOpen, setIsEditSensorStatusOpen] = useState(false);
   const [isDeleteSensorStatusOpen, setIsDeleteSensorStatusOpen] = useState(false);
   const [sensorStatusAlarmToDelete, setSensorStatusAlarmToDelete] = useState<number | null>(null);
+  const [isDeleteThresholdOpen, setIsDeleteThresholdOpen] = useState(false);
+  const [thresholdAlarmToDelete, setThresholdAlarmToDelete] = useState<number | null>(null);
+  const [isDeleteCommOpen, setIsDeleteCommOpen] = useState(false);
+  const [commAlarmToDelete, setCommAlarmToDelete] = useState<number | null>(null);
+  const [isDeletePumpStatusPSOpen, setIsDeletePumpStatusPSOpen] = useState(false);
+  const [pumpStatusPSAlarmToDelete, setPumpStatusPSAlarmToDelete] = useState<number | null>(null);
+  const [isDeletePumpStatusIdvOpen, setIsDeletePumpStatusIdvOpen] = useState(false);
+  const [pumpStatusIdvAlarmToDelete, setPumpStatusIdvAlarmToDelete] = useState<number | null>(null);
   const [currentSensorStatusAlarm, setCurrentSensorStatusAlarm] = useState<SensorStatusForm | null>(null);
   const [newSensorStatusForm, setNewSensorStatusForm] = useState<SensorStatusForm>(INITIAL_SENSOR_STATUS_FORM);
   const [isAddPumpStatusPSOpen, setIsAddPumpStatusPSOpen] = useState(false);
@@ -673,22 +684,29 @@ export function AlarmConfiguration() {
     setIsEditPumpStatusIdvOpen(true);
   };
 
-  const handlePumpStatusIdvAlarmDelete = async (alarmId: number) => {
-    if (window.confirm(t('alarms.confirmDelete'))) {
-      setIsSubmittingPumpIdvEdit(true);
-      try {
-        const result = await deletePumpStatusIdvAlarm(alarmId);
-        if (result.success) {
-          toast.success(t('alarms.alarmDeletedSuccess'));
-        } else {
-          toast.error(result.message || t('alarms.alarmDeleteFailed'));
-        }
-      } catch (error: any) {
-        console.error('Error deleting alarm:', error);
-        toast.error(error.message || t('alarms.alarmDeleteFailed'));
-      } finally {
-        setIsSubmittingPumpIdvEdit(false);
+  const handlePumpStatusIdvAlarmDelete = (alarmId: number) => {
+    setPumpStatusIdvAlarmToDelete(alarmId);
+    setIsDeletePumpStatusIdvOpen(true);
+  };
+
+  const confirmDeletePumpStatusIdvAlarm = async () => {
+    if (!pumpStatusIdvAlarmToDelete) return;
+    
+    try {
+      const result = await deletePumpStatusIdvAlarm(pumpStatusIdvAlarmToDelete);
+      if (result.success) {
+        toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeletePumpStatusIdvOpen(false);
+        setPumpStatusIdvAlarmToDelete(null);
+      } else {
+        toast.error(result.message || t('errors.deleteFailed'));
       }
+    } catch (error: any) {
+      console.error('Error deleting pump status IDV alarm:', error);
+      toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeletePumpStatusIdvOpen(false);
+      setPumpStatusIdvAlarmToDelete(null);
     }
   };
 
@@ -777,6 +795,84 @@ export function AlarmConfiguration() {
     } finally {
       setIsDeleteSensorStatusOpen(false);
       setSensorStatusAlarmToDelete(null);
+    }
+  };
+
+  const handleThresholdAlarmDelete = (alarmId: number) => {
+    setThresholdAlarmToDelete(alarmId);
+    setIsDeleteThresholdOpen(true);
+  };
+
+  const confirmDeleteThresholdAlarm = async () => {
+    if (!thresholdAlarmToDelete) return;
+    
+    try {
+      const result = await deleteThresholdAlarm(thresholdAlarmToDelete);
+      if (result.success) {
+        toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeleteThresholdOpen(false);
+        setThresholdAlarmToDelete(null);
+      } else {
+        toast.error(result.message || t('errors.deleteFailed'));
+      }
+    } catch (error: any) {
+      console.error('Error deleting threshold alarm:', error);
+      toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeleteThresholdOpen(false);
+      setThresholdAlarmToDelete(null);
+    }
+  };
+
+  const handleCommunicationAlarmDelete = (alarmId: number) => {
+    setCommAlarmToDelete(alarmId);
+    setIsDeleteCommOpen(true);
+  };
+
+  const confirmDeleteCommunicationAlarm = async () => {
+    if (!commAlarmToDelete) return;
+    
+    try {
+      const result = await deleteCommunicationAlarm(commAlarmToDelete);
+      if (result.success) {
+        toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeleteCommOpen(false);
+        setCommAlarmToDelete(null);
+      } else {
+        toast.error(result.message || t('errors.deleteFailed'));
+      }
+    } catch (error: any) {
+      console.error('Error deleting communication alarm:', error);
+      toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeleteCommOpen(false);
+      setCommAlarmToDelete(null);
+    }
+  };
+
+  const handlePumpStatusPSAlarmDelete = (alarmId: number) => {
+    setPumpStatusPSAlarmToDelete(alarmId);
+    setIsDeletePumpStatusPSOpen(true);
+  };
+
+  const confirmDeletePumpStatusPSAlarm = async () => {
+    if (!pumpStatusPSAlarmToDelete) return;
+    
+    try {
+      const result = await deletePumpStatusPSAlarm(pumpStatusPSAlarmToDelete);
+      if (result.success) {
+        toast.success(t('alarms.deleteAlarmSuccess'));
+        setIsDeletePumpStatusPSOpen(false);
+        setPumpStatusPSAlarmToDelete(null);
+      } else {
+        toast.error(result.message || t('errors.deleteFailed'));
+      }
+    } catch (error: any) {
+      console.error('Error deleting pump status PS alarm:', error);
+      toast.error(error.message || t('errors.deleteFailed'));
+    } finally {
+      setIsDeletePumpStatusPSOpen(false);
+      setPumpStatusPSAlarmToDelete(null);
     }
   };
 
@@ -1234,6 +1330,7 @@ export function AlarmConfiguration() {
                 <ThresholdAlarmTable
                   alarms={filteredThresholdAlarms}
                   onEdit={handleThresholdAlarmEdit}
+                  onDelete={handleThresholdAlarmDelete}
                   error={fetchError}
                 />
               </CardContent>
@@ -1284,6 +1381,7 @@ export function AlarmConfiguration() {
                 <CommunicationAlarmTable
                   alarms={filteredCommunicationAlarms}
                   onEdit={handleCommunicationAlarmEdit}
+                  onDelete={handleCommunicationAlarmDelete}
                   error={fetchError}
                 />
               </CardContent>
@@ -1388,6 +1486,7 @@ export function AlarmConfiguration() {
               <CardContent>
                 <PumpStatusPSTable
                   alarms={filteredPumpStatusPSAlarms} 
+                onDelete={handlePumpStatusPSAlarmDelete}
                 onEdit={handlePumpStatusPSAlarmEdit}
                 error={fetchError}
                 />
@@ -1524,6 +1623,62 @@ export function AlarmConfiguration() {
         }}
         onConfirm={confirmDeleteSensorStatusAlarm}
         title={t('alarms.deleteSensorStatusAlarm')}
+        description={t('alarms.deleteAlarmConfirm')}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
+
+      <AlertDialog
+        open={isDeleteThresholdOpen}
+        onClose={() => {
+          setIsDeleteThresholdOpen(false);
+          setThresholdAlarmToDelete(null);
+        }}
+        onConfirm={confirmDeleteThresholdAlarm}
+        title={t('alarms.deleteThresholdAlarm')}
+        description={t('alarms.deleteAlarmConfirm')}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
+
+      <AlertDialog
+        open={isDeleteCommOpen}
+        onClose={() => {
+          setIsDeleteCommOpen(false);
+          setCommAlarmToDelete(null);
+        }}
+        onConfirm={confirmDeleteCommunicationAlarm}
+        title={t('alarms.deleteCommunicationAlarm')}
+        description={t('alarms.deleteAlarmConfirm')}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
+
+      <AlertDialog
+        open={isDeletePumpStatusPSOpen}
+        onClose={() => {
+          setIsDeletePumpStatusPSOpen(false);
+          setPumpStatusPSAlarmToDelete(null);
+        }}
+        onConfirm={confirmDeletePumpStatusPSAlarm}
+        title={t('alarms.deletePumpStatusPSAlarm')}
+        description={t('alarms.deleteAlarmConfirm')}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
+
+      <AlertDialog
+        open={isDeletePumpStatusIdvOpen}
+        onClose={() => {
+          setIsDeletePumpStatusIdvOpen(false);
+          setPumpStatusIdvAlarmToDelete(null);
+        }}
+        onConfirm={confirmDeletePumpStatusIdvAlarm}
+        title={t('alarms.deletePumpStatusIdvAlarm')}
         description={t('alarms.deleteAlarmConfirm')}
         type="error"
         confirmText={t('common.delete')}

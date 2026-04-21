@@ -10,16 +10,17 @@ import {
 } from '../../../../components/ui/table';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
-import { Edit, Mail, Phone } from 'lucide-react';
+import { Edit, Mail, Phone, Trash2 } from 'lucide-react';
 import { CommunicationAlarmResponse } from '../../types';
 
 interface CommunicationAlarmTableProps {
     alarms: CommunicationAlarmResponse[];
     onEdit: (alarm: CommunicationAlarmResponse) => void;
+    onDelete?: (alarmId: number) => void;
     error?: boolean;
 }
 
-export function CommunicationAlarmTable({ alarms, onEdit, error }: CommunicationAlarmTableProps) {
+export function CommunicationAlarmTable({ alarms, onEdit, onDelete, error }: CommunicationAlarmTableProps) {
     const { t } = useTranslation();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
@@ -31,10 +32,20 @@ export function CommunicationAlarmTable({ alarms, onEdit, error }: Communication
             key: 'actions',
             header: t('common.actions'),
             render: (alarm: CommunicationAlarmResponse) => (
-                <div className={textAlignClass}>
+                <div className="flex gap-2 justify-center">
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
+                    {onDelete && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onDelete(alarm.alarmId)}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             )
         },
