@@ -454,6 +454,37 @@ npm run build
 * SPA fallback
 * Zero downtime
 
+### Vercel Connection & Network Details
+
+**Vercel Domains:**
+  - Primary: `https://<your-project>.vercel.app`
+  - Custom domains can be configured in the Vercel dashboard.
+
+**SPA Routing:**
+  - Configured in `vercel.json` with history fallback:
+    ```json
+    {
+      "routes": [
+        { "src": "/(.*\\..+)$", "dest": "/$1" },
+        { "src": "/(.*)",        "dest": "/index.html" }
+      ]
+    }
+    ```
+
+**API Connection:**
+  - The frontend connects to the backend via:
+    ```ts
+    const API_BASE_URL = 'https://tele-dairot:5050/api';
+    ```
+
+**Environment Variables:**
+  - Set sensitive values (API URLs, tokens) in the Vercel dashboard under Project Settings > Environment Variables.
+
+**CORS & Security:**
+  - Allow CORS for `*.vercel.app` and any custom domains used.
+
+For more details, see: https://vercel.com/docs/concepts/projects/custom-domains
+
 ---
 
 ## 13. Performance Optimizations
