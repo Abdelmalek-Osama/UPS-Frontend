@@ -264,15 +264,27 @@ export function AlarmConfiguration() {
     setThresholdSubmissionError(null); // Clear previous errors
     const { siteId, alarmName, field, criticalOperator, criticalThresholdValue, criticalColorCode, crisisOperator, crisisThresholdValue, crisisColorCode } = newThresholdAlarmForm;
 
-    if (!siteId || !alarmName || !field || !criticalOperator || !crisisOperator) {
-      console.error('Missing required threshold alarm fields');
+    // Validate required fields with detailed messages
+    const errors = [];
+    if (!siteId) errors.push(t('alarms.validation.siteRequired'));
+    if (!alarmName) errors.push(t('alarms.validation.alarmNameEmpty'));
+    if (!field) errors.push(t('alarms.validation.fieldRequired'));
+    if (!criticalOperator) errors.push(t('alarms.operators.greaterThan') + ' ' + t('alarms.validation.messageRequired'));
+    if (!crisisOperator) errors.push(t('alarms.operators.greaterThan') + ' ' + t('alarms.validation.messageRequired'));
+    if (newThresholdAlarmForm.emails.length === 0 && newThresholdAlarmForm.phones.length === 0) {
+      errors.push(t('alarms.validation.atLeastOneRecipient'));
+    }
+
+    if (errors.length > 0) {
+      const errorMessage = errors.join('. ');
+      setThresholdSubmissionError(errorMessage);
       setIsSubmittingThresholdAdd(false);
       return;
     }
 
     const requestBody: CreateThresholdAlarmRequest = {
       id: 0,
-      siteId,
+      siteId: siteId || 0,
       alarmName,
       emails: newThresholdAlarmForm.emails.join(','),
       phones: newThresholdAlarmForm.phones.join(','),
@@ -313,15 +325,24 @@ export function AlarmConfiguration() {
     setCommunicationSubmissionError(null); // Clear previous errors
     const { siteId, alarmName, hours } = newCommunicationAlarmForm;
 
-    if (!siteId || !alarmName) {
-      console.error('Missing required communication alarm fields');
+    // Validate required fields
+    const errors = [];
+    if (!siteId) errors.push(t('alarms.validation.siteRequired'));
+    if (!alarmName) errors.push(t('alarms.validation.alarmNameEmpty'));
+    if (newCommunicationAlarmForm.emails.length === 0 && newCommunicationAlarmForm.phones.length === 0) {
+      errors.push(t('alarms.validation.atLeastOneRecipient'));
+    }
+
+    if (errors.length > 0) {
+      const errorMessage = errors.join('. ');
+      setCommunicationSubmissionError(errorMessage);
       setIsSubmittingCommAdd(false);
       return;
     }
 
     const requestBody: CreateCommunicationAlarmRequest = {
       id: 0,
-      siteId,
+      siteId: siteId || 0,
       alarmName,
       emails: newCommunicationAlarmForm.emails.join(','),
       phones: newCommunicationAlarmForm.phones.join(','),
@@ -357,15 +378,25 @@ export function AlarmConfiguration() {
     setSensorStatusSubmissionError(null);
     const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
-      console.error('Missing required sensor status alarm fields');
+    // Validate required fields with detailed messages
+    const errors = [];
+    if (!siteId || !site) errors.push(t('alarms.validation.siteRequired'));
+    if (!alarmName) errors.push(t('alarms.validation.alarmNameEmpty'));
+    if (!field) errors.push(t('alarms.validation.fieldRequired'));
+    if (threshold === 0) errors.push(t('alarms.validation.thresholdRequired'));
+    if (!message) errors.push(t('alarms.validation.messageRequired'));
+    if (emails.length === 0 && phones.length === 0) errors.push(t('alarms.validation.atLeastOneRecipient'));
+
+    if (errors.length > 0) {
+      const errorMessage = errors.join('. ');
+      setSensorStatusSubmissionError(errorMessage);
       setIsSubmittingSensorStatusAdd(false);
       return;
     }
 
     const requestBody: CreateSensorStatusAlarmRequest = {
       id: 0,
-      siteId,
+      siteId: siteId || 0,
       alarmName,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
@@ -498,12 +529,26 @@ export function AlarmConfiguration() {
 
   const handleEditSensorStatusAlarm = async () => {
     setIsSubmittingSensorStatusEdit(true);
-    if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) return;
+    setSensorStatusSubmissionError(null);
+    if (!currentSensorStatusAlarm || !currentSensorStatusAlarm.siteId) {
+      setIsSubmittingSensorStatusEdit(false);
+      return;
+    }
 
     const { siteId, site, alarmName, message, field, threshold, emails, phones } = newSensorStatusForm;
 
-    if (!siteId || !site || !alarmName || !message || !field || threshold === 0 || (emails.length === 0 && phones.length === 0)) {
-      console.error('Missing required sensor status alarm fields');
+    // Validate required fields with detailed messages
+    const errors = [];
+    if (!siteId || !site) errors.push(t('alarms.validation.siteRequired'));
+    if (!alarmName) errors.push(t('alarms.validation.alarmNameEmpty'));
+    if (!field) errors.push(t('alarms.validation.fieldRequired'));
+    if (threshold === 0) errors.push(t('alarms.validation.thresholdRequired'));
+    if (!message) errors.push(t('alarms.validation.messageRequired'));
+    if (emails.length === 0 && phones.length === 0) errors.push(t('alarms.validation.atLeastOneRecipient'));
+
+    if (errors.length > 0) {
+      const errorMessage = errors.join('. ');
+      setSensorStatusSubmissionError(errorMessage);
       setIsSubmittingSensorStatusEdit(false);
       return;
     }
@@ -512,7 +557,7 @@ export function AlarmConfiguration() {
 
     const requestBody: CreateSensorStatusAlarmRequest = {
       id: alarmIdToUse,
-      siteId,
+      siteId: siteId || 0,
       alarmName,
       emails: newSensorStatusForm.emails.join(','),
       phones: newSensorStatusForm.phones.join(','),
@@ -533,7 +578,6 @@ export function AlarmConfiguration() {
         setCurrentSensorStatusAlarm(null);
         setHasSensorStatusChanges(false);
       } else {
-        console.error('Error updating sensor status alarm:', result.message);
         const errorMessage = result.message || 'Failed to update sensor status alarm.';
         toast.error(errorMessage);
         setSensorStatusSubmissionError(errorMessage);
