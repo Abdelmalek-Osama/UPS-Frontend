@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Dialog,
@@ -176,6 +176,19 @@ export function EditSensorStatusAlarmDialog({
         return fieldTranslations[fieldName] || fieldName;
     };
 
+    // Ensure current field value is included in available fields to prevent Select warnings
+    const fieldsToDisplay = useMemo(() => {
+        if (!form.field || !form.siteId) {
+            return availableFields;
+        }
+        // Include the current field value even if it's not in availableFields yet
+        const fieldsSet = new Set(availableFields);
+        if (form.field) {
+            fieldsSet.add(form.field);
+        }
+        return Array.from(fieldsSet);
+    }, [form.field, form.siteId, availableFields]);
+
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
             onOpenChange(newOpen);
@@ -267,8 +280,8 @@ export function EditSensorStatusAlarmDialog({
                                     <SelectValue placeholder={!form.siteId ? t('alarms.selectSiteFirst') : t('alarms.field')} />
                                 </SelectTrigger>
                                 <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
-                                    {availableFields.length > 0 ? (
-                                        availableFields.map(field => (
+                                    {fieldsToDisplay.length > 0 ? (
+                                        fieldsToDisplay.map(field => (
                                             <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
                                         ))
                                     ) : (

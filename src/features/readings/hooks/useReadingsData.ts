@@ -522,18 +522,20 @@ export function useReadingsData(selectedSiteId: string) {
             usLevel: reading.usLevel,
             ds1Level: reading.ds1Level,
             ds2Level: reading.ds2Level,
-            pumps: [
-              { time: reading.p1_Time, flow: reading.p1_Flow },
-              { time: reading.p2_Time, flow: reading.p2_Flow },
-              { time: reading.p3_Time, flow: reading.p3_Flow },
-              { time: reading.p4_Time, flow: reading.p4_Flow },
-              { time: reading.p5_Time, flow: reading.p5_Flow },
-              { time: reading.p6_Time, flow: reading.p6_Flow },
-              { time: reading.p7_Time, flow: reading.p7_Flow },
-              { time: reading.p8_Time, flow: reading.p8_Flow },
-              { time: reading.p9_Time, flow: reading.p9_Flow },
-              { time: reading.p10_Time, flow: reading.p10_Flow },
-            ].filter(pump => pump.time > 0 || pump.flow > 0),
+            pumps: (() => {
+  // Get the actual number of pumps from siteConfiguration
+  const actualNumPumps = reading.siteConfiguration?.numPumps || 10;
+  
+  // Create array with only the actual number of pumps
+  const pumpsArray = [];
+  for (let i = 1; i <= actualNumPumps; i++) {
+    pumpsArray.push({
+      time: reading[`p${i}_Time` as keyof PumpStationApiResponse] as number,
+      flow: reading[`p${i}_Flow` as keyof PumpStationApiResponse] as number
+    });
+  }
+  return pumpsArray;
+})(),
             totalUptime: reading.totalUptime,
             totalFlow: reading.totalFlow,
             hasAlarm: false, // Assuming no alarm status in API for now

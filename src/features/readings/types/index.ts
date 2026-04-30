@@ -157,6 +157,7 @@ export interface PumpStationApiResponse {
   totalFlow: number;
   isManual: boolean;
   alarms?: Alarm[];
+  siteConfiguration?: SiteConfiguration; 
 }
 
 export interface ReadingLogDTO {

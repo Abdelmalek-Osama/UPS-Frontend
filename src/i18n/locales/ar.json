@@ -511,7 +511,17 @@
       "alarmNameEmpty": "اسم التنبيه لا يمكن أن يكون فارغًا",
       "alarmNameMinLength": "اسم التنبيه يجب أن يتكون من 3 أحرف على الأقل",
       "alarmNameInvalidCharacters": "يجب أن يحتوي اسم التنبيه على أحرف إنجليزية أو عربية وأرقام ومسافات فقط",
-      "alarmNameWhitespace": "لا يمكن أن يحتوي اسم التنبيه على مسافات بادئة أو لاحقة"
+      "alarmNameWhitespace": "لا يمكن أن يحتوي اسم التنبيه على مسافات بادئة أو لاحقة",
+      "siteRequired": "الموقع مطلوب",
+      "fieldRequired": "الحقل مطلوب",
+      "thresholdRequired": "قيمة الحد مطلوبة",
+      "messageRequired": "الرسالة مطلوبة",
+      "atLeastOneRecipient": "يجب تحديد متلقي واحد على الأقل (بريد إلكتروني أو هاتف)",
+      "hoursRequired": "الساعات مطلوبة",
+      "pumpNumberRequired": "رقم المضخة مطلوب",
+      "monitoringHoursRequired": "ساعات المراقبة مطلوبة",
+      "invalidPumpNumber": "يجب أن يكون رقم المضخة بين 1 و 10",
+      "invalidMonitoringHours": "يجب أن تكون ساعات المراقبة بين 1 و 168"
     }
   },
   "flowCalculations": {

@@ -512,7 +512,17 @@
       "alarmNameEmpty": "Alarm name cannot be empty",
       "alarmNameMinLength": "Alarm name must be at least 3 characters",
       "alarmNameInvalidCharacters": "Alarm name can only contain English and Arabic letters, numbers, and spaces",
-      "alarmNameWhitespace": "Alarm name cannot have leading or trailing spaces"
+      "alarmNameWhitespace": "Alarm name cannot have leading or trailing spaces",
+      "siteRequired": "Site is required",
+      "fieldRequired": "Field is required",
+      "thresholdRequired": "Threshold is required",
+      "messageRequired": "Message is required",
+      "atLeastOneRecipient": "At least one recipient (email or phone) is required",
+      "hoursRequired": "Hours is required",
+      "pumpNumberRequired": "Pump number is required",
+      "monitoringHoursRequired": "Monitoring hours is required",
+      "invalidPumpNumber": "Pump number must be between 1 and 10",
+      "invalidMonitoringHours": "Monitoring hours must be between 1 and 168"
     }
   },
   "flowCalculations": {
