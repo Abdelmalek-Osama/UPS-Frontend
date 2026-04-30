@@ -258,6 +258,13 @@ export function AlarmConfiguration() {
     }
   }, []);
 
+  const handleEditSensorStatusDialogOpenChange = useCallback((open: boolean) => {
+    setIsEditSensorStatusOpen(open);
+    if (!open) {
+      setSensorStatusSubmissionError(null);
+    }
+  }, []);
+
   // Form submission handlers
   const handleSubmitThresholdAlarm = async () => {
     setIsSubmittingThresholdAdd(true);
@@ -1642,7 +1649,7 @@ export function AlarmConfiguration() {
 
       <EditSensorStatusAlarmDialog
         open={isEditSensorStatusOpen}
-        onOpenChange={setIsEditSensorStatusOpen}
+        onOpenChange={handleEditSensorStatusDialogOpenChange}
         form={newSensorStatusForm}
         setForm={setNewSensorStatusForm}
         currentAlarm={currentSensorStatusAlarm}
