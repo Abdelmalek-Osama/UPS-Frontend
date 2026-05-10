@@ -74,7 +74,18 @@ function AuthRoutes() {
         />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
-        <Route path="reading-logs" element={<ReadingLogs />} />
+        <Route 
+          path="reading-logs" 
+          element={
+            loadingAuth || !userLoaded ? null : (
+              currentUser?.role === 'Admin' ? (
+                <ReadingLogs />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            )
+          } 
+        />
         <Route path="sites" element={<SitesManagement />} />
         <Route 
           path="users" 

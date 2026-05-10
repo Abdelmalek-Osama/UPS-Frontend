@@ -575,59 +575,61 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
       </div>
 
       {/* Data Logger Type Dropdown */}
-      <div className="space-y-2">
-        <Label htmlFor="dataLoggerType">
-          {t('sites.stage1.dataLoggerTypeLabel')}
-        </Label>
-        <Select
-          value={data.dataLoggerType || ''}
-          onValueChange={(value) => {
-            onChange('dataLoggerType', value as DataLoggerType);
-            setDataLoggerTypeTouched(true);
-          }}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleDataLoggerTypeBlur();
-            }
-          }}
-          dir={dir}
-        >
-          <SelectTrigger
-            id="dataLoggerType"
-            className={dir === 'rtl' ? 'rtl:flex-row-reverse text-right' : 'text-left'}
-          >
-            <SelectValue
-              placeholder={t('sites.stage1.dataLoggerTypePlaceholder')}
-            />
-          </SelectTrigger>
-          <SelectContent dir={dir}>
-            {dataLoggerTypeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {t(option.label)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {getDataLoggerTypeErrorsList().map((error, index) => (
-          <p key={index} className="text-sm text-red-600">{error}</p>
-        ))}
-      </div>
+<div className="space-y-2">
+  <Label htmlFor="dataLoggerType">
+    {t('sites.stage1.dataLoggerTypeLabel')}
+  </Label>
+  <Select
+    value={data.dataLoggerType || ''}
+    onValueChange={(value) => {
+      onChange('dataLoggerType', value as DataLoggerType);
+      setDataLoggerTypeTouched(true);
+    }}
+    onOpenChange={(open) => {
+      if (!open) {
+        handleDataLoggerTypeBlur();
+      }
+    }}
+    dir={dir}
+    disabled={isOperatorEditMode}
+  >
+    <SelectTrigger
+      id="dataLoggerType"
+      className={dir === 'rtl' ? 'rtl:flex-row-reverse text-right' : 'text-left'}
+    >
+      <SelectValue
+        placeholder={t('sites.stage1.dataLoggerTypePlaceholder')}
+      />
+    </SelectTrigger>
+    <SelectContent dir={dir}>
+      {dataLoggerTypeOptions.map((option) => (
+        <SelectItem key={option.value} value={option.value}>
+          {t(option.label)}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  {getDataLoggerTypeErrorsList().map((error, index) => (
+    <p key={index} className="text-sm text-red-600">{error}</p>
+  ))}
+</div>
 
-      {/* SIM ID Field */}
-      <div className="space-y-2">
-        <Label htmlFor="simId">{t('sites.stage1.simIdLabel')}</Label>
-        <Input
-          id="simId"
-          placeholder={t('sites.stage1.simIdPlaceholder')}
-          value={data.simId || ''}
-          onChange={(e) => handleSIMIdChange(e.target.value)}
-          onBlur={handleSIMIdBlur}
-          className={dir === 'rtl' ? 'text-right' : 'text-left'}
-        />
-        {getSIMIdErrorsList().map((error, index) => (
-          <p key={index} className="text-sm text-red-600">{error}</p>
-        ))}
-      </div>
+{/* SIM ID Field */}
+<div className="space-y-2">
+  <Label htmlFor="simId">{t('sites.stage1.simIdLabel')}</Label>
+  <Input
+    id="simId"
+    placeholder={t('sites.stage1.simIdPlaceholder')}
+    value={data.simId || ''}
+    onChange={(e) => handleSIMIdChange(e.target.value)}
+    onBlur={handleSIMIdBlur}
+    className={dir === 'rtl' ? 'text-right' : 'text-left'}
+    disabled={isOperatorEditMode}
+  />
+  {getSIMIdErrorsList().map((error, index) => (
+    <p key={index} className="text-sm text-red-600">{error}</p>
+  ))}
+</div>
     </div>
   );
 }
