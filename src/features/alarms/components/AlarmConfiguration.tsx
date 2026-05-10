@@ -1627,6 +1627,7 @@ export function AlarmConfiguration() {
         setEmails={setThresholdEmails}
         setPhones={setThresholdPhones}
         submissionError={thresholdSubmissionError}
+        currentUser={currentUser}
       />
 
       <EditCommunicationAlarmDialog

@@ -179,16 +179,24 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             {t('users.userDataDescription')}
           </DialogDescription>
         </DialogHeader>
+        {/* Hidden dummy fields to prevent autofill */}
+        <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="new-password" />
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">{t('auth.username')}</Label>
               <Input
                 id="username"
+                name="new-username"
                 placeholder={t('placeholders.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+                readOnly
               />
               {errors.username && <p className="text-red-600 text-xs mt-1">{errors.username}</p>}
             </div>
@@ -196,6 +204,7 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
+                name="new-user-email"
                 type="text" // Changed from "email" to "text"
                 placeholder={t('placeholders.email')}
                 value={email}
@@ -214,7 +223,11 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
                     setErrors(prev => ({ ...prev, email: '' }));
                   }
                 }}
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+                readOnly
               />
               {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
             </div>
@@ -223,10 +236,14 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
             <Label htmlFor="fullName">{t('users.fullName')}</Label>
             <Input
               id="fullName"
+              name="new-user-fullname"
               placeholder={t('placeholders.fullName')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              onFocus={(e) => e.target.removeAttribute('readonly')}
               autoComplete="off"
+              data-lpignore="true"
+              readOnly
             />
             {errors.fullName && <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>}
           </div>
@@ -236,11 +253,16 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               <div className="relative">
                 <Input
                   id="password"
+                  name="new-user-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder={t('placeholders.password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onFocus={(e) => e.target.removeAttribute('readonly')}
                   autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  readOnly
                   className="pr-1" 
                 />
                 <Button
@@ -270,11 +292,16 @@ export function AddUserDialog({ open, onOpenChange, availableSites }: AddUserDia
               <div className="relative">
                 <Input
                   id="confirmPassword"
+                  name="new-user-confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder={t('placeholders.confirmPassword')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  onFocus={(e) => e.target.removeAttribute('readonly')}
                   autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  readOnly
                   className="pr-1"
                 />
                 <Button
