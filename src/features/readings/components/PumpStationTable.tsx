@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -85,6 +86,7 @@ export function PumpStationTable({
   deletePumpStationReading,
 }: PumpStationTableProps) {
     const { t } = useTranslation();
+    const { currentUser } = useAuth();
     const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
@@ -1137,13 +1139,15 @@ export function PumpStationTable({
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeletePumpStation(reading)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {currentUser?.role === 'Admin' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeletePumpStation(reading)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

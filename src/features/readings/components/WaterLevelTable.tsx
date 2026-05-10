@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import {
@@ -111,6 +112,7 @@ export function WaterLevelTable({
   deleteWaterLevelReading,
 }: WaterLevelTableProps) {
   const { t } = useTranslation();
+  const { currentUser } = useAuth();
   const [readingDate, setReadingDate] = useState<Date | undefined>();
   const [readingTime, setReadingTime] = useState<string>('');
   const [uswl, setUswl] = useState<string>('');
@@ -1159,13 +1161,15 @@ export function WaterLevelTable({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteWaterLevel(reading)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {currentUser?.role === 'Admin' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteWaterLevel(reading)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

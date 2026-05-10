@@ -39,7 +39,7 @@ export function DashboardLayout({ currentUser, onLogout, refreshCurrentUser }: D
     { id: 'dashboard', label: t('navigation.dashboard'), icon: LayoutDashboard, path: '/', roles: ['Admin'] },
     { id: 'sites', label: t('navigation.sites'), icon: MapPin, path: '/sites', roles: ['Admin', 'Operator'] },
     { id: 'readings', label: t('navigation.readings'), icon: Database, path: '/readings', roles: ['Admin', 'Operator'] },
-    { id: 'reading-logs', label: t('navigation.readingLogs'), icon: FileText, path: '/reading-logs', roles: ['Admin', 'Operator'] },
+    { id: 'reading-logs', label: t('navigation.readingLogs'), icon: FileText, path: '/reading-logs', roles: ['Admin'] },
     { id: 'alarms', label: t('navigation.alarms'), icon: Bell, path: '/alarms', roles: ['Admin', 'Operator'] },
     { id: 'alarm-events', label: t('navigation.alarmEvents'), icon: AlertTriangle, path: '/alarms/events', roles: ['Admin', 'Operator'] },
     { id: 'alarm-reports', label: t('navigation.alarmReports'), icon: Bell, path: '/alarms/reports', roles: ['Admin'] },

@@ -63,24 +63,39 @@ function AuthRoutes() {
         <Route 
           path="alarms/reports" 
           element={
-            currentUser?.role === 'Admin' ? (
-              <AlarmReportsConfiguration />
-            ) : (
-              <Navigate to="/" replace />
+            loadingAuth || !userLoaded ? null : (
+              currentUser?.role === 'Admin' ? (
+                <AlarmReportsConfiguration />
+              ) : (
+                <Navigate to="/" replace />
+              )
             )
           } 
         />
         <Route path="calculations" element={<FlowCalculations />} />
         <Route path="readings" element={<ReadingsManagement />} />
-        <Route path="reading-logs" element={<ReadingLogs />} />
+        <Route 
+          path="reading-logs" 
+          element={
+            loadingAuth || !userLoaded ? null : (
+              currentUser?.role === 'Admin' ? (
+                <ReadingLogs />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            )
+          } 
+        />
         <Route path="sites" element={<SitesManagement />} />
         <Route 
           path="users" 
           element={
-            currentUser?.role === 'Admin' ? (
-              <UserManagement refreshCurrentUser={refreshCurrentUser} />
-            ) : (
-              <Navigate to="/" replace />
+            loadingAuth || !userLoaded ? null : (
+              currentUser?.role === 'Admin' ? (
+                <UserManagement refreshCurrentUser={refreshCurrentUser} />
+              ) : (
+                <Navigate to="/" replace />
+              )
             )
           } 
         />

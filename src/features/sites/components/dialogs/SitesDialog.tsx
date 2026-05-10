@@ -96,11 +96,11 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
     { id: "stage4", name: t('sites.stage4.title'), icon: "4" },
   ];
 
-  // For operators, only show editable tabs
-  const visibleTabsWithIndices = userRole === 'Operator' && mode === 'edit' ? 
+  // For operators, don't show the flow calculation tab (stage4)
+  const visibleTabsWithIndices = userRole === 'Operator' ? 
     tabs
       .map((tab, originalIndex) => ({ tab, originalIndex }))
-      .filter(item => ['stage1', 'stage4'].includes(item.tab.id)) :
+      .filter(item => item.tab.id == 'stage1') :
     tabs.map((tab, originalIndex) => ({ tab, originalIndex }));
 
   
@@ -362,11 +362,6 @@ export default function SitesDialog({ mode, siteData, onSave, onCancel, isOpen, 
 
       // Determine next tab index
       let nextTabIndex = currentTab + 1;
-      
-      // For operators in edit mode, skip from stage 1 (index 0) directly to stage 4 (index 3)
-      if (userRole === 'Operator' && mode === 'edit' && currentTab === 0) {
-        nextTabIndex = 3;
-      }
 
       if (nextTabIndex < tabs.length) {
         setCurrentTab(nextTabIndex);

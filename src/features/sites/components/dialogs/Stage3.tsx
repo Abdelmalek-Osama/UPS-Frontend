@@ -19,6 +19,7 @@ interface TabProps {
   isOpen: boolean;
   onClose: () => void;
   onValidationChange?: (isValid: boolean) => void;
+  userRole?: 'Admin' | 'Operator';
 }
 
 // Static database column names for Water Level
@@ -102,7 +103,7 @@ const getTableColumns = (tableKey: string, numPumps: number = 0, hasUS: boolean 
   }
 };
 
-export default function Stage3({ data, onChange, onValidationChange }: TabProps) {
+export default function Stage3({ data, onChange, onValidationChange, userRole }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
 
@@ -401,6 +402,7 @@ export default function Stage3({ data, onChange, onValidationChange }: TabProps)
                     size="sm"
                     variant="ghost"
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                    style={{ display: userRole === 'Admin' ? 'flex' : 'none' }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
