@@ -65,6 +65,7 @@ export function SitesManagement() {
         setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
         setDeleteDialogOpen(false);
         setSiteToDelete(null);
+        toast.success(t('notifications.deleted'));
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete site');
         setDeleteDialogOpen(false);
@@ -171,56 +172,6 @@ export function SitesManagement() {
                   {t('sites.addNewSite')}
                 </button>
               )}
-              <SitesDialog
-                mode="create"
-                siteData={formData}
-                isOpen={isAddDialogOpen}
-                onCancel={() => setIsAddDialogOpen(false)}
-                onSave={(data) => {
-                  setIsAddDialogOpen(false);
-                  setFormData({});
-                }}
-                onSiteCreated={() => {
-                  // Refetch sites after successful creation
-                  refetch();
-                }}
-                directorates={directorates}
-                isLoadingDirectorates={loading}
-                userRole={currentUser?.role}
-              />
-
-              {/* Edit Dialog */}
-              <SitesDialog
-                key={editingSite?.id}
-                mode="edit"
-                siteData={editingSite || {}}
-                isOpen={isEditDialogOpen}
-                onCancel={() => {
-                  setIsEditDialogOpen(false);
-                  setEditingSite(null);
-                  setFormData({});
-                }}
-                onSave={(data) => {
-                  setIsEditDialogOpen(false);
-                  setEditingSite(null);
-                  setFormData({});
-                }}
-                directorates={directorates}
-                isLoadingDirectorates={loading}
-                userRole={currentUser?.role}
-              />
-
-              <AlertDialog
-                open={deleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
-                onConfirm={handleConfirmDelete}
-                title={t('sites.deleteSite')}
-                description={t('sites.deleteConfirmation') || 'Are you sure you want to delete this site?'}
-                type="error"
-                confirmText={t('common.delete')}
-                cancelText={t('common.cancel')}
-              />
-
             </div>
           </CardHeader>
           <CardContent>
@@ -229,8 +180,8 @@ export function SitesManagement() {
                 <TableRow>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteName')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.siteType')}</TableHead>
-                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.simId')}</TableHead>
-                  <TableHead className= {t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.dataLoggerType')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.simId')}</TableHead>
+                  <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.dataLoggerType')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.canal')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.directorate')}</TableHead>
                   <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('sites.location')}</TableHead>
@@ -284,13 +235,15 @@ export function SitesManagement() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteClick(site.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {currentUser?.role === 'Admin' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(site.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -300,6 +253,55 @@ export function SitesManagement() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialogs - Rendered outside conditional blocks */}
+      <SitesDialog
+        mode="create"
+        siteData={formData}
+        isOpen={isAddDialogOpen}
+        onCancel={() => setIsAddDialogOpen(false)}
+        onSave={(data) => {
+          setIsAddDialogOpen(false);
+          setFormData({});
+        }}
+        onSiteCreated={() => {
+          refetch();
+        }}
+        directorates={directorates}
+        isLoadingDirectorates={loading}
+        userRole={currentUser?.role}
+      />
+
+      <SitesDialog
+        key={editingSite?.id}
+        mode="edit"
+        siteData={editingSite || {}}
+        isOpen={isEditDialogOpen}
+        onCancel={() => {
+          setIsEditDialogOpen(false);
+          setEditingSite(null);
+          setFormData({});
+        }}
+        onSave={(data) => {
+          setIsEditDialogOpen(false);
+          setEditingSite(null);
+          setFormData({});
+        }}
+        directorates={directorates}
+        isLoadingDirectorates={loading}
+        userRole={currentUser?.role}
+      />
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title={t('sites.deleteSite')}
+        description={t('sites.deleteConfirmation') || 'Are you sure you want to delete this site?'}
+        type="error"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
     </div>
   );
 }

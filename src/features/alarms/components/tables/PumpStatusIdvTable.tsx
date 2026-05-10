@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 import {
     Table,
     TableBody,
@@ -23,6 +24,7 @@ interface PumpStatusIdvResponseTableProps {
 
 export function PumpStatusIdvTable({ alarms, onEdit, onDelete, error }: PumpStatusIdvResponseTableProps) {
     const { t } = useTranslation();
+    const { currentUser } = useAuth();
     const isRTL = t('_rtl') === 'rtl';
     // Arabic/RTL should align right, English/LTR should align left
     const textAlignClass = isRTL ? '!text-right' : 'text-left';
@@ -56,7 +58,7 @@ export function PumpStatusIdvTable({ alarms, onEdit, onDelete, error }: PumpStat
                     <Button variant="ghost" size="sm" onClick={() => onEdit(alarm)}>
                         <Edit className="h-4 w-4" />
                     </Button>
-                    {onDelete && (
+                    {onDelete && currentUser?.role === 'Admin' && (
                         <Button 
                             variant="ghost" 
                             size="sm" 
