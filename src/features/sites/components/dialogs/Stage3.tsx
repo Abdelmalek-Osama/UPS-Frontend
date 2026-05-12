@@ -23,7 +23,7 @@ interface TabProps {
 }
 
 // Static database column names for Water Level
-const WATER_LEVEL_COLUMNS = ['USWL', 'DSWL1', 'Battery'];
+const WATER_LEVEL_COLUMNS = ['USWL', 'DSWL1', 'Battery', 'CalculatedFlow'];
 
 const TABLE_OPTIONS = {
   'waterLevel': 'sites.stage3.tableWaterLevel',
@@ -86,6 +86,7 @@ const filterWaterLevelColumns = (hasUS: boolean = false, hasDS1: boolean = false
     columns.push('DSWL1');
   }
   columns.push('Battery');
+  columns.push('CalculatedFlow');
   return columns;
 };
 
