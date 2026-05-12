@@ -134,7 +134,7 @@
     "siteName": "Site Name",
     "siteType": "Site Type",
     "siteCode": "Site Code",
-     "simId" : "SIM ID",
+     "simId" : "SIM IP",
     "dataLoggerType" : "Data Logger Type",
     "canal": "Canal",
     "directorate": "Directorate",
@@ -205,10 +205,10 @@
       "dataLoggerTypeLabel": "Data Logger Type",
       "dataLoggerTypePlaceholder": "Select data logger type",
       "dataLoggerTypeRequired": "Data Logger Type is required",
-      "simIdLabel": "SIM ID",
-      "simIdPlaceholder": "Enter SIM ID",
-      "simIdRequired": "SIM ID is required",
-      "simIdLeadingTrailingSpaces": "SIM ID cannot have leading or trailing spaces",
+      "simIdLabel": "SIM IP",
+      "simIdPlaceholder": "Enter SIM IP",
+      "simIdRequired": "SIM IP is required",
+      "simIdLeadingTrailingSpaces": "SIM IP cannot have leading or trailing spaces",
       "canalOptions": {
         "BahrYusuf": "BahrYusuf",
         "Ibrahimia": "Ibrahimia"

@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Site, SiteFilters } from '../types';
 import apiService from '../../../../src/shared/utils/apiService';
-import { useAuth } from '../../../../src/shared/contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../../../../src/shared/contexts/AuthContext';
 
 interface Directorate {
   id: number;
@@ -14,32 +14,45 @@ export function useSitesData() {
   const [directorates, setDirectorates] = useState<Directorate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth(); // Get isAuthenticated from AuthContext
+  const { isAuthenticated, loadingAuth } = useAuth();
+  
+  // Use a ref to track if we have already attempted the first fetch
+  const hasFetched = useRef(false);
 
   const fetchSitesWithDirectorates = useCallback(async (signal?: AbortSignal) => {
+    // If the auth state is not yet confirmed (still loading), keep the loading spinner active and exit.
+    if (loadingAuth) return;
+
+    // If we are definitely not authenticated, stop loading and clear data.
     if (!isAuthenticated) {
       setSites([]);
       setDirectorates([]);
       setLoading(false);
       return;
     }
+
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch both sites and directorates in parallel
       const [sitesResponse, directoratesResponse] = await Promise.all([
-        apiService.get<Site[] | { data: Site[] }>('v1/Sites/all', { signal }),
-        apiService.get<Directorate[]>('/v1/Lookups/Lookup/Directorates', { signal })
+        apiService.get<any>('v1/Sites/all', { signal }),
+        apiService.get<any>('/v1/Lookups/Lookup/Directorates', { signal })
       ]);
       
       if (!signal?.aborted) {
-        const sitesList = Array.isArray(sitesResponse) ? sitesResponse : (sitesResponse as { data: Site[] }).data || [];
-        const directoratesList = directoratesResponse || [];
+        // Robust extraction logic to prevent "Failed to load" if response shape varies
+        const sitesList = Array.isArray(sitesResponse) 
+          ? sitesResponse 
+          : sitesResponse?.data || sitesResponse?.items || [];
+          
+        const directoratesList = Array.isArray(directoratesResponse)
+          ? directoratesResponse
+          : directoratesResponse?.data || directoratesResponse?.items || [];
         
-        // Map directorate names to IDs
-        const sitesWithDirectorateIds = sitesList.map(site => {
+        const sitesWithDirectorateIds = sitesList.map((site: any) => {
           const matchingDirectorate = directoratesList.find(
-            d => d.name === site.directorateName || d.arabicName === site.directorateArabicName
+            (d: any) => d.name === site.directorateName || d.arabicName === site.directorateArabicName
           );
           return {
             ...site,
@@ -49,12 +62,11 @@ export function useSitesData() {
         
         setSites(sitesWithDirectorateIds);
         setDirectorates(directoratesList);
+        hasFetched.current = true;
       }
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        // Fetch aborted
-      } else {
-        setError((err as Error).message);
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Failed to load sites');
         console.error('Error fetching sites:', err);
       }
     } finally {
@@ -62,13 +74,19 @@ export function useSitesData() {
         setLoading(false);
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadingAuth]);
 
   useEffect(() => {
     const abortController = new AbortController();
-    fetchSitesWithDirectorates(abortController.signal);
+    
+    // On hard refresh, isAuthenticated might take a moment to flip to true.
+    // We only trigger the fetch once the auth state is confirmed.
+    if (!loadingAuth && isAuthenticated) {
+      fetchSitesWithDirectorates(abortController.signal);
+    }
+    
     return () => abortController.abort();
-  }, [fetchSitesWithDirectorates]);
+  }, [fetchSitesWithDirectorates, isAuthenticated, loadingAuth]);
 
   return { sites, setSites, directorates, loading, error, refetch: fetchSitesWithDirectorates };
 }
