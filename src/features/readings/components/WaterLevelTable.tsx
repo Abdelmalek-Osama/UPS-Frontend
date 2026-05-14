@@ -577,7 +577,7 @@ export function WaterLevelTable({
               <Download className="ml-2 h-4 w-4" />
               {t('common.export')}
             </Button>
-
+            {!isOperator && (
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               if (!open && (addError || addSiteDataError)) {
                 return;
@@ -825,6 +825,7 @@ export function WaterLevelTable({
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            )}
 
             {/* Edit Dialog */}
             <Dialog open={isEditWaterLevelOpen} onOpenChange={(open) => {
