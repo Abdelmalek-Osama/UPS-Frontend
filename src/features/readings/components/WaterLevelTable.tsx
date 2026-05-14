@@ -113,6 +113,7 @@ export function WaterLevelTable({
 }: WaterLevelTableProps) {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
+  const isOperator = currentUser?.role === 'Operator';
   const [readingDate, setReadingDate] = useState<Date | undefined>();
   const [readingTime, setReadingTime] = useState<string>('');
   const [uswl, setUswl] = useState<string>('');
@@ -546,7 +547,7 @@ export function WaterLevelTable({
   const showDSWL2 = firstReading?.siteConfiguration?.hasDS2 ?? false;
 
   // Calculate total column count for colSpan
-  const totalColumns = 5 + (showUSWL ? 1 : 0) + (showDSWL1 ? 1 : 0) + (showDSWL2 ? 1 : 0);
+  const totalColumns = 5 + (showUSWL ? 1 : 0) + (showDSWL1 ? 1 : 0) + (showDSWL2 ? 1 : 0) - (isOperator ? 1 : 0);
 
   const getAlarmStatus = (reading: WaterLevelReading, fieldName: string) => {
     const relevantAlarms = reading.alarms?.filter(alarm => alarm.fieldName === fieldName);
@@ -864,12 +865,13 @@ export function WaterLevelTable({
                         value={editReadingDate}
                         onChange={setEditReadingDate}
                         maxDate={new Date()} // Disable dates after today
+                        disabled={isOperator}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('common.time')}</Label>
-                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={editReadingTime} onValueChange={setEditReadingTime}>
+                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={editReadingTime} onValueChange={setEditReadingTime} disabled={isOperator}>
                       <SelectTrigger className="w-1/2 rtl:flex-row-reverse">
                         <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
@@ -895,6 +897,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="125.4"
                           value={editUswl}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -934,6 +937,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -973,6 +977,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl2}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -1011,6 +1016,7 @@ export function WaterLevelTable({
                       step="0.1"
                       placeholder="12.8"
                       value={editBattery}
+                      disabled={isOperator}
                       onInput={(e: React.FormEvent<HTMLInputElement>) => {
                         const input = e.currentTarget;
                         if (input.validity.badInput) {
@@ -1050,6 +1056,7 @@ export function WaterLevelTable({
                     onClick={handleUpdateReading}
                     disabled={
                       isSubmittingEdit ||
+                      isOperator ||
                       !editingWaterLevel ||
                       !editReadingDate ||
                       !editReadingTime ||
@@ -1103,7 +1110,7 @@ export function WaterLevelTable({
                 {showDSWL2 && <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('alarms.DSWL2')} ({t('readings.meter')})</TableHead>}
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.battery')} (V)</TableHead>
                 <TableHead className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>{t('readings.calculatedFlow')}</TableHead>
-                <TableHead className="text-center">{t('common.actions')}</TableHead>
+                {!isOperator && <TableHead className="text-center">{t('common.actions')}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1152,26 +1159,28 @@ export function WaterLevelTable({
                       <span>{reading.calculatedFlow.toFixed(2)} {t('readings.flowUnit')}</span>
                     </div>
                   </TableCell>
-                  <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditWaterLevel(reading)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {currentUser?.role === 'Admin' && (
+                  {!isOperator && (
+                    <TableCell className={t('_rtl') === 'rtl' ? 'text-right' : 'text-left'}>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteWaterLevel(reading)}
+                          onClick={() => handleEditWaterLevel(reading)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
+                        {currentUser?.role === 'Admin' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteWaterLevel(reading)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               )})}
             </TableBody>

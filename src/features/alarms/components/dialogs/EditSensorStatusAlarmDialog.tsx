@@ -21,6 +21,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { SensorStatusForm, Site } from '../../types';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 
 interface EditSensorStatusAlarmDialogProps {
     open: boolean;
@@ -65,6 +66,8 @@ export function EditSensorStatusAlarmDialog({
 }: EditSensorStatusAlarmDialogProps) {
     const { t } = useTranslation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const { currentUser } = useAuth();
+    const isOperator = currentUser?.role === 'Operator';
 
     const headerContainerStyle: React.CSSProperties = {
         paddingLeft: '1.5rem',
@@ -221,6 +224,7 @@ export function EditSensorStatusAlarmDialog({
                         <div style={fieldContainerStyle}>
                             <Label>{t('alarms.alarmName')}</Label>
                             <Input
+                                disabled={isOperator}
                                 type="text"
                                 value={form.alarmName}
                                 onChange={(e) => {
@@ -238,6 +242,7 @@ export function EditSensorStatusAlarmDialog({
                             ) : (
                                 <Select
                                     onValueChange={handleSiteChange}
+                                    disabled={isOperator}
                                     value={form.siteId?.toString() || ""}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 >
@@ -273,7 +278,7 @@ export function EditSensorStatusAlarmDialog({
                                     setHasChanges(true);
                                 }}
                                 value={form.field}
-                                disabled={!form.siteId}
+                                disabled={isOperator || !form.siteId}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
                                 <SelectTrigger className="rtl:flex-row-reverse">
@@ -323,6 +328,7 @@ export function EditSensorStatusAlarmDialog({
                                     setHasChanges(true);
                                 }}
                                 placeholder={t('alarms.message')}
+                                disabled={isOperator}
                             />
                         </div>
 
@@ -332,6 +338,7 @@ export function EditSensorStatusAlarmDialog({
                             recipients={form.emails}
                             setRecipients={setEmails}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
 
                         <RecipientInput
@@ -340,6 +347,7 @@ export function EditSensorStatusAlarmDialog({
                             recipients={form.phones}
                             setRecipients={setPhones}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
                     </div>
                 </div>

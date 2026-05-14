@@ -20,6 +20,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { PumpStatusPSAlarmForm, Site } from '../../types';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 
 interface EditPumpStatusPSAlarmDialogProps {
     open: boolean;
@@ -61,6 +62,8 @@ export function EditPumpStatusPSAlarmDialog({
     submissionError
 }: EditPumpStatusPSAlarmDialogProps) {
     const { t } = useTranslation();
+    const { currentUser } = useAuth();
+    const isOperator = currentUser?.role === 'Operator';
 
     const headerContainerStyle: React.CSSProperties = {
         paddingLeft: '1.5rem',
@@ -148,6 +151,7 @@ export function EditPumpStatusPSAlarmDialog({
                                 <Input type="text" value={currentAlarm.site} disabled />
                             ) : (
                                 <Select
+                                    disabled={isOperator}
                                     onValueChange={handleSiteChange}
                                     value={form.siteId?.toString() || ""}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
@@ -179,6 +183,7 @@ export function EditPumpStatusPSAlarmDialog({
                             <Input
                                 id="alarm-name"
                                 type="text"
+                                disabled={isOperator}
                                 value={form.alarmName || ''}
                                 onChange={(e) => {
                                     setForm(prev => ({ ...prev, alarmName: e.target.value }));
@@ -215,6 +220,7 @@ export function EditPumpStatusPSAlarmDialog({
                             recipients={form.emails}
                             setRecipients={setEmails}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
 
                         {/* Phone Recipients */}
@@ -224,6 +230,7 @@ export function EditPumpStatusPSAlarmDialog({
                             recipients={form.phones}
                             setRecipients={setPhones}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
                     </div>
                 </div>

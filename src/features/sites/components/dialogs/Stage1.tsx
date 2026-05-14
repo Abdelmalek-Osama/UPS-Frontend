@@ -15,6 +15,7 @@ import {
   getDataLoggerTypeOptions,
 } from '../../constants';
 import type { Directorate } from '../../hooks/useDirectorates';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 
 interface TabProps {
   data: Partial<Site>;
@@ -224,9 +225,11 @@ const getDataLoggerTypeErrors = (value: string, t: any): string[] => {
 export default function Stage1({ data, onChange, isOpen, onValidationChange, directorates, isLoadingDirectorates, mode, userRole }: TabProps) {
   const { t } = useTranslation();
   const dir = t('_rtl') === 'rtl' ? 'rtl' : 'ltr';
+  const { currentUser } = useAuth();
+  const isOperator = currentUser?.role === 'Operator';
   
   // For operators, restrict editing to certain fields
-  const isOperatorEditMode = userRole === 'Operator' && mode === 'edit';
+  const isOperatorEditMode = isOperator && mode === 'edit';
   
   const [arabicNameTouched, setArabicNameTouched] = useState(false);
   const [englishNameTouched, setEnglishNameTouched] = useState(false);
@@ -438,7 +441,6 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             }}
             onBlur={handleLongitudeBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
-            disabled={isOperatorEditMode}
           />
           <Select
             value={data.longitudeDirection || 'E'}
@@ -483,7 +485,6 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
             }}
             onBlur={handleLatitudeBlur}
             className={dir === 'rtl' ? 'text-right' : 'text-left'}
-            disabled={isOperatorEditMode}
           />
           <Select
             value={data.latitudeDirection || 'N'}
@@ -591,7 +592,6 @@ export default function Stage1({ data, onChange, isOpen, onValidationChange, dir
       }
     }}
     dir={dir}
-    disabled={isOperatorEditMode}
   >
     <SelectTrigger
       id="dataLoggerType"
