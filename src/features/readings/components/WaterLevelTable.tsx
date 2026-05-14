@@ -113,6 +113,7 @@ export function WaterLevelTable({
 }: WaterLevelTableProps) {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
+  const isOperator = currentUser?.role === 'Operator';
   const [readingDate, setReadingDate] = useState<Date | undefined>();
   const [readingTime, setReadingTime] = useState<string>('');
   const [uswl, setUswl] = useState<string>('');
@@ -864,12 +865,13 @@ export function WaterLevelTable({
                         value={editReadingDate}
                         onChange={setEditReadingDate}
                         maxDate={new Date()} // Disable dates after today
+                        disabled={isOperator}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('common.time')}</Label>
-                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={editReadingTime} onValueChange={setEditReadingTime}>
+                    <Select dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'} value={editReadingTime} onValueChange={setEditReadingTime} disabled={isOperator}>
                       <SelectTrigger className="w-1/2 rtl:flex-row-reverse">
                         <SelectValue placeholder={t('readings.selectHour')} />
                       </SelectTrigger>
@@ -895,6 +897,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="125.4"
                           value={editUswl}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -934,6 +937,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -973,6 +977,7 @@ export function WaterLevelTable({
                           min="0"
                           placeholder="122.1"
                           value={editDswl2}
+                          disabled={isOperator}
                           onInput={(e: React.FormEvent<HTMLInputElement>) => {
                             const input = e.currentTarget;
                             if (input.validity.badInput) {
@@ -1011,6 +1016,7 @@ export function WaterLevelTable({
                       step="0.1"
                       placeholder="12.8"
                       value={editBattery}
+                      disabled={isOperator}
                       onInput={(e: React.FormEvent<HTMLInputElement>) => {
                         const input = e.currentTarget;
                         if (input.validity.badInput) {
@@ -1050,6 +1056,7 @@ export function WaterLevelTable({
                     onClick={handleUpdateReading}
                     disabled={
                       isSubmittingEdit ||
+                      isOperator ||
                       !editingWaterLevel ||
                       !editReadingDate ||
                       !editReadingTime ||

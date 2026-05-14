@@ -87,6 +87,7 @@ export function PumpStationTable({
 }: PumpStationTableProps) {
     const { t } = useTranslation();
     const { currentUser } = useAuth();
+    const isOperator = currentUser?.role === 'Operator';
     const [pumpReadings, setPumpReadings] = useState<{ time: number | null; flow: number | null; timeError?: string | null; flowError?: string | null }[]>([]);
     const [readingDateTime, setReadingDateTime] = useState<Date | undefined>();
     const [readingDate, setReadingDate] = useState<Date | undefined>();
@@ -935,6 +936,7 @@ export function PumpStationTable({
                     value={editReadingDate}
                     onChange={(date) => setEditReadingDate(date ?? undefined)}
                     maxDate={new Date()} // Disable dates after today
+                    disabled={isOperator}
                     />
                   </div>
                 </div>
@@ -945,6 +947,7 @@ export function PumpStationTable({
                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                     value={editTimePerHour?.toString().padStart(2, '0') || ''}
                     onValueChange={(value) => setEditTimePerHour(value === '' ? undefined : parseFloat(value))}
+                    disabled={isOperator}
                   >
                     <SelectTrigger className="rtl:flex-row-reverse">
                       <SelectValue placeholder={t('readings.selectHour')} />
@@ -975,6 +978,7 @@ export function PumpStationTable({
                         min="0"
                         placeholder={t('common.zero')}
                         value={editPumpReadings[index]?.time ?? ''}
+                        disabled={isOperator}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
                           if (input.validity.badInput) {
@@ -1000,6 +1004,7 @@ export function PumpStationTable({
                         min="0"
                         placeholder={t('common.zero')}
                         value={editPumpReadings[index]?.flow ?? ''}
+                        disabled={isOperator}
                         onInput={(e: React.FormEvent<HTMLInputElement>) => {
                           const input = e.currentTarget;
                           if (input.validity.badInput) {
@@ -1028,6 +1033,7 @@ export function PumpStationTable({
                       {t('common.cancel')}
                     </Button>
                     <Button onClick={handleSaveEditPumpStation} disabled={
+                      isOperator ||
                       isSubmittingEdit || 
                       !editingPumpStation || 
                       !editReadingDate || 
