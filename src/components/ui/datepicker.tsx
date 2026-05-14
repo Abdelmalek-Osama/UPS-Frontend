@@ -14,9 +14,10 @@ interface DatePickerProps {
   onChange?: (date: Date | undefined) => void
   minDate?: Date
   maxDate?: Date
+  disabled?: boolean
 }
 
-export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: DatePickerProps) {
+export function DatePicker({ placeholder, value, onChange, minDate, maxDate, disabled }: DatePickerProps) {
   const { t } = useTranslation()
   const [internalDate, setInternalDate] = useState<Date | undefined>(value)
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -40,6 +41,7 @@ export function DatePicker({ placeholder, value, onChange, minDate, maxDate }: D
         <Button
           variant="outline"
           className={t('_rtl') === 'rtl' ? "justify-start text-right" : "justify-start text-left"}
+          disabled={disabled}
         >
           <CalendarIcon className={t('_rtl') === 'rtl' ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
           {date ? format(date, "PPP", { locale }) : placeholder}

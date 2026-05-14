@@ -20,6 +20,7 @@ import {
 } from '../../../../components/ui/select';
 import { RecipientInput } from '../RecipientInput';
 import { PumpStatusIdvAlarmForm, Site, SiteConfiguration } from '../../types';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 
 interface EditPumpStatusIdvAlarmDialogProps {
     open: boolean;
@@ -65,6 +66,8 @@ export function EditPumpStatusIdvAlarmDialog({
     onFetchSiteConfig
 }: EditPumpStatusIdvAlarmDialogProps) {
     const { t } = useTranslation();
+    const { currentUser } = useAuth();
+    const isOperator = currentUser?.role === 'Operator';
 
     // Fetch site configuration when currentAlarm changes
     useEffect(() => {
@@ -167,6 +170,7 @@ export function EditPumpStatusIdvAlarmDialog({
                                 id="alarm-name"
                                 type="text"
                                 value={form.alarmName || ''}
+                                disabled={isOperator}
                                 onChange={(e) => {
                                     setForm(prev => ({ ...prev, alarmName: e.target.value }));
                                     setHasChanges(true);
@@ -185,6 +189,7 @@ export function EditPumpStatusIdvAlarmDialog({
                             ) : (
                                 <Select
                                     onValueChange={handleSiteChange}
+                                    disabled={isOperator}
                                     value={form.siteId?.toString() || ""}
                                     dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                                 >
@@ -214,8 +219,8 @@ export function EditPumpStatusIdvAlarmDialog({
                             <Label>{t('alarms.idvPump')}</Label>
                             <Select
                                 value={String(form.pumpNumber || 1)}
+                                disabled={isOperator || configLoading || !siteConfiguration?.numPumps}
                                 onValueChange={handleIdvPumpChange}
-                                disabled={configLoading || !siteConfiguration?.numPumps}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
                                 <SelectTrigger className="rtl:flex-row-reverse">
@@ -263,6 +268,7 @@ export function EditPumpStatusIdvAlarmDialog({
                             recipients={form.emails}
                             setRecipients={setEmails}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
 
                         {/* Phone Recipients */}
@@ -272,6 +278,7 @@ export function EditPumpStatusIdvAlarmDialog({
                             recipients={form.phones}
                             setRecipients={setPhones}
                             setHasChanges={setHasChanges}
+                            disabled={isOperator}
                         />
                     </div>
                 </div>

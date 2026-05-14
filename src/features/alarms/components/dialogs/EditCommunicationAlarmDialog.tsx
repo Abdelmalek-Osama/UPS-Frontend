@@ -21,6 +21,7 @@ import {
 import { RecipientInput } from '../RecipientInput';
 import { CommunicationAlarmForm, Site } from '../../types';
 import { validateAlarmName } from '../../utils/validation';
+import { useAuth } from '../../../../shared/contexts/AuthContext';
 
 interface EditCommunicationAlarmDialogProps {
     open: boolean;
@@ -59,6 +60,8 @@ export function EditCommunicationAlarmDialog({
 }: EditCommunicationAlarmDialogProps) {
     const { t } = useTranslation();
     const [alarmNameError, setAlarmNameError] = React.useState<string | undefined>(undefined);
+    const { currentUser } = useAuth();
+    const isOperator = currentUser?.role === 'Operator';
 
     useEffect(() => {
         if (currentAlarm && currentAlarm.hours < 0) {
@@ -100,6 +103,7 @@ export function EditCommunicationAlarmDialog({
                             type="text"
                             placeholder={t('alarms.alarmName')}
                             value={form.alarmName}
+                            disabled={isOperator}
                             onChange={(e) => {
                                 setForm(prev => ({
                                     ...prev,
@@ -125,6 +129,7 @@ export function EditCommunicationAlarmDialog({
                                     siteId: parseInt(value)
                                 }))}
                                 value={form.siteId?.toString() || ""}
+                                disabled={isOperator}
                                 dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
                             >
                                 <SelectTrigger className="rtl:flex-row-reverse">
@@ -217,6 +222,7 @@ export function EditCommunicationAlarmDialog({
                         recipients={form.emails}
                         setRecipients={setEmails}
                         setHasChanges={setHasChanges}
+                        disabled={isOperator}
                     />
 
                     <RecipientInput
@@ -225,6 +231,7 @@ export function EditCommunicationAlarmDialog({
                         recipients={form.phones}
                         setRecipients={setPhones}
                         setHasChanges={setHasChanges}
+                        disabled={isOperator}
                     />
                 </div>
 
