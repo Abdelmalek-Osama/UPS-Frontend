@@ -67,7 +67,6 @@ export const AddPumpStatusPSAlarmDialog = React.forwardRef<HTMLDivElement, Exten
                 <div className="space-y-4 py-4">
                     {/* Site Selection */}
                     <div className="space-y-2">
-                        <Label htmlFor="site-select">{t('alarms.site')}</Label>
                         <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}

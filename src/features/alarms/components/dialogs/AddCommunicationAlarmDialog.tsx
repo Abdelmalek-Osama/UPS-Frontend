@@ -78,7 +78,6 @@ export const AddCommunicationAlarmDialog = React.forwardRef<HTMLDivElement, AddC
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>{t('alarms.site')}</Label>
                         <AlarmSiteSelector
                             sites={sites}
                             sitesLoading={sitesLoading}

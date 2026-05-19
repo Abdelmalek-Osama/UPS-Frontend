@@ -279,7 +279,6 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                             )}
                         </div>
                         <div style={fieldContainerStyle}>
-    <Label>{t('alarms.site')}</Label>
     <AlarmSiteSelector
      sites={sites}
    sitesLoading={sitesLoading}
@@ -306,7 +305,8 @@ export const AddThresholdAlarmDialog = React.forwardRef<HTMLDivElement, AddThres
                                 <SelectTrigger className="rtl:flex-row-reverse">
                                     <SelectValue placeholder={t('alarms.field')} />
                                 </SelectTrigger>
-                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
+                                <SelectContent dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}
+                                className="max-h-48 overflow-y-auto">
                                     {availableFields.map(field => (
                                         <SelectItem key={field} value={field}>{translateFieldName(field)}</SelectItem>
                                     ))}
