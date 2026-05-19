@@ -717,11 +717,13 @@ export function PumpStationTable({
             {t('common.export')}
           </Button>
 
+          {!isOperator && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button >
                 <Plus className="ml-2 h-4 w-4" />
                 {t('readings.addManualReading')}
+                
               </Button>
             </DialogTrigger>
             <DialogContent style={dialogContentStyle} dir={t('_rtl') === 'rtl' ? 'rtl' : 'ltr'}>
@@ -898,6 +900,7 @@ export function PumpStationTable({
               </div>
             </DialogContent>
           </Dialog>
+          )}
 
           {/* Edit Dialog */}
           <Dialog open={isEditPumpStationOpen} onOpenChange={setIsEditPumpStationOpen}>
